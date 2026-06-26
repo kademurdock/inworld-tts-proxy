@@ -96,11 +96,22 @@ const MODEL_MAP = {
 };
 
 // ---- Chunking ----
-// Splits text into sentence-grouped chunks so we can fire several smaller
-// requests at Inworld IN PARALLEL instead of waiting on one giant serial
-// request. Never splits mid-sentence unless a single sentence itself is
-// longer than maxChunkLen.
-const MAX_CHUNK_LEN = 350;
+// Inworld's emotional steering reads surrounding context, so chunks need to
+// stay as LONG as possible (more sentences together = better emotional
+// continuity) while still (a) splitting at real natural breaks instead of
+// mid-thought, and (b) staying safely under Inworld's practical request
+// size so long replies can still be parallelized for latency.
+//
+// Strategy: split on paragraph breaks first (the most natural place to cut
+// without losing emotional context within a thought). Only if a paragraph
+// itself is too long do we fall back to grouping whole sentences together
+// up to the size limit -- we never split mid-sentence.
+const MAX_CHUNK_LEN = 1200;
+
+function splitParagraphs(text) {
+  const paras = text.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
+  return paras.length ? paras : [text];
+}
 
 function splitSentences(text) {
   const matches = text.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g);
@@ -108,7 +119,9 @@ function splitSentences(text) {
   return matches.map((s) => s.trim()).filter(Boolean);
 }
 
-function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
+// Groups whole sentences together up to maxChunkLen -- used as a fallback
+// when a single paragraph is too long to send as one chunk.
+function groupSentences(text, maxChunkLen) {
   const sentences = splitSentences(text);
   const chunks = [];
   let current = "";
@@ -129,6 +142,34 @@ function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
     if (candidate.length > maxChunkLen && current) {
       chunks.push(current);
       current = sentence;
+    } else {
+      current = candidate;
+    }
+  }
+
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
+  const paragraphs = splitParagraphs(text);
+  const chunks = [];
+  let current = "";
+
+  for (const para of paragraphs) {
+    if (para.length > maxChunkLen) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      chunks.push(...groupSentences(para, maxChunkLen));
+      continue;
+    }
+
+    const candidate = current ? `${current}\n\n${para}` : para;
+    if (candidate.length > maxChunkLen && current) {
+      chunks.push(current);
+      current = para;
     } else {
       current = candidate;
     }
