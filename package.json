@@ -1,0 +1,15 @@
+{
+  "name": "inworld-tts-proxy",
+  "version": "1.0.0",
+  "description": "OpenAI TTS-compatible proxy for Inworld's REST TTS API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
