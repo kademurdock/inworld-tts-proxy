@@ -383,6 +383,11 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
            color:#bcd2ff; white-space:nowrap; }
   .playing-dot { font-size:0.85rem; color:#6ea8fe; }
   .hint { color:#808992; }
+  section.howto { margin:14px 16px 0; padding:14px 16px; background:#141821;
+       border:1px solid #2a3550; border-left:4px solid #6ea8fe; border-radius:10px; }
+  section.howto h2 { margin:0 0 6px; font-size:1.05rem; }
+  section.howto p { margin:6px 0; color:#c4ccd8; font-size:0.95rem; }
+  section.howto strong { color:#eceef2; }
   footer { padding:16px; color:#6b7280; font-size:0.85rem; border-top:1px solid #262a33; }
 </style>
 </head>
@@ -397,6 +402,11 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
     <span class="count" id="count"></span>
   </div>
 </header>
+<section class="howto" aria-label="How to change your voice">
+  <h2>How to use a voice you like</h2>
+  <p>Heads up: the voice provider (Inworld) gives us no way to preview voices inside the chat itself — which is lame, and it is the whole reason this page exists. Browse here, find one you like, then set it in the app.</p>
+  <p>To switch your voice: open <strong>Settings</strong> in the chat, go to the <strong>Speech</strong> tab, find the <strong>Text-to-Speech</strong> section, and choose your voice from the <strong>Voice</strong> menu. The names there match the names here exactly.</p>
+</section>
 <div id="status" role="status" aria-live="polite">Ready. Select a voice to hear a sample.</div>
 <main>
   <ul id="list" aria-label="Available voices"></ul>
