@@ -355,6 +355,8 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
   * { box-sizing: border-box; }
   body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
          background:#0f1115; color:#eceef2; line-height:1.5; }
+  a.back { display:inline-block; color:#6ea8fe; text-decoration:none; font-weight:600; margin:0 0 10px; font-size:0.95rem; }
+  a.back:focus-visible { outline:3px solid #6ea8fe; outline-offset:2px; }
   header { padding:20px 16px 8px; border-bottom:1px solid #262a33; position:sticky; top:0;
            background:#0f1115; z-index:5; }
   h1 { margin:0 0 6px; font-size:1.5rem; }
@@ -386,6 +388,7 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 </head>
 <body>
 <header>
+  <a class="back" href="https://kademurdock.com">← Back to Kade-AI chat</a>
   <h1>Kiana Voice Library</h1>
   <p class="intro">Browse every voice available on kademurdock.com. Select any voice to hear a short sample of how it sounds. Samples are generated fresh when you select them, so the first play takes a second or two.</p>
   <div class="controls">
