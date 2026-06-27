@@ -343,13 +343,13 @@ app.post("/v1/audio/speech", async (req, res) => {
 // NOTE: VOICE_LIST mirrors the `voices:` list in kademurdock/librechat.yaml (what
 // users can pick in the UI). If that list changes, update this array too.
 const VOICE_LIST = ["alloy", "echo", "fable", "onyx", "nova", "shimmer", "Abby", "Alaric", "Alex", "Ashley", "Avery", "Banjo", "Beatrice", "Bianca", "Blake", "Brandon", "Brian", "Brick", "Callum", "Carter", "Cedric", "Celeste", "Chip", "Chloe", "Claire", "Clive", "Conrad", "Cooper", "Cordelia", "Craig", "Damon", "Darlene", "Deborah", "Dennis", "Derek", "Dominus", "Duncan", "Edward", "Eldrin", "Eleanor", "Elizabeth", "Elliot", "Ethan", "Evan", "Evelyn", "Felix", "Freddie", "Gareth", "Graham", "Grant", "Hades", "Hamish", "Hank", "Indi", "Jake", "James", "Jarrah", "Jason", "Jessica", "Jonah", "Joy", "Julia", "Kayla", "Kelsey", "Lauren", "Levi", "Liam", "Loretta", "Lucian", "Luna", "Malcolm", "Marcus", "Mark", "Marlene", "Matilda", "Mia", "Miranda", "Morgana", "Mortimer", "Naomi", "Nate", "Oliver", "Olivia", "Pippa", "Pixie", "Reed", "Riley", "Ronald", "Rosalind", "Rupert", "Sarah", "Sebastian", "Selene", "Serena", "Serene", "Shaun", "Simon", "Snik", "Sophie", "Tahlia", "Tessa", "Theodore", "Timothy", "Trevor", "Tristan", "Tyler", "Veronica", "Victor", "Victoria", "Vinny", "Wendy", "Winifred", "Zadie", "Amy", "Vintage Announcer", "Boss", "Biker Radio", "Young Reader", "Podcaster 1", "Podcaster 2", "Deadpan Narrator", "Carolyn", "Kid Reporter", "Christa", "Colby", "Comedian", "Conversational (Female)", "Crying (Female)", "Cutie (Child)", "Death Metal", "DJ Velvet", "Ducky", "Fara", "R&B DJ (Female) 1", "Nanny Franny", "Fucia", "Gracie (Child)", "Hannah", "Honey", "Houston Stone", "Jerrimiah", "Junior (Child)", "Kade (Kid)", "Kiana (Comedian)", "Lannie", "Southern Local (Male) 1", "Southern Local (Male) 2", "Interview Tape (Male)", "Mazy (Podcaster)", "Megan (Teen)", "Misty", "Nervous Driver (Female)", "Elder Speech (Male)", "Preacher", "Kids' Show Host (Female)", "Queasy Reporter", "Quiet (Male)", "Reanne", "Strict Teacher (Retro)", "R&B DJ (Female) 2", "Ronda (Child)", "Sadie", "Sagey (Child)", "Scarla (Commercial Narrator)", "Scary Narrator (Female)", "Stephen (Shocked)", "Shy & Friendly (Child)", "Southern (Male) 4", "Southern Guy", "Used Car Salesman (Southern)", "Stiff Narrator (Male)", "Sweet Southern Senior", "Antique Tape (Female)", "Tasha Wexler (Reporter) 1", "Tasha Wexler (Reporter) 2", "Teen Reporter (Female)", "Tiffany Tinseltown (Intern)", "Tomboy", "Trevor (Kid)", "Zadia", "Zadiana", "Aditya", "Amara", "Amina", "Andoy", "Anjali", "Arjun", "Boonleng", "Chioma", "Dalisay", "Dhruv", "Emeka", "Emil", "Folake", "Hana", "Huiling", "Ishaan", "Junhao", "Kabir", "Kenji", "Liwa", "Maricel", "Nadia", "Nikhil", "Priya", "Ren", "Saanvi", "Shu", "Tala", "Tunde", "Vikram", "Wei", "Yash", "Zherong", "Birta", "Sharma"];
-const SAMPLE_TEXT = "Hey there! I can sound excited, or calm and serious \u2014 here's a little of how I come across.";
+const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kiana Voice Library</title>
+<title>Kade-AI Voice Library</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -394,8 +394,8 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <body>
 <header>
   <a class="back" href="https://kademurdock.com">← Back to Kade-AI chat</a>
-  <h1>Kiana Voice Library</h1>
-  <p class="intro">Browse every voice available on kademurdock.com. Select any voice to hear a short sample of how it sounds. Samples are generated fresh when you select them, so the first play takes a second or two.</p>
+  <h1>Kade-AI Voice Library</h1>
+  <p class="intro">Browse every voice available on kademurdock.com. Select any voice to hear a short audition of how it sounds \u2014 a little emotional range, not just a flat read. Samples are generated fresh when you select them, so the first play takes a second or two.</p>
   <div class="controls">
     <label for="search">Search voices</label>
     <input type="search" id="search" placeholder="Type to filter, e.g. southern, child, DJ" autocomplete="off" aria-describedby="count">
@@ -411,7 +411,7 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <main>
   <ul id="list" aria-label="Available voices"></ul>
 </main>
-<footer>Powered by Inworld TTS. Each sample is about one short sentence. If a voice ever fails to play, it may have been removed on Inworld.</footer>
+<footer>Powered by Inworld TTS. Each sample is a short audition so you can hear the voice's range. If a voice ever fails to play, it may have been removed on Inworld.</footer>
 
 <script>
   var VOICES = /*VOICES*/;
@@ -515,8 +515,20 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 
 app.get(["/voices", "/voice-library"], (req, res) => {
   const custom = Object.keys(CUSTOM_VOICE_MAP);
+  // (b) Float Kade's custom-made voices to the top, keeping the existing
+  //     English-first order for the rest. (c) Drop the OpenAI-style alias names
+  //     (alloy/echo/fable/onyx/nova/shimmer) from the PUBLIC list so nobody
+  //     mistakes them for OpenAI's real voices -- their true Inworld voices
+  //     (Sarah/Timothy/Edward/Dennis/Julia/Olivia) are already listed by name.
+  //     OPENAI_ALIAS_MAP stays intact so LibreChat's internal calls still resolve.
+  const customSet = new Set(custom);
+  const aliasSet = new Set(Object.keys(OPENAI_ALIAS_MAP));
+  const displayList = [
+    ...VOICE_LIST.filter((v) => customSet.has(v)),
+    ...VOICE_LIST.filter((v) => !customSet.has(v) && !aliasSet.has(v)),
+  ];
   const html = VOICE_PAGE_HTML
-    .replace("/*VOICES*/", JSON.stringify(VOICE_LIST))
+    .replace("/*VOICES*/", JSON.stringify(displayList))
     .replace("/*CUSTOM*/", JSON.stringify(custom))
     .replace("/*SAMPLE*/", JSON.stringify(SAMPLE_TEXT));
   res.set("Content-Type", "text/html; charset=utf-8");
