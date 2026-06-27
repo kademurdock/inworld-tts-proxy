@@ -336,6 +336,180 @@ app.post("/v1/audio/speech", async (req, res) => {
   }
 });
 
+
+// ---- Accessible on-demand voice preview library ----
+// Served at GET /voices . The page calls this same service's /v1/audio/speech
+// (same origin, so no CORS needed) to generate a short sample per voice on demand.
+// NOTE: VOICE_LIST mirrors the `voices:` list in kademurdock/librechat.yaml (what
+// users can pick in the UI). If that list changes, update this array too.
+const VOICE_LIST = ["alloy", "echo", "fable", "onyx", "nova", "shimmer", "Abby", "Alaric", "Alex", "Ashley", "Avery", "Banjo", "Beatrice", "Bianca", "Blake", "Brandon", "Brian", "Brick", "Callum", "Carter", "Cedric", "Celeste", "Chip", "Chloe", "Claire", "Clive", "Conrad", "Cooper", "Cordelia", "Craig", "Damon", "Darlene", "Deborah", "Dennis", "Derek", "Dominus", "Duncan", "Edward", "Eldrin", "Eleanor", "Elizabeth", "Elliot", "Ethan", "Evan", "Evelyn", "Felix", "Freddie", "Gareth", "Graham", "Grant", "Hades", "Hamish", "Hank", "Indi", "Jake", "James", "Jarrah", "Jason", "Jessica", "Jonah", "Joy", "Julia", "Kayla", "Kelsey", "Lauren", "Levi", "Liam", "Loretta", "Lucian", "Luna", "Malcolm", "Marcus", "Mark", "Marlene", "Matilda", "Mia", "Miranda", "Morgana", "Mortimer", "Naomi", "Nate", "Oliver", "Olivia", "Pippa", "Pixie", "Reed", "Riley", "Ronald", "Rosalind", "Rupert", "Sarah", "Sebastian", "Selene", "Serena", "Serene", "Shaun", "Simon", "Snik", "Sophie", "Tahlia", "Tessa", "Theodore", "Timothy", "Trevor", "Tristan", "Tyler", "Veronica", "Victor", "Victoria", "Vinny", "Wendy", "Winifred", "Zadie", "Amy", "Vintage Announcer", "Boss", "Biker Radio", "Young Reader", "Podcaster 1", "Podcaster 2", "Deadpan Narrator", "Carolyn", "Kid Reporter", "Christa", "Colby", "Comedian", "Conversational (Female)", "Crying (Female)", "Cutie (Child)", "Death Metal", "DJ Velvet", "Ducky", "Fara", "R&B DJ (Female) 1", "Nanny Franny", "Fucia", "Gracie (Child)", "Hannah", "Honey", "Houston Stone", "Jerrimiah", "Junior (Child)", "Kade (Kid)", "Kiana (Comedian)", "Lannie", "Southern Local (Male) 1", "Southern Local (Male) 2", "Interview Tape (Male)", "Mazy (Podcaster)", "Megan (Teen)", "Misty", "Nervous Driver (Female)", "Elder Speech (Male)", "Preacher", "Kids' Show Host (Female)", "Queasy Reporter", "Quiet (Male)", "Reanne", "Strict Teacher (Retro)", "R&B DJ (Female) 2", "Ronda (Child)", "Sadie", "Sagey (Child)", "Scarla (Commercial Narrator)", "Scary Narrator (Female)", "Stephen (Shocked)", "Shy & Friendly (Child)", "Southern (Male) 4", "Southern Guy", "Used Car Salesman (Southern)", "Stiff Narrator (Male)", "Sweet Southern Senior", "Antique Tape (Female)", "Tasha Wexler (Reporter) 1", "Tasha Wexler (Reporter) 2", "Teen Reporter (Female)", "Tiffany Tinseltown (Intern)", "Tomboy", "Trevor (Kid)", "Zadia", "Zadiana", "Aditya", "Amara", "Amina", "Andoy", "Anjali", "Arjun", "Boonleng", "Chioma", "Dalisay", "Dhruv", "Emeka", "Emil", "Folake", "Hana", "Huiling", "Ishaan", "Junhao", "Kabir", "Kenji", "Liwa", "Maricel", "Nadia", "Nikhil", "Priya", "Ren", "Saanvi", "Shu", "Tala", "Tunde", "Vikram", "Wei", "Yash", "Zherong", "Birta", "Sharma"];
+const SAMPLE_TEXT = "Hey there! I can sound excited, or calm and serious \u2014 here's a little of how I come across.";
+const VOICE_PAGE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiana Voice Library</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         background:#0f1115; color:#eceef2; line-height:1.5; }
+  header { padding:20px 16px 8px; border-bottom:1px solid #262a33; position:sticky; top:0;
+           background:#0f1115; z-index:5; }
+  h1 { margin:0 0 6px; font-size:1.5rem; }
+  p.intro { margin:0 0 12px; color:#aab2c0; font-size:0.98rem; max-width:60ch; }
+  .controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  label { font-weight:600; }
+  input[type=search]{ flex:1 1 220px; min-width:180px; padding:12px 14px; font-size:1rem;
+         border-radius:10px; border:1px solid #3a4150; background:#1a1e26; color:#eceef2; }
+  input[type=search]:focus, button:focus-visible { outline:3px solid #6ea8fe; outline-offset:2px; }
+  .count { color:#aab2c0; font-size:0.9rem; white-space:nowrap; }
+  #status { padding:10px 16px; font-weight:600; min-height:1.4em; color:#9ed3a0;
+            background:#141821; border-bottom:1px solid #262a33; position:sticky; top:0; }
+  main { padding:12px 16px 40px; }
+  ul { list-style:none; margin:0; padding:0; display:grid;
+       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:10px; }
+  li { margin:0; }
+  button.voice { width:100%; text-align:left; padding:14px 14px; font-size:1rem;
+       border-radius:12px; border:1px solid #3a4150; background:#1a1e26; color:#eceef2;
+       cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  button.voice:hover { background:#222732; }
+  button.voice[aria-pressed=true] { border-color:#6ea8fe; background:#1d2740; }
+  .name { font-weight:600; }
+  .badge { font-size:0.72rem; padding:2px 8px; border-radius:999px; background:#2a3550;
+           color:#bcd2ff; white-space:nowrap; }
+  .playing-dot { font-size:0.85rem; color:#6ea8fe; }
+  .hint { color:#808992; }
+  footer { padding:16px; color:#6b7280; font-size:0.85rem; border-top:1px solid #262a33; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Kiana Voice Library</h1>
+  <p class="intro">Browse every voice available on kademurdock.com. Select any voice to hear a short sample of how it sounds. Samples are generated fresh when you select them, so the first play takes a second or two.</p>
+  <div class="controls">
+    <label for="search">Search voices</label>
+    <input type="search" id="search" placeholder="Type to filter, e.g. southern, child, DJ" autocomplete="off" aria-describedby="count">
+    <span class="count" id="count"></span>
+  </div>
+</header>
+<div id="status" role="status" aria-live="polite">Ready. Select a voice to hear a sample.</div>
+<main>
+  <ul id="list" aria-label="Available voices"></ul>
+</main>
+<footer>Powered by Inworld TTS. Each sample is about one short sentence. If a voice ever fails to play, it may have been removed on Inworld.</footer>
+
+<script>
+  var VOICES = /*VOICES*/;
+  var CUSTOM = new Set(/*CUSTOM*/);
+  var SAMPLE = /*SAMPLE*/;
+
+  var listEl = document.getElementById("list");
+  var statusEl = document.getElementById("status");
+  var countEl = document.getElementById("count");
+  var searchEl = document.getElementById("search");
+
+  var audio = new Audio();
+  var currentBtn = null;
+  var currentUrl = null;
+  var controller = null;
+
+  function setStatus(msg, color){
+    statusEl.textContent = msg;
+    statusEl.style.color = color || "#9ed3a0";
+  }
+
+  function clearPressed(){
+    if (currentBtn){ currentBtn.setAttribute("aria-pressed","false");
+      var d = currentBtn.querySelector(".playing-dot"); if(d) d.remove(); currentBtn=null; }
+  }
+
+  audio.addEventListener("ended", function(){
+    setStatus("Finished. Select another voice to compare.");
+    clearPressed();
+  });
+  audio.addEventListener("playing", function(){
+    if (currentBtn){ var nm = currentBtn.getAttribute("data-name");
+      setStatus("Now playing: " + nm, "#6ea8fe"); }
+  });
+
+  function preview(name, btn){
+    if (controller) controller.abort();
+    controller = new AbortController();
+    audio.pause();
+    clearPressed();
+    currentBtn = btn;
+    btn.setAttribute("aria-pressed","true");
+    var dot = document.createElement("span");
+    dot.className = "playing-dot"; dot.textContent = "loading";
+    dot.setAttribute("aria-hidden","true");
+    btn.appendChild(dot);
+    setStatus("Generating sample for " + name + ", one moment...", "#e8c46a");
+
+    fetch("/v1/audio/speech", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ input: SAMPLE, voice: name, model: "tts-1" }),
+      signal: controller.signal
+    }).then(function(r){
+      if(!r.ok) throw new Error("server returned " + r.status);
+      return r.blob();
+    }).then(function(blob){
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      currentUrl = URL.createObjectURL(blob);
+      audio.src = currentUrl;
+      return audio.play();
+    }).catch(function(err){
+      if (err.name === "AbortError") return;
+      setStatus("Could not play " + name + ". " + err.message, "#ff8a8a");
+      clearPressed();
+    });
+  }
+
+  function render(filter){
+    filter = (filter||"").trim().toLowerCase();
+    listEl.innerHTML = "";
+    var shown = 0;
+    VOICES.forEach(function(name){
+      if (filter && name.toLowerCase().indexOf(filter) === -1) return;
+      shown++;
+      var li = document.createElement("li");
+      var btn = document.createElement("button");
+      btn.className = "voice";
+      btn.type = "button";
+      btn.setAttribute("data-name", name);
+      btn.setAttribute("aria-pressed","false");
+      var isCustom = CUSTOM.has(name);
+      btn.setAttribute("aria-label", "Play sample of " + name + (isCustom ? ", custom designed voice" : ""));
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "name"; nameSpan.textContent = name;
+      btn.appendChild(nameSpan);
+      if (isCustom){ var b=document.createElement("span"); b.className="badge";
+        b.textContent="custom"; b.setAttribute("aria-hidden","true"); btn.appendChild(b); }
+      btn.addEventListener("click", function(){ preview(name, btn); });
+      li.appendChild(btn);
+      listEl.appendChild(li);
+    });
+    countEl.textContent = shown + " of " + VOICES.length + " voices";
+  }
+
+  searchEl.addEventListener("input", function(){ render(searchEl.value); });
+  render("");
+</script>
+</body>
+</html>`;
+
+app.get(["/voices", "/voice-library"], (req, res) => {
+  const custom = Object.keys(CUSTOM_VOICE_MAP);
+  const html = VOICE_PAGE_HTML
+    .replace("/*VOICES*/", JSON.stringify(VOICE_LIST))
+    .replace("/*CUSTOM*/", JSON.stringify(custom))
+    .replace("/*SAMPLE*/", JSON.stringify(SAMPLE_TEXT));
+  res.set("Content-Type", "text/html; charset=utf-8");
+  res.send(html);
+});
+
 app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);
 });
