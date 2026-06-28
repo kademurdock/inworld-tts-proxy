@@ -284,6 +284,20 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "inworld-tts-proxy" });
 });
 
+// Remove web-search citation markers so TTS never voices them. Catches the
+// private-use citation chars (U+E200-U+E20F) plus the "turn<N>search<M>"-style
+// tokens they carry (also turn<N>news<M>, view, etc. via the generic shape).
+function stripCitationMarkers(text) {
+  if (!text) return text;
+  return text
+    .replace(/[\uE200-\uE20F]turn\d+[a-z]+\d+/gi, "")
+    .replace(/[\uE200-\uE20F]/g, "")
+    .replace(/\bturn\d+[a-z]+\d+\b/gi, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .trim();
+}
+
 // This is the endpoint LibreChat will hit -- it expects OpenAI's /v1/audio/speech path
 app.post("/v1/audio/speech", async (req, res) => {
   if (!INWORLD_API_KEY) {
@@ -292,9 +306,6 @@ app.post("/v1/audio/speech", async (req, res) => {
 
   const { input, voice = "alloy", model = "tts-1" } = req.body;
 
-  // TEMP DIAGNOSTIC (remove after diagnosing TTS-reads-search-terms): log spoken text.
-  console.log("[tts-input] len=" + (input ? input.length : 0) + " :: " + JSON.stringify((input || "").slice(0, 1800)));
-
   if (!input) {
     return res.status(400).json({ error: "Missing required field: input" });
   }
@@ -302,8 +313,15 @@ app.post("/v1/audio/speech", async (req, res) => {
   const inworldVoice = VOICE_MAP[voice] || voice;
   const inworldModel = MODEL_MAP[model] || "inworld-tts-1.5-max";
 
+  // Strip web-search citation markers before speaking. The search-augmented
+  // model embeds inline citation tokens (a private-use char U+E200-U+E20F
+  // followed by a "turn0search3"-style id) into its answer; these render as
+  // source chips in the UI but TTS otherwise reads them aloud as gibberish
+  // mid-sentence. Visible message text is untouched (this only cleans audio).
+  const speakText = stripCitationMarkers(input);
+
   try {
-    const chunks = chunkText(input);
+    const chunks = chunkText(speakText);
 
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
