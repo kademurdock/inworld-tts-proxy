@@ -101,4 +101,18 @@ router.get("/railway/vars", auth, async (req, res) => {
   } catch (e) { res.status(502).json({ error: e.message }); }
 });
 
+// ---- WRITE power (deploy) ----
+// Redeploy the CURRENT deployment of a service (restart latest code). This is
+// the one mutation Forge is granted. No variable-write, no delete, no repo
+// commits here yet (add deliberately if/when wanted).
+router.post("/railway/redeploy", auth, async (req, res) => {
+  const { serviceId, environmentId } = req.body || {};
+  if (!serviceId || !environmentId) return res.status(400).json({ error: "serviceId and environmentId are required" });
+  try {
+    const m = `mutation($e:String!,$s:String!){ serviceInstanceRedeploy(environmentId:$e, serviceId:$s) }`;
+    const d = await gql(m, { e: environmentId, s: serviceId });
+    res.json({ redeployed: d.serviceInstanceRedeploy === true });
+  } catch (e) { res.status(502).json({ error: e.message }); }
+});
+
 module.exports = router;
