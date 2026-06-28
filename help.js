@@ -1,0 +1,766 @@
+// ---- Kade-AI Help System ----
+// A small hub of short, screen-reader-first help pages, served from the
+// inworld-tts-proxy Railway service (same pattern as the /voices page).
+//
+// Design notes for whoever touches this next:
+//  - Every page is fully static authored HTML. Nothing user-supplied is ever
+//    interpolated into the markup, so plain template literals are safe here
+//    (no injection surface). The one bit of client JS (hub search) only reads
+//    from a server-authored array.
+//  - Accessibility is the whole point. Match the /voices page: semantic
+//    landmarks (<header><nav><main><footer>), one <h1> then <h2>/<h3>, a
+//    "skip to main content" link, a keyboard-reachable section nav on every
+//    page with aria-current on the active link, visible focus outlines, big
+//    tap targets, dark theme, and a "Back to Kade-AI chat" link up top.
+//  - Public "house voice" only. Warm, funny, plain. NOT Kiana's persona.
+//  - Contact line is always the literal words "contact Kade" (no email/phone).
+//
+// Mounted in server.js via:  app.use(require("./help"));
+
+const express = require("express");
+const router = express.Router();
+
+const CHAT_URL = "https://kademurdock.com";
+const PAYPAL_URL = "https://paypal.me/kademurdock";
+const VOICES_URL = "/voices";
+
+// ---- Navigation model ----
+// One source of truth for every section + which group it belongs to. The nav
+// is rendered from this on every page, so links stay consistent and we can
+// verify offline that every route resolves.
+const SECTIONS = [
+  { key: "home",            path: "/help",                 label: "Help Home",          group: "Getting started" },
+  { key: "quickstart",      path: "/help/quickstart",      label: "Your First Five Minutes", group: "Getting started" },
+  { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
+
+  { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
+  { key: "characters",      path: "/help/characters",      label: "Characters & the Marketplace", group: "Using Kade-AI" },
+  { key: "build",           path: "/help/build",           label: "Build Your Own Character", group: "Using Kade-AI" },
+  { key: "memory",          path: "/help/memory",          label: "What It Remembers",   group: "Using Kade-AI" },
+  { key: "images",          path: "/help/images",          label: "Making Pictures",     group: "Using Kade-AI" },
+  { key: "temporary",       path: "/help/temporary",       label: "Starting Over & Private Chats", group: "Using Kade-AI" },
+  { key: "cheatsheet",      path: "/help/cheatsheet",      label: "The Cheat Sheet",     group: "Using Kade-AI" },
+
+  { key: "tokens",          path: "/help/tokens",          label: "What Are Tokens?",    group: "The money part" },
+  { key: "costs",           path: "/help/costs",           label: "What This Costs Kade", group: "The money part" },
+  { key: "donate",          path: "/help/donate",          label: "Feed the Server",     group: "The money part" },
+
+  { key: "accessibility",   path: "/help/accessibility",   label: "Accessibility Tips",  group: "Getting the best experience" },
+  { key: "troubleshooting", path: "/help/troubleshooting", label: "When Something Breaks", group: "Getting the best experience" },
+];
+
+const GROUP_ORDER = ["Getting started", "Using Kade-AI", "The money part", "Getting the best experience"];
+
+function navHtml(currentKey) {
+  let out = '<nav aria-label="Help sections" class="sectionnav">';
+  for (const group of GROUP_ORDER) {
+    out += `<h2 class="navgroup">${group}</h2><ul>`;
+    for (const s of SECTIONS.filter((x) => x.group === group)) {
+      const current = s.key === currentKey ? ' aria-current="page"' : "";
+      out += `<li><a href="${s.path}"${current}>${s.label}</a></li>`;
+    }
+    out += "</ul>";
+  }
+  out += "</nav>";
+  return out;
+}
+
+// ---- Shared page shell ----
+const STYLES = `
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         background:#0f1115; color:#eceef2; line-height:1.6; font-size:1.05rem; }
+  .skip { position:absolute; left:-9999px; top:0; background:#1d2740; color:#eceef2;
+          padding:12px 16px; border-radius:0 0 10px 0; z-index:50; font-weight:700; }
+  .skip:focus { left:0; outline:3px solid #6ea8fe; }
+  a { color:#8fc0ff; }
+  a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+        outline:3px solid #6ea8fe; outline-offset:2px; border-radius:4px; }
+  .wrap { max-width:1100px; margin:0 auto; }
+  header.site { padding:20px 16px 14px; border-bottom:1px solid #262a33; }
+  a.back { display:inline-block; color:#8fc0ff; text-decoration:none; font-weight:700;
+           margin:0 0 12px; font-size:1rem; padding:6px 0; }
+  a.back:hover { text-decoration:underline; }
+  h1 { margin:0 0 8px; font-size:1.7rem; line-height:1.25; }
+  p.tagline { margin:0; color:#aab2c0; max-width:65ch; }
+  .layout { display:flex; gap:8px; align-items:flex-start; }
+  nav.sectionnav { flex:0 0 270px; padding:18px 14px 30px; border-right:1px solid #262a33; }
+  nav.sectionnav .navgroup { font-size:0.8rem; text-transform:uppercase; letter-spacing:0.06em;
+           color:#8a93a3; margin:18px 0 6px; font-weight:700; }
+  nav.sectionnav ul { list-style:none; margin:0; padding:0; }
+  nav.sectionnav li { margin:0; }
+  nav.sectionnav a { display:block; padding:11px 12px; border-radius:10px; text-decoration:none;
+           color:#dfe4ec; font-weight:500; }
+  nav.sectionnav a:hover { background:#1a1e26; }
+  nav.sectionnav a[aria-current=page] { background:#1d2740; color:#fff; font-weight:700;
+           border-left:4px solid #6ea8fe; padding-left:8px; }
+  main { flex:1 1 auto; padding:22px 18px 60px; min-width:0; max-width:75ch; }
+  main h2 { font-size:1.3rem; margin:30px 0 8px; padding-top:6px; }
+  main h3 { font-size:1.08rem; margin:22px 0 6px; color:#dfe4ec; }
+  main p, main li { max-width:70ch; }
+  main ul, main ol { padding-left:1.3em; }
+  main li { margin:8px 0; }
+  .lead { font-size:1.15rem; color:#e7ebf2; }
+  .term { background:#141821; border:1px solid #2a3550; border-left:4px solid #6ea8fe;
+          border-radius:10px; padding:12px 16px; margin:14px 0; }
+  .term strong { color:#fff; }
+  .callout { background:#141821; border:1px solid #2a3550; border-radius:10px;
+          padding:14px 16px; margin:18px 0; }
+  .callout.warn { border-left:4px solid #e8c46a; }
+  .callout.good { border-left:4px solid #6ea8fe; }
+  table { width:100%; border-collapse:collapse; margin:16px 0; }
+  caption { text-align:left; color:#aab2c0; margin-bottom:8px; font-size:0.95rem; }
+  th, td { text-align:left; padding:12px 12px; border-bottom:1px solid #2a3037; vertical-align:top; }
+  th { color:#fff; background:#141821; }
+  .btnrow { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+  a.cta { display:inline-block; background:#1d2740; border:1px solid #3a4150; color:#fff;
+          padding:13px 18px; border-radius:12px; text-decoration:none; font-weight:700; }
+  a.cta:hover { background:#243152; }
+  a.cta.big { font-size:1.1rem; padding:16px 22px; }
+  .cards { list-style:none; padding:0; margin:18px 0; display:grid;
+          grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:12px; }
+  .cards li { margin:0; }
+  .cards a { display:block; height:100%; padding:16px; border:1px solid #3a4150; border-radius:12px;
+          background:#1a1e26; text-decoration:none; color:#eceef2; }
+  .cards a:hover { background:#222732; border-color:#6ea8fe; }
+  .cards .ttl { font-weight:700; font-size:1.05rem; color:#fff; display:block; margin-bottom:4px; }
+  .cards .desc { color:#aab2c0; font-size:0.95rem; }
+  .hubsearch { margin:18px 0 6px; }
+  .hubsearch label { font-weight:700; display:block; margin-bottom:6px; }
+  .hubsearch input { width:100%; max-width:480px; padding:13px 15px; font-size:1.05rem;
+          border-radius:10px; border:1px solid #3a4150; background:#1a1e26; color:#eceef2; }
+  #searchcount { color:#aab2c0; font-size:0.95rem; margin:8px 0 0; min-height:1.3em; }
+  footer.site { padding:22px 18px 40px; border-top:1px solid #262a33; color:#8a93a3;
+          font-size:0.95rem; }
+  footer.site a { color:#8fc0ff; }
+  .nextprev { display:flex; flex-wrap:wrap; gap:10px; margin:34px 0 0; padding-top:18px;
+          border-top:1px solid #262a33; }
+
+  /* ---- Decorative visual flair (all aria-hidden, never read aloud) ---- */
+  header.site { position:relative; overflow:hidden;
+          background:
+            radial-gradient(900px 240px at 12% -40%, rgba(110,168,254,0.20), transparent 70%),
+            radial-gradient(700px 220px at 95% -60%, rgba(155,120,255,0.16), transparent 70%); }
+  h1 { background:linear-gradient(90deg,#cfe0ff,#a9b9ff 55%,#d8c4ff);
+          -webkit-background-clip:text; background-clip:text; color:#eceef2; }
+  @supports ((-webkit-background-clip:text) or (background-clip:text)) {
+    h1 { -webkit-text-fill-color:transparent; }
+  }
+  .cards a { position:relative; transition:transform .12s ease, border-color .12s ease, background .12s ease; }
+  .cards a:hover { transform:translateY(-2px); }
+  .cards .ico { font-size:1.7rem; line-height:1; display:block; margin-bottom:8px; }
+  .cards a::after { content:""; position:absolute; left:0; right:0; bottom:0; height:3px;
+          border-radius:0 0 12px 12px;
+          background:linear-gradient(90deg,#6ea8fe,#9b78ff); opacity:0; transition:opacity .12s ease; }
+  .cards a:hover::after, .cards a:focus-visible::after { opacity:1; }
+  a.cta { background:linear-gradient(180deg,#243152,#1b2440); transition:transform .12s ease, background .12s ease; }
+  a.cta:hover { transform:translateY(-1px); }
+  a.cta.big { background:linear-gradient(90deg,#2b3a63,#3a2b63); }
+  .term { background:linear-gradient(180deg,#161b25,#12151c); }
+  .hero-art { margin:6px 0 2px; }
+  .hero-art svg { display:block; width:100%; max-width:520px; height:auto; }
+  .float { animation:floaty 5s ease-in-out infinite; transform-origin:center; }
+  @keyframes floaty { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+  @media (prefers-reduced-motion: reduce) { .float { animation:none; } .cards a, a.cta { transition:none; } }
+  @media (max-width: 820px) {
+    .layout { display:block; }
+    nav.sectionnav { flex:none; width:auto; border-right:none; border-bottom:1px solid #262a33; }
+    main { max-width:none; }
+  }
+`;
+
+function page({ key, title, h1, tagline, main }) {
+  const fullTitle = title ? `${title} — Kade-AI Help` : "Kade-AI Help";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${fullTitle}</title>
+<style>${STYLES}</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<div class="wrap">
+  <header class="site">
+    <a class="back" href="${CHAT_URL}">← Back to Kade-AI chat</a>
+    <h1>${h1}</h1>
+    ${tagline ? `<p class="tagline">${tagline}</p>` : ""}
+  </header>
+  <div class="layout">
+    ${navHtml(key)}
+    <main id="main" tabindex="-1">
+${main}
+    </main>
+  </div>
+  <footer class="site">
+    <p>This is the help center for Kade-AI, a private little AI chat that Kade built and runs herself. Stuck on something not covered here? Just <strong>contact Kade</strong>.</p>
+    <p><a href="${CHAT_URL}">← Back to the chat</a> &nbsp;·&nbsp; <a href="${VOICES_URL}">Voice Library</a> &nbsp;·&nbsp; <a href="/help">Help Home</a></p>
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+// "Next / previous" footer link helper for the linear reading path.
+function nextprev(prevKey, nextKey) {
+  const find = (k) => SECTIONS.find((s) => s.key === k);
+  let out = '<nav class="nextprev" aria-label="More help pages">';
+  if (prevKey) { const p = find(prevKey); out += `<a class="cta" href="${p.path}">← ${p.label}</a>`; }
+  if (nextKey) { const n = find(nextKey); out += `<a class="cta" href="${n.path}">${n.label} →</a>`; }
+  out += "</nav>";
+  return out;
+}
+
+// ============================================================================
+//  PAGE CONTENT
+//  Each entry is the inner <main> HTML for one route. Public house voice.
+//  Facts (balance cap, registration, image credits, known issues, privacy)
+//  trace back to PROJECT_STATUS.md.
+// ============================================================================
+
+const PAGES = {};
+
+// ---- 1. HUB / HOME --------------------------------------------------------
+PAGES.home = {
+  title: "",
+  h1: "Welcome to Kade-AI Help",
+  tagline: "Everything you need to feel at home here — in plain language, built to work beautifully with a screen reader.",
+  main: `
+<p class="lead">Kade-AI is a friendly little AI chat that Kade built and runs herself, and opened up for family and friends. You type, an AI character types back (and can talk out loud if you want). That's the whole idea.</p>
+<p>New here? Start with <a href="/help/quickstart">Your First Five Minutes</a>. Got a quick question, like "does this cost me anything?" — jump to <a href="/help/faq">Questions &amp; Answers</a>. Everything else is in the menu, and you can search it right below.</p>
+
+<div class="hubsearch">
+  <label for="hubsearch">Search the help pages</label>
+  <input type="search" id="hubsearch" autocomplete="off" placeholder="Try: voice, cost, password, picture" aria-describedby="searchcount">
+  <p id="searchcount" role="status" aria-live="polite"></p>
+</div>
+
+<h2>Pick a topic</h2>
+<ul class="cards" id="hubcards">
+  <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
+  <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
+  <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
+  <li data-terms="characters marketplace agents personas switch browse"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
+  <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
+  <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
+  <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
+  <li data-terms="temporary private starting over new chat fresh delete"><a href="/help/temporary"><span class="ico" aria-hidden="true">🧹</span><span class="ttl">Starting Over &amp; Private Chats</span><span class="desc">Fresh start, or a chat that doesn't get saved.</span></a></li>
+  <li data-terms="cheat sheet buttons quick reference where shortcuts"><a href="/help/cheatsheet"><span class="ico" aria-hidden="true">📋</span><span class="ttl">The Cheat Sheet</span><span class="desc">Where the buttons are and how to do the common stuff. One page.</span></a></li>
+  <li data-terms="tokens context counter words cost meaning"><a href="/help/tokens"><span class="ico" aria-hidden="true">🔢</span><span class="ttl">What Are Tokens?</span><span class="desc">That little counter, explained without the math homework.</span></a></li>
+  <li data-terms="cost money bill credits balance economics pay"><a href="/help/costs"><span class="ico" aria-hidden="true">💸</span><span class="ttl">What This Costs Kade</span><span class="desc">The honest money side. Spoiler: a real person pays a real bill.</span></a></li>
+  <li data-terms="donate paypal feed server support tip groceries help pay"><a href="/help/donate"><span class="ico" aria-hidden="true">🍕</span><span class="ttl">Feed the Server</span><span class="desc">The fridge doesn't refill itself. Chip in if you can. (No pressure.)</span></a></li>
+  <li data-terms="accessibility screen reader voiceover nvda blind shortcuts"><a href="/help/accessibility"><span class="ico" aria-hidden="true">♿</span><span class="ttl">Accessibility Tips</span><span class="desc">Get the smoothest ride with VoiceOver or NVDA.</span></a></li>
+  <li data-terms="troubleshooting broken stuck fix audio microphone problem help"><a href="/help/troubleshooting"><span class="ico" aria-hidden="true">🔧</span><span class="ttl">When Something Breaks</span><span class="desc">The usual hiccups and how to get unstuck.</span></a></li>
+</ul>
+
+<script>
+  (function(){
+    var input = document.getElementById("hubsearch");
+    var count = document.getElementById("searchcount");
+    var cards = Array.prototype.slice.call(document.querySelectorAll("#hubcards > li"));
+    function run(){
+      var q = (input.value || "").trim().toLowerCase();
+      var shown = 0;
+      cards.forEach(function(li){
+        var hay = (li.getAttribute("data-terms") + " " + li.textContent).toLowerCase();
+        var match = !q || hay.indexOf(q) !== -1;
+        li.style.display = match ? "" : "none";
+        if (match) shown++;
+      });
+      count.textContent = q ? (shown + (shown === 1 ? " topic matches" : " topics match") + " your search.") : "";
+    }
+    input.addEventListener("input", run);
+  })();
+</script>
+`,
+};
+
+// ---- 2. QUICK START -------------------------------------------------------
+PAGES.quickstart = {
+  title: "Your First Five Minutes",
+  h1: "Your First Five Minutes",
+  tagline: "Brand new? Do these in order. You'll be chatting like a pro before your coffee gets cold.",
+  main: `
+<p class="lead">There's nothing to set up. You land on the chat and you're ready. Here's the whole thing, step by step.</p>
+
+<h2>1. Say hi to Kiana</h2>
+<p>When you log in, you're already talking to <strong>Kiana</strong> — she's the friendly host of the place. You don't have to pick anything. She's just there, ready.</p>
+
+<h2>2. Type like you're texting a friend</h2>
+<p>Find the message box at the bottom of the screen and type whatever's on your mind. "What's a good dinner with chicken and rice?" "Explain my new phone bill." "Tell me a joke." There's no wrong way to ask. Plain words work great.</p>
+
+<h2>3. Send it</h2>
+<p>Press <strong>Enter</strong> (or tap the send button next to the box) to send your message. Kiana will think for a second, then reply right below.</p>
+
+<h2>4. Want to hear her talk?</h2>
+<p>You can have replies read out loud instead of reading them yourself. There's a play button on each reply, and you can turn on automatic read-aloud so it just happens. The full how-to is on the <a href="/help/voice">Talking &amp; Listening</a> page.</p>
+
+<h2>5. Don't love the voice? Change it</h2>
+<p>There are over two hundred voices to choose from. Browse and preview them all on the <a href="${VOICES_URL}">Voice Library</a>, then set your favorite in the chat's settings. (The Voice Library page tells you exactly where.)</p>
+
+<h2>6. Want a clean slate?</h2>
+<p>To start a brand-new conversation, look for the <strong>New chat</strong> button (usually top of the screen or in the side menu). Your old chats are saved in the list on the side, so you can always go back to one.</p>
+
+<h2>7. Meet the rest of the cast</h2>
+<p>Kiana's not the only one here. There's a whole <strong>marketplace</strong> of characters — a mechanic, a chef, a bedtime-story reader, you name it. See <a href="/help/characters">Characters &amp; the Marketplace</a> to go exploring.</p>
+
+<div class="callout good">
+  <p><strong>That's it.</strong> Honestly, that's the whole learning curve. Everything else on this site is a bonus you can pick up whenever you feel like it.</p>
+</div>
+${nextprev(null, "faq")}
+`,
+};
+
+// ---- 3. FAQ ---------------------------------------------------------------
+PAGES.faq = {
+  title: "Questions & Answers",
+  h1: "Questions & Answers",
+  tagline: "The real questions people ask in their first week. Short, honest answers.",
+  main: `
+<h2>Is this ChatGPT?</h2>
+<p>No. This is Kade's own private setup that she built and runs herself. Under the hood it uses powerful AI models to do the thinking, but it isn't ChatGPT, and your stuff here isn't tied to any big company's account. Think of it as a cozy independent place rather than a chain restaurant.</p>
+
+<h2>Does it cost me anything?</h2>
+<p>Not a penny. It's free for you to use. Behind the scenes it does cost Kade a small amount of real money to run, which is why there's a (totally optional) <a href="/help/donate">tip jar</a>. But you will never be charged. See <a href="/help/costs">What This Costs Kade</a> if you're curious how it all works.</p>
+
+<h2>Can other people see my chats?</h2>
+<p>No. Your conversations are tied to your own login — nobody else using the site can read them.</p>
+<p>And before you even wonder about Kade: she <strong>doesn't know how to go reading people's chats, she doesn't want to, and the platform doesn't make it easy anyway</strong> — she'd have to sit down and build a special logging tool from scratch just to do it, and she has exactly zero interest in that. This place runs on trust, for people she cares about.</p>
+<p>The only thing she asks in return for that trust: <strong>don't do anything sketchy or illegal in here</strong> that could land you — or her — in trouble. Be cool, and everybody stays cool.</p>
+
+<h2>How do I get an account? Can anyone sign up?</h2>
+<p>Accounts here are by invitation — Kade sets you up personally. That's on purpose: it keeps the place small, safe, and affordable. If a friend or family member wants in, just <strong>contact Kade</strong>.</p>
+
+<h2>Why does it keep asking for my microphone again?</h2>
+<p>If you're on an iPhone and added this to your home screen, Apple makes apps like this re-ask for microphone permission a lot — sometimes every time you start talking. It's an Apple limitation, not something Kade broke, and there's no magic switch to fully turn it off. Just tap "Allow" again. More on the <a href="/help/troubleshooting">When Something Breaks</a> page.</p>
+
+<h2>Can I make my own character?</h2>
+<p>Yes, and you don't need to know any tech. You give it a name, describe its personality in plain words, and it's yours. Walkthrough on the <a href="/help/build">Build Your Own Character</a> page.</p>
+
+<h2>Is my stuff private?</h2>
+<p>Your chats are yours, kept under your own account, and there's an automatic backup so nothing gets lost if a computer hiccups. No other user can see your conversations.</p>
+<p>Kade runs the server, but as said above — she has no easy way to read your chats (she'd have to code a whole tool to even try) and no desire to. Treat it like a private space among family and friends, keep things above-board, and it stays a good place for everyone.</p>
+
+<h2>What do I do if it breaks?</h2>
+<p>First, check <a href="/help/troubleshooting">When Something Breaks</a> — most hiccups have a 10-second fix. Still stuck? <strong>Contact Kade.</strong></p>
+${nextprev("quickstart", "voice")}
+`,
+};
+
+// ---- 4a. VOICE ------------------------------------------------------------
+PAGES.voice = {
+  title: "Talking & Listening",
+  h1: "Talking & Listening",
+  tagline: "You can speak your messages instead of typing, and have replies read out loud. Here's how.",
+  main: `
+<p class="lead">Two separate things live here, and you can use either, both, or neither:</p>
+<ul>
+  <li><strong>Listening</strong> — having the AI's replies read out loud to you.</li>
+  <li><strong>Talking</strong> — speaking your message out loud instead of typing it.</li>
+</ul>
+
+<h2>Having replies read out loud</h2>
+<p>Every reply has a small <strong>play</strong> button. Activate it and the reply is spoken to you.</p>
+<div class="term"><strong>Auto-play</strong> means the reply starts reading itself the moment it arrives, so you don't have to press play each time. You can switch this on in the chat's <strong>Settings → Speech</strong> area.</div>
+<div class="callout warn">
+  <p><strong>Heads up about phones:</strong> if you added the site to your home screen, phone browsers sometimes block sound from playing on its own until you tap the screen once. If auto-play seems silent, tap a reply's play button once and it usually wakes up for the rest of the chat. (Apple's rule, not a bug here.)</p>
+</div>
+
+<h2>Speaking instead of typing</h2>
+<p>There's a <strong>microphone</strong> button by the message box. Activate it, say your message, and it gets turned into text for you to send. The first time, your browser or phone will ask permission to use the mic — say yes.</p>
+<div class="term"><strong>Speech-to-text</strong> is the feature that listens to your voice and writes down the words. <strong>Text-to-speech</strong> is the reverse — it reads written words out loud. This site does both.</div>
+
+<h2>Changing the voice you hear</h2>
+<p>Don't love the default voice? There are <strong>over two hundred</strong> to choose from — calm ones, warm ones, dramatic ones, silly ones.</p>
+<div class="btnrow">
+  <a class="cta" href="${VOICES_URL}">Open the Voice Library →</a>
+</div>
+<p>The chat itself can't preview voices, which is exactly why the Voice Library page exists: browse there, hear a short audition of each one, then set your pick in <strong>Settings → Speech → Text-to-Speech → Voice</strong>. The names on the page match the names in the menu.</p>
+${nextprev("faq", "characters")}
+`,
+};
+
+// ---- 4b. CHARACTERS -------------------------------------------------------
+PAGES.characters = {
+  title: "Characters & the Marketplace",
+  h1: "Characters & the Marketplace",
+  tagline: "Kiana's your host — but she brought friends. A whole marketplace of them.",
+  main: `
+<p class="lead">A <strong>character</strong> (you might also see the word <strong>agent</strong>) is an AI with its own personality and specialty. Kiana is the all-rounder who greets everybody. The rest each have a thing they're great at.</p>
+
+<h2>What's in there</h2>
+<p>There's a big cast — think a mechanic who'll talk you through a weird engine noise, a chef for "what can I make with what's in my fridge," a patient tech helper, a bedtime-story reader for the kids, and dozens more. They're free to use, just like Kiana.</p>
+
+<h2>How to browse them</h2>
+<p>Look for the <strong>marketplace</strong> (sometimes shown as a grid or an "explore characters" option in the menu). Open it and you can scroll the whole list, each with a short description of what it's for.</p>
+
+<h2>How to switch</h2>
+<p>Pick any character to start talking to it. Switching characters starts a conversation with that one — your chat with Kiana is still saved in your list, so hopping around never loses anything.</p>
+
+<div class="callout good">
+  <p><strong>Tip:</strong> if a character isn't quite what you wanted, there's no harm done. Just switch back, or start a <a href="/help/temporary">new chat</a>. You can't break anything by exploring.</p>
+</div>
+${nextprev("voice", "build")}
+`,
+};
+
+// ---- 4c. BUILD YOUR OWN ---------------------------------------------------
+PAGES.build = {
+  title: "Build Your Own Character",
+  h1: "Build Your Own Character",
+  tagline: "Yes, you. No coding, no jargon. If you can describe a person, you can make one.",
+  main: `
+<p class="lead">Want an AI that talks exactly how you like, or knows about exactly your hobby? You can make your own character in a few minutes.</p>
+
+<h2>The gentle version</h2>
+<ol>
+  <li>Find the option to <strong>create a character</strong> (often a "+" or "create" in the characters menu or marketplace).</li>
+  <li>Give it a <strong>name</strong>. Anything you want.</li>
+  <li>Describe its <strong>personality and job</strong> in plain English. This part is just writing a little description, like: <em>"You're a calm, encouraging running coach. You give short, doable tips and never make me feel bad for missing a day."</em></li>
+  <li>Save it. That's it — you can now chat with your creation.</li>
+</ol>
+
+<div class="term"><strong>Instructions</strong> is the name for that personality description you write. It's the AI's "be like this" note to itself. The more clearly you describe what you want, the better it behaves.</div>
+
+<h2>A few tips that make a big difference</h2>
+<ul>
+  <li><strong>Say the tone you want.</strong> "Warm and chatty" lands very differently from "short and to the point."</li>
+  <li><strong>Say what NOT to do, too.</strong> "Don't lecture me" or "skip the long intros" really works.</li>
+  <li><strong>You can edit it later.</strong> Nothing's permanent. Tweak the description any time until it feels right.</li>
+</ul>
+
+<div class="callout good">
+  <p>Your characters are yours. Building one doesn't change Kiana or anybody else's, and you can keep it private or share it with the family. Have fun with it — this is the most "make it your own" part of the whole site.</p>
+</div>
+${nextprev("characters", "memory")}
+`,
+};
+
+// ---- 4d. MEMORY -----------------------------------------------------------
+PAGES.memory = {
+  title: "What It Remembers",
+  h1: "What It Remembers",
+  tagline: "It can remember helpful things about you over time — but it's not reading your mind. Here's the honest version.",
+  main: `
+<p class="lead">Kade-AI has a <strong>memory</strong> feature. Over time, it can hold onto useful facts you've shared, so you don't have to repeat yourself in every new chat.</p>
+
+<div class="term"><strong>Memory</strong> here means a small set of notes the AI keeps about you across conversations — things like "prefers short answers" or "has a dog named Biscuit." It's like a friend remembering the gist of you, not a recording of everything you've ever said.</div>
+
+<h2>What it tends to remember</h2>
+<ul>
+  <li>Preferences you mention ("I like things explained simply").</li>
+  <li>Handy facts about your life that come up naturally.</li>
+  <li>Things that help it be more useful to <em>you</em> specifically.</li>
+</ul>
+
+<h2>What it does NOT do</h2>
+<ul>
+  <li>It doesn't memorize every word of every chat, perfectly, forever. It keeps the useful gist.</li>
+  <li>It can't read chats you had with a different character as if they were one big diary.</li>
+  <li>It won't share your memory notes with other people on the site. Your account, your notes.</li>
+</ul>
+
+<div class="callout good">
+  <p>If it ever remembers something wrong or out of date, you can just tell it — "actually, I don't have that dog anymore" — and it'll update. And if you'd rather it forget something, say so, or <strong>contact Kade</strong> for a hand.</p>
+</div>
+${nextprev("build", "images")}
+`,
+};
+
+// ---- 4e. IMAGES -----------------------------------------------------------
+PAGES.images = {
+  title: "Making Pictures",
+  h1: "Making Pictures",
+  tagline: "Ask for a picture and it'll draw one from your words. There's a limited supply, so it's worth knowing how it works.",
+  main: `
+<p class="lead">Kade-AI can <strong>generate images</strong> — you describe a picture in words, and it draws one for you.</p>
+
+<div class="term"><strong>Generate an image</strong> means the AI creates a brand-new picture from your description. Nothing is copied from somewhere else — it's made fresh, just for your request.</div>
+
+<h2>How to ask</h2>
+<p>Just say what you want to see, like: <em>"Draw a cozy cabin in the snow at sunset"</em> or <em>"Make me a cartoon cat wearing sunglasses."</em> The more detail you give — colors, mood, style — the closer it gets to what's in your head.</p>
+
+<h2>The one catch: pictures cost a little</h2>
+<div class="callout warn">
+  <p>Drawing pictures pulls from a small, separate pot of credits that Kade pays for. Each image costs only a few cents, but that pot isn't bottomless. So: make all the pictures you like, just don't fire off a hundred at once for fun. If image-making ever stops working, the pot may have run dry — <strong>contact Kade</strong> and she can top it up.</p>
+</div>
+
+<h2>For folks using a screen reader</h2>
+<p>When the AI makes an image, ask it to <strong>describe the picture in detail</strong> too — it's happy to paint the full scene in words so you know exactly what it created.</p>
+${nextprev("memory", "temporary")}
+`,
+};
+
+// ---- 4f. TEMPORARY / STARTING OVER ---------------------------------------
+PAGES.temporary = {
+  title: "Starting Over & Private Chats",
+  h1: "Starting Over & Private Chats",
+  tagline: "How to get a clean slate — and how to have a chat that doesn't get saved at all.",
+  main: `
+<p class="lead">Two handy "reset" tools live here.</p>
+
+<h2>Start a fresh conversation</h2>
+<p>Use the <strong>New chat</strong> button when you want a clean slate. Your old conversations stay saved in the list on the side, so this never deletes anything — it just opens a new blank one. Great for switching topics so things don't get muddled.</p>
+
+<h2>Have a chat that isn't saved</h2>
+<div class="term"><strong>Temporary chat</strong> is a conversation that disappears when you're done — it isn't kept in your history. Think of it like a whiteboard you wipe clean, versus a notebook you keep.</div>
+<p>Turn on <strong>temporary chat</strong> when you want to ask something one-off and not have it stick around. When would you want this?</p>
+<ul>
+  <li>A quick question you don't need to keep.</li>
+  <li>Something you'd rather not leave in your saved history.</li>
+  <li>Testing out a brand-new character without cluttering your list.</li>
+</ul>
+
+<div class="callout good">
+  <p><strong>Rule of thumb:</strong> use <em>New chat</em> when you want a fresh start but want to keep it; use <em>Temporary chat</em> when you want it to vanish afterward.</p>
+</div>
+${nextprev("images", "cheatsheet")}
+`,
+};
+
+// ---- 5. CHEAT SHEET -------------------------------------------------------
+PAGES.cheatsheet = {
+  title: "The Cheat Sheet",
+  h1: "The Cheat Sheet",
+  tagline: "Every common task in one place. Skim it, bookmark it, come back to it.",
+  main: `
+<p class="lead">Here's the handful of things people do most, and exactly how to do each one. This is a real table — your screen reader can navigate it row by row.</p>
+
+<table>
+  <caption>Common tasks and how to do them</caption>
+  <thead>
+    <tr><th scope="col">I want to…</th><th scope="col">Here's how</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Send a message</th><td>Type in the box at the bottom, press Enter (or tap the send button).</td></tr>
+    <tr><th scope="row">Hear a reply out loud</th><td>Activate the play button on that reply.</td></tr>
+    <tr><th scope="row">Have replies read automatically</th><td>Settings → Speech → turn on auto-play.</td></tr>
+    <tr><th scope="row">Speak instead of type</th><td>Activate the microphone button by the message box, then talk.</td></tr>
+    <tr><th scope="row">Change the voice</th><td>Browse the <a href="${VOICES_URL}">Voice Library</a>, then set it in Settings → Speech → Text-to-Speech → Voice.</td></tr>
+    <tr><th scope="row">Start a new conversation</th><td>Activate the New chat button (top of screen or side menu).</td></tr>
+    <tr><th scope="row">Switch to a different character</th><td>Open the marketplace / characters menu and pick one.</td></tr>
+    <tr><th scope="row">Make my own character</th><td>Use "create a character" in the characters menu. See <a href="/help/build">Build Your Own</a>.</td></tr>
+    <tr><th scope="row">Make a picture</th><td>Just ask, e.g. "draw a sunny beach." See <a href="/help/images">Making Pictures</a>.</td></tr>
+    <tr><th scope="row">Have a chat that isn't saved</th><td>Turn on Temporary chat. See <a href="/help/temporary">Private Chats</a>.</td></tr>
+    <tr><th scope="row">See what a message cost</th><td>Each message shows its cost and usage against your balance. See <a href="/help/tokens">What Are Tokens?</a></td></tr>
+    <tr><th scope="row">Get help from a human</th><td>Contact Kade.</td></tr>
+  </tbody>
+</table>
+${nextprev("temporary", "tokens")}
+`,
+};
+
+// ---- 6. TOKENS ------------------------------------------------------------
+PAGES.tokens = {
+  title: "What Are Tokens?",
+  h1: "What Are Tokens?",
+  tagline: "You'll see the word 'tokens' and a little counter in the chat. Here's what it actually means — no math required.",
+  main: `
+<p class="lead">Most people have never heard the word "token" outside of an arcade. Good news: the idea is simple.</p>
+
+<div class="term"><strong>A token</strong> is a small chunk of text — usually a short word or a piece of a longer word. As a rough rule, one token is about three-quarters of a word. So "cat" is one token; "extraordinary" might be three or four.</div>
+
+<h2>Why the AI thinks in tokens</h2>
+<p>The AI doesn't read whole sentences the way you do. It breaks everything — your messages and its own replies — into these little chunks and works through them piece by piece. Tokens are simply the AI's bite-sized unit, the way minutes are the bite-sized unit of a phone plan.</p>
+
+<h2>That counter you see</h2>
+<p>The chat shows you a couple of numbers as you go. Here's what they're telling you:</p>
+
+<div class="term"><strong>Context</strong> is everything the AI is keeping in mind for your current conversation — your messages and its replies so far. Each time you send something, it re-reads the whole context to stay on track.</div>
+
+<ul>
+  <li><strong>Context usage</strong> — roughly how full that "working memory" for this chat is getting. A long conversation uses more than a quick one.</li>
+  <li><strong>Context cost</strong> — what that particular message cost (in those tiny token units) against your balance. It's there so nothing's hidden from you.</li>
+</ul>
+
+<h2>The everyday way to picture it</h2>
+<p>Imagine the conversation is written on a <strong>whiteboard</strong> that the AI re-reads before every answer. Tokens are the words on the board. A short chat barely uses any space; a long, rambling one fills the board up. "Context usage" is how full the board is. "Cost" is the little tab for re-reading it that time.</p>
+
+<div class="callout good">
+  <p><strong>Do you need to worry about any of this?</strong> Honestly, no. You can use the site happily and never glance at those numbers. They're there for the curious and the careful — not a test you have to pass. If a chat ever feels like it's getting forgetful or pricey, just start a <a href="/help/temporary">new chat</a> for a fresh, empty board.</p>
+</div>
+${nextprev("cheatsheet", "costs")}
+`,
+};
+
+// ---- 7. COSTS -------------------------------------------------------------
+PAGES.costs = {
+  title: "What This Costs Kade",
+  h1: "How This Actually Costs Kade Money",
+  tagline: "The honest, friendly version of the money side — because a real person is footing a real (if small) bill.",
+  main: `
+<p class="lead">You'll never be charged to use Kade-AI. But "free for you" isn't the same as "free." Here's exactly how it works, no mystery.</p>
+
+<h2>Every message gets processed by an outside AI provider</h2>
+<p>Kade didn't build the AI brain from scratch — almost nobody does. When you send a message, it goes out to an outside AI service that does the actual thinking and sends a reply back. That service <strong>charges per token</strong> — those tiny text chunks from the <a href="/help/tokens">tokens page</a>. Every message, in and out, costs a sliver of a cent.</p>
+
+<h2>Kade pre-loads credits to cover it</h2>
+<p>So the lights stay on, Kade puts her own money in ahead of time as credits. Your chatting quietly draws that balance down, a few fractions of a cent at a time. It's small per message — but it's real, and it adds up across a whole family of people chatting away.</p>
+
+<h2>Nobody can accidentally run up her bill</h2>
+<div class="callout good">
+  <p>Here's the reassuring part. Every user has a <strong>spending cap</strong> — roughly ten dollars' worth of usage per month — and it <strong>refills automatically every 30 days</strong>. That means no single person, no matter how chatty, can blow through Kade's whole budget. The guardrails are built in. So please relax and use it — you genuinely can't accidentally cost her a fortune.</p>
+</div>
+
+<h2>Pictures come from a different jar</h2>
+<p>Making images is paid for separately, from its own little pot of credits (a few cents per picture). Same idea, different jar. More on the <a href="/help/images">Making Pictures</a> page.</p>
+
+<h2>So why mention any of this?</h2>
+<p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about. Knowing there's a real bill behind it just helps everyone treat the place with a little respect… and maybe, if you're able, <a href="/help/donate">toss a few bucks toward the grocery fund</a>. Which brings us to the next page.</p>
+${nextprev("tokens", "donate")}
+`,
+};
+
+// ---- 8. DONATE ("Feed Your Friends on the Server") ------------------------
+PAGES.donate = {
+  title: "Feed the Server",
+  h1: "Feed Your Friends on the Server",
+  tagline: "There's a server living in this house. It eats. A lot. This page is its grocery fund.",
+  main: `
+<div class="hero-art" aria-hidden="true" role="presentation">
+<svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="srv" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#243152"/><stop offset="1" stop-color="#1b2440"/>
+    </linearGradient>
+  </defs>
+  <g class="float">
+    <rect x="150" y="40" width="220" height="120" rx="16" fill="url(#srv)" stroke="#3a4150" stroke-width="2"/>
+    <circle cx="183" cy="70" r="6" fill="#6ea8fe"/>
+    <circle cx="205" cy="70" r="6" fill="#9b78ff"/>
+    <rect x="225" y="65" width="120" height="10" rx="5" fill="#2a3037"/>
+    <rect x="225" y="88" width="120" height="10" rx="5" fill="#2a3037"/>
+    <circle cx="240" cy="128" r="11" fill="#0f1115" stroke="#6ea8fe" stroke-width="2"/>
+    <circle cx="280" cy="128" r="11" fill="#0f1115" stroke="#6ea8fe" stroke-width="2"/>
+    <circle cx="240" cy="128" r="3.5" fill="#cfe0ff"/>
+    <circle cx="280" cy="128" r="3.5" fill="#cfe0ff"/>
+    <path d="M250 146 q10 9 20 0" fill="none" stroke="#cfe0ff" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <g class="float" style="animation-delay:.6s">
+    <path d="M70 150 L110 60 L150 150 Z" fill="#e8c46a" stroke="#caa233" stroke-width="2"/>
+    <path d="M84 117 L136 117 L110 60 Z" fill="#d96a4a"/>
+    <circle cx="103" cy="100" r="4" fill="#7a2f1f"/>
+    <circle cx="118" cy="108" r="4" fill="#7a2f1f"/>
+    <circle cx="110" cy="122" r="4" fill="#7a2f1f"/>
+  </g>
+</svg>
+</div>
+<p class="lead">Picture it: somewhere out there, a little server is humming along in a digital house. It's a good server. A <em>hungry</em> server. And every message you send is basically you opening its fridge.</p>
+
+<h2>Meet the roommate</h2>
+<p>Think of this whole site as Kade's house, and the AI as the world's most enthusiastic roommate. It never sleeps. It answers every question at 3 a.m. without complaint. It'll draw you a cat in sunglasses for no reason. Truly, a delight to live with.</p>
+<p>It has exactly one flaw: <strong>the appetite of a teenage golden retriever.</strong> Every reply it gives nibbles a little snack off the grocery bill (the credits Kade pre-loads — see <a href="/help/costs">What This Costs Kade</a> if you want the receipts). And here's the thing nobody warns you about a roommate like this:</p>
+<p class="lead"><strong>The fridge does not refill itself.</strong></p>
+
+<h2>Where you come in (totally optional, zero guilt)</h2>
+<p>You're a welcome guest here. Genuinely. Nobody's standing at the door with a tip jar and a stern look. But if this place has made you laugh, helped you out, or saved your bacon even once — you can chip in for groceries and keep the robot fed.</p>
+
+<div class="btnrow">
+  <a class="cta big" href="${PAYPAL_URL}">🍕 Buy the server a snack</a>
+</div>
+
+<h2>What your few bucks actually do</h2>
+<ul>
+  <li><strong>$3</strong> — a coffee for the server. It will stay up all night anyway, but now it's caffeinated and grateful.</li>
+  <li><strong>$5</strong> — a proper snack run. Keeps the lights on and the roommate fed for a good while.</li>
+  <li><strong>$10</strong> — you are now the server's favorite. It won't say it out loud, but it knows.</li>
+  <li><strong>Whatever you've got</strong> — seriously, any amount helps, and "nothing right now" is a perfectly fine amount too.</li>
+</ul>
+
+<div class="callout good">
+  <p>No subscriptions. No pressure. No awkward reminders every time you log in. Just a link, a hungry server, and a thank-you from Kade — who's covering the bill so the whole family can have this. If you can feed it, the fridge thanks you. If you can't, pull up a chair anyway. There's always room at the table.</p>
+</div>
+
+<div class="btnrow">
+  <a class="cta" href="${PAYPAL_URL}">💛 Chip in for groceries</a>
+  <a class="cta" href="${CHAT_URL}">← Back to chatting (the server's hungry again already)</a>
+</div>
+${nextprev("costs", "accessibility")}
+`,
+};
+
+// ---- 9. ACCESSIBILITY -----------------------------------------------------
+PAGES.accessibility = {
+  title: "Accessibility Tips",
+  h1: "Accessibility Tips",
+  tagline: "This whole site was built by a blind developer, for everyone. Here's how to get the smoothest ride with a screen reader.",
+  main: `
+<p class="lead">Kade is blind and built Kade-AI to actually be pleasant with a screen reader — not just technically usable. These tips help you get the most out of it on VoiceOver (Mac/iPhone) and NVDA (Windows).</p>
+
+<h2>The big ones first</h2>
+<ul>
+  <li><strong>Use the headings to jump around.</strong> Every page here, and the chat itself, uses real headings. In NVDA, press <strong>H</strong> to hop heading to heading; in VoiceOver, use the rotor set to Headings.</li>
+  <li><strong>Replies get announced.</strong> When the AI answers, the new text is marked as a live update, so your screen reader can read it without you hunting for it.</li>
+  <li><strong>Prefer listening?</strong> Turn on auto-play (Settings → Speech) so replies read themselves aloud in a chosen voice — that's separate from your screen reader and often nicer for long answers. Full details on <a href="/help/voice">Talking &amp; Listening</a>.</li>
+</ul>
+
+<h2>On these help pages</h2>
+<ul>
+  <li>There's a <strong>"Skip to main content"</strong> link as the very first thing on every page — activate it to jump straight past the navigation.</li>
+  <li>The page you're on is marked as <strong>current</strong> in the section menu, so you always know where you are.</li>
+  <li>The Cheat Sheet is a <strong>real table</strong> with proper row and column headers — navigate it cell by cell with your screen reader's table commands.</li>
+</ul>
+
+<h2>iPhone home-screen tip</h2>
+<p>If you've added the site to your home screen, iPhones tend to re-ask for microphone permission often when you use voice input. That's an Apple limitation (not fixable from here) — just tap "Allow" again. See <a href="/help/troubleshooting">When Something Breaks</a>.</p>
+
+<h2>Pictures and screen readers</h2>
+<p>When you have the AI make an image, also ask it to <strong>describe the picture in words</strong> — it'll happily give you a full, detailed description so the visual isn't lost on you.</p>
+
+<div class="callout good">
+  <p>This page is a work in progress, and Kade wants it to be genuinely useful — not generic advice. If you've found a screen-reader trick that works great here (or a spot that fights you), <strong>contact Kade</strong> so it can be added or fixed.</p>
+</div>
+${nextprev("donate", "troubleshooting")}
+`,
+};
+
+// ---- 10. TROUBLESHOOTING --------------------------------------------------
+PAGES.troubleshooting = {
+  title: "When Something Breaks",
+  h1: "When Something Breaks",
+  tagline: "The usual hiccups and the quick fixes. Most of these take ten seconds.",
+  main: `
+<p class="lead">Tech has its moments. Here are the things that actually come up, and what to do about each.</p>
+
+<h2>The voice won't auto-play</h2>
+<p>On phones (especially iPhones with the site on your home screen), the browser often blocks sound from starting on its own until you've tapped the screen. <strong>Fix:</strong> tap a reply's play button once by hand — that usually unlocks audio for the rest of that session. It's a phone-browser rule, not a fault here.</p>
+
+<h2>It keeps asking for my microphone (iPhone)</h2>
+<p>Apple doesn't reliably remember mic permission for home-screen web apps, so it re-asks — sometimes every time you start talking. <strong>Fix:</strong> just tap "Allow" again. There's no setting on this site that turns it off; it's an Apple limitation. Annoying, but harmless.</p>
+
+<h2>A reply seems stuck — it's "thinking" forever</h2>
+<p>Once in a while a reply stalls out behind the scenes. <strong>Fix:</strong> wait a few seconds, then if it's clearly hung, just send your message again. It almost always comes back fine on the second try.</p>
+
+<h2>Where's my balance / how much have I used?</h2>
+<p>Each message shows its cost and usage right there in the chat, so you can keep an eye on it as you go. (Curious what the numbers mean? The <a href="/help/tokens">What Are Tokens?</a> page explains them.) Remember your balance refills automatically every 30 days — see <a href="/help/costs">What This Costs Kade</a>.</p>
+
+<h2>Pictures stopped working</h2>
+<p>Image-making draws from a small separate pot of credits. If it suddenly won't make pictures, that pot may have run dry. <strong>Fix:</strong> contact Kade — she can top it up.</p>
+
+<h2>I can't log in / I want an account for someone</h2>
+<p>Accounts are set up by Kade personally (it's an invite-only place). If you're locked out or want to add a family member, <strong>contact Kade</strong>.</p>
+
+<div class="callout warn">
+  <p><strong>Still stuck after trying the above?</strong> Don't wrestle with it. <strong>Contact Kade</strong> — that's what she's there for, and "it's doing a weird thing" is a perfectly good bug report.</p>
+</div>
+${nextprev("accessibility", null)}
+`,
+};
+
+// ---- Register a route for every page --------------------------------------
+for (const key of Object.keys(PAGES)) {
+  const def = PAGES[key];
+  const section = SECTIONS.find((s) => s.key === key);
+  const path = section ? section.path : (key === "home" ? "/help" : `/help/${key}`);
+  router.get(path, (req, res) => {
+    res.set("Content-Type", "text/html; charset=utf-8");
+    res.send(page({ key, title: def.title, h1: def.h1, tagline: def.tagline, main: def.main }));
+  });
+}
+
+module.exports = router;
+module.exports.SECTIONS = SECTIONS;
+module.exports.PAGES = PAGES;
+module.exports.renderPage = page; // exported for offline render tests

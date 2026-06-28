@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
+// Mount the accessible help system (/help and friends). See help.js.
+app.use(require("./help"));
+
 const PORT = process.env.PORT || 3000;
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
