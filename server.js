@@ -119,10 +119,39 @@ function splitParagraphs(text) {
   return paras.length ? paras : [text];
 }
 
+// Periods after these don't end a sentence (case-insensitive on first letter,
+// since "dr." and "Dr." both show up). Periods inside "..." don't either --
+// that's a pause for inflection, not a sentence break. Splitting on these was
+// handing the TTS model disconnected fragments mid-thought (e.g. "Dr." / "
+// Smith said..." as two separate "sentences"), which is what was causing the
+// weird, context-less delivery/inflection reported live June 28, 2026.
+const SENTENCE_ABBREVIATIONS = [
+  "Mr", "Mrs", "Ms", "Dr", "Prof", "Sr", "Jr", "St", "Mt", "vs", "etc",
+  "approx", "Inc", "Ltd", "Co", "Corp", "Ave", "Blvd", "No", "e.g", "i.e",
+  "a.m", "p.m", "U.S", "U.K", "U.N",
+];
+const ELLIPSIS_TOKEN = "\u0000ELLIPSIS\u0000";
+const DOT_TOKEN = "\u0000DOT\u0000";
+
 function splitSentences(text) {
-  const matches = text.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g);
-  if (!matches) return [text];
-  return matches.map((s) => s.trim()).filter(Boolean);
+  if (!text) return [text];
+
+  // Mask ellipses and abbreviation-periods so the sentence-boundary regex
+  // below can't mistake them for a sentence end.
+  let masked = text.replace(/\.\.\.+/g, ELLIPSIS_TOKEN);
+  for (const abbr of SENTENCE_ABBREVIATIONS) {
+    const escaped = abbr.replace(/\./g, "\\.");
+    masked = masked.replace(new RegExp(`\\b${escaped}\\.(?=\\s)`, "gi"), (m) =>
+      m.split(".").join(DOT_TOKEN)
+    );
+  }
+
+  const matches = masked.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g);
+  const restore = (s) =>
+    s.split(ELLIPSIS_TOKEN).join("...").split(DOT_TOKEN).join(".");
+
+  if (!matches) return [restore(masked).trim()].filter(Boolean);
+  return matches.map((s) => restore(s).trim()).filter(Boolean);
 }
 
 // Groups whole sentences together up to maxChunkLen -- used as a fallback
