@@ -425,7 +425,7 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 </header>
 <section class="howto" aria-label="How to change your voice">
   <h2>How to use a voice you like</h2>
-  <p>Heads up: the voice provider (Inworld) gives us no way to preview voices inside the chat itself — which is lame, and it is the whole reason this page exists. Browse here, find one you like, then set it in the app.</p>
+  <p>Heads up: the chat itself doesn't give us a way to preview voices inside it — which is lame, and it's the whole reason this page exists. Browse here, find one you like, then set it in the app.</p>
   <p>To switch your voice: open <strong>Settings</strong> in the chat, go to the <strong>Speech</strong> tab, find the <strong>Text-to-Speech</strong> section, and choose your voice from the <strong>Voice</strong> menu. The names there match the names here exactly.</p>
 </section>
 <div id="status" role="status" aria-live="polite">Ready. Select a voice to hear a sample.</div>
