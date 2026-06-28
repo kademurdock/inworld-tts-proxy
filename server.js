@@ -106,7 +106,7 @@ const MODEL_MAP = {
 // without losing emotional context within a thought). Only if a paragraph
 // itself is too long do we fall back to grouping whole sentences together
 // up to the size limit -- we never split mid-sentence.
-const MAX_CHUNK_LEN = 1200;
+const MAX_CHUNK_LEN = 1600;
 
 function splitParagraphs(text) {
   const paras = text.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
@@ -241,7 +241,7 @@ function buildWavHeader(dataLength, { numChannels, sampleRate, bitsPerSample }) 
 
 // ~140ms of silence between chunks -- long enough to sound like a natural
 // pause, short enough not to feel like dead air.
-const GAP_MS = 140;
+const GAP_MS = 350;
 
 function buildSilence(ms, { sampleRate, numChannels, bitsPerSample }) {
   const bytesPerSample = bitsPerSample / 8;
@@ -291,6 +291,9 @@ app.post("/v1/audio/speech", async (req, res) => {
   }
 
   const { input, voice = "alloy", model = "tts-1" } = req.body;
+
+  // TEMP DIAGNOSTIC (remove after diagnosing TTS-reads-search-terms): log spoken text.
+  console.log("[tts-input] len=" + (input ? input.length : 0) + " :: " + JSON.stringify((input || "").slice(0, 1800)));
 
   if (!input) {
     return res.status(400).json({ error: "Missing required field: input" });
