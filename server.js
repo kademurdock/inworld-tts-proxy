@@ -298,7 +298,58 @@ function buildSilence(ms, { sampleRate, numChannels, bitsPerSample }) {
   return Buffer.alloc(samples * numChannels * bytesPerSample, 0);
 }
 
-async function synthesizeChunk(text, voiceId, modelId) {
+// Inworld enforces a hard account-wide cap of 10 concurrent TTS requests
+// ("maximum allowed number of concurrent TTS requests: 10 is reached", a 429
+// with code 8). Confirmed live June 28, 2026: a single ~7,200-char reply,
+// once MAX_CHUNK_LEN dropped to 500 (see above), splits into ~15 chunks --
+// all fired at once via Promise.all -- which blows straight through that
+// ceiling. Any chunk that gets the 429 throws, Promise.all rejects, and the
+// ENTIRE reply's audio dies with a 500, even though most chunks succeeded.
+// This is the root cause of the "hanging and generating nothing" / TTS 500
+// reports right after the chunk-size change shipped.
+//
+// Fix has two parts:
+//  1. A small in-process semaphore caps how many synthesizeChunk calls are
+//     in flight at once, well under Inworld's limit of 10 -- leaving
+//     headroom for other concurrent requests elsewhere on the account (other
+//     users, the /voices preview page, etc.) instead of assuming this one
+//     request owns the whole budget.
+//  2. A short retry-with-backoff on the 429 specifically, so even if we do
+//     transiently collide with another request's burst, we recover instead
+//     of failing the whole reply.
+const MAX_CONCURRENT_INWORLD_CALLS = 6;
+
+function createLimiter(maxConcurrent) {
+  let active = 0;
+  const queue = [];
+
+  function next() {
+    if (active >= maxConcurrent || queue.length === 0) return;
+    active++;
+    const { fn, resolve, reject } = queue.shift();
+    fn()
+      .then(resolve, reject)
+      .finally(() => {
+        active--;
+        next();
+      });
+  }
+
+  return function limit(fn) {
+    return new Promise((resolve, reject) => {
+      queue.push({ fn, resolve, reject });
+      next();
+    });
+  };
+}
+
+const inworldLimiter = createLimiter(MAX_CONCURRENT_INWORLD_CALLS);
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function synthesizeChunkOnce(text, voiceId, modelId) {
   const response = await fetch("https://api.inworld.ai/tts/v1/voice", {
     method: "POST",
     headers: {
@@ -318,7 +369,10 @@ async function synthesizeChunk(text, voiceId, modelId) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Inworld API error ${response.status}: ${errorText}`);
+    const err = new Error(`Inworld API error ${response.status}: ${errorText}`);
+    err.status = response.status;
+    err.isRateLimit = response.status === 429;
+    throw err;
   }
 
   const data = await response.json();
@@ -327,6 +381,25 @@ async function synthesizeChunk(text, voiceId, modelId) {
   }
 
   return Buffer.from(data.audioContent, "base64");
+}
+
+async function synthesizeChunk(text, voiceId, modelId) {
+  return inworldLimiter(async () => {
+    const maxAttempts = 4;
+    let lastErr;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await synthesizeChunkOnce(text, voiceId, modelId);
+      } catch (err) {
+        lastErr = err;
+        if (!err.isRateLimit || attempt === maxAttempts) throw err;
+        // Backoff with a little jitter so retries from a batch of chunks
+        // don't all collide on the same retry tick.
+        await sleep(300 * attempt + Math.random() * 200);
+      }
+    }
+    throw lastErr;
+  });
 }
 
 app.get("/health", (req, res) => {
