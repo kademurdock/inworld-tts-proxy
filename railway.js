@@ -1,18 +1,25 @@
-// ---- Forge's read-only Railway ops routes ----
+// ---- Forge's Railway ops routes ----
 // Mounted on the inworld-tts-proxy service. Gives the private "Forge" agent
-// SAFE, READ-ONLY visibility into Kade's Railway infrastructure via an Action.
+// controlled visibility AND a few deliberate write powers into Kade's
+// Railway infrastructure via an Action.
 //
 // SECURITY MODEL:
 //  - The powerful Railway API token lives ONLY here as env RAILWAY_API_TOKEN
 //    (never handed to the agent, never in any prompt).
-//  - This module issues READ queries ONLY. There is NO code path that performs
-//    a Railway mutation (no deploy, redeploy, variableUpsert, delete, etc.), so
-//    even though the token itself is write-capable, nothing reachable here can
-//    change infrastructure. Read-only is enforced by construction.
 //  - Every route requires Authorization: Bearer <RAILWAY_PROXY_SECRET>, so the
 //    public URL can't be abused even though it's reachable.
-//  - The /vars route returns variable NAMES ONLY, never values, so secrets
-//    are never exposed to the agent.
+//  - The /vars GET route returns variable NAMES ONLY, never values, so secrets
+//    are never exposed to the agent on read.
+//  - Mutations are intentionally narrow:
+//      * /railway/redeploy  - restart current image (no commit change)
+//      * /railway/deploy    - deploy a SPECIFIC commit. commitSha is REQUIRED
+//        (Railway's serviceInstanceDeployV2 silently redeploys the service's
+//        INITIAL commit if commitSha is omitted -- a documented footgun hit
+//        live in production. This route refuses the call without one.)
+//      * /railway/vars (POST) - variableUpsert, set ONE named env var at a time.
+//        No bulk writes, no delete route. Real blast radius -- a bad value can
+//        break a live service instantly. Used deliberately, one var at a time.
+//  - Still no delete-service, no project-level mutations, no token exposure.
 
 const express = require("express");
 const router = express.Router();
@@ -101,10 +108,11 @@ router.get("/railway/vars", auth, async (req, res) => {
   } catch (e) { res.status(502).json({ error: e.message }); }
 });
 
-// ---- WRITE power (deploy) ----
-// Redeploy the CURRENT deployment of a service (restart latest code). This is
-// the one mutation Forge is granted. No variable-write, no delete, no repo
-// commits here yet (add deliberately if/when wanted).
+// ---- WRITE power: restart current image ----
+// Redeploy the CURRENT deployment of a service (restart latest BUILT code,
+// does NOT pull a new commit). Fine for "the service is stuck/crashed,
+// just restart it" -- NOT the right call after a fresh commit. Use
+// /railway/deploy for that.
 router.post("/railway/redeploy", auth, async (req, res) => {
   const { serviceId, environmentId } = req.body || {};
   if (!serviceId || !environmentId) return res.status(400).json({ error: "serviceId and environmentId are required" });
@@ -112,6 +120,45 @@ router.post("/railway/redeploy", auth, async (req, res) => {
     const m = `mutation($e:String!,$s:String!){ serviceInstanceRedeploy(environmentId:$e, serviceId:$s) }`;
     const d = await gql(m, { e: environmentId, s: serviceId });
     res.json({ redeployed: d.serviceInstanceRedeploy === true });
+  } catch (e) { res.status(502).json({ error: e.message }); }
+});
+
+// ---- WRITE power: deploy a specific commit ----
+// Deploys the EXACT commit you give it. commitSha is REQUIRED on purpose --
+// Railway's serviceInstanceDeployV2 redeploys the service's INITIAL commit
+// if commitSha is left out, which is the opposite of what you want after
+// pushing a fix. Get the right sha from your own commitToGitHub response.
+router.post("/railway/deploy", auth, async (req, res) => {
+  const { serviceId, environmentId, commitSha } = req.body || {};
+  if (!serviceId || !environmentId || !commitSha) {
+    return res.status(400).json({
+      error: "serviceId, environmentId, and commitSha are all required. " +
+        "Omitting commitSha will NOT deploy your latest commit -- Railway falls back to redeploying " +
+        "the service's very first commit ever. Pass the exact sha you just committed.",
+    });
+  }
+  try {
+    const m = `mutation($e:String!,$s:String!,$c:String!){ serviceInstanceDeployV2(environmentId:$e, serviceId:$s, commitSha:$c) }`;
+    const d = await gql(m, { e: environmentId, s: serviceId, c: commitSha });
+    res.json({ deployed: d.serviceInstanceDeployV2 === true, commitSha });
+  } catch (e) { res.status(502).json({ error: e.message }); }
+});
+
+// ---- WRITE power: set ONE environment variable ----
+// One name/value at a time, deliberately -- no bulk-replace route. Real risk:
+// a wrong value can break a live service the moment this resolves. Most
+// services need a redeploy/restart to actually pick up a changed variable --
+// follow up with /railway/redeploy or /railway/deploy if the var doesn't seem
+// to take effect.
+router.post("/railway/vars", auth, async (req, res) => {
+  const { projectId, environmentId, serviceId, name, value } = req.body || {};
+  if (!projectId || !environmentId || !serviceId || !name || value === undefined) {
+    return res.status(400).json({ error: "projectId, environmentId, serviceId, name, and value are all required" });
+  }
+  try {
+    const m = `mutation($input: VariableUpsertInput!){ variableUpsert(input:$input) }`;
+    const d = await gql(m, { input: { projectId, environmentId, serviceId, name, value: String(value) } });
+    res.json({ set: d.variableUpsert === true, name });
   } catch (e) { res.status(502).json({ error: e.message }); }
 });
 
