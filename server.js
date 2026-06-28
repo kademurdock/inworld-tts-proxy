@@ -8,6 +8,9 @@ app.use(require("./help"));
 // Forge's read-only Railway ops routes. See railway.js.
 app.use(require("./railway"));
 
+// Forge's GitHub commit/read routes. See github.js.
+app.use(require("./github"));
+
 const PORT = process.env.PORT || 3000;
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
