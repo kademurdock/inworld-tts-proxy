@@ -1,3 +1,3 @@
-# Forge proxy test
+# Forge proxy test - UPDATED
 
-This file was committed by the new /github/commit proxy route as a local end-to-end test before going live. Safe to delete.
+This confirms the update path (existing sha auto-fetched) also works. Safe to delete.
