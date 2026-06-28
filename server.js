@@ -296,9 +296,24 @@ app.get("/health", (req, res) => {
 function stripCitationMarkers(text) {
   if (!text) return text;
   return text
+    // Real OpenAI-style private-use-area citation tokens (actual unicode char
+    // U+E200-U+E20F immediately followed by a "turn0search0"-shaped id).
     .replace(/[\uE200-\uE20F]turn\d+[a-z]+\d+/gi, "")
     .replace(/[\uE200-\uE20F]/g, "")
-    .replace(/\bturn\d+[a-z]+\d+\b/gi, "")
+    // What the model in this project (via OpenRouter, web_search/Tavily tool)
+    // ACTUALLY emits: the literal escaped text "\ue202turn0search7" as plain
+    // characters (backslash, u, e, 2, 0, 2, t, u, r, n, ...) rather than a real
+    // private-use codepoint. Confirmed live June 28, 2026 by inspecting a saved
+    // message's content array directly. There is no word boundary between the
+    // trailing hex digit and "turn", so the old \b-anchored fallback below
+    // never matched this -- which is exactly why TTS was reading it aloud as
+    // "uturn search...". Strip the escaped-prefix form first, with or without
+    // the leading backslash (covers any pre-processing that already ate it).
+    .replace(/\\?u[eE]20[0-9a-fA-F]turn\d+[a-zA-Z]+\d+/g, "")
+    .replace(/\\?u[eE]20[0-9a-fA-F]/g, "")
+    // Catch-all: bare "turn0search0"-shaped token anywhere, even back-to-back
+    // with no separating whitespace (no \b requirement -- that was the bug).
+    .replace(/turn\d+[a-zA-Z]+\d+/g, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+([.,!?;:])/g, "$1")
     .trim();
