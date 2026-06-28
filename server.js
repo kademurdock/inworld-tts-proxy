@@ -322,6 +322,19 @@ app.get("/health", (req, res) => {
 // Remove web-search citation markers so TTS never voices them. Catches the
 // private-use citation chars (U+E200-U+E20F) plus the "turn<N>search<M>"-style
 // tokens they carry (also turn<N>news<M>, view, etc. via the generic shape).
+// Strips the ":::thinking\n...\n:::\n" reasoning-bubble marker block that
+// reframe-proxy now embeds in message.content (added June 28, 2026, so
+// LibreChat's legacy content renderer actually shows a "thinking" bubble for
+// this custom endpoint). LibreChat's own UI already hides this from the
+// visible answer text via the same marker, but the TTS feature is handed the
+// raw saved message text, so it needs the same treatment here -- otherwise
+// the model's internal reasoning would get read aloud right along with the
+// real answer, defeating the whole point of having a separate bubble.
+function stripThinkingBlock(text) {
+  if (!text) return text;
+  return text.replace(/:::thinking[\s\S]*?:::\n?/g, "").trim();
+}
+
 function stripCitationMarkers(text) {
   if (!text) return text;
   return text
@@ -368,7 +381,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // followed by a "turn0search3"-style id) into its answer; these render as
   // source chips in the UI but TTS otherwise reads them aloud as gibberish
   // mid-sentence. Visible message text is untouched (this only cleans audio).
-  const speakText = stripCitationMarkers(input);
+  const speakText = stripCitationMarkers(stripThinkingBlock(input));
 
   try {
     const chunks = chunkText(speakText);
