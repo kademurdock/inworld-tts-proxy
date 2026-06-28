@@ -102,17 +102,31 @@ const MODEL_MAP = {
 };
 
 // ---- Chunking ----
-// Inworld's emotional steering reads surrounding context, so chunks need to
-// stay as LONG as possible (more sentences together = better emotional
+// Inworld's emotional steering reads surrounding context, so chunks should
+// stay reasonably long (a few sentences together = better emotional
 // continuity) while still (a) splitting at real natural breaks instead of
-// mid-thought, and (b) staying safely under Inworld's practical request
-// size so long replies can still be parallelized for latency.
+// mid-thought, and (b) staying short enough per chunk that Inworld's own
+// synthesis time doesn't dominate total latency.
 //
 // Strategy: split on paragraph breaks first (the most natural place to cut
 // without losing emotional context within a thought). Only if a paragraph
 // itself is too long do we fall back to grouping whole sentences together
 // up to the size limit -- we never split mid-sentence.
-const MAX_CHUNK_LEN = 1600;
+//
+// MAX_CHUNK_LEN was raised to 1600 on June 27 2026 to fix a different problem
+// (sentences getting cut mid-thought) -- but the actual cause of THAT was a
+// separate splitSentences() bug (abbreviations/ellipses treated as sentence
+// ends), fixed independently on June 28. With that real fix in place, 1600
+// no longer buys anything but slow single Inworld calls: chunks ARE
+// synthesized in parallel (see Promise.all below), but Inworld's own
+// per-request latency scales with text length, so one huge ~1600-char chunk
+// can itself take 60-90+ seconds and become the slowest link, which is
+// exactly the "now it takes 2 minutes" complaint. Lowered back down to 500
+// so a normal multi-sentence reply splits into several smaller, faster,
+// genuinely-parallel Inworld calls instead of one slow one -- the GAP_MS
+// silence between chunks (below) is what keeps the seams sounding natural,
+// not the chunk size itself.
+const MAX_CHUNK_LEN = 500;
 
 function splitParagraphs(text) {
   const paras = text.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
