@@ -425,6 +425,7 @@ function stripThinkingBlock(text) {
   return text
     .replace(/:::thinking[\s\S]*?:::\n?/g, "")     // legacy :::thinking::: marker
     .replace(/<think>[\s\S]*?<\/think>\n?/g, "") // <think>...</think> from reframe-proxy
+    .replace(/\uF001[\s\S]*?\uF002/g, "")        // PUA-wrapped reasoning text (extracted from think part by LibreChat before sending to TTS)
     .trim();
 }
 
@@ -475,8 +476,13 @@ app.post("/v1/audio/speech", async (req, res) => {
   // source chips in the UI but TTS otherwise reads them aloud as gibberish
   // mid-sentence. Visible message text is untouched (this only cleans audio).
   const speakText = stripCitationMarkers(stripThinkingBlock(input));
-  console.log(`[TTS] raw input (first 300): ${JSON.stringify(input.slice(0,300))}`);
-  console.log(`[TTS] after strip (first 300): ${JSON.stringify(speakText.slice(0,300))}`);
+  console.log(`[TTS] input len=${input.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
+  // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
+  if (!speakText.trim()) {
+    console.log('[TTS] nothing to speak after stripping — returning empty audio');
+    res.set({ 'Content-Type': 'audio/wav', 'Content-Length': '0' });
+    return res.status(200).end();
+  }
 
   try {
     const chunks = chunkText(speakText);
