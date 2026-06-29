@@ -456,6 +456,21 @@ function stripCitationMarkers(text) {
 }
 
 // This is the endpoint LibreChat will hit -- it expects OpenAI's /v1/audio/speech path
+// ── Brand/name pronunciation normalization (AUDIO ONLY) ──────────────────────
+// Kade's name is pronounced "Kadie" (KAY-dee) Murdock. Left as-is, Inworld sounds
+// the brand handles out wrong ("kah-day-mur-dock"). Rewrite the SPOKEN form to a
+// phonetic spelling. This only touches the text sent to Inworld for synthesis —
+// the visible chat text the user reads on screen is never modified.
+function fixPronunciations(text) {
+  if (!text) return text;
+  return text
+    // Most specific first so stems don't get half-replaced.
+    .replace(/kademurdock[-_ ]?ai/gi, "Kadie Murdock A.I.")
+    .replace(/kademurdock/gi, "Kadie Murdock")   // also covers kademurdock.com, @kademurdock
+    .replace(/kade[-_ ]?ai/gi, "Kadie A.I.")     // the Kade-AI platform brand
+    .replace(/\bkade\b/gi, "Kadie");            // bare first name -> KAY-dee
+}
+
 app.post("/v1/audio/speech", async (req, res) => {
   if (!INWORLD_API_KEY) {
     return res.status(500).json({ error: "INWORLD_API_KEY not set" });
@@ -475,7 +490,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // followed by a "turn0search3"-style id) into its answer; these render as
   // source chips in the UI but TTS otherwise reads them aloud as gibberish
   // mid-sentence. Visible message text is untouched (this only cleans audio).
-  const speakText = stripCitationMarkers(stripThinkingBlock(input));
+  const speakText = fixPronunciations(stripCitationMarkers(stripThinkingBlock(input)));
   console.log(`[TTS] input len=${input.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
