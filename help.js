@@ -22,7 +22,6 @@ const router = express.Router();
 
 const CHAT_URL = "https://kademurdock.com";
 const PAYPAL_URL = "https://paypal.me/kademurdock";
-const VOICES_URL = "/voices";
 
 // ---- Navigation model ----
 // One source of truth for every section + which group it belongs to. The nav
@@ -196,7 +195,7 @@ ${main}
   </div>
   <footer class="site">
     <p>This is the help center for Kade-AI, a private little AI chat that Kade built and runs herself. Stuck on something not covered here? Just <strong>contact Kade</strong>.</p>
-    <p><a href="${CHAT_URL}">← Back to the chat</a> &nbsp;·&nbsp; <a href="${VOICES_URL}">Voice Library</a> &nbsp;·&nbsp; <a href="/help">Help Home</a></p>
+    <p><a href="${CHAT_URL}">← Back to the chat</a> &nbsp;·&nbsp; <a href="/help">Help Home</a></p>
   </footer>
 </div>
 </body>
@@ -298,7 +297,7 @@ PAGES.quickstart = {
 <p>You can have replies read out loud instead of reading them yourself. There's a play button on each reply, and you can turn on automatic read-aloud so it just happens. The full how-to is on the <a href="/help/voice">Talking &amp; Listening</a> page.</p>
 
 <h2>5. Don't love the voice? Change it</h2>
-<p>There are over two hundred voices to choose from. Browse and preview them all on the <a href="${VOICES_URL}">Voice Library</a>, then set your favorite in the chat's settings. (The Voice Library page tells you exactly where.)</p>
+<p>There are over two hundred voices to choose from. In the chat, open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick one from the list, and tap the <strong>Preview</strong> button to hear a short sample before you commit. Leave the one you like selected and you're done.</p>
 
 <h2>6. Want a clean slate?</h2>
 <p>To start a brand-new conversation, look for the <strong>New chat</strong> button (usually top of the screen or in the side menu). Your old chats are saved in the list on the side, so you can always go back to one.</p>
@@ -374,10 +373,7 @@ PAGES.voice = {
 
 <h2>Changing the voice you hear</h2>
 <p>Don't love the default voice? There are <strong>over two hundred</strong> to choose from — calm ones, warm ones, dramatic ones, silly ones.</p>
-<div class="btnrow">
-  <a class="cta" href="${VOICES_URL}">Open the Voice Library →</a>
-</div>
-<p>The chat itself can't preview voices, which is exactly why the Voice Library page exists: browse there, hear a short audition of each one, then set your pick in <strong>Settings → Speech → Text-to-Speech → Voice</strong>. The names on the page match the names in the menu.</p>
+<p>You can hear any of them right in the chat — no separate page needed. Open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick a voice from the list, then tap the <strong>Preview</strong> button to hear a short sample. When one sounds right, just leave it selected and that becomes your voice.</p>
 ${nextprev("faq", "characters")}
 `,
 };
@@ -538,7 +534,7 @@ PAGES.cheatsheet = {
     <tr><th scope="row">Hear a reply out loud</th><td>Activate the play button on that reply.</td></tr>
     <tr><th scope="row">Have replies read automatically</th><td>Settings → Speech → turn on auto-play.</td></tr>
     <tr><th scope="row">Speak instead of type</th><td>Activate the microphone button by the message box, then talk.</td></tr>
-    <tr><th scope="row">Change the voice</th><td>Browse the <a href="${VOICES_URL}">Voice Library</a>, then set it in Settings → Speech → Text-to-Speech → Voice.</td></tr>
+    <tr><th scope="row">Change the voice</th><td>Settings → Speech → Text-to-Speech → Voice — pick one and tap Preview to hear it.</td></tr>
     <tr><th scope="row">Start a new conversation</th><td>Activate the New chat button (top of screen or side menu).</td></tr>
     <tr><th scope="row">Switch to a different character</th><td>Open the marketplace / characters menu and pick one.</td></tr>
     <tr><th scope="row">Make my own character</th><td>Use "create a character" in the characters menu. See <a href="/help/build">Build Your Own</a>.</td></tr>
