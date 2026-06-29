@@ -422,10 +422,7 @@ app.get("/health", (req, res) => {
 // real answer, defeating the whole point of having a separate bubble.
 function stripThinkingBlock(text) {
   if (!text) return text;
-  return text
-    .replace(/:::thinking[\s\S]*?:::\n?/g, "")  // legacy :::thinking::: marker
-    .replace(/<think>[\s\S]*?<\/think>\n?/g, "")  // <think>...</think> from reframe-proxy think_and_text injection
-    .trim();
+  return text.replace(/:::thinking[\s\S]*?:::\n?/g, "").trim();
 }
 
 function stripCitationMarkers(text) {
@@ -475,6 +472,8 @@ app.post("/v1/audio/speech", async (req, res) => {
   // source chips in the UI but TTS otherwise reads them aloud as gibberish
   // mid-sentence. Visible message text is untouched (this only cleans audio).
   const speakText = stripCitationMarkers(stripThinkingBlock(input));
+  console.log(`[TTS] raw input (first 300): ${JSON.stringify(input.slice(0,300))}`);
+  console.log(`[TTS] after strip (first 300): ${JSON.stringify(speakText.slice(0,300))}`);
 
   try {
     const chunks = chunkText(speakText);
@@ -708,4 +707,10 @@ app.get(["/voices", "/voice-library"], (req, res) => {
     .replace("/*VOICES*/", JSON.stringify(displayList))
     .replace("/*CUSTOM*/", JSON.stringify(custom))
     .replace("/*SAMPLE*/", JSON.stringify(SAMPLE_TEXT));
-  res.se
+  res.set("Content-Type", "text/html; charset=utf-8");
+  res.send(html);
+});
+
+app.listen(PORT, () => {
+  console.log(`Inworld TTS proxy running on port ${PORT}`);
+});
