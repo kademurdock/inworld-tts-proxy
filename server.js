@@ -422,7 +422,10 @@ app.get("/health", (req, res) => {
 // real answer, defeating the whole point of having a separate bubble.
 function stripThinkingBlock(text) {
   if (!text) return text;
-  return text.replace(/:::thinking[\s\S]*?:::\n?/g, "").trim();
+  return text
+    .replace(/:::thinking[\s\S]*?:::\n?/g, "")     // legacy :::thinking::: marker
+    .replace(/<think>[\s\S]*?<\/think>\n?/g, "") // <think>...</think> from reframe-proxy
+    .trim();
 }
 
 function stripCitationMarkers(text) {
