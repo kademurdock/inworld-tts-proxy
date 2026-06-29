@@ -11,6 +11,9 @@ app.use(require("./railway"));
 // Forge's GitHub commit/read routes. See github.js.
 app.use(require("./github"));
 
+// LibreChat platform-management routes for Forge (agents API, usage)
+app.use(require("./librechat"));
+
 const PORT = process.env.PORT || 3000;
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
