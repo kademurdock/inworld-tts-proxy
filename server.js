@@ -422,7 +422,10 @@ app.get("/health", (req, res) => {
 // real answer, defeating the whole point of having a separate bubble.
 function stripThinkingBlock(text) {
   if (!text) return text;
-  return text.replace(/:::thinking[\s\S]*?:::\n?/g, "").trim();
+  return text
+    .replace(/:::thinking[\s\S]*?:::\n?/g, "")  // legacy :::thinking::: marker
+    .replace(/<think>[\s\S]*?<\/think>\n?/g, "")  // <think>...</think> from reframe-proxy think_and_text injection
+    .trim();
 }
 
 function stripCitationMarkers(text) {
@@ -705,10 +708,4 @@ app.get(["/voices", "/voice-library"], (req, res) => {
     .replace("/*VOICES*/", JSON.stringify(displayList))
     .replace("/*CUSTOM*/", JSON.stringify(custom))
     .replace("/*SAMPLE*/", JSON.stringify(SAMPLE_TEXT));
-  res.set("Content-Type", "text/html; charset=utf-8");
-  res.send(html);
-});
-
-app.listen(PORT, () => {
-  console.log(`Inworld TTS proxy running on port ${PORT}`);
-});
+  res.se
