@@ -527,11 +527,13 @@ async function lcAsk(agentId, messages) {
     let reply = "";
     const dec = new TextDecoder();
     let buf = "";
+    let rawLines = [];
     for await (const chunk of streamR.body) {
       buf += dec.decode(chunk, { stream: true });
       const lines = buf.split("\n");
       buf = lines.pop() ?? "";
       for (const line of lines) {
+        if (line.trim()) rawLines.push(line.slice(0, 200));
         if (!line.startsWith("data: ")) continue;
         try {
           const d = JSON.parse(line.slice(6));
@@ -541,6 +543,9 @@ async function lcAsk(agentId, messages) {
       }
     }
 
+    console.log("[lcAsk] SSE lines received:", rawLines.length);
+    console.log("[lcAsk] first 5 lines:", JSON.stringify(rawLines.slice(0, 5)));
+    console.log("[lcAsk] last 3 lines:", JSON.stringify(rawLines.slice(-3)));
     if (!reply) throw new Error("empty reply from agent");
     return reply;
   });
