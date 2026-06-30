@@ -554,13 +554,16 @@ async function lcAsk(agentId, messages) {
 // POST /librechat/ask  { agentId, messages[] } -> { text }
 router.post("/librechat/ask", auth, async (req, res) => {
   const { agentId, messages } = req.body;
+  console.log("[lcAsk] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array");
   if (!agentId || !Array.isArray(messages)) {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
   try {
     const text = await lcAsk(agentId, messages);
+    console.log("[lcAsk] success, reply length=", text.length);
     res.json({ text });
   } catch (err) {
+    console.error("[lcAsk] error:", err.message);
     const status = typeof err.status === "number" ? err.status : 500;
     res.status(status).json({ error: err.message });
   }
