@@ -467,10 +467,10 @@ router.get("/balances", auth, async (req, res) => {
 // Used by kade-ai-bridge (wholesome-acceptance project, different IP) to avoid
 // hitting kademurdock.com directly from a Railway IP that gets 403'd.
 async function lcAsk(agentId, messages) {
-  const body = { agentId, messages, conversationId: null, parentMessageId: null };
+  const body = { endpoint: 'agents', agentId, messages, conversationId: null, parentMessageId: null, text: (messages[messages.length - 1] || {}).content || '' };
   return paced(async () => {
     if (!_token) await login();
-    const doFetch = (tok) => fetch(`${BASE}/api/ask/agents`, {
+    const doFetch = (tok) => fetch(`${BASE}/api/agents/chat`, {
       method: "POST",
       headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json", "User-Agent": UA },
       body: JSON.stringify(body),
