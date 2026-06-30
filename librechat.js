@@ -537,8 +537,13 @@ async function lcAsk(agentId, messages) {
         if (!line.startsWith("data: ")) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.text) reply = d.text;
-          if (d.final) { buf = ""; break; }
+          // LibreChat streams text via on_message_delta events
+          if (d.event === "on_message_delta" && Array.isArray(d.data?.delta?.content)) {
+            for (const part of d.data.delta.content) {
+              if (part.type === "text" && part.text) reply += part.text;
+            }
+          }
+          if (d.final) break;
         } catch {}
       }
     }
