@@ -519,6 +519,20 @@ function fixPronunciations(text) {
     .replace(/\bkade\b/gi, "Kadie");            // bare first name -> KAY-dee
 }
 
+// ── CORS for browser-side voice conversation (F2 patch) ──────────────────────
+// Allows kademurdock.com PWA to call /v1/audio/speech directly from the browser
+// (the web/Skype-style voice mode). Restricted to our origin — not open CORS.
+app.use("/v1/audio/speech", (req, res, next) => {
+  const origin = req.headers.origin || '';
+  if (origin === 'https://kademurdock.com' || origin === 'http://localhost:3080') {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.post("/v1/audio/speech", async (req, res) => {
   if (!INWORLD_API_KEY) {
     return res.status(500).json({ error: "INWORLD_API_KEY not set" });
