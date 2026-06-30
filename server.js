@@ -531,8 +531,15 @@ function fixPronunciations(text) {
 // actually interprets (see docs.inworld.ai/tts/capabilities/steering).
 // Distinct PUA pair from the reasoning-bubble marker (U+F001/U+F002, see
 // stripThinkingBlock above) so the two schemes can never collide.
-const STEERING_OPEN = "\uF003";
-const STEERING_CLOSE = "\uF004";
+// PIVOT (June 30 2026, same session): live testing showed GLM-5.2 does NOT
+// reliably reproduce an exact PUA codepoint pair across generations -- 4/4
+// live tagged replies from Kiana either skipped the tag, used the wrong
+// character, or used it asymmetrically. Switched to a plain-ASCII SYMMETRIC
+// delimiter (same token both ends, like markdown **bold**), which models
+// reproduce far more reliably. Still effectively invisible: nobody types
+// "%%%" mid-sentence, and the fork strips it the same as before.
+const STEERING_OPEN = "%%%";
+const STEERING_CLOSE = "%%%";
 
 // Inworld's fixed inline non-verbal vocabulary. These can appear anywhere,
 // repeatedly, inline -- unlike a leading direction they are NOT subject to
