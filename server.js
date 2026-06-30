@@ -105,6 +105,7 @@ const MODEL_MAP = {
   "tts-1": "inworld-tts-1.5-max",
   "tts-1-hd": "inworld-tts-1.5-max",
   "gpt-4o-mini-tts": "inworld-tts-1.5-max",
+  "tts-1-mini": "inworld-tts-1.5-mini",
 };
 
 // ---- Chunking ----
