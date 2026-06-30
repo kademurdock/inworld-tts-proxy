@@ -102,10 +102,10 @@ const CUSTOM_VOICE_MAP = {
 const VOICE_MAP = { ...OPENAI_ALIAS_MAP, ...CUSTOM_VOICE_MAP };
 
 const MODEL_MAP = {
-  "tts-1": "inworld-tts-1.5-max",
-  "tts-1-hd": "inworld-tts-1.5-max",
-  "gpt-4o-mini-tts": "inworld-tts-1.5-max",
-  "tts-1-mini": "inworld-tts-1.5-mini",
+  "tts-1": "inworld-tts-2",
+  "tts-1-hd": "inworld-tts-2",
+  "gpt-4o-mini-tts": "inworld-tts-2",
+  "tts-1-mini": "inworld-tts-2",
 };
 
 // ---- Chunking ----
@@ -545,7 +545,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   }
 
   const inworldVoice = VOICE_MAP[voice] || voice;
-  const inworldModel = MODEL_MAP[model] || "inworld-tts-1.5-max";
+  const inworldModel = MODEL_MAP[model] || "inworld-tts-2";
 
   // Strip web-search citation markers before speaking. The search-augmented
   // model embeds inline citation tokens (a private-use char U+E200-U+E20F
