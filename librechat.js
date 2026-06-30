@@ -462,4 +462,62 @@ router.get("/balances", auth, async (req, res) => {
   res.json(out);
 });
 
+
+// ---- /librechat/ask — proxy streaming agent call, returns {text} ----
+// Used by kade-ai-bridge (wholesome-acceptance project, different IP) to avoid
+// hitting kademurdock.com directly from a Railway IP that gets 403'd.
+async function lcAsk(agentId, messages) {
+  const body = { agentId, messages, conversationId: null, parentMessageId: null };
+  return paced(async () => {
+    if (!_token) await login();
+    const doFetch = (tok) => fetch(`${BASE}/api/ask/agents`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json", "User-Agent": UA },
+      body: JSON.stringify(body),
+    });
+    let r = await doFetch(_token);
+    if (r.status === 401) { _token = null; await login(); r = await doFetch(_token); }
+    if (r.status === 429 || r.status === 403) {
+      const t = await r.text();
+      const e = new Error(`anti-abuse/forbidden ${r.status}: ${String(t).slice(0, 120)}`);
+      e.status = 502; throw e;
+    }
+    if (!r.ok) {
+      const t = await r.text();
+      const e = new Error(`ask agents failed ${r.status}: ${String(t).slice(0, 200)}`);
+      e.status = r.status; throw e;
+    }
+    // Read SSE stream, accumulate final text token
+    let reply = "";
+    const dec = new TextDecoder();
+    let buf = "";
+    for await (const chunk of r.body) {
+      buf += dec.decode(chunk, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try { const d = JSON.parse(line.slice(6)); if (d.text) reply = d.text; } catch {}
+      }
+    }
+    if (!reply) throw new Error("empty reply from agent");
+    return reply;
+  });
+}
+
+// POST /librechat/ask  { agentId, messages[] } -> { text }
+router.post("/librechat/ask", auth, async (req, res) => {
+  const { agentId, messages } = req.body;
+  if (!agentId || !Array.isArray(messages)) {
+    return res.status(400).json({ error: "agentId and messages[] required" });
+  }
+  try {
+    const text = await lcAsk(agentId, messages);
+    res.json({ text });
+  } catch (err) {
+    const status = typeof err.status === "number" ? err.status : 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
 module.exports = router;
