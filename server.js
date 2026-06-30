@@ -519,6 +519,65 @@ function fixPronunciations(text) {
     .replace(/\bkade\b/gi, "Kadie");            // bare first name -> KAY-dee
 }
 
+// ── TTS-2 emotion/performance tags (LLM-authored, sentinel-wrapped) ──────────
+// Kiana (and later other agents, on Kade's go-ahead) write performance
+// directions wrapped in a private PUA sentinel so they NEVER show up in the
+// visible chat bubble, the copy buffer, or Conversation Mode captions -- the
+// LibreChat fork strips the sentinel at render time (kademurdock/LibreChat,
+// branch kade), but the CANONICAL SAVED MESSAGE keeps it, which is what lets
+// read-aloud, Conversation Mode, and the phone bridge all stay expressive
+// (they all read the saved message, same as today). Right here, just before
+// synth, we convert the sentinel back into the real square brackets TTS-2
+// actually interprets (see docs.inworld.ai/tts/capabilities/steering).
+// Distinct PUA pair from the reasoning-bubble marker (U+F001/U+F002, see
+// stripThinkingBlock above) so the two schemes can never collide.
+const STEERING_OPEN = "\uF003";
+const STEERING_CLOSE = "\uF004";
+
+// Inworld's fixed inline non-verbal vocabulary. These can appear anywhere,
+// repeatedly, inline -- unlike a leading direction they are NOT subject to
+// the "one instruction at the start of an utterance" rule, so they need no
+// carry-forward treatment in applySteeringTags below.
+const NONVERBAL_TAGS = new Set(["laugh", "breathe", "clear throat", "sigh", "cough", "yawn"]);
+
+// Convert sentinel-wrapped tags to real [bracket] steering for TTS-2, AND
+// carry a leading "direction" (anything that isn't a fixed non-verbal, e.g.
+// "[say playfully]" or "[speak through gritted teeth]") forward onto every
+// paragraph that doesn't already open with its own tag. This matters because
+// chunkText() below fires each paragraph-group at Inworld as its OWN
+// separate request/utterance for parallel synthesis -- without this, a long
+// multi-paragraph reply would only sound expressive on the first chunk, since
+// Inworld only honors a leading direction once, at an utterance's start.
+// Inline non-verbals need no such treatment; they stay exactly where written.
+function applySteeringTags(text) {
+  if (!text || text.indexOf(STEERING_OPEN) === -1) return text;
+
+  const tagRe = new RegExp(`${STEERING_OPEN}([\\s\\S]*?)${STEERING_CLOSE}`, "g");
+  // Pass 1: sentinel -> real brackets, everywhere in the text.
+  const converted = text.replace(tagRe, (_, raw) => `[${raw.trim()}]`);
+
+  // Pass 2: carry the most recent leading direction across paragraph breaks.
+  // chunkText() groups whole paragraphs into a chunk and only sub-splits a
+  // single paragraph that alone exceeds MAX_CHUNK_LEN, so aligning to
+  // paragraph boundaries here means virtually every resulting TTS chunk
+  // opens with a direction. (The rare case of one oversized paragraph with
+  // no blank line getting sentence-split mid-paragraph is a known, narrow
+  // limitation -- only its first sentence-group carries the tag.)
+  const bracketAtStart = /^\s*\[([^\]]+)\]/;
+  const parts = converted.split(/(\n\s*\n+)/); // odd indices are the blank-line separators themselves
+  let active = null;
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1 || !parts[i].trim()) continue; // separator or blank -- leave untouched
+    const opens = parts[i].match(bracketAtStart);
+    if (opens) {
+      if (!NONVERBAL_TAGS.has(opens[1].trim().toLowerCase())) active = opens[1].trim();
+      continue; // paragraph already opens with its own tag -- don't double up
+    }
+    if (active) parts[i] = `[${active}] ${parts[i]}`;
+  }
+  return parts.join("");
+}
+
 // ── CORS for browser-side voice conversation (F2 patch) ──────────────────────
 // Allows kademurdock.com PWA to call /v1/audio/speech directly from the browser
 // (the web/Skype-style voice mode). Restricted to our origin — not open CORS.
@@ -552,7 +611,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // followed by a "turn0search3"-style id) into its answer; these render as
   // source chips in the UI but TTS otherwise reads them aloud as gibberish
   // mid-sentence. Visible message text is untouched (this only cleans audio).
-  const speakText = fixPronunciations(stripCitationMarkers(stripThinkingBlock(input)));
+  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(input))));
   console.log(`[TTS] input len=${input.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
