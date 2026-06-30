@@ -574,4 +574,116 @@ router.post("/librechat/ask", auth, async (req, res) => {
   }
 });
 
+// ---- /librechat/ask-stream — SSE token stream for voice-stream.js ----
+// Same two-phase LibreChat call as lcAsk, but forwards each on_message_delta
+// token to the caller as an SSE event as it arrives.  voice-stream.js (Twilio
+// Media Streams path) consumes this to start synthesizing sentence 1 while the
+// rest of the reply is still generating — that's what cuts first-audio latency
+// from ~20-30s to ~2-3s.
+//
+// Uses the same paced() queue as lcAsk so we never hit the anti-abuse gate
+// with back-to-back rapid-fire LibreChat calls.  For Kade's low call volume
+// (one caller at a time) this is never a bottleneck.
+
+async function lcAskStream(agentId, messages, onToken) {
+  const userText = (messages[messages.length - 1] || {}).content || "";
+  const body = {
+    endpoint: "agents",
+    agentId,
+    agent_id: agentId,
+    text: userText,
+    messages,
+    conversationId: "new",
+    parentMessageId: "00000000-0000-0000-0000-000000000000",
+  };
+
+  return paced(async () => {
+    if (!_token) await login();
+
+    const authHeaders = (tok) => ({
+      Authorization: `Bearer ${tok}`,
+      "Content-Type": "application/json",
+      "User-Agent": UA,
+    });
+
+    const doStart = (tok) =>
+      fetch(`${BASE}/api/agents/chat`, {
+        method: "POST",
+        headers: authHeaders(tok),
+        body: JSON.stringify(body),
+      });
+
+    let r = await doStart(_token);
+    if (r.status === 401) { _token = null; await login(); r = await doStart(_token); }
+    if (r.status === 429 || r.status === 403) {
+      const t = await r.text();
+      const e = new Error(`anti-abuse/forbidden ${r.status}: ${String(t).slice(0, 120)}`);
+      e.status = 502; throw e;
+    }
+    if (!r.ok) {
+      const t = await r.text();
+      const e = new Error(`ask agents start failed ${r.status}: ${String(t).slice(0, 200)}`);
+      e.status = r.status; throw e;
+    }
+
+    const startData = await r.json();
+    const streamId = startData.streamId;
+    if (!streamId) throw new Error(`no streamId: ${JSON.stringify(startData)}`);
+
+    await new Promise((res) => setTimeout(res, 300));
+
+    const streamR = await fetch(`${BASE}/api/agents/chat/stream/${streamId}`, {
+      headers: { Authorization: `Bearer ${_token}`, "User-Agent": UA, Accept: "text/event-stream" },
+    });
+    if (!streamR.ok) {
+      const t = await streamR.text();
+      throw new Error(`stream subscribe failed ${streamR.status}: ${String(t).slice(0, 200)}`);
+    }
+
+    const dec = new TextDecoder();
+    let buf = "";
+    for await (const chunk of streamR.body) {
+      buf += dec.decode(chunk, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const d = JSON.parse(line.slice(6));
+          if (d.event === "on_message_delta" && Array.isArray(d.data?.delta?.content)) {
+            for (const part of d.data.delta.content) {
+              if (part.type === "text" && part.text) onToken(part.text);
+            }
+          }
+          if (d.final) return;
+        } catch {}
+      }
+    }
+  });
+}
+
+// POST /librechat/ask-stream  { agentId, messages[] } -> SSE { token } stream
+router.post("/librechat/ask-stream", auth, async (req, res) => {
+  const { agentId, messages } = req.body;
+  console.log("[lcAskStream] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array");
+  if (!agentId || !Array.isArray(messages)) {
+    return res.status(400).json({ error: "agentId and messages[] required" });
+  }
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+  try {
+    await lcAskStream(agentId, messages, (token) => {
+      try { res.write(`data: ${JSON.stringify({ token })}\n\n`); } catch {}
+    });
+    res.write("data: [DONE]\n\n");
+  } catch (err) {
+    console.error("[lcAskStream] error:", err.message);
+    try { res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`); } catch {}
+  }
+  res.end();
+});
+
+
 module.exports = router;

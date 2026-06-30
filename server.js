@@ -305,6 +305,50 @@ function buildSilence(ms, { sampleRate, numChannels, bitsPerSample }) {
   return Buffer.alloc(samples * numChannels * bytesPerSample, 0);
 }
 
+
+// ── μ-law 8kHz output for Twilio Media Streams (telephony=1 mode) ─────────────
+// The voice-stream.js bridge pulls /v1/audio/speech?telephony=1 to get raw
+// G.711 μ-law at 8kHz instead of WAV — that's the exact format Twilio's Media
+// Streams expects. We downsample Inworld's 24kHz PCM, then μ-law-encode it.
+
+// Simple averaging downsampler (24kHz PCM → 8kHz PCM, 16-bit LE)
+function downsamplePcm(pcmBuf, fromRate, toRate) {
+  if (fromRate === toRate) return pcmBuf;
+  const ratio = fromRate / toRate;
+  const outSamples = Math.floor(pcmBuf.length / 2 / ratio);
+  const out = Buffer.alloc(outSamples * 2);
+  for (let i = 0; i < outSamples; i++) {
+    const s0 = Math.floor(i * ratio);
+    const s1 = Math.min(Math.floor((i + 1) * ratio), pcmBuf.length / 2);
+    let sum = 0, n = 0;
+    for (let j = s0; j < s1; j++) { sum += pcmBuf.readInt16LE(j * 2); n++; }
+    out.writeInt16LE(n ? Math.round(sum / n) : 0, i * 2);
+  }
+  return out;
+}
+
+// ITU-T G.711 μ-law encoder (16-bit signed PCM → 8-bit μ-law byte)
+const MULAW_BIAS = 33;
+function encodeMulaw(s16) {
+  let s = s16;
+  const sign = (s >> 8) & 0x80;
+  if (sign) s = -s;
+  s += MULAW_BIAS;
+  if (s > 32767) s = 32767;
+  let exp = 7;
+  for (let mask = 0x4000; !(s & mask) && exp > 0; exp--, mask >>= 1) {}
+  const mantissa = (s >> (exp + 3)) & 0x0F;
+  return (~(sign | (exp << 4) | mantissa)) & 0xFF;
+}
+
+function pcm16ToMulaw(pcmBuf) {
+  const out = Buffer.alloc(pcmBuf.length >> 1);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = encodeMulaw(pcmBuf.readInt16LE(i * 2));
+  }
+  return out;
+}
+
 // Inworld enforces a hard account-wide cap of 10 concurrent TTS requests
 // ("maximum allowed number of concurrent TTS requests: 10 is reached", a 429
 // with code 8). Confirmed live June 28, 2026: a single ~7,200-char reply,
@@ -531,6 +575,15 @@ app.post("/v1/audio/speech", async (req, res) => {
     const header = buildWavHeader(combinedData.length, format);
     const finalAudio = Buffer.concat([header, combinedData]);
 
+    // Telephony mode: return raw μ-law 8kHz for Twilio Media Streams
+    if (req.query.telephony === "1") {
+      const wav = parseWav(finalAudio);
+      const pcm8k = downsamplePcm(wav.data, wav.sampleRate, 8000);
+      const mulaw = pcm16ToMulaw(pcm8k);
+      res.set("Content-Type", "audio/basic");
+      res.set("Content-Length", mulaw.length);
+      return res.send(mulaw);
+    }
     res.set("Content-Type", "audio/wav");
     res.set("Content-Length", finalAudio.length);
     res.send(finalAudio);
