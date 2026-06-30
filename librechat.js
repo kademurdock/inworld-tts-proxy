@@ -463,20 +463,40 @@ router.get("/balances", auth, async (req, res) => {
 });
 
 
-// ---- /librechat/ask — proxy streaming agent call, returns {text} ----
-// Used by kade-ai-bridge (wholesome-acceptance project, different IP) to avoid
-// hitting kademurdock.com directly from a Railway IP that gets 403'd.
+// ---- /librechat/ask — proxy agent call, returns {text} ----
+// LibreChat uses a two-phase model: POST /api/agents/chat returns {streamId}
+// immediately; then GET /api/agents/chat/stream/:streamId delivers SSE tokens.
 async function lcAsk(agentId, messages) {
-  const body = { endpoint: 'agents', agentId, agent_id: agentId, messages, conversationId: null, parentMessageId: null, text: (messages[messages.length - 1] || {}).content || '' };
+  const userText = (messages[messages.length - 1] || {}).content || "";
+  const body = {
+    endpoint: "agents",
+    agentId,
+    agent_id: agentId,
+    text: userText,
+    messages,
+    conversationId: "new",
+    parentMessageId: "00000000-0000-0000-0000-000000000000",
+  };
+
   return paced(async () => {
     if (!_token) await login();
-    const doFetch = (tok) => fetch(`${BASE}/api/agents/chat`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json", "User-Agent": UA },
-      body: JSON.stringify(body),
+
+    const authHeaders = (tok) => ({
+      Authorization: `Bearer ${tok}`,
+      "Content-Type": "application/json",
+      "User-Agent": UA,
     });
-    let r = await doFetch(_token);
-    if (r.status === 401) { _token = null; await login(); r = await doFetch(_token); }
+
+    // Phase 1: start the generation job
+    const doStart = (tok) =>
+      fetch(`${BASE}/api/agents/chat`, {
+        method: "POST",
+        headers: authHeaders(tok),
+        body: JSON.stringify(body),
+      });
+
+    let r = await doStart(_token);
+    if (r.status === 401) { _token = null; await login(); r = await doStart(_token); }
     if (r.status === 429 || r.status === 403) {
       const t = await r.text();
       const e = new Error(`anti-abuse/forbidden ${r.status}: ${String(t).slice(0, 120)}`);
@@ -484,22 +504,43 @@ async function lcAsk(agentId, messages) {
     }
     if (!r.ok) {
       const t = await r.text();
-      const e = new Error(`ask agents failed ${r.status}: ${String(t).slice(0, 200)}`);
+      const e = new Error(`ask agents start failed ${r.status}: ${String(t).slice(0, 200)}`);
       e.status = r.status; throw e;
     }
-    // Read SSE stream, accumulate final text token
+
+    const startData = await r.json();
+    const streamId = startData.streamId;
+    if (!streamId) throw new Error(`no streamId returned: ${JSON.stringify(startData)}`);
+
+    // Phase 2: subscribe to SSE stream (give job ~300ms to start)
+    await new Promise((res) => setTimeout(res, 300));
+
+    const streamR = await fetch(`${BASE}/api/agents/chat/stream/${streamId}`, {
+      headers: { Authorization: `Bearer ${_token}`, "User-Agent": UA, Accept: "text/event-stream" },
+    });
+    if (!streamR.ok) {
+      const t = await streamR.text();
+      throw new Error(`stream subscribe failed ${streamR.status}: ${String(t).slice(0, 200)}`);
+    }
+
+    // Read SSE: accumulate d.text (LibreChat sends full text-so-far in each chunk)
     let reply = "";
     const dec = new TextDecoder();
     let buf = "";
-    for await (const chunk of r.body) {
+    for await (const chunk of streamR.body) {
       buf += dec.decode(chunk, { stream: true });
       const lines = buf.split("\n");
       buf = lines.pop() ?? "";
       for (const line of lines) {
         if (!line.startsWith("data: ")) continue;
-        try { const d = JSON.parse(line.slice(6)); if (d.text) reply = d.text; } catch {}
+        try {
+          const d = JSON.parse(line.slice(6));
+          if (d.text) reply = d.text;
+          if (d.final) { buf = ""; break; }
+        } catch {}
       }
     }
+
     if (!reply) throw new Error("empty reply from agent");
     return reply;
   });
