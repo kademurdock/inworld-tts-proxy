@@ -209,4 +209,257 @@ router.get("/librechat/usage", auth, async (req, res) => {
   }
 });
 
+// ============================================================================
+// MEMORIES — /api/memories (LibreChat native per-user memory). Same anti-abuse
+// path as the agent routes (goes through lc()). Standing rule: anything that can
+// CHANGE about Kade/the project lives here, not in agent instructions — so Forge
+// needs read+write here to keep parity with the Cowork assistant.
+//
+// FOOTGUN: PATCH /api/memories/preferences does NOT edit a memory named
+// "preferences" — that exact path is hardcoded server-side as the memory on/off
+// toggle (body {memories:boolean}), evaluated before the /:key route. So we
+// refuse PATCH/DELETE on the literal key "preferences" and tell Forge to rename
+// or recreate under a different key instead.
+// ============================================================================
+const MEM_RESERVED = "preferences";
+
+// GET /librechat/memories -> list all of Kade's memory entries (+ usage)
+router.get("/librechat/memories", auth, async (req, res) => {
+  try {
+    const d = await lc("GET", "/api/memories");
+    const memories = (d.memories || []).map((m) => ({
+      key: m.key,
+      value: m.value,
+      tokenCount: m.tokenCount,
+      updated_at: m.updated_at,
+    }));
+    res.json({
+      count: memories.length,
+      totalTokens: d.totalTokens,
+      tokenLimit: d.tokenLimit,
+      usagePercentage: d.usagePercentage,
+      memories,
+    });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// POST /librechat/memory -> create a NEW memory. body = { key, value }
+router.post("/librechat/memory", auth, async (req, res) => {
+  const { key, value } = req.body || {};
+  if (typeof key !== "string" || !key.trim() || typeof value !== "string" || !value.trim()) {
+    return res.status(400).json({ error: "key and value (non-empty strings) are required" });
+  }
+  try {
+    res.json(await lc("POST", "/api/memories", { key: key.trim(), value }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// PATCH /librechat/memory -> update an existing memory's value (and optionally
+// rename it). body = { key, value, newKey? }
+router.patch("/librechat/memory", auth, async (req, res) => {
+  const { key, value, newKey } = req.body || {};
+  if (typeof key !== "string" || !key.trim()) {
+    return res.status(400).json({ error: "key (the existing memory key) is required" });
+  }
+  if (typeof value !== "string" || !value.trim()) {
+    return res.status(400).json({ error: "value (non-empty string) is required" });
+  }
+  if (key.trim() === MEM_RESERVED) {
+    return res.status(409).json({
+      error:
+        "Cannot PATCH the 'preferences' key: that path is hijacked server-side as the memory on/off toggle. " +
+        "To change its content, create a new key (POST /librechat/memory) and delete this one, or use a different key name.",
+    });
+  }
+  const body = { value };
+  if (typeof newKey === "string" && newKey.trim()) body.key = newKey.trim();
+  try {
+    res.json(await lc("PATCH", `/api/memories/${encodeURIComponent(key.trim())}`, body));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// POST /librechat/memory/delete -> delete a memory. body = { key }
+router.post("/librechat/memory/delete", auth, async (req, res) => {
+  const { key } = req.body || {};
+  if (typeof key !== "string" || !key.trim()) {
+    return res.status(400).json({ error: "key is required" });
+  }
+  try {
+    res.json(await lc("DELETE", `/api/memories/${encodeURIComponent(key.trim())}`));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// ============================================================================
+// TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
+// and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
+// queue and use their own creds. Read/registration only; NO outbound calls, NO
+// money movement (Kade's standing rule).
+// ============================================================================
+const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+const BRIDGE_BASE = process.env.BRIDGE_BASE || "https://kade-ai-bridge-production.up.railway.app";
+const BRIDGE_SECRET = process.env.BRIDGE_SECRET;
+
+function twilioAuthHeader() {
+  return "Basic " + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString("base64");
+}
+async function twilio(url) {
+  if (!TWILIO_SID || !TWILIO_TOKEN) {
+    const e = new Error("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN not set on the proxy");
+    e.status = 500;
+    throw e;
+  }
+  const r = await fetch(url, { headers: { Authorization: twilioAuthHeader(), "User-Agent": UA } });
+  const text = await r.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (_) {
+    data = text;
+  }
+  if (!r.ok) {
+    const e = new Error(typeof data === "string" ? data.slice(0, 200) : JSON.stringify(data).slice(0, 200));
+    e.status = r.status;
+    throw e;
+  }
+  return data;
+}
+
+// GET /twilio/balance -> current Twilio account balance
+router.get("/twilio/balance", auth, async (req, res) => {
+  try {
+    const d = await twilio(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Balance.json`);
+    res.json({ balance: d.balance, currency: d.currency });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// GET /twilio/verification?sid=HH... -> toll-free verification status.
+// Defaults to the known toll-free verification SID if none passed.
+router.get("/twilio/verification", auth, async (req, res) => {
+  const sid = req.query.sid || process.env.TOLLFREE_VERIFICATION_SID;
+  if (!sid) return res.status(400).json({ error: "query param sid (HH...) is required" });
+  try {
+    const d = await twilio(`https://messaging.twilio.com/v1/Tollfree/Verifications/${encodeURIComponent(sid)}`);
+    res.json({
+      sid: d.sid,
+      status: d.status,
+      business_name: d.business_name,
+      phone_number_sid: d.tollfree_phone_number_sid,
+      rejection_reason: d.rejection_reason || null,
+      date_updated: d.date_updated,
+    });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// GET /twilio/usage -> Twilio usage records (today)
+router.get("/twilio/usage", auth, async (req, res) => {
+  try {
+    const d = await twilio(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Usage/Records/Today.json?PageSize=50`,
+    );
+    const records = (d.usage_records || []).map((u) => ({
+      category: u.category,
+      description: u.description,
+      count: u.count,
+      usage: u.usage,
+      usage_unit: u.usage_unit,
+      price: u.price,
+      price_unit: u.price_unit,
+    }));
+    res.json({ count: records.length, records });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// GET /bridge/numbers -> list phone numbers registered to the SMS/voice bridge
+router.get("/bridge/numbers", auth, async (req, res) => {
+  if (!BRIDGE_SECRET) return res.status(500).json({ error: "BRIDGE_SECRET not set on the proxy" });
+  try {
+    const r = await fetch(`${BRIDGE_BASE}/users?secret=${encodeURIComponent(BRIDGE_SECRET)}`, {
+      headers: { "User-Agent": UA },
+    });
+    const text = await r.text();
+    if (!r.ok) return res.status(r.status).json({ error: text.slice(0, 200) });
+    res.json(text ? JSON.parse(text) : {});
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// POST /bridge/register -> map a phone number to an agent.
+// body = { phone, name, agentId? }. (No money moves; just a JSON mapping.)
+router.post("/bridge/register", auth, async (req, res) => {
+  if (!BRIDGE_SECRET) return res.status(500).json({ error: "BRIDGE_SECRET not set on the proxy" });
+  const { phone, name, agentId } = req.body || {};
+  if (!phone || !name) return res.status(400).json({ error: "phone and name are required" });
+  try {
+    const r = await fetch(`${BRIDGE_BASE}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": UA },
+      body: JSON.stringify({ phone, name, agentId, secret: BRIDGE_SECRET }),
+    });
+    const text = await r.text();
+    if (!r.ok) return res.status(r.status).json({ error: text.slice(0, 200) });
+    res.json(text ? JSON.parse(text) : { ok: true });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// ============================================================================
+// IMAGE + SEARCH BALANCES. Flux/BFL has a real credits API; Twilio balance is
+// above. Tavily has no public balance endpoint, so search usage comes from the
+// in-app tracker (/api/kade/usage). One roll-up route for convenience.
+// ============================================================================
+const BFL_KEY = process.env.BFL_API_KEY || process.env.FLUX_API_KEY;
+
+async function fluxCredits() {
+  if (!BFL_KEY) return { error: "BFL_API_KEY / FLUX_API_KEY not set" };
+  try {
+    const r = await fetch("https://api.bfl.ai/v1/credits", {
+      headers: { "x-key": BFL_KEY, "User-Agent": UA },
+    });
+    const text = await r.text();
+    if (!r.ok) return { error: `bfl ${r.status}: ${text.slice(0, 120)}` };
+    const j = JSON.parse(text);
+    return { credits: j.credits ?? j.balance ?? j };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+// GET /balances -> Flux image credits + Twilio balance in one shot.
+router.get("/balances", auth, async (req, res) => {
+  const out = { flux: await fluxCredits(), twilio: null, search: null };
+  try {
+    const t = await twilio(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Balance.json`);
+    out.twilio = { balance: t.balance, currency: t.currency };
+  } catch (e) {
+    out.twilio = { error: e.message };
+  }
+  try {
+    const u = await lc("GET", "/api/kade/usage?days=30");
+    out.search = {
+      note: "Tavily has no public balance API; this is in-app search usage (last 30d).",
+      usage: u.perService ? u.perService.tavily || u.perService.search || null : null,
+    };
+  } catch (e) {
+    out.search = { error: e.message };
+  }
+  res.json(out);
+});
+
 module.exports = router;
