@@ -627,6 +627,28 @@ router.post("/librechat/ask", auth, async (req, res) => {
 // with back-to-back rapid-fire LibreChat calls.  For Kade's low call volume
 // (one caller at a time) this is never a bottleneck.
 
+// Text extraction helpers -- ported from the fork's ConversationMode.tsx
+// (client/src/components/Chat/ConversationMode.tsx), which is the proven-live
+// parser for this exact SSE stream shape.
+function partToText(pp) {
+  if (pp == null) return "";
+  if (typeof pp === "string") return pp;
+  if (typeof pp.text === "string") return pp.text;
+  if (pp.text && typeof pp.text.value === "string") return pp.text.value;
+  return "";
+}
+function contentToText(content) {
+  if (content == null) return "";
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) return content.map(partToText).join("");
+  return partToText(content);
+}
+function messageText(msg) {
+  if (!msg) return "";
+  if (typeof msg.text === "string" && msg.text) return msg.text;
+  return contentToText(msg.content);
+}
+
 async function lcAskStream(agentId, messages, onToken) {
   const userText = (messages[messages.length - 1] || {}).content || "";
   const body = {
@@ -684,6 +706,8 @@ async function lcAskStream(agentId, messages, onToken) {
 
     const dec = new TextDecoder();
     let buf = "";
+    let acc = ""; // everything already forwarded to the caller
+    const emit = (t) => { if (t) { acc += t; onToken(t); } };
     for await (const chunk of streamR.body) {
       buf += dec.decode(chunk, { stream: true });
       const lines = buf.split("\n");
@@ -692,12 +716,24 @@ async function lcAskStream(agentId, messages, onToken) {
         if (!line.startsWith("data: ")) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.event === "on_message_delta" && Array.isArray(d.data?.delta?.content)) {
-            for (const part of d.data.delta.content) {
-              if (part.type === "text" && part.text) onToken(part.text);
-            }
+          if (d.final != null) {
+            // FIX (July 1 2026): tool-using turns (web_search etc.) deliver
+            // their text in delta shapes the old on_message_delta-only parser
+            // missed entirely -- "get me the weather" was pure SILENCE on the
+            // phone while plain turns worked. The fork's ConversationMode hit
+            // the same problem and reconciles against the final event's full
+            // responseMessage; same fix here: speak whatever the deltas
+            // didn't already deliver.
+            const deltasSpoke = acc.length;
+            const full = messageText(d.responseMessage) || (typeof d.text === "string" ? d.text : "");
+            if (full && full.length > acc.length && full.startsWith(acc)) emit(full.slice(acc.length));
+            else if (full && acc === "") emit(full);
+            console.log(`[lcAskStream] final: ${acc.length} chars total, ${deltasSpoke} via deltas${deltasSpoke ? "" : " (final-event fallback carried the reply)"}`);
+            return;
           }
-          if (d.final) return;
+          if (d.event === "on_reasoning_delta") continue;
+          const deltaContent = d?.data?.delta?.content ?? d?.delta?.content;
+          if (deltaContent != null) { emit(contentToText(deltaContent)); continue; }
         } catch {}
       }
     }
@@ -715,6 +751,11 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
+  // Keepalive: a tool-using turn (web search etc.) can produce long silent
+  // gaps while LibreChat runs the tool. The bridge treats 25s of socket
+  // silence as a hang, so tick a comment line every 10s -- SSE parsers
+  // ignore it, but it keeps the socket audibly alive.
+  const keepalive = setInterval(() => { try { res.write(":ka\n\n"); } catch {} }, 10000);
   try {
     await lcAskStream(agentId, messages, (token) => {
       try { res.write(`data: ${JSON.stringify({ token })}\n\n`); } catch {}
@@ -724,6 +765,7 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
     console.error("[lcAskStream] error:", err.message);
     try { res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`); } catch {}
   }
+  clearInterval(keepalive);
   res.end();
 });
 
