@@ -557,7 +557,7 @@ function downsamplePcm(pcmBuf, fromRate, toRate) {
 // abrupt step to/from silence is heard as a snap/click on the phone line --
 // this ramps the edges so utterance boundaries are inaudible. Added July 1
 // 2026 alongside the bridge's mu-law padding fix (the other click source).
-function fadePcmEdges(pcmBuf, fadeSamples = 40) {
+function fadePcmEdges(pcmBuf, fadeSamples = 96) {  // 96 = 12ms @ 8kHz (5ms proved too short July 1)
   const total = pcmBuf.length >> 1;
   const n = Math.min(fadeSamples, total >> 1);
   for (let i = 0; i < n; i++) {
@@ -1101,6 +1101,9 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 </script>
 </body>
 </html>`;
+
+app.get("/healthz", (_req, res) =>
+  res.json({ ok: true, rev: (process.env.RAILWAY_GIT_COMMIT_SHA || "unknown").slice(0, 7) }));
 
 app.get(["/voices", "/voice-library"], (req, res) => {
   // (b) Float Kade's custom-made/specialty voices to the top, keeping the existing
