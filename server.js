@@ -642,8 +642,20 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Hard cap on a single Inworld request. Without this, a hung upstream call
+// (a) never resolves, so the caller waits forever (the July 1 phone-greeting
+// hang: request logged, no response, no error -- and the bridge rang forever),
+// and (b) permanently eats one of the limiter's 6 slots, quietly shrinking
+// capacity until the whole proxy starves. Timeouts are retryable below.
+const INWORLD_TIMEOUT_MS = 20000;
+
 async function synthesizeChunkOnce(text, voiceId, modelId) {
-  const response = await fetch("https://api.inworld.ai/tts/v1/voice", {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch("https://api.inworld.ai/tts/v1/voice", {
+    signal: ac.signal,
     method: "POST",
     headers: {
       Authorization: `Basic ${INWORLD_API_KEY}`,
@@ -664,6 +676,17 @@ async function synthesizeChunkOnce(text, voiceId, modelId) {
       deliveryMode: TTS_DELIVERY_MODE,
     }),
   });
+
+  } catch (err) {
+    if (err.name === "AbortError") {
+      const e = new Error(`Inworld request timed out after ${INWORLD_TIMEOUT_MS}ms`);
+      e.isTimeout = true;
+      throw e;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -690,7 +713,9 @@ async function synthesizeChunk(text, voiceId, modelId) {
         return await synthesizeChunkOnce(text, voiceId, modelId);
       } catch (err) {
         lastErr = err;
-        if (!err.isRateLimit || attempt === maxAttempts) throw err;
+        const retryable = err.isRateLimit || err.isTimeout;
+        if (!retryable || attempt === maxAttempts) throw err;
+        console.warn(`[TTS] chunk attempt ${attempt}/${maxAttempts} failed (${err.message}) -- retrying`);
         // Backoff with a little jitter so retries from a batch of chunks
         // don't all collide on the same retry tick.
         await sleep(300 * attempt + Math.random() * 200);
@@ -879,9 +904,11 @@ app.post("/v1/audio/speech", async (req, res) => {
 
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
+    const tSynth = Date.now();
     const wavBuffers = await Promise.all(
       chunks.map((chunk) => synthesizeChunk(chunk, inworldVoice, inworldModel))
     );
+    console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
 
     const parsed = wavBuffers.map(parseWav);
     const format = {
@@ -907,6 +934,7 @@ app.post("/v1/audio/speech", async (req, res) => {
       const wav = parseWav(finalAudio);
       const pcm8k = fadePcmEdges(downsamplePcm(wav.data, wav.sampleRate, 8000));
       const mulaw = pcm16ToMulaw(pcm8k);
+      console.log(`[TTS] telephony out: ${mulaw.length} bytes mulaw from ${wav.sampleRate}Hz source`);
       res.set("Content-Type", "audio/basic");
       res.set("Content-Length", mulaw.length);
       return res.send(mulaw);
