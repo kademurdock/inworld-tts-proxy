@@ -17,6 +17,15 @@ app.use(require("./librechat"));
 const PORT = process.env.PORT || 3000;
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
+// Voice performance tuning for inworld-tts-2. Note: this model IGNORES the
+// `temperature` field entirely (per Inworld's own API docs -- "Ignored on
+// inworld-tts-2. Use deliveryMode instead."), so deliveryMode is the real
+// emotional-range knob here, not temperature. speakingRate is separate --
+// pure pacing, [0.5, 1.5], 1.0 = the voice's own native speed.
+// Both env-overridable so they can be re-tuned without a code change.
+const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "CREATIVE";
+const TTS_SPEAKING_RATE = parseFloat(process.env.TTS_SPEAKING_RATE || "1.1");
+
 const OPENAI_ALIAS_MAP = {
   alloy: "Sarah",
   echo: "Timothy",
@@ -414,7 +423,12 @@ async function synthesizeChunkOnce(text, voiceId, modelId) {
       audioConfig: {
         audioEncoding: "WAV",
         sampleRateHertz: 24000,
+        speakingRate: TTS_SPEAKING_RATE,
       },
+      // Only takes effect on inworld-tts-2 (which is the only model this
+      // proxy ever actually requests -- see MODEL_MAP). CREATIVE = "optimizes
+      // for increased emotional range and variation" per Inworld's docs.
+      deliveryMode: TTS_DELIVERY_MODE,
     }),
   });
 
