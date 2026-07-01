@@ -108,7 +108,223 @@ const CUSTOM_VOICE_MAP = {
   "Zadiana": "default-e-m11vgtr9l-m7afw4kmnw__zadiana",
 };
 
-const VOICE_MAP = { ...OPENAI_ALIAS_MAP, ...CUSTOM_VOICE_MAP };
+const NUMBERED_VOICE_ALIASES = {
+  "Voice 1": "Abby",
+  "Voice 2": "Alaric",
+  "Voice 3": "Alex",
+  "Voice 4": "Ashley",
+  "Voice 5": "Avery",
+  "Voice 6": "Banjo",
+  "Voice 7": "Beatrice",
+  "Voice 8": "Bianca",
+  "Voice 9": "Blake",
+  "Voice 10": "Brandon",
+  "Voice 11": "Brian",
+  "Voice 12": "Brick",
+  "Voice 13": "Callum",
+  "Voice 14": "Carter",
+  "Voice 15": "Cedric",
+  "Voice 16": "Celeste",
+  "Voice 17": "Chip",
+  "Voice 18": "Chloe",
+  "Voice 19": "Claire",
+  "Voice 20": "Clive",
+  "Voice 21": "Conrad",
+  "Voice 22": "Cooper",
+  "Voice 23": "Cordelia",
+  "Voice 24": "Craig",
+  "Voice 25": "Damon",
+  "Voice 26": "Darlene",
+  "Voice 27": "Deborah",
+  "Voice 28": "Dennis",
+  "Voice 29": "Derek",
+  "Voice 30": "Dominus",
+  "Voice 31": "Duncan",
+  "Voice 32": "Edward",
+  "Voice 33": "Eldrin",
+  "Voice 34": "Eleanor",
+  "Voice 35": "Elizabeth",
+  "Voice 36": "Elliot",
+  "Voice 37": "Ethan",
+  "Voice 38": "Evan",
+  "Voice 39": "Evelyn",
+  "Voice 40": "Felix",
+  "Voice 41": "Freddie",
+  "Voice 42": "Gareth",
+  "Voice 43": "Graham",
+  "Voice 44": "Grant",
+  "Voice 45": "Hades",
+  "Voice 46": "Hamish",
+  "Voice 47": "Hank",
+  "Voice 48": "Indi",
+  "Voice 49": "Jake",
+  "Voice 50": "James",
+  "Voice 51": "Jarrah",
+  "Voice 52": "Jason",
+  "Voice 53": "Jessica",
+  "Voice 54": "Jonah",
+  "Voice 55": "Joy",
+  "Voice 56": "Julia",
+  "Voice 57": "Kayla",
+  "Voice 58": "Kelsey",
+  "Voice 59": "Lauren",
+  "Voice 60": "Levi",
+  "Voice 61": "Liam",
+  "Voice 62": "Loretta",
+  "Voice 63": "Lucian",
+  "Voice 64": "Luna",
+  "Voice 65": "Malcolm",
+  "Voice 66": "Marcus",
+  "Voice 67": "Mark",
+  "Voice 68": "Marlene",
+  "Voice 69": "Matilda",
+  "Voice 70": "Mia",
+  "Voice 71": "Miranda",
+  "Voice 72": "Morgana",
+  "Voice 73": "Mortimer",
+  "Voice 74": "Naomi",
+  "Voice 75": "Nate",
+  "Voice 76": "Oliver",
+  "Voice 77": "Olivia",
+  "Voice 78": "Pippa",
+  "Voice 79": "Pixie",
+  "Voice 80": "Reed",
+  "Voice 81": "Riley",
+  "Voice 82": "Ronald",
+  "Voice 83": "Rosalind",
+  "Voice 84": "Rupert",
+  "Voice 85": "Sarah",
+  "Voice 86": "Sebastian",
+  "Voice 87": "Selene",
+  "Voice 88": "Serena",
+  "Voice 89": "Serene",
+  "Voice 90": "Shaun",
+  "Voice 91": "Simon",
+  "Voice 92": "Snik",
+  "Voice 93": "Sophie",
+  "Voice 94": "Tahlia",
+  "Voice 95": "Tessa",
+  "Voice 96": "Theodore",
+  "Voice 97": "Timothy",
+  "Voice 98": "Trevor",
+  "Voice 99": "Tristan",
+  "Voice 100": "Tyler",
+  "Voice 101": "Veronica",
+  "Voice 102": "Victor",
+  "Voice 103": "Victoria",
+  "Voice 104": "Vinny",
+  "Voice 105": "Wendy",
+  "Voice 106": "Winifred",
+  "Voice 107": "Zadie",
+  "Voice 108": "default-e-m11vgtr9l-m7afw4kmnw__amy",
+  "Voice 109": "default-e-m11vgtr9l-m7afw4kmnw__antique_guy",
+  "Voice 110": "default-e-m11vgtr9l-m7afw4kmnw__bawse",
+  "Voice 111": "default-e-m11vgtr9l-m7afw4kmnw__biker_station_voice",
+  "Voice 112": "default-e-m11vgtr9l-m7afw4kmnw__black_child_reading",
+  "Voice 113": "default-e-m11vgtr9l-m7afw4kmnw__black_female_podcaster1",
+  "Voice 114": "default-e-m11vgtr9l-m7afw4kmnw__black_female_podcaster2",
+  "Voice 115": "default-e-m11vgtr9l-m7afw4kmnw__boring_guy_recording",
+  "Voice 116": "default-e-m11vgtr9l-m7afw4kmnw__carolyn",
+  "Voice 117": "default-e-m11vgtr9l-m7afw4kmnw__child_reporter",
+  "Voice 118": "default-e-m11vgtr9l-m7afw4kmnw__christa",
+  "Voice 119": "default-e-m11vgtr9l-m7afw4kmnw__colby",
+  "Voice 120": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-7d768c00",
+  "Voice 121": "default-e-m11vgtr9l-m7afw4kmnw__conversia_girl",
+  "Voice 122": "default-e-m11vgtr9l-m7afw4kmnw__crying_woman1",
+  "Voice 123": "default-e-m11vgtr9l-m7afw4kmnw__cutie_child",
+  "Voice 124": "default-e-m11vgtr9l-m7afw4kmnw__death_metal_devil",
+  "Voice 125": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-490b0c53",
+  "Voice 126": "default-e-m11vgtr9l-m7afw4kmnw__ducky_quackster",
+  "Voice 127": "default-e-m11vgtr9l-m7afw4kmnw__fara",
+  "Voice 128": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-4c9f3a1e",
+  "Voice 129": "default-e-m11vgtr9l-m7afw4kmnw__franny_the_nanny",
+  "Voice 130": "default-e-m11vgtr9l-m7afw4kmnw__fucia_black_young_adult_or_teen",
+  "Voice 131": "default-e-m11vgtr9l-m7afw4kmnw__gracie_child",
+  "Voice 132": "default-e-m11vgtr9l-m7afw4kmnw__hannah",
+  "Voice 133": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-770cd001",
+  "Voice 134": "default-e-m11vgtr9l-m7afw4kmnw__houston_stone",
+  "Voice 135": "default-e-m11vgtr9l-m7afw4kmnw__jerrimiah",
+  "Voice 136": "default-e-m11vgtr9l-m7afw4kmnw__junior_cute_child",
+  "Voice 137": "default-e-m11vgtr9l-m7afw4kmnw__kade_ten_years_old",
+  "Voice 138": "default-e-m11vgtr9l-m7afw4kmnw__kiana_the_commedian",
+  "Voice 139": "default-e-m11vgtr9l-m7afw4kmnw__lannie",
+  "Voice 140": "default-e-m11vgtr9l-m7afw4kmnw__local_southern_man1",
+  "Voice 141": "default-e-m11vgtr9l-m7afw4kmnw__local_southern_man_2",
+  "Voice 142": "default-e-m11vgtr9l-m7afw4kmnw__male_doing_taped_interview",
+  "Voice 143": "default-e-m11vgtr9l-m7afw4kmnw__mazy_podcaster_female",
+  "Voice 144": "default-e-m11vgtr9l-m7afw4kmnw__megan_female_teen",
+  "Voice 145": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-d0d9f95c",
+  "Voice 146": "default-e-m11vgtr9l-m7afw4kmnw__nervous_female_driver",
+  "Voice 147": "default-e-m11vgtr9l-m7afw4kmnw__old_guy_speech",
+  "Voice 148": "default-e-m11vgtr9l-m7afw4kmnw__preacher",
+  "Voice 149": "default-e-m11vgtr9l-m7afw4kmnw__preschool_show_host_female",
+  "Voice 150": "default-e-m11vgtr9l-m7afw4kmnw__pukin_reporter",
+  "Voice 151": "default-e-m11vgtr9l-m7afw4kmnw__quiet_guy",
+  "Voice 152": "default-e-m11vgtr9l-m7afw4kmnw__reanne",
+  "Voice 153": "default-e-m11vgtr9l-m7afw4kmnw__retro_strict_teacher_female",
+  "Voice 154": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-3ef0834f",
+  "Voice 155": "default-e-m11vgtr9l-m7afw4kmnw__ronda_snotty_sounding_child",
+  "Voice 156": "default-e-m11vgtr9l-m7afw4kmnw__sadie",
+  "Voice 157": "default-e-m11vgtr9l-m7afw4kmnw__sagey_child",
+  "Voice 158": "default-e-m11vgtr9l-m7afw4kmnw__scarla_female_child_commercial_narrator",
+  "Voice 159": "default-e-m11vgtr9l-m7afw4kmnw__scary_female_narrator",
+  "Voice 160": "default-e-m11vgtr9l-m7afw4kmnw__shocked_stephen",
+  "Voice 161": "default-e-m11vgtr9l-m7afw4kmnw__shy_friendly_child",
+  "Voice 162": "default-e-m11vgtr9l-m7afw4kmnw__southern_man_4_with_speech_delay",
+  "Voice 163": "default-e-m11vgtr9l-m7afw4kmnw__southern_stranger_danger_dude",
+  "Voice 164": "default-e-m11vgtr9l-m7afw4kmnw__southern_used_car_guy",
+  "Voice 165": "default-e-m11vgtr9l-m7afw4kmnw__stiff_narrator_male",
+  "Voice 166": "default-e-m11vgtr9l-m7afw4kmnw__super_southern_senior_sweety",
+  "Voice 167": "default-e-m11vgtr9l-m7afw4kmnw__taped_antique_female",
+  "Voice 168": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-d8af8cf0",
+  "Voice 169": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-0df70f81",
+  "Voice 170": "default-e-m11vgtr9l-m7afw4kmnw__teen_reporter_female",
+  "Voice 171": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-ce8aef66",
+  "Voice 172": "default-e-m11vgtr9l-m7afw4kmnw__tom_girl",
+  "Voice 173": "default-e-m11vgtr9l-m7afw4kmnw__trevor_male_kid",
+  "Voice 174": "default-e-m11vgtr9l-m7afw4kmnw__zadia",
+  "Voice 175": "default-e-m11vgtr9l-m7afw4kmnw__zadiana",
+  "Voice 176": "Aditya",
+  "Voice 177": "Amara",
+  "Voice 178": "Amina",
+  "Voice 179": "Andoy",
+  "Voice 180": "Anjali",
+  "Voice 181": "Arjun",
+  "Voice 182": "Boonleng",
+  "Voice 183": "Chioma",
+  "Voice 184": "Dalisay",
+  "Voice 185": "Dhruv",
+  "Voice 186": "Emeka",
+  "Voice 187": "Emil",
+  "Voice 188": "Folake",
+  "Voice 189": "Hana",
+  "Voice 190": "Huiling",
+  "Voice 191": "Ishaan",
+  "Voice 192": "Junhao",
+  "Voice 193": "Kabir",
+  "Voice 194": "Kenji",
+  "Voice 195": "Liwa",
+  "Voice 196": "Maricel",
+  "Voice 197": "Nadia",
+  "Voice 198": "Nikhil",
+  "Voice 199": "Priya",
+  "Voice 200": "Ren",
+  "Voice 201": "Saanvi",
+  "Voice 202": "Shu",
+  "Voice 203": "Tala",
+  "Voice 204": "Tunde",
+  "Voice 205": "Vikram",
+  "Voice 206": "Wei",
+  "Voice 207": "Yash",
+  "Voice 208": "Zherong",
+  "Voice 209": "default-e-m11vgtr9l-m7afw4kmnw__birta",
+  "Voice 210": "default-e-m11vgtr9l-m7afw4kmnw__sharma",
+};
+// NUMBERED_VOICE_ALIASES: "Voice N" labels -> the exact same real Inworld voice IDs
+// the old friendly names pointed to (2026-07-01 numbered-voice-list rename). Additive:
+// OPENAI_ALIAS_MAP and CUSTOM_VOICE_MAP stay intact so nothing that already resolved
+// (including anyone's saved preference for an old name) stops working.
+const VOICE_MAP = { ...OPENAI_ALIAS_MAP, ...CUSTOM_VOICE_MAP, ...NUMBERED_VOICE_ALIASES };
 
 const MODEL_MAP = {
   "tts-1": "inworld-tts-2",
@@ -693,8 +909,13 @@ app.post("/v1/audio/speech", async (req, res) => {
 // (same origin, so no CORS needed) to generate a short sample per voice on demand.
 // NOTE: VOICE_LIST mirrors the `voices:` list in kademurdock/librechat.yaml (what
 // users can pick in the UI). If that list changes, update this array too.
-const VOICE_LIST = ["alloy", "echo", "fable", "onyx", "nova", "shimmer", "Abby", "Alaric", "Alex", "Ashley", "Avery", "Banjo", "Beatrice", "Bianca", "Blake", "Brandon", "Brian", "Brick", "Callum", "Carter", "Cedric", "Celeste", "Chip", "Chloe", "Claire", "Clive", "Conrad", "Cooper", "Cordelia", "Craig", "Damon", "Darlene", "Deborah", "Dennis", "Derek", "Dominus", "Duncan", "Edward", "Eldrin", "Eleanor", "Elizabeth", "Elliot", "Ethan", "Evan", "Evelyn", "Felix", "Freddie", "Gareth", "Graham", "Grant", "Hades", "Hamish", "Hank", "Indi", "Jake", "James", "Jarrah", "Jason", "Jessica", "Jonah", "Joy", "Julia", "Kayla", "Kelsey", "Lauren", "Levi", "Liam", "Loretta", "Lucian", "Luna", "Malcolm", "Marcus", "Mark", "Marlene", "Matilda", "Mia", "Miranda", "Morgana", "Mortimer", "Naomi", "Nate", "Oliver", "Olivia", "Pippa", "Pixie", "Reed", "Riley", "Ronald", "Rosalind", "Rupert", "Sarah", "Sebastian", "Selene", "Serena", "Serene", "Shaun", "Simon", "Snik", "Sophie", "Tahlia", "Tessa", "Theodore", "Timothy", "Trevor", "Tristan", "Tyler", "Veronica", "Victor", "Victoria", "Vinny", "Wendy", "Winifred", "Zadie", "Amy", "Vintage Announcer", "Boss", "Biker Radio", "Young Reader", "Podcaster 1", "Podcaster 2", "Deadpan Narrator", "Carolyn", "Kid Reporter", "Christa", "Colby", "Comedian", "Conversational (Female)", "Crying (Female)", "Cutie (Child)", "Death Metal", "DJ Velvet", "Ducky", "Fara", "R&B DJ (Female) 1", "Nanny Franny", "Fucia", "Gracie (Child)", "Hannah", "Honey", "Houston Stone", "Jerrimiah", "Junior (Child)", "Kade (Kid)", "Kiana (Comedian)", "Lannie", "Southern Local (Male) 1", "Southern Local (Male) 2", "Interview Tape (Male)", "Mazy (Podcaster)", "Megan (Teen)", "Misty", "Nervous Driver (Female)", "Elder Speech (Male)", "Preacher", "Kids' Show Host (Female)", "Queasy Reporter", "Quiet (Male)", "Reanne", "Strict Teacher (Retro)", "R&B DJ (Female) 2", "Ronda (Child)", "Sadie", "Sagey (Child)", "Scarla (Commercial Narrator)", "Scary Narrator (Female)", "Stephen (Shocked)", "Shy & Friendly (Child)", "Southern (Male) 4", "Southern Guy", "Used Car Salesman (Southern)", "Stiff Narrator (Male)", "Sweet Southern Senior", "Antique Tape (Female)", "Tasha Wexler (Reporter) 1", "Tasha Wexler (Reporter) 2", "Teen Reporter (Female)", "Tiffany Tinseltown (Intern)", "Tomboy", "Trevor (Kid)", "Zadia", "Zadiana", "Aditya", "Amara", "Amina", "Andoy", "Anjali", "Arjun", "Boonleng", "Chioma", "Dalisay", "Dhruv", "Emeka", "Emil", "Folake", "Hana", "Huiling", "Ishaan", "Junhao", "Kabir", "Kenji", "Liwa", "Maricel", "Nadia", "Nikhil", "Priya", "Ren", "Saanvi", "Shu", "Tala", "Tunde", "Vikram", "Wei", "Yash", "Zherong", "Birta", "Sharma"];
-const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
+// 2026-07-01: renamed to plain numbered labels ("Voice 1".. "Voice 210") per Kade's
+// request -- same voices, same order, just no descriptive names in the picker anymore.
+// The old OpenAI-style aliases (alloy/echo/fable/onyx/nova/shimmer) are gone from this
+// display list entirely now -- OPENAI_ALIAS_MAP still resolves them for any internal
+// LibreChat calls that hardcode those names, they just never show up in the picker.
+const VOICE_LIST = ["Voice 1", "Voice 2", "Voice 3", "Voice 4", "Voice 5", "Voice 6", "Voice 7", "Voice 8", "Voice 9", "Voice 10", "Voice 11", "Voice 12", "Voice 13", "Voice 14", "Voice 15", "Voice 16", "Voice 17", "Voice 18", "Voice 19", "Voice 20", "Voice 21", "Voice 22", "Voice 23", "Voice 24", "Voice 25", "Voice 26", "Voice 27", "Voice 28", "Voice 29", "Voice 30", "Voice 31", "Voice 32", "Voice 33", "Voice 34", "Voice 35", "Voice 36", "Voice 37", "Voice 38", "Voice 39", "Voice 40", "Voice 41", "Voice 42", "Voice 43", "Voice 44", "Voice 45", "Voice 46", "Voice 47", "Voice 48", "Voice 49", "Voice 50", "Voice 51", "Voice 52", "Voice 53", "Voice 54", "Voice 55", "Voice 56", "Voice 57", "Voice 58", "Voice 59", "Voice 60", "Voice 61", "Voice 62", "Voice 63", "Voice 64", "Voice 65", "Voice 66", "Voice 67", "Voice 68", "Voice 69", "Voice 70", "Voice 71", "Voice 72", "Voice 73", "Voice 74", "Voice 75", "Voice 76", "Voice 77", "Voice 78", "Voice 79", "Voice 80", "Voice 81", "Voice 82", "Voice 83", "Voice 84", "Voice 85", "Voice 86", "Voice 87", "Voice 88", "Voice 89", "Voice 90", "Voice 91", "Voice 92", "Voice 93", "Voice 94", "Voice 95", "Voice 96", "Voice 97", "Voice 98", "Voice 99", "Voice 100", "Voice 101", "Voice 102", "Voice 103", "Voice 104", "Voice 105", "Voice 106", "Voice 107", "Voice 108", "Voice 109", "Voice 110", "Voice 111", "Voice 112", "Voice 113", "Voice 114", "Voice 115", "Voice 116", "Voice 117", "Voice 118", "Voice 119", "Voice 120", "Voice 121", "Voice 122", "Voice 123", "Voice 124", "Voice 125", "Voice 126", "Voice 127", "Voice 128", "Voice 129", "Voice 130", "Voice 131", "Voice 132", "Voice 133", "Voice 134", "Voice 135", "Voice 136", "Voice 137", "Voice 138", "Voice 139", "Voice 140", "Voice 141", "Voice 142", "Voice 143", "Voice 144", "Voice 145", "Voice 146", "Voice 147", "Voice 148", "Voice 149", "Voice 150", "Voice 151", "Voice 152", "Voice 153", "Voice 154", "Voice 155", "Voice 156", "Voice 157", "Voice 158", "Voice 159", "Voice 160", "Voice 161", "Voice 162", "Voice 163", "Voice 164", "Voice 165", "Voice 166", "Voice 167", "Voice 168", "Voice 169", "Voice 170", "Voice 171", "Voice 172", "Voice 173", "Voice 174", "Voice 175", "Voice 176", "Voice 177", "Voice 178", "Voice 179", "Voice 180", "Voice 181", "Voice 182", "Voice 183", "Voice 184", "Voice 185", "Voice 186", "Voice 187", "Voice 188", "Voice 189", "Voice 190", "Voice 191", "Voice 192", "Voice 193", "Voice 194", "Voice 195", "Voice 196", "Voice 197", "Voice 198", "Voice 199", "Voice 200", "Voice 201", "Voice 202", "Voice 203", "Voice 204", "Voice 205", "Voice 206", "Voice 207", "Voice 208", "Voice 209", "Voice 210"];
+const CUSTOM_VOICE_NUMBERS = new Set(["Voice 108", "Voice 109", "Voice 110", "Voice 111", "Voice 112", "Voice 113", "Voice 114", "Voice 115", "Voice 116", "Voice 117", "Voice 118", "Voice 119", "Voice 120", "Voice 121", "Voice 122", "Voice 123", "Voice 124", "Voice 125", "Voice 126", "Voice 127", "Voice 128", "Voice 129", "Voice 130", "Voice 131", "Voice 132", "Voice 133", "Voice 134", "Voice 135", "Voice 136", "Voice 137", "Voice 138", "Voice 139", "Voice 140", "Voice 141", "Voice 142", "Voice 143", "Voice 144", "Voice 145", "Voice 146", "Voice 147", "Voice 148", "Voice 149", "Voice 150", "Voice 151", "Voice 152", "Voice 153", "Voice 154", "Voice 155", "Voice 156", "Voice 157", "Voice 158", "Voice 159", "Voice 160", "Voice 161", "Voice 162", "Voice 163", "Voice 164", "Voice 165", "Voice 166", "Voice 167", "Voice 168", "Voice 169", "Voice 170", "Voice 171", "Voice 172", "Voice 173", "Voice 174", "Voice 175", "Voice 209", "Voice 210"]);const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -865,18 +1086,18 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 </html>`;
 
 app.get(["/voices", "/voice-library"], (req, res) => {
-  const custom = Object.keys(CUSTOM_VOICE_MAP);
-  // (b) Float Kade's custom-made voices to the top, keeping the existing
-  //     English-first order for the rest. (c) Drop the OpenAI-style alias names
-  //     (alloy/echo/fable/onyx/nova/shimmer) from the PUBLIC list so nobody
-  //     mistakes them for OpenAI's real voices -- their true Inworld voices
-  //     (Sarah/Timothy/Edward/Dennis/Julia/Olivia) are already listed by name.
-  //     OPENAI_ALIAS_MAP stays intact so LibreChat's internal calls still resolve.
-  const customSet = new Set(custom);
-  const aliasSet = new Set(Object.keys(OPENAI_ALIAS_MAP));
+  // (b) Float Kade's custom-made/specialty voices to the top, keeping the existing
+  //     order for the rest. 2026-07-01: labels are now "Voice N" numbers, so the
+  //     floating check runs against CUSTOM_VOICE_NUMBERS (which numbers used to be
+  //     a CUSTOM_VOICE_MAP entry) instead of matching old friendly-name strings --
+  //     matching against the old names would silently float nothing anymore since
+  //     VOICE_LIST no longer contains any of those strings.
+  //     The OpenAI-style aliases (alloy/echo/fable/onyx/nova/shimmer) were already
+  //     dropped from VOICE_LIST itself, so there's nothing left to filter out here.
+  const custom = [...CUSTOM_VOICE_NUMBERS];
   const displayList = [
-    ...VOICE_LIST.filter((v) => customSet.has(v)),
-    ...VOICE_LIST.filter((v) => !customSet.has(v) && !aliasSet.has(v)),
+    ...VOICE_LIST.filter((v) => CUSTOM_VOICE_NUMBERS.has(v)),
+    ...VOICE_LIST.filter((v) => !CUSTOM_VOICE_NUMBERS.has(v)),
   ];
   const html = VOICE_PAGE_HTML
     .replace("/*VOICES*/", JSON.stringify(displayList))
