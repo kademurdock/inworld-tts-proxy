@@ -552,6 +552,23 @@ function downsamplePcm(pcmBuf, fromRate, toRate) {
   return out;
 }
 
+// Short linear fade-in/out at the edges of a PCM buffer (default 40 samples
+// = 5ms @ 8kHz). TTS-2 clips can start/stop at non-zero amplitude, and an
+// abrupt step to/from silence is heard as a snap/click on the phone line --
+// this ramps the edges so utterance boundaries are inaudible. Added July 1
+// 2026 alongside the bridge's mu-law padding fix (the other click source).
+function fadePcmEdges(pcmBuf, fadeSamples = 40) {
+  const total = pcmBuf.length >> 1;
+  const n = Math.min(fadeSamples, total >> 1);
+  for (let i = 0; i < n; i++) {
+    const gain = i / n;
+    pcmBuf.writeInt16LE(Math.round(pcmBuf.readInt16LE(i * 2) * gain), i * 2);
+    const j = total - 1 - i;
+    pcmBuf.writeInt16LE(Math.round(pcmBuf.readInt16LE(j * 2) * gain), j * 2);
+  }
+  return pcmBuf;
+}
+
 // ITU-T G.711 μ-law encoder (16-bit signed PCM → 8-bit μ-law byte)
 const MULAW_BIAS = 33;
 function encodeMulaw(s16) {
@@ -888,7 +905,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // Telephony mode: return raw μ-law 8kHz for Twilio Media Streams
     if (req.query.telephony === "1") {
       const wav = parseWav(finalAudio);
-      const pcm8k = downsamplePcm(wav.data, wav.sampleRate, 8000);
+      const pcm8k = fadePcmEdges(downsamplePcm(wav.data, wav.sampleRate, 8000));
       const mulaw = pcm16ToMulaw(pcm8k);
       res.set("Content-Type", "audio/basic");
       res.set("Content-Length", mulaw.length);
