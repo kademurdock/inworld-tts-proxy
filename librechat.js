@@ -333,7 +333,7 @@ router.post("/librechat/memory/consolidate", auth, async (req, res) => {
   const body = {};
   if (typeof agentId === "string" && agentId.trim()) body.agentId = agentId.trim();
   try {
-    res.json(await lc("POST", "/memories/consolidate", body));
+    res.json(await lc("POST", "/api/memories/consolidate", body));
   } catch (e) {
     fail(res, e);
   }
