@@ -210,10 +210,18 @@ router.get("/librechat/usage", auth, async (req, res) => {
 });
 
 // ============================================================================
-// MEMORIES — /api/memories (LibreChat native per-user memory). Same anti-abuse
-// path as the agent routes (goes through lc()). Standing rule: anything that can
-// CHANGE about Kade/the project lives here, not in agent instructions — so Forge
-// needs read+write here to keep parity with the Cowork assistant.
+// MEMORIES — /api/memories (LibreChat native memory). Same anti-abuse path as
+// the agent routes (goes through lc()). Standing rule: anything that can CHANGE
+// about Kade/the project lives here, not in agent instructions — so Forge needs
+// read+write here to keep parity with the Cowork assistant.
+//
+// TWO-TIER MEMORY (added July 2026): every entry is either SHARED (agentId
+// omitted/null — visible to every persona, the original behavior) or scoped to
+// ONE agent's own bucket (agentId = that agent's string id, e.g.
+// "agent_6llV0eMu4fmIaj8f2x1Sb" for Kiana). The one agent-scoped key in use is
+// "agent_notes". Pass `agentId` on any of the routes below to reach that
+// persona's own bucket instead of the shared one; omit it for shared (unchanged
+// default behavior).
 //
 // FOOTGUN: PATCH /api/memories/preferences does NOT edit a memory named
 // "preferences" — that exact path is hardcoded server-side as the memory on/off
@@ -223,16 +231,22 @@ router.get("/librechat/usage", auth, async (req, res) => {
 // ============================================================================
 const MEM_RESERVED = "preferences";
 
-// GET /librechat/memories -> list all of Kade's memory entries (+ usage)
+// GET /librechat/memories -> list memory entries (+ usage). Query: ?agentId=
+// to show just one agent's own bucket; omit to show everything (shared + every
+// agent's), same as before two-tier memory existed.
 router.get("/librechat/memories", auth, async (req, res) => {
   try {
     const d = await lc("GET", "/api/memories");
-    const memories = (d.memories || []).map((m) => ({
+    const filterAgentId = typeof req.query.agentId === "string" ? req.query.agentId.trim() : "";
+    const all = (d.memories || []).map((m) => ({
       key: m.key,
       value: m.value,
+      agentId: m.agentId || null,
+      type: m.type || "fact",
       tokenCount: m.tokenCount,
       updated_at: m.updated_at,
     }));
+    const memories = filterAgentId ? all.filter((m) => m.agentId === filterAgentId) : all;
     res.json({
       count: memories.length,
       totalTokens: d.totalTokens,
@@ -245,23 +259,27 @@ router.get("/librechat/memories", auth, async (req, res) => {
   }
 });
 
-// POST /librechat/memory -> create a NEW memory. body = { key, value }
+// POST /librechat/memory -> create a NEW memory. body = { key, value, agentId? }
+// agentId scopes it to one agent's own bucket; omit for shared (default).
 router.post("/librechat/memory", auth, async (req, res) => {
-  const { key, value } = req.body || {};
+  const { key, value, agentId } = req.body || {};
   if (typeof key !== "string" || !key.trim() || typeof value !== "string" || !value.trim()) {
     return res.status(400).json({ error: "key and value (non-empty strings) are required" });
   }
+  const body = { key: key.trim(), value };
+  if (typeof agentId === "string" && agentId.trim()) body.agentId = agentId.trim();
   try {
-    res.json(await lc("POST", "/api/memories", { key: key.trim(), value }));
+    res.json(await lc("POST", "/api/memories", body));
   } catch (e) {
     fail(res, e);
   }
 });
 
 // PATCH /librechat/memory -> update an existing memory's value (and optionally
-// rename it). body = { key, value, newKey? }
+// rename it). body = { key, value, newKey?, agentId? }. agentId must match the
+// bucket the existing entry is already in (omit for shared).
 router.patch("/librechat/memory", auth, async (req, res) => {
-  const { key, value, newKey } = req.body || {};
+  const { key, value, newKey, agentId } = req.body || {};
   if (typeof key !== "string" || !key.trim()) {
     return res.status(400).json({ error: "key (the existing memory key) is required" });
   }
@@ -277,6 +295,7 @@ router.patch("/librechat/memory", auth, async (req, res) => {
   }
   const body = { value };
   if (typeof newKey === "string" && newKey.trim()) body.key = newKey.trim();
+  if (typeof agentId === "string" && agentId.trim()) body.agentId = agentId.trim();
   try {
     res.json(await lc("PATCH", `/api/memories/${encodeURIComponent(key.trim())}`, body));
   } catch (e) {
@@ -284,14 +303,37 @@ router.patch("/librechat/memory", auth, async (req, res) => {
   }
 });
 
-// POST /librechat/memory/delete -> delete a memory. body = { key }
+// POST /librechat/memory/delete -> delete a memory (its ENTIRE history, not just
+// the current value). body = { key, agentId? }. agentId must match the bucket
+// the entry is in (omit for shared).
 router.post("/librechat/memory/delete", auth, async (req, res) => {
-  const { key } = req.body || {};
+  const { key, agentId } = req.body || {};
   if (typeof key !== "string" || !key.trim()) {
     return res.status(400).json({ error: "key is required" });
   }
+  let path = `/api/memories/${encodeURIComponent(key.trim())}`;
+  if (typeof agentId === "string" && agentId.trim()) {
+    path += `?agentId=${encodeURIComponent(agentId.trim())}`;
+  }
   try {
-    res.json(await lc("DELETE", `/api/memories/${encodeURIComponent(key.trim())}`));
+    res.json(await lc("DELETE", path));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// POST /librechat/memory/consolidate -> memory-hygiene pass: reviews everything
+// ACTIVE in one bucket and asks the memory-writer model to merge near-duplicates
+// / tighten stale phrasing (never invents new facts). body = { agentId? } --
+// omit for the shared bucket, or pass an agent's string id for just that
+// persona's own bucket. NOT on an automatic schedule -- on-demand only, until an
+// automatic cadence is explicitly turned on (see PROJECT_STATUS.md).
+router.post("/librechat/memory/consolidate", auth, async (req, res) => {
+  const { agentId } = req.body || {};
+  const body = {};
+  if (typeof agentId === "string" && agentId.trim()) body.agentId = agentId.trim();
+  try {
+    res.json(await lc("POST", "/memories/consolidate", body));
   } catch (e) {
     fail(res, e);
   }
