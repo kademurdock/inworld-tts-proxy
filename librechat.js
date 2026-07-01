@@ -585,7 +585,17 @@ async function lcAsk(agentId, messages) {
               if (part.type === "text" && part.text) reply += part.text;
             }
           }
-          if (d.final) break;
+          if (d.final) {
+            // Same fix as lcAskStream (July 1 2026): tool-using turns deliver
+            // their text at/near the final event in shapes the delta loop
+            // above can miss entirely -- reconcile against the final
+            // responseMessage so an SMS weather ask isn't "empty reply".
+            if (!reply) {
+              const full = messageText(d.responseMessage) || (typeof d.text === "string" ? d.text : "");
+              if (full) reply = full;
+            }
+            break;
+          }
         } catch {}
       }
     }
@@ -594,7 +604,7 @@ async function lcAsk(agentId, messages) {
     console.log("[lcAsk] first 5 lines:", JSON.stringify(rawLines.slice(0, 5)));
     console.log("[lcAsk] last 3 lines:", JSON.stringify(rawLines.slice(-3)));
     if (!reply) throw new Error("empty reply from agent");
-    return reply;
+    return stripCitationAnchors(reply);
   });
 }
 
@@ -626,6 +636,21 @@ router.post("/librechat/ask", auth, async (req, res) => {
 // Uses the same paced() queue as lcAsk so we never hit the anti-abuse gate
 // with back-to-back rapid-fire LibreChat calls.  For Kade's low call volume
 // (one caller at a time) this is never a bottleneck.
+
+// Citation-anchor scrub (July 1 2026): LibreChat's web_search decorates
+// replies with private-use unicode citation anchors (e.g. "\ue202turn0search0")
+// that the web UI renders as clickable chips. On the phone/SMS they'd be
+// SPOKEN/texted as literal garbage, so strip them before handing text to
+// the bridge. Covers the PUA markers (U+E200-U+E2FF) and the bare
+// turnNsearchN / turnNnewsN / turnNimageN / turnNrefN / turnNfetchN tokens
+// they wrap, plus any doubled-up whitespace left behind.
+function stripCitationAnchors(t) {
+  if (!t) return t;
+  return t
+    .replace(/[\ue200-\ue2ff]/g, "")
+    .replace(/\bturn\d+(?:search|news|image|ref|fetch|forecast)\d*\b/g, "")
+    .replace(/[ \t]{2,}/g, " ");
+}
 
 // Text extraction helpers -- ported from the fork's ConversationMode.tsx
 // (client/src/components/Chat/ConversationMode.tsx), which is the proven-live
@@ -707,7 +732,11 @@ async function lcAskStream(agentId, messages, onToken) {
     const dec = new TextDecoder();
     let buf = "";
     let acc = ""; // everything already forwarded to the caller
-    const emit = (t) => { if (t) { acc += t; onToken(t); } };
+    const emit = (raw) => {
+      const t = stripCitationAnchors(raw);
+      if (raw) acc += raw; // acc tracks RAW so final-event startsWith() reconciliation stays exact
+      if (t) onToken(t);
+    };
     for await (const chunk of streamR.body) {
       buf += dec.decode(chunk, { stream: true });
       const lines = buf.split("\n");
