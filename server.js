@@ -874,7 +874,14 @@ const NONVERBAL_TAGS = new Set(["laugh", "breathe", "clear throat", "sigh", "cou
 // Inworld only honors a leading direction once, at an utterance's start.
 // Inline non-verbals need no such treatment; they stay exactly where written.
 function applySteeringTags(text) {
-  if (!text || text.indexOf(STEERING_OPEN) === -1) return text;
+  if (!text || text.indexOf("%%") === -1) return text;
+  // Tag-typo tolerance (July 2 2026, seen live from Kiana): models sometimes
+  // emit "%%sigh%%" or "%%%sigh%%" instead of the canonical "%%%sigh%%%".
+  // Normalize any 2-4-percent delimited, short, direction-looking span to the
+  // canonical form BEFORE parsing, so a typo'd tag still steers the voice
+  // instead of being read aloud as "percent percent sigh".
+  text = text.replace(/%{2,4}([a-zA-Z][a-zA-Z ’',!-]{0,60}?)%{2,4}/g, "%%%$1%%%");
+  if (text.indexOf(STEERING_OPEN) === -1) return text;
 
   const tagRe = new RegExp(`${STEERING_OPEN}([\\s\\S]*?)${STEERING_CLOSE}`, "g");
   // Pass 1: sentinel -> real brackets, everywhere in the text.
