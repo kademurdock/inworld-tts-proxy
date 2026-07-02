@@ -108,7 +108,10 @@ const CUSTOM_VOICE_MAP = {
   "Zadiana": "default-e-m11vgtr9l-m7afw4kmnw__zadiana",
 };
 
-const NUMBERED_VOICE_ALIASES = {
+// LEGACY numbering (June 2026, pre-renumber) -- kept verbatim as the source
+// the 2026-07-01 renumbering below derives from. Do NOT hand-edit the derived
+// map; edit THIS one (add/remove voices here) and the derivation re-numbers.
+const NUMBERED_VOICE_ALIASES_LEGACY_2026_06 = {
   "Voice 1": "Abby",
   "Voice 2": "Alaric",
   "Voice 3": "Alex",
@@ -320,6 +323,48 @@ const NUMBERED_VOICE_ALIASES = {
   "Voice 209": "default-e-m11vgtr9l-m7afw4kmnw__birta",
   "Voice 210": "default-e-m11vgtr9l-m7afw4kmnw__sharma",
 };
+
+// 2026-07-01 RENUMBERING (Kade's call, supervised session): her custom-made
+// voices lead the catalog as Voice 1-70; the stock library follows as
+// Voice 71-210. Same voices, same relative order within each group, new
+// labels. Old labels can NOT be kept as aliases -- the label space collides
+// ("Voice 1" old/stock vs new/custom) -- so saved client prefs are migrated
+// fork-side (boot migration) and agent records were patched via the API.
+//   new 1-68    <- old 108-175   (custom block)
+//   new 69-70   <- old 209-210   (late custom additions)
+//   new 71-177  <- old 1-107     (stock, first block)
+//   new 178-210 <- old 176-208   (stock, second block)
+function legacyToNewVoiceNumber(n) {
+  if (n >= 108 && n <= 175) return n - 107;
+  if (n === 209) return 69;
+  if (n === 210) return 70;
+  if (n >= 1 && n <= 107) return n + 70;
+  if (n >= 176 && n <= 208) return n + 2;
+  return null;
+}
+
+const NUMBERED_VOICE_ALIASES = {};
+for (const [label, target] of Object.entries(NUMBERED_VOICE_ALIASES_LEGACY_2026_06)) {
+  const oldN = Number(label.replace("Voice ", ""));
+  const newN = legacyToNewVoiceNumber(oldN);
+  if (newN == null) throw new Error(`voice renumbering: no mapping for old ${label}`);
+  NUMBERED_VOICE_ALIASES[`Voice ${newN}`] = target;
+}
+// Startup sanity: exactly 210 unique labels, customs occupy exactly 1-70.
+// A failed assertion crashes boot -> the deploy fails its health check ->
+// Railway keeps the previous deploy serving. Fail-safe by construction.
+if (Object.keys(NUMBERED_VOICE_ALIASES).length !== 210) {
+  throw new Error(`voice renumbering: expected 210 labels, got ${Object.keys(NUMBERED_VOICE_ALIASES).length}`);
+}
+for (let i = 1; i <= 210; i++) {
+  const t = NUMBERED_VOICE_ALIASES[`Voice ${i}`];
+  if (!t) throw new Error(`voice renumbering: missing Voice ${i}`);
+  const isCustom = t.startsWith("default-e-");
+  if ((i <= 70) !== isCustom) {
+    throw new Error(`voice renumbering: Voice ${i} custom/stock mismatch (${t})`);
+  }
+}
+
 // NUMBERED_VOICE_ALIASES: "Voice N" labels -> the exact same real Inworld voice IDs
 // the old friendly names pointed to (2026-07-01 numbered-voice-list rename). Additive:
 // OPENAI_ALIAS_MAP and CUSTOM_VOICE_MAP stay intact so nothing that already resolved
@@ -649,7 +694,7 @@ function sleep(ms) {
 // capacity until the whole proxy starves. Timeouts are retryable below.
 const INWORLD_TIMEOUT_MS = 20000;
 
-async function synthesizeChunkOnce(text, voiceId, modelId) {
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
   let response;
@@ -668,7 +713,7 @@ async function synthesizeChunkOnce(text, voiceId, modelId) {
       audioConfig: {
         audioEncoding: "WAV",
         sampleRateHertz: 24000,
-        speakingRate: TTS_SPEAKING_RATE,
+        speakingRate: speakingRate != null ? speakingRate : TTS_SPEAKING_RATE,
       },
       // Only takes effect on inworld-tts-2 (which is the only model this
       // proxy ever actually requests -- see MODEL_MAP). CREATIVE = "optimizes
@@ -704,13 +749,13 @@ async function synthesizeChunkOnce(text, voiceId, modelId) {
   return Buffer.from(data.audioContent, "base64");
 }
 
-async function synthesizeChunk(text, voiceId, modelId) {
+async function synthesizeChunk(text, voiceId, modelId, speakingRate) {
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await synthesizeChunkOnce(text, voiceId, modelId);
+        return await synthesizeChunkOnce(text, voiceId, modelId, speakingRate);
       } catch (err) {
         lastErr = err;
         const retryable = err.isRateLimit || err.isTimeout;
@@ -876,7 +921,13 @@ app.post("/v1/audio/speech", async (req, res) => {
     return res.status(500).json({ error: "INWORLD_API_KEY not set" });
   }
 
-  const { input, voice = "alloy", model = "tts-1" } = req.body;
+  const { input, voice = "alloy", model = "tts-1", speed } = req.body;
+  // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
+  // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
+  const speakingRate =
+    typeof speed === "number" && isFinite(speed)
+      ? Math.min(2, Math.max(0.5, speed))
+      : undefined;
 
   if (!input) {
     return res.status(400).json({ error: "Missing required field: input" });
@@ -906,7 +957,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // giant request -- this is the actual latency fix.
     const tSynth = Date.now();
     const wavBuffers = await Promise.all(
-      chunks.map((chunk) => synthesizeChunk(chunk, inworldVoice, inworldModel))
+      chunks.map((chunk) => synthesizeChunk(chunk, inworldVoice, inworldModel, speakingRate))
     );
     console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
 
@@ -960,7 +1011,10 @@ app.post("/v1/audio/speech", async (req, res) => {
 // display list entirely now -- OPENAI_ALIAS_MAP still resolves them for any internal
 // LibreChat calls that hardcode those names, they just never show up in the picker.
 const VOICE_LIST = ["Voice 1", "Voice 2", "Voice 3", "Voice 4", "Voice 5", "Voice 6", "Voice 7", "Voice 8", "Voice 9", "Voice 10", "Voice 11", "Voice 12", "Voice 13", "Voice 14", "Voice 15", "Voice 16", "Voice 17", "Voice 18", "Voice 19", "Voice 20", "Voice 21", "Voice 22", "Voice 23", "Voice 24", "Voice 25", "Voice 26", "Voice 27", "Voice 28", "Voice 29", "Voice 30", "Voice 31", "Voice 32", "Voice 33", "Voice 34", "Voice 35", "Voice 36", "Voice 37", "Voice 38", "Voice 39", "Voice 40", "Voice 41", "Voice 42", "Voice 43", "Voice 44", "Voice 45", "Voice 46", "Voice 47", "Voice 48", "Voice 49", "Voice 50", "Voice 51", "Voice 52", "Voice 53", "Voice 54", "Voice 55", "Voice 56", "Voice 57", "Voice 58", "Voice 59", "Voice 60", "Voice 61", "Voice 62", "Voice 63", "Voice 64", "Voice 65", "Voice 66", "Voice 67", "Voice 68", "Voice 69", "Voice 70", "Voice 71", "Voice 72", "Voice 73", "Voice 74", "Voice 75", "Voice 76", "Voice 77", "Voice 78", "Voice 79", "Voice 80", "Voice 81", "Voice 82", "Voice 83", "Voice 84", "Voice 85", "Voice 86", "Voice 87", "Voice 88", "Voice 89", "Voice 90", "Voice 91", "Voice 92", "Voice 93", "Voice 94", "Voice 95", "Voice 96", "Voice 97", "Voice 98", "Voice 99", "Voice 100", "Voice 101", "Voice 102", "Voice 103", "Voice 104", "Voice 105", "Voice 106", "Voice 107", "Voice 108", "Voice 109", "Voice 110", "Voice 111", "Voice 112", "Voice 113", "Voice 114", "Voice 115", "Voice 116", "Voice 117", "Voice 118", "Voice 119", "Voice 120", "Voice 121", "Voice 122", "Voice 123", "Voice 124", "Voice 125", "Voice 126", "Voice 127", "Voice 128", "Voice 129", "Voice 130", "Voice 131", "Voice 132", "Voice 133", "Voice 134", "Voice 135", "Voice 136", "Voice 137", "Voice 138", "Voice 139", "Voice 140", "Voice 141", "Voice 142", "Voice 143", "Voice 144", "Voice 145", "Voice 146", "Voice 147", "Voice 148", "Voice 149", "Voice 150", "Voice 151", "Voice 152", "Voice 153", "Voice 154", "Voice 155", "Voice 156", "Voice 157", "Voice 158", "Voice 159", "Voice 160", "Voice 161", "Voice 162", "Voice 163", "Voice 164", "Voice 165", "Voice 166", "Voice 167", "Voice 168", "Voice 169", "Voice 170", "Voice 171", "Voice 172", "Voice 173", "Voice 174", "Voice 175", "Voice 176", "Voice 177", "Voice 178", "Voice 179", "Voice 180", "Voice 181", "Voice 182", "Voice 183", "Voice 184", "Voice 185", "Voice 186", "Voice 187", "Voice 188", "Voice 189", "Voice 190", "Voice 191", "Voice 192", "Voice 193", "Voice 194", "Voice 195", "Voice 196", "Voice 197", "Voice 198", "Voice 199", "Voice 200", "Voice 201", "Voice 202", "Voice 203", "Voice 204", "Voice 205", "Voice 206", "Voice 207", "Voice 208", "Voice 209", "Voice 210"];
-const CUSTOM_VOICE_NUMBERS = new Set(["Voice 108", "Voice 109", "Voice 110", "Voice 111", "Voice 112", "Voice 113", "Voice 114", "Voice 115", "Voice 116", "Voice 117", "Voice 118", "Voice 119", "Voice 120", "Voice 121", "Voice 122", "Voice 123", "Voice 124", "Voice 125", "Voice 126", "Voice 127", "Voice 128", "Voice 129", "Voice 130", "Voice 131", "Voice 132", "Voice 133", "Voice 134", "Voice 135", "Voice 136", "Voice 137", "Voice 138", "Voice 139", "Voice 140", "Voice 141", "Voice 142", "Voice 143", "Voice 144", "Voice 145", "Voice 146", "Voice 147", "Voice 148", "Voice 149", "Voice 150", "Voice 151", "Voice 152", "Voice 153", "Voice 154", "Voice 155", "Voice 156", "Voice 157", "Voice 158", "Voice 159", "Voice 160", "Voice 161", "Voice 162", "Voice 163", "Voice 164", "Voice 165", "Voice 166", "Voice 167", "Voice 168", "Voice 169", "Voice 170", "Voice 171", "Voice 172", "Voice 173", "Voice 174", "Voice 175", "Voice 209", "Voice 210"]);const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
+// Derived: after the 2026-07-01 renumbering the customs ARE Voice 1-70.
+const CUSTOM_VOICE_NUMBERS = new Set(
+  Array.from({ length: 70 }, (_, i) => `Voice ${i + 1}`),
+);const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1142,7 +1196,9 @@ app.get("/healthz", (_req, res) =>
 app.get("/voices.json", (_req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Cache-Control", "public, max-age=300");
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS] });
+  // `sample` is the same expressive monologue the /voices page performs --
+  // the fork's picker auditions use it so both surfaces sound identical.
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], sample: SAMPLE_TEXT });
 });
 
 app.get(["/voices", "/voice-library"], (req, res) => {
@@ -1154,7 +1210,11 @@ app.get(["/voices", "/voice-library"], (req, res) => {
   //     VOICE_LIST no longer contains any of those strings.
   //     The OpenAI-style aliases (alloy/echo/fable/onyx/nova/shimmer) were already
   //     dropped from VOICE_LIST itself, so there's nothing left to filter out here.
-  const custom = [...CUSTOM_VOICE_NUMBERS];
+  // 2026-07-01: badges retired (Kade: customs should not be distinguishable).
+  // The renumbering already puts her customs first as Voice 1-70, so the
+  // float below is a no-op kept for safety; the page just stops saying/showing
+  // which entries are custom.
+  const custom = [];
   const displayList = [
     ...VOICE_LIST.filter((v) => CUSTOM_VOICE_NUMBERS.has(v)),
     ...VOICE_LIST.filter((v) => !CUSTOM_VOICE_NUMBERS.has(v)),
