@@ -833,7 +833,10 @@ function fixPronunciations(text) {
     .replace(/kademurdock[-_ ]?ai/gi, "Kadie Murdock A.I.")
     .replace(/kademurdock/gi, "Kadie Murdock")   // also covers kademurdock.com, @kademurdock
     .replace(/kade[-_ ]?ai/gi, "Kadie A.I.")     // the Kade-AI platform brand
-    .replace(/\bkade\b/gi, "Kadie");            // bare first name -> KAY-dee
+    .replace(/\bkade\b/gi, "Kadie")            // bare first name -> KAY-dee
+    // Zadiana -> "zay-dee-ON-nuh" (Kade's spec, July 2 2026). Covers Zadiana,
+    // possessives, and the Zadi nickname keeps its natural read (ZAY-dee).
+    .replace(/\bzadiana\b/gi, "Zaydionna");
 }
 
 // ── TTS-2 emotion/performance tags (LLM-authored, sentinel-wrapped) ──────────
