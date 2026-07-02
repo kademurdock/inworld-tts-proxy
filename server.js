@@ -924,9 +924,11 @@ app.post("/v1/audio/speech", async (req, res) => {
   const { input, voice = "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
+  // Inworld hard range is 0.5-1.5 (verified live 2026-07-01: 1.8 and 2.0
+  // return HTTP 400 "speakingRate should be within the range of 0.5 to 1.5").
   const speakingRate =
     typeof speed === "number" && isFinite(speed)
-      ? Math.min(2, Math.max(0.5, speed))
+      ? Math.min(1.5, Math.max(0.5, speed))
       : undefined;
 
   if (!input) {
