@@ -1017,6 +1017,14 @@ const VOICE_LIST = ["Voice 1", "Voice 2", "Voice 3", "Voice 4", "Voice 5", "Voic
 const CUSTOM_VOICE_NUMBERS = new Set(
   Array.from({ length: 70 }, (_, i) => `Voice ${i + 1}`),
 );const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
+// Short expressive audition line for the in-app picker's browse-as-you-go
+// samples (Kade 2026-07-01: the full SAMPLE_TEXT monologue lagged when
+// swiping; this keeps the character but synthesizes in a fraction of the
+// time). The %%% sentinel becomes real [bracket] emotion steering in
+// applySteeringTags on the synth path -- same pipeline as chat. {voice} is
+// replaced client-side with the numbered label so each voice introduces
+// itself by name.
+const AUDITION_TEXT = "%%%warm, playful, quietly showing off%%% Hey — {voice} here! And this right here? That's exactly how I sound.";
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1200,7 +1208,7 @@ app.get("/voices.json", (_req, res) => {
   res.set("Cache-Control", "public, max-age=300");
   // `sample` is the same expressive monologue the /voices page performs --
   // the fork's picker auditions use it so both surfaces sound identical.
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], sample: SAMPLE_TEXT });
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
 });
 
 app.get(["/voices", "/voice-library"], (req, res) => {
