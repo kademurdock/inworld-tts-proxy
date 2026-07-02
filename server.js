@@ -916,6 +916,101 @@ app.use("/v1/audio/speech", (req, res, next) => {
   next();
 });
 
+
+// ── Loudness normalization (July 1 2026, Kade's ask: equal volume across voices) ──
+// Custom cloned voices synth at wildly different levels (quiet source sample =
+// quiet voice, hot sample = loud voice). EVERY synth path funnels through
+// /v1/audio/speech, so normalizing here fixes chat read-aloud, the in-app
+// previews, the /voices library, and the phone -- one place, all surfaces.
+//
+// Approach: measure speech-gated RMS (30ms windows; windows quieter than 10%
+// of the loudest window are pauses/room tone and get ignored), then apply ONE
+// flat gain that moves the voice's typical speaking level to the target.
+// The measured level is smoothed PER VOICE (EMA) so on the phone path -- where
+// every sentence is its own request -- a deliberately whispered sentence isn't
+// individually boosted to shouting volume. The voice keeps its dynamics; the
+// VOICE as a whole lands at the same loudness as every other voice.
+// Peak-limited so a boost can never clip. Kill switch: TTS_NORM=0.
+const TTS_NORM_ENABLED = process.env.TTS_NORM !== "0";
+const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-20"); // speech RMS target, dBFS
+const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "14");
+const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
+
+const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
+
+function measureSpeechRmsDb(pcmBuf, sampleRate) {
+  const samples = pcmBuf.length >> 1;
+  const win = Math.max(1, Math.round(sampleRate * 0.03)); // 30ms windows
+  if (samples < win) return null;
+  const winRms = [];
+  for (let start = 0; start + win <= samples; start += win) {
+    let sum = 0;
+    for (let i = start; i < start + win; i++) {
+      const s = pcmBuf.readInt16LE(i * 2) / 32768;
+      sum += s * s;
+    }
+    winRms.push(Math.sqrt(sum / win));
+  }
+  if (!winRms.length) return null;
+  const peakWin = Math.max(...winRms);
+  if (peakWin <= 0.0005) return null; // effectively silent clip -- leave it alone
+  const gate = Math.max(peakWin * 0.1, 0.001);
+  let acc = 0;
+  let n = 0;
+  for (const r of winRms) {
+    if (r >= gate) {
+      acc += r * r;
+      n++;
+    }
+  }
+  if (!n) return null;
+  return 20 * Math.log10(Math.sqrt(acc / n));
+}
+
+function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
+  if (!TTS_NORM_ENABLED || !pcmBuf || pcmBuf.length < 4) return pcmBuf;
+  try {
+    const rmsDb = measureSpeechRmsDb(pcmBuf, sampleRate);
+    if (rmsDb == null) return pcmBuf;
+
+    // Per-voice smoothing: longer clips are better level evidence, so they
+    // move the running estimate more. A 1s phone sentence nudges it; a full
+    // chat reply mostly IS it. First measurement stands on its own.
+    const prior = voiceLevelEma.get(voiceKey);
+    const durSec = (pcmBuf.length >> 1) / sampleRate;
+    const alpha = Math.min(0.5, Math.max(0.1, durSec / 20));
+    const level = prior == null ? rmsDb : prior + (rmsDb - prior) * alpha;
+    voiceLevelEma.set(voiceKey, level);
+
+    let gainDb = TTS_NORM_TARGET_DB - level;
+    gainDb = Math.min(TTS_NORM_MAX_BOOST_DB, Math.max(-TTS_NORM_MAX_CUT_DB, gainDb));
+    let gain = Math.pow(10, gainDb / 20);
+
+    // Peak limiter: if the wanted boost would clip, back off to just-under-full-scale.
+    const total = pcmBuf.length >> 1;
+    let peak = 0;
+    for (let i = 0; i < total; i++) {
+      const a = Math.abs(pcmBuf.readInt16LE(i * 2));
+      if (a > peak) peak = a;
+    }
+    if (peak > 0) gain = Math.min(gain, 32000 / peak);
+
+    if (Math.abs(gain - 1) < 0.03) return pcmBuf; // ~0.25 dB, not worth touching
+    for (let i = 0; i < total; i++) {
+      let v = Math.round(pcmBuf.readInt16LE(i * 2) * gain);
+      if (v > 32767) v = 32767;
+      else if (v < -32768) v = -32768;
+      pcmBuf.writeInt16LE(v, i * 2);
+    }
+    console.log(
+      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB`
+    );
+  } catch (e) {
+    console.warn("[TTS] normalize skipped:", e.message);
+  }
+  return pcmBuf;
+}
+
 app.post("/v1/audio/speech", async (req, res) => {
   if (!INWORLD_API_KEY) {
     return res.status(500).json({ error: "INWORLD_API_KEY not set" });
@@ -979,6 +1074,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     });
 
     const combinedData = Buffer.concat(pieces);
+    normalizeLoudness(combinedData, format.sampleRate, inworldVoice);
     const header = buildWavHeader(combinedData.length, format);
     const finalAudio = Buffer.concat([header, combinedData]);
 
