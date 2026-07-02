@@ -33,6 +33,7 @@ const SECTIONS = [
   { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
+  { key: "phone",           path: "/help/phone",           label: "Phone Calls", group: "Using Kade-AI" },
   { key: "characters",      path: "/help/characters",      label: "Characters & the Marketplace", group: "Using Kade-AI" },
   { key: "build",           path: "/help/build",           label: "Build Your Own Character", group: "Using Kade-AI" },
   { key: "memory",          path: "/help/memory",          label: "What It Remembers",   group: "Using Kade-AI" },
@@ -241,6 +242,7 @@ PAGES.home = {
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
+  <li data-terms="phone call telephone dial 833 briefing news morning outbound ring"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — and they can make calls for you.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
@@ -297,13 +299,16 @@ PAGES.quickstart = {
 <p>You can have replies read out loud instead of reading them yourself. There's a play button on each reply, and you can turn on automatic read-aloud so it just happens. The full how-to is on the <a href="/help/voice">Talking &amp; Listening</a> page.</p>
 
 <h2>5. Don't love the voice? Change it</h2>
-<p>There are over two hundred voices to choose from. In the chat, open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick one from the list, and tap the <strong>Preview</strong> button to hear a short sample before you commit. Leave the one you like selected and you're done.</p>
+<p>Most characters now come with their own voice already picked out. Want something different? Open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick from over two hundred voices, and tap <strong>Preview</strong> to hear a sample before you commit.</p>
 
 <h2>6. Want a clean slate?</h2>
 <p>To start a brand-new conversation, look for the <strong>New chat</strong> button (usually top of the screen or in the side menu). Your old chats are saved in the list on the side, so you can always go back to one.</p>
 
 <h2>7. Meet the rest of the cast</h2>
 <p>Kiana's not the only one here. There's a whole <strong>marketplace</strong> of characters — a mechanic, a chef, a bedtime-story reader, you name it. See <a href="/help/characters">Characters &amp; the Marketplace</a> to go exploring.</p>
+
+<h2>8. Prefer an actual phone call?</h2>
+<p>You can literally call the place: dial <strong>1-833-530-0313</strong> and talk to a character out loud, like a normal phone call. There's also a phone button right in the chat for a hands-free voice conversation. Details on the <a href="/help/phone">Phone Calls</a> page.</p>
 
 <div class="callout good">
   <p><strong>That's it.</strong> Honestly, that's the whole learning curve. Everything else on this site is a bonus you can pick up whenever you feel like it.</p>
@@ -334,6 +339,9 @@ PAGES.faq = {
 
 <h2>Why does it keep asking for my microphone again?</h2>
 <p>If you're on an iPhone and added this to your home screen, Apple makes apps like this re-ask for microphone permission a lot — sometimes every time you start talking. It's an Apple limitation, not something Kade broke, and there's no magic switch to fully turn it off. Just tap "Allow" again. More on the <a href="/help/troubleshooting">When Something Breaks</a> page.</p>
+
+<h2>Can it really make phone calls?</h2>
+<p>Yes — two ways. You can <strong>call 1-833-530-0313</strong> and talk to any character by name, and characters can <strong>place calls for you</strong> (like checking if a store has something in stock). When a character calls someone on your behalf, it introduces itself as an AI calling for you — first name only — and the call's small cost shows up on your <a href="/help/donate">Feed the Server</a> page. Full story on the <a href="/help/phone">Phone Calls</a> page.</p>
 
 <h2>Can I make my own character?</h2>
 <p>Yes, and you don't need to know any tech. You give it a name, describe its personality in plain words, and it's yours. Walkthrough on the <a href="/help/build">Build Your Own Character</a> page.</p>
@@ -372,9 +380,50 @@ PAGES.voice = {
 <div class="term"><strong>Speech-to-text</strong> is the feature that listens to your voice and writes down the words. <strong>Text-to-speech</strong> is the reverse — it reads written words out loud. This site does both.</div>
 
 <h2>Changing the voice you hear</h2>
-<p>Don't love the default voice? There are <strong>over two hundred</strong> to choose from — calm ones, warm ones, dramatic ones, silly ones.</p>
+<p>Most characters come with a voice their creator picked for them, so they each sound like themselves. Prefer something else? There are <strong>over two hundred</strong> voices — calm ones, warm ones, dramatic ones, silly ones.</p>
 <p>You can hear any of them right in the chat — no separate page needed. Open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick a voice from the list, then tap the <strong>Preview</strong> button to hear a short sample. When one sounds right, just leave it selected and that becomes your voice.</p>
-${nextprev("faq", "characters")}
+<div class="callout good">
+  <p><strong>Hearing a flat, robotic "system" voice instead of the nice ones?</strong> Check <strong>Settings → Speech → Text to Speech → Engine</strong> — it should say <strong>External</strong>. Flip it there once and the real voices come back.</p>
+</div>
+
+<h2>Have a whole voice conversation</h2>
+<p>Next to the message box there's a <strong>phone button</strong>. Tap it and the screen turns into a call — you talk, the character talks back in its own voice, no typing at all. Tap the amber button if you want to jump in while it's speaking, and hang up whenever you're done. (The first tap will ask for microphone permission.)</p>
+<p>And yes — there's a REAL phone line too. That's big enough to get <a href="/help/phone">its own page</a>.</p>
+${nextprev("faq", "phone")}
+`,
+};
+
+// ---- 4a2. PHONE CALLS ------------------------------------------------------
+PAGES.phone = {
+  title: "Phone Calls",
+  h1: "Phone Calls",
+  tagline: "A real phone line, characters who can make calls for you, and a morning news briefing that calls YOU.",
+  main: `
+<p class="lead">Kade-AI isn't stuck inside a browser. It has an actual phone number, and the characters can use the phone themselves.</p>
+
+<h2>Call the place: 1-833-530-0313</h2>
+<p>Dial <strong>1-833-530-0313</strong> from any phone — it's toll-free. A character answers and you just… talk, like a regular call. You can interrupt it mid-sentence, it keeps up. Want somebody specific? Just ask — <em>"can I talk to Zadiana?"</em> — and it switches characters right on the call.</p>
+<div class="callout good">
+  <p>If Kade set your phone number up in advance, the line already knows who you are and which character is yours — it greets you by name the moment you call. Want that? <strong>Contact Kade.</strong></p>
+</div>
+
+<h2>The in-app call button</h2>
+<p>Don't want to dial? The <strong>phone button next to the message box</strong> starts a voice conversation right in the app — same idea, no phone plan needed. See <a href="/help/voice">Talking &amp; Listening</a>.</p>
+
+<h2>Characters can make calls FOR you</h2>
+<p>This is the wild one. Ask a character to call a real place — <em>"call the pharmacy and ask if my refill is ready"</em> — and it actually dials, has the conversation out loud, and reports back what was said.</p>
+<p>The honest fine print, so nothing surprises you:</p>
+<ul>
+  <li><strong>The call says who it's for.</strong> Every call opens with the AI introducing itself and naming you (first name only) as the person who asked for it. That's on purpose — no anonymous prank calls, ever.</li>
+  <li><strong>Calls are recorded</strong> and the other person is told so, so there's always a record of what was said.</li>
+  <li><strong>It costs a little</strong> — about a cent and a half per minute, added to your tab on the <a href="/help/donate">Feed the Server</a> page. The character will mention this before dialing.</li>
+  <li><strong>There are limits</strong> — calls cap at 15 minutes and a handful per person per day, so nobody can go wild with it.</li>
+</ul>
+
+<h2>Your morning news briefing, by phone</h2>
+<p>New: you can sign up for a <strong>morning briefing call</strong>. At your chosen time, your character calls you and runs through the day's headlines — national news, world news, Springfield/Ozarks local, sports, music, whatever mix you want — morning-radio style, and you can ask about any story. <strong>Contact Kade</strong> to get set up.</p>
+<p>Prefer it on demand? Just ask any character <em>"what's the news this morning?"</em> in chat or on a call — same headlines, no schedule.</p>
+${nextprev("voice", "characters")}
 `,
 };
 
@@ -389,6 +438,9 @@ PAGES.characters = {
 <h2>What's in there</h2>
 <p>There's a big cast — think a mechanic who'll talk you through a weird engine noise, a chef for "what can I make with what's in my fridge," a patient tech helper, a bedtime-story reader for the kids, and dozens more. They're free to use, just like Kiana.</p>
 
+<h2>The specialists</h2>
+<p>A few characters have serious extra powers: <strong>Rio</strong> makes short <em>videos</em> from your description, <strong>Lux</strong> is the photography ace, <strong>Indie</strong> designs images with clean text in them (logos, cards, flyers), and <strong>Describe-It</strong> looks at a photo you upload and tells you everything that's in it — a favorite for screen-reader users. Video-making costs real money per clip (the character will tell you roughly how much before it runs), so it mentions the price the way a friend would — no surprises. See <a href="/help/images">Making Pictures</a>.</p>
+
 <h2>How to browse them</h2>
 <p>Look for the <strong>marketplace</strong> (sometimes shown as a grid or an "explore characters" option in the menu). Open it and you can scroll the whole list, each with a short description of what it's for.</p>
 
@@ -398,7 +450,7 @@ PAGES.characters = {
 <div class="callout good">
   <p><strong>Tip:</strong> if a character isn't quite what you wanted, there's no harm done. Just switch back, or start a <a href="/help/temporary">new chat</a>. You can't break anything by exploring.</p>
 </div>
-${nextprev("voice", "build")}
+${nextprev("phone", "build")}
 `,
 };
 
@@ -426,6 +478,16 @@ PAGES.build = {
   <li><strong>Say what NOT to do, too.</strong> "Don't lecture me" or "skip the long intros" really works.</li>
   <li><strong>You can edit it later.</strong> Nothing's permanent. Tweak the description any time until it feels right.</li>
 </ul>
+
+<h2>Give it a face, a voice, and a speed</h2>
+<ul>
+  <li><strong>A profile picture, made for you:</strong> in the builder, activate the avatar and choose <strong>Generate with AI</strong>. It writes a portrait description from your character's name and personality — edit it if you like, tap Generate, and a face appears (costs about 3 cents from the picture jar).</li>
+  <li><strong>Its own voice:</strong> pick a default voice (and how fast it talks) right in the builder, with a preview button — everyone who chats with your character hears it that way.</li>
+  <li><strong>Answer speed:</strong> choose Instant, Quick, or Deep depending on whether your character should fire back fast or think harder first.</li>
+</ul>
+
+<h2>Give it tools</h2>
+<p>In the builder you can check boxes to give your character real abilities: <strong>weather</strong>, <strong>Wikipedia</strong>, <strong>news headlines</strong>, <strong>jokes</strong>, <strong>reading webpages out loud</strong>, a <strong>calculator</strong>, <strong>picture-making</strong>, <strong>adventure-game save files</strong>, and even <strong>phone calls</strong>. Most are completely free to use.</p>
 
 <div class="callout good">
   <p>Your characters are yours. Building one doesn't change Kiana or anybody else's, and you can keep it private or share it with the family. Have fun with it — this is the most "make it your own" part of the whole site.</p>
@@ -483,8 +545,11 @@ PAGES.images = {
   <p>Drawing pictures pulls from a small, separate pot of credits that Kade pays for. Each image costs only a few cents, but that pot isn't bottomless. So: make all the pictures you like, just don't fire off a hundred at once for fun. If image-making ever stops working, the pot may have run dry — <strong>contact Kade</strong> and she can top it up.</p>
 </div>
 
+<h2>Videos and designs, too</h2>
+<p>The specialists go further than pictures: <strong>Rio</strong> turns a description into a short <em>video clip</em>, and <strong>Indie</strong> makes designed images with clean readable text (flyers, logos, cards). Videos are the priciest thing on the whole site — roughly <strong>50 cents to a dollar per clip</strong> — so the character will casually tell you the ballpark cost before it runs, and the spend lands on your <a href="/help/donate">Feed the Server</a> page. Regular pictures stay cheap (a few cents) and skip the speech.</p>
+
 <h2>For folks using a screen reader</h2>
-<p>When the AI makes an image, ask it to <strong>describe the picture in detail</strong> too — it's happy to paint the full scene in words so you know exactly what it created.</p>
+<p>When the AI makes an image, ask it to <strong>describe the picture in detail</strong> too — it's happy to paint the full scene in words so you know exactly what it created. And <strong>Describe-It</strong> in the marketplace does the reverse: upload any photo and it tells you what's in it.</p>
 ${nextprev("memory", "temporary")}
 `,
 };
@@ -541,6 +606,13 @@ PAGES.cheatsheet = {
     <tr><th scope="row">Make a picture</th><td>Just ask, e.g. "draw a sunny beach." See <a href="/help/images">Making Pictures</a>.</td></tr>
     <tr><th scope="row">Have a chat that isn't saved</th><td>Turn on Temporary chat. See <a href="/help/temporary">Private Chats</a>.</td></tr>
     <tr><th scope="row">See what a message cost</th><td>Each message shows its cost and usage against your balance. See <a href="/help/tokens">What Are Tokens?</a></td></tr>
+    <tr><th scope="row">Talk instead of type, hands-free</th><td>Tap the phone button by the message box for a voice conversation.</td></tr>
+    <tr><th scope="row">Call from an actual phone</th><td>Dial 1-833-530-0313 (toll-free). Ask for any character by name. See <a href="/help/phone">Phone Calls</a>.</td></tr>
+    <tr><th scope="row">Have the AI call a business for me</th><td>Ask a character, e.g. "call the pharmacy and ask if my refill's ready." See <a href="/help/phone">Phone Calls</a>.</td></tr>
+    <tr><th scope="row">Hear today's news</th><td>Ask any character "what's the news this morning?" — or get a scheduled morning briefing call (contact Kade).</td></tr>
+    <tr><th scope="row">Have a webpage read to me</th><td>Paste the link and say "read this to me" — it strips the ads and clutter first.</td></tr>
+    <tr><th scope="row">Play a text adventure</th><td>Ask for an adventure game — it can SAVE your game and pick it up any day, any chat.</td></tr>
+    <tr><th scope="row">See what I've used this month</th><td>Account menu (bottom-left avatar) → Feed the Server.</td></tr>
     <tr><th scope="row">Get help from a human</th><td>Contact Kade.</td></tr>
   </tbody>
 </table>
@@ -600,8 +672,9 @@ PAGES.costs = {
   <p>Here's the reassuring part. Every user has a <strong>spending cap</strong> — roughly ten dollars' worth of usage per month — and it <strong>refills automatically every 30 days</strong>. That means no single person, no matter how chatty, can blow through Kade's whole budget. The guardrails are built in. So please relax and use it — you genuinely can't accidentally cost her a fortune.</p>
 </div>
 
-<h2>Pictures come from a different jar</h2>
-<p>Making images is paid for separately, from its own little pot of credits (a few cents per picture). Same idea, different jar. More on the <a href="/help/images">Making Pictures</a> page.</p>
+<h2>Pictures, videos, and phone calls come from different jars</h2>
+<p>Making images is paid for separately, from its own little pot of credits (a few cents per picture). <strong>Videos</strong> are the big-ticket item — roughly 50 cents to a dollar per clip — and <strong>phone calls</strong> run about a cent and a half per minute. Same idea, different jars — and the characters give you a casual heads-up before doing the expensive stuff.</p>
+<p>Want to see your own numbers? Open the <strong>account menu</strong> (your avatar, bottom-left) and choose <strong>Feed the Server</strong> — it shows your month so far, item by item, nothing hidden.</p>
 
 <h2>So why mention any of this?</h2>
 <p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about. Knowing there's a real bill behind it just helps everyone treat the place with a little respect… and maybe, if you're able, <a href="/help/donate">toss a few bucks toward the grocery fund</a>. Which brings us to the next page.</p>
@@ -649,6 +722,9 @@ PAGES.donate = {
 <p>Think of this whole site as Kade's house, and the AI as the world's most enthusiastic roommate. It never sleeps. It answers every question at 3 a.m. without complaint. It'll draw you a cat in sunglasses for no reason. Truly, a delight to live with.</p>
 <p>It has exactly one flaw: <strong>the appetite of a teenage golden retriever.</strong> Every reply it gives nibbles a little snack off the grocery bill (the credits Kade pre-loads — see <a href="/help/costs">What This Costs Kade</a> if you want the receipts). And here's the thing nobody warns you about a roommate like this:</p>
 <p class="lead"><strong>The fridge does not refill itself.</strong></p>
+
+<h2>See your own tab</h2>
+<p>Curious what YOUR chatting actually added up to? In the app, open the <strong>account menu</strong> (your avatar, bottom-left) and choose <strong>Feed the Server</strong>. It shows your month — chat, voice, pictures, phone calls, the works — priced out honestly, framed as a suggested chip-in. No bill, no obligation, just receipts.</p>
 
 <h2>Where you come in (totally optional, zero guilt)</h2>
 <p>You're a welcome guest here. Genuinely. Nobody's standing at the door with a tip jar and a stern look. But if this place has made you laugh, helped you out, or saved your bacon even once — you can chip in for groceries and keep the robot fed.</p>
@@ -699,6 +775,13 @@ PAGES.accessibility = {
   <li>The Cheat Sheet is a <strong>real table</strong> with proper row and column headers — navigate it cell by cell with your screen reader's table commands.</li>
 </ul>
 
+<h2>Little comforts worth switching on</h2>
+<ul>
+  <li><strong>Completion chime:</strong> Settings → General → Accessibility has an optional soft chime when a reply finishes — nice when you've tabbed away.</li>
+  <li><strong>Skip straight to typing:</strong> there's a "skip to message box" link at the top of the chat, so you never have to walk the whole sidebar.</li>
+  <li><strong>Webpages, without the junk:</strong> paste any link and say "read this to me" — the AI pulls just the article text, no ads or menus, in proper reading order.</li>
+</ul>
+
 <h2>iPhone home-screen tip</h2>
 <p>If you've added the site to your home screen, iPhones tend to re-ask for microphone permission often when you use voice input. That's an Apple limitation (not fixable from here) — just tap "Allow" again. See <a href="/help/troubleshooting">When Something Breaks</a>.</p>
 
@@ -722,6 +805,12 @@ PAGES.troubleshooting = {
 
 <h2>The voice won't auto-play</h2>
 <p>On phones (especially iPhones with the site on your home screen), the browser often blocks sound from starting on its own until you've tapped the screen. <strong>Fix:</strong> tap a reply's play button once by hand — that usually unlocks audio for the rest of that session. It's a phone-browser rule, not a fault here.</p>
+
+<h2>The voice sounds robotic / like the phone's built-in voice</h2>
+<p>That's your device reading instead of the real character voices. <strong>Fix:</strong> Settings → Speech → Text to Speech → <strong>Engine → External</strong>. Do it inside the same app you chat in (if you use the home-screen app, flip it there, not in Safari), close it fully, reopen. Real voices restored.</p>
+
+<h2>The call button plays but can't hear me</h2>
+<p>The in-app phone button needs microphone permission — say yes when asked. If it's speaking over itself or acting confused, hang up with End call and tap the phone button again; a fresh call resets everything.</p>
 
 <h2>It keeps asking for my microphone (iPhone)</h2>
 <p>Apple doesn't reliably remember mic permission for home-screen web apps, so it re-asks — sometimes every time you start talking. <strong>Fix:</strong> just tap "Allow" again. There's no setting on this site that turns it off; it's an Apple limitation. Annoying, but harmless.</p>
