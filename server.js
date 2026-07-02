@@ -1133,6 +1133,18 @@ const VOICE_PAGE_HTML = `<!DOCTYPE html>
 app.get("/healthz", (_req, res) =>
   res.json({ ok: true, rev: (process.env.RAILWAY_GIT_COMMIT_SHA || "unknown").slice(0, 7) }));
 
+// JSON version of the catalog + which entries are Kade's custom voices.
+// Consumed by the fork's in-app voice pickers (agent-builder audition picker,
+// settings voice dropdown) so the SAME source of truth that orders and badges
+// the /voices library page orders the pickers too -- no hardcoded copy in the
+// fork to go stale when the custom set changes. Labels only, nothing
+// sensitive, so open CORS is fine (the fork's frontend is a different origin).
+app.get("/voices.json", (_req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS] });
+});
+
 app.get(["/voices", "/voice-library"], (req, res) => {
   // (b) Float Kade's custom-made/specialty voices to the top, keeping the existing
   //     order for the rest. 2026-07-01: labels are now "Voice N" numbers, so the
