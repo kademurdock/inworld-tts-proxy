@@ -1055,7 +1055,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // client/src/utils/gameSounds.ts): the web client plays these as real
   // clips; on the TTS path they must simply vanish so no surface ever
   // SPEAKS the token. Same hygiene class as citation markers.
-  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(input)))).replace(/\[sound:[a-z0-9_]+\]/gi, '');
+  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(input)))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
   console.log(`[TTS] input len=${input.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {

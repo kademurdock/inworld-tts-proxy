@@ -573,6 +573,10 @@ PAGES.games = {
 <h2>Your games wait for you</h2>
 <p>A game you start is saved to your account. Walk away in the middle of a hand and it'll still be there tomorrow — in a new chat, or even on a phone call. Just say "let's pick up my game" and you're back at the table.</p>
 
+<h2>See the table — visuals for sighted players</h2>
+<p>Games now draw themselves on screen. When a character deals a hand in the chat, a picture of the table appears right under their message: your cards face-up, everyone else's face-down, the discard pile, dice, chip counts, trivia questions with their answer choices — updated after every move, with little card-deal animations and confetti when you win. The same table shows up in conversation mode while you play by voice.</p>
+<p>Two honest notes. First, the picture never shows anything the character hasn't already told you — it's the same game, just drawn. Screen reader users lose nothing and gain no clutter: the visual is completely invisible to VoiceOver and NVDA on purpose, so the spoken experience is exactly what it always was. Second, if you prefer less motion, the animations respect your device's reduce-motion setting automatically.</p>
+
 <h2>The Game Room — family bragging rights</h2>
 <p>Every game you finish lands on the family leaderboard. Open the <strong>Game Room</strong> from the account menu (bottom-left, under Explore), or go straight to <strong>kademurdock.com/game-room</strong>. It shows who's winning across the whole family: total wins and losses for each player, a champion for every game, the biggest Blackjack win ever, the best Trivia Night score, and the latest results as they happen.</p>
 <p>Only finished games count. Walking away from a table in the middle never counts as a loss — the board only knows about games played to the end. And like everything here, it reads top to bottom with a screen reader: plain tables, plain words, no charts to squint at.</p>
