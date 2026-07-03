@@ -249,7 +249,7 @@ PAGES.home = {
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — and they can make calls for you.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
   <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room, give them a topic, and jump in.</span></a></li>
-  <li data-terms="games game parlor cards blackjack wild eights go fish dealer play deal poker dice trivia casino"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Play real card games by voice — Blackjack, Wild Eights, Go Fish. The dealer keeps you honest.</span></a></li>
+  <li data-terms="games game parlor cards blackjack wild eights go fish dealer play deal poker dice trivia casino pig phone sounds quiz"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Play real games by voice — Blackjack, Wild Eights, Go Fish, Pig dice, Trivia Night. Real table sounds, in chat and on the phone.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
   <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
@@ -541,7 +541,7 @@ PAGES.rooms = {
 PAGES.games = {
   title: "The Game Parlor",
   h1: "The Game Parlor",
-  tagline: "Real card games you play out loud — the dealer handles the cards, you bring the trash talk.",
+  tagline: "Real games you play out loud — the dealer handles the cards and dice, you bring the trash talk.",
   main: `
 <p class="lead">The Game Parlor is a room full of games you can play entirely by voice or by typing — no board to look at, nothing to see. Every card is read out to you by name, and a real dealer keeps the game honest. You just say what you want to do.</p>
 
@@ -553,14 +553,22 @@ PAGES.games = {
   <li><strong>Blackjack</strong> — get as close to 21 as you can without going over, and beat the dealer. Say "hit" for another card or "stay" to hold. You play with pretend chips — never real money.</li>
   <li><strong>Wild Eights</strong> — our version of crazy eights. Match the top card by number or suit, drop an Eight to change the suit and mess with everybody, and empty your hand first to win. Play against one to three computer opponents.</li>
   <li><strong>Go Fish</strong> — ask for cards, collect sets of four, most sets wins. Easy, friendly, and great over the phone or by voice. Perfect for the kids too.</li>
+  <li><strong>Pig</strong> — the press-your-luck dice game. Roll to pile up points, hold to bank them — but roll a one and the whole turn's points vanish. First to 100 wins. Made for the phone: two choices, all sound.</li>
+  <li><strong>Trivia Night</strong> — real quiz questions with four choices, A through D. Play solo, or race up to three characters who answer the same questions you do. Pick a topic (movies, music, science, history, animals and more) and a difficulty, or take a mix.</li>
 </ul>
-<p>More games are on the way — dice games, trivia, Battleship by voice, word games, and multi-character game nights.</p>
+<p>More games are on the way — Battleship by voice, word games, and multi-character game nights.</p>
 
 <h2>How to start a game</h2>
 <p>Just ask. Tell Kiana — or any character with the games tool — something like "let's play Blackjack," "deal me into Go Fish," or "teach me Wild Eights." The dealer takes it from there: it deals you in, tells you your hand, and lays out your choices in plain words. You say what you want to do, and it plays it out.</p>
 
 <h2>Playing by ear</h2>
 <p>Everything is spoken. Instead of a pile of cards on a screen, you'll hear things like "You've got the Ace of Spades and the King of Hearts — that's twenty-one, blackjack!" You never have to picture a table. Say your move in normal words ("hit me," "I'll ask for kings," "play my red eight and call diamonds") and the dealer sorts out the details.</p>
+
+<h2>Real table sounds</h2>
+<p>Games come with real sounds now — cards being shuffled and dealt, dice rattling across the table, chips clacking down, a little fanfare when you win and a sad trombone when you don't. You'll hear them in regular chat, in conversation mode, and on the phone. They play themselves at the right moments; there's nothing to set up.</p>
+
+<h2>Play on the phone</h2>
+<p>Call the usual number — <strong>+1&nbsp;833&nbsp;530&nbsp;0313</strong> — and just say "deal me in" or "let's pick up my game." If you have an account, the same saved table from your chats is waiting for you on the call, sounds and all. Pig and Trivia are especially good by phone: for trivia, just blurt your answer the second you know it — interrupting is allowed. That IS the buzzer.</p>
 
 <h2>Your games wait for you</h2>
 <p>A game you start is saved to your account. Walk away in the middle of a hand and it'll still be there tomorrow — in a new chat, or even on a phone call. Just say "let's pick up my game" and you're back at the table.</p>
