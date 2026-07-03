@@ -29,12 +29,14 @@ const PAYPAL_URL = "https://paypal.me/kademurdock";
 // verify offline that every route resolves.
 const SECTIONS = [
   { key: "home",            path: "/help",                 label: "Help Home",          group: "Getting started" },
+  { key: "starthere",       path: "/help/start-here",      label: "Start Here (New to AI?)", group: "Getting started" },
   { key: "quickstart",      path: "/help/quickstart",      label: "Your First Five Minutes", group: "Getting started" },
   { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
   { key: "phone",           path: "/help/phone",           label: "Phone Calls", group: "Using Kade-AI" },
   { key: "characters",      path: "/help/characters",      label: "Characters & the Marketplace", group: "Using Kade-AI" },
+  { key: "rooms",           path: "/help/debate-room",     label: "The Debate Room",     group: "Using Kade-AI" },
   { key: "build",           path: "/help/build",           label: "Build Your Own Character", group: "Using Kade-AI" },
   { key: "memory",          path: "/help/memory",          label: "What It Remembers",   group: "Using Kade-AI" },
   { key: "images",          path: "/help/images",          label: "Making Pictures",     group: "Using Kade-AI" },
@@ -229,7 +231,7 @@ PAGES.home = {
   tagline: "Everything you need to feel at home here — in plain language, built to work beautifully with a screen reader.",
   main: `
 <p class="lead">Kade-AI is a friendly little AI chat that Kade built and runs herself, and opened up for family and friends. You type, an AI character types back (and can talk out loud if you want). That's the whole idea.</p>
-<p>New here? Start with <a href="/help/quickstart">Your First Five Minutes</a>. Got a quick question, like "does this cost me anything?" — jump to <a href="/help/faq">Questions &amp; Answers</a>. Everything else is in the menu, and you can search it right below.</p>
+<p>Brand new to AI in general? <a href="/help/start-here">Start Here</a> assumes nothing at all. Already comfortable? Jump to <a href="/help/quickstart">Your First Five Minutes</a>. Got a quick question, like "does this cost me anything?" — jump to <a href="/help/faq">Questions &amp; Answers</a>. Everything else is in the menu, and you can search it right below.</p>
 
 <div class="hubsearch">
   <label for="hubsearch">Search the help pages</label>
@@ -239,11 +241,13 @@ PAGES.home = {
 
 <h2>Pick a topic</h2>
 <ul class="cards" id="hubcards">
+  <li data-terms="start here new ai beginner never used what is this chatgpt robot confused lost"><a href="/help/start-here"><span class="ico" aria-hidden="true">🌱</span><span class="ttl">Start Here (New to AI?)</span><span class="desc">Never used AI before? This page assumes nothing. Read this one first.</span></a></li>
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — and they can make calls for you.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
+  <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room, give them a topic, and jump in.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
   <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
@@ -275,6 +279,46 @@ PAGES.home = {
     input.addEventListener("input", run);
   })();
 </script>
+`,
+};
+
+// ---- 1b. START HERE (never used AI) ----------------------------------------
+PAGES.starthere = {
+  title: "Start Here (New to AI?)",
+  h1: "Start Here",
+  tagline: "Never used AI before? Perfect. This page assumes absolutely nothing.",
+  main: `
+<p class="lead">Kade-AI is a website where you have conversations. You type something, and a character types back — out loud too, if you want. That's really it. Everything else on this site is just extra toppings.</p>
+
+<h2>So what am I actually talking to?</h2>
+<p>You're talking to an <strong>AI character</strong>. The AI part means it's a computer program that has read an enormous amount of writing and learned to hold a conversation. The character part means it has a name and a personality — the host here is <strong>Kiana</strong>, and she's who greets you when you sign in.</p>
+<p>Three honest things to know:</p>
+<ul>
+  <li><strong>It's not a person.</strong> Nobody is sitting there typing back at you. It's a program with a lot of charm.</li>
+  <li><strong>It can be wrong.</strong> It usually isn't, but it can sound completely confident and still be mistaken. For anything important — medical, legal, money — double-check before acting.</li>
+  <li><strong>It's patient forever.</strong> You cannot annoy it, ask a dumb question, or use it "wrong." Ask it to explain something five times, five different ways. That's what it's for.</li>
+</ul>
+
+<h2>How do I start?</h2>
+<p>Type in the message box at the bottom of the chat and press enter (or the send button). Talk like you'd talk to a person: "I'm trying to write a birthday card for my sister and I'm stuck" works better than robot-speak. Whole sentences, normal words, no magic commands.</p>
+<p>Don't know what to say? Steal one of these: "What can you actually do?" &middot; "Help me plan supper with what's in my fridge" &middot; "Explain how car insurance works like I'm twelve" &middot; "Tell me something interesting."</p>
+
+<h2>You can talk instead of type</h2>
+<p>There's a microphone button to speak your message, and replies can be read out loud in a real voice. There's even a phone number you can call and just talk, no computer needed. See <a href="/help/voice">Talking &amp; Listening</a> and <a href="/help/phone">Phone Calls</a>.</p>
+
+<h2>Does this cost me money?</h2>
+<p>No. Kade pays the bill so friends and family can use it. If you're curious what your chats cost her (it's usually pocket change) or want to chip in, that's <a href="/help/donate">Feed the Server</a> — zero pressure, ever.</p>
+
+<h2>Once you're comfortable</h2>
+<ul>
+  <li><a href="/help/characters">Meet the other characters</a> — there's a whole cast: cooks, mechanics, grandmas, a dog.</li>
+  <li><a href="/help/images">Ask for a picture</a> and it'll draw one.</li>
+  <li><a href="/help/debate-room">The Debate Room</a> — put a few characters in one room and watch them argue about pineapple pizza.</li>
+  <li><a href="/help/build">Build your own character</a> — no coding, just a name and a personality.</li>
+</ul>
+
+<h2>You can't break anything</h2>
+<p>Worst case, a conversation gets weird or boring — so you <a href="/help/temporary">start a new chat</a> and it's a clean slate. And if you're ever lost, ask the character itself: "how does this site work?" It knows. Or come back here and use the search on the <a href="/help">help home page</a>.</p>
 `,
 };
 
@@ -455,6 +499,43 @@ ${nextprev("phone", "build")}
 };
 
 // ---- 4c. BUILD YOUR OWN ---------------------------------------------------
+PAGES.rooms = {
+  title: "The Debate Room",
+  h1: "The Debate Room",
+  tagline: "Two or more characters, one room, one topic — and you, whenever you feel like jumping in.",
+  main: `
+<p class="lead">The Debate Room lets you drop a handful of characters into one conversation and give them something to chew on. They'll argue, agree, gang up, and crack jokes — with each other, not just with you. You can sit back and listen, or wade in anytime.</p>
+
+<h2>Where it is</h2>
+<p>Open the account menu (your name, bottom-left corner), choose <strong>Explore</strong>, then <strong>Debate Room</strong>. Or go straight to <strong>kademurdock.com/debate-room</strong>.</p>
+
+<h2>Starting a room</h2>
+<ol>
+  <li><strong>Give it a topic or a scene.</strong> Anything: "Pineapple on pizza — settle it," or "You're a ship's crew and the ship is sinking."</li>
+  <li><strong>Add rules if you want.</strong> This part's optional but powerful: "Tank argues FOR and takes it way too seriously. Nana Pearl thinks everyone needs a snack. Keep it short." The characters actually follow these.</li>
+  <li><strong>Pick your cast</strong> — check 2 to 6 characters from the list.</li>
+  <li>Press <strong>Create room</strong>.</li>
+</ol>
+
+<h2>Running the conversation</h2>
+<ul>
+  <li><strong>Next speaker</strong> — one character takes a turn.</li>
+  <li><strong>Run a round</strong> — everyone speaks once.</li>
+  <li><strong>Let them cook</strong> — they go three full rounds on their own. There's a Stop button.</li>
+  <li><strong>Type anything</strong> in the box and send it — you're in the room too, and everyone gets a turn to react to what you said.</li>
+</ul>
+
+<h2>Read aloud — radio-play mode</h2>
+<p>Turn on <strong>Read aloud</strong> in the room and every character's turn is spoken out loud <em>in that character's own voice</em>, one after another. It turns a debate into a little radio drama. Your choice is remembered for next time.</p>
+
+<h2>The Conversation Hall</h2>
+<p>Had a conversation so good it deserves an audience? Press <strong>Share to the Hall</strong>, give it a title, and it appears in the <a href="${CHAT_URL}/conversation-hall">Conversation Hall</a> — the public greatest-hits shelf everyone on the site can read. You can unshare or delete your room anytime, and deleting the room removes it from the Hall too.</p>
+
+<h2>The small print (tiny, promise)</h2>
+<p>Each character turn costs a fraction of a cent, and it shows on your <a href="/help/donate">Feed the Server</a> tab like everything else. There's a daily limit high enough that you'll never notice it in normal use. Rooms stick around until you delete them, so you can come back to a good one tomorrow.</p>
+`,
+};
+
 PAGES.build = {
   title: "Build Your Own Character",
   h1: "Build Your Own Character",
@@ -612,7 +693,7 @@ PAGES.cheatsheet = {
     <tr><th scope="row">Hear today's news</th><td>Ask any character "what's the news this morning?" — or get a scheduled morning briefing call (contact Kade).</td></tr>
     <tr><th scope="row">Have a webpage read to me</th><td>Paste the link and say "read this to me" — it strips the ads and clutter first.</td></tr>
     <tr><th scope="row">Play a text adventure</th><td>Ask for an adventure game — it can SAVE your game and pick it up any day, any chat.</td></tr>
-    <tr><th scope="row">See what I've used this month</th><td>Account menu (bottom-left avatar) → Feed the Server.</td></tr>
+    <tr><th scope="row">See what I've used this month</th><td>Account menu (bottom-left avatar) → Explore → Feed the Server.</td></tr>
     <tr><th scope="row">Get help from a human</th><td>Contact Kade.</td></tr>
   </tbody>
 </table>

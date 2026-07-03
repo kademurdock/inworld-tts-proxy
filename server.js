@@ -1317,30 +1317,12 @@ app.get("/voices.json", (_req, res) => {
   res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
 });
 
-app.get(["/voices", "/voice-library"], (req, res) => {
-  // (b) Float Kade's custom-made/specialty voices to the top, keeping the existing
-  //     order for the rest. 2026-07-01: labels are now "Voice N" numbers, so the
-  //     floating check runs against CUSTOM_VOICE_NUMBERS (which numbers used to be
-  //     a CUSTOM_VOICE_MAP entry) instead of matching old friendly-name strings --
-  //     matching against the old names would silently float nothing anymore since
-  //     VOICE_LIST no longer contains any of those strings.
-  //     The OpenAI-style aliases (alloy/echo/fable/onyx/nova/shimmer) were already
-  //     dropped from VOICE_LIST itself, so there's nothing left to filter out here.
-  // 2026-07-01: badges retired (Kade: customs should not be distinguishable).
-  // The renumbering already puts her customs first as Voice 1-70, so the
-  // float below is a no-op kept for safety; the page just stops saying/showing
-  // which entries are custom.
-  const custom = [];
-  const displayList = [
-    ...VOICE_LIST.filter((v) => CUSTOM_VOICE_NUMBERS.has(v)),
-    ...VOICE_LIST.filter((v) => !CUSTOM_VOICE_NUMBERS.has(v)),
-  ];
-  const html = VOICE_PAGE_HTML
-    .replace("/*VOICES*/", JSON.stringify(displayList))
-    .replace("/*CUSTOM*/", JSON.stringify(custom))
-    .replace("/*SAMPLE*/", JSON.stringify(SAMPLE_TEXT));
-  res.set("Content-Type", "text/html; charset=utf-8");
-  res.send(html);
+// RETIRED July 3 2026 (Kade's call): the standalone Voice Library page is
+// obsolete now that the fork has in-app audition pickers (builder + settings).
+// Old bookmarks land on the help page that explains voices instead of a 404.
+// /voices.json above stays — the fork's pickers read it.
+app.get(["/voices", "/voice-library"], (_req, res) => {
+  res.redirect(302, "/help/voice");
 });
 
 app.listen(PORT, () => {
