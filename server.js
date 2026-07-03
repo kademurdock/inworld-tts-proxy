@@ -1048,7 +1048,11 @@ app.post("/v1/audio/speech", async (req, res) => {
   // followed by a "turn0search3"-style id) into its answer; these render as
   // source chips in the UI but TTS otherwise reads them aloud as gibberish
   // mid-sentence. Visible message text is untouched (this only cleans audio).
-  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(input))));
+  // Game Parlor sound cues ([sound:card_deal] etc., see the fork's
+  // client/src/utils/gameSounds.ts): the web client plays these as real
+  // clips; on the TTS path they must simply vanish so no surface ever
+  // SPEAKS the token. Same hygiene class as citation markers.
+  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(input)))).replace(/\[sound:[a-z0-9_]+\]/gi, '');
   console.log(`[TTS] input len=${input.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
