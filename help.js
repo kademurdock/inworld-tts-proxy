@@ -755,7 +755,7 @@ PAGES.costs = {
 
 <h2>Pictures, videos, and phone calls come from different jars</h2>
 <p>Making images is paid for separately, from its own little pot of credits (a few cents per picture). <strong>Videos</strong> are the big-ticket item — roughly 50 cents to a dollar per clip — and <strong>phone calls</strong> run about a cent and a half per minute. Same idea, different jars — and the characters give you a casual heads-up before doing the expensive stuff.</p>
-<p>Want to see your own numbers? Open the <strong>account menu</strong> (your avatar, bottom-left) and choose <strong>Feed the Server</strong> — it shows your month so far, item by item, nothing hidden.</p>
+<p>Want to see your own numbers? Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Feed the Server</strong> — it shows your month so far, item by item, nothing hidden.</p>
 
 <h2>So why mention any of this?</h2>
 <p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about. Knowing there's a real bill behind it just helps everyone treat the place with a little respect… and maybe, if you're able, <a href="/help/donate">toss a few bucks toward the grocery fund</a>. Which brings us to the next page.</p>
@@ -805,7 +805,7 @@ PAGES.donate = {
 <p class="lead"><strong>The fridge does not refill itself.</strong></p>
 
 <h2>See your own tab</h2>
-<p>Curious what YOUR chatting actually added up to? In the app, open the <strong>account menu</strong> (your avatar, bottom-left) and choose <strong>Feed the Server</strong>. It shows your month — chat, voice, pictures, phone calls, the works — priced out honestly, framed as a suggested chip-in. No bill, no obligation, just receipts.</p>
+<p>Curious what YOUR chatting actually added up to? In the app, open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Feed the Server</strong>. It shows your month — chat, voice, pictures, phone calls, the works — priced out honestly, framed as a suggested chip-in. No bill, no obligation, just receipts.</p>
 
 <h2>Where you come in (totally optional, zero guilt)</h2>
 <p>You're a welcome guest here. Genuinely. Nobody's standing at the door with a tip jar and a stern look. But if this place has made you laugh, helped you out, or saved your bacon even once — you can chip in for groceries and keep the robot fed.</p>
