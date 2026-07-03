@@ -836,7 +836,10 @@ function fixPronunciations(text) {
     .replace(/\bkade\b/gi, "Kadie")            // bare first name -> KAY-dee
     // Zadiana -> "zay-dee-ON-nuh" (Kade's spec, July 2 2026). Covers Zadiana,
     // possessives, and the Zadi nickname keeps its natural read (ZAY-dee).
-    .replace(/\bzadiana\b/gi, "Zaydionna");
+    // Spelling is env-tunable (July 3 2026): Kade reported the name reading
+    // flat ("Zad-ee-ana") on Voice 14 — audition WAVs went to her folder;
+    // set TTS_ZADIANA_SPELLING on this service to apply the winner.
+    .replace(/\bzadiana\b/gi, process.env.TTS_ZADIANA_SPELLING || "Zaydionna");
 }
 
 // ── TTS-2 emotion/performance tags (LLM-authored, sentinel-wrapped) ──────────
