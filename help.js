@@ -247,9 +247,9 @@ PAGES.home = {
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — and they can make calls for you.</span></a></li>
-  <li data-terms="characters marketplace agents personas switch browse"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
+  <li data-terms="characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
   <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room, give them a topic, and jump in.</span></a></li>
-  <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Play real games by voice — Blackjack, Wild Eights, Go Fish, Uno, War, Pig dice, Trivia Night. Real table sounds, and a family leaderboard in the Game Room.</span></a></li>
+  <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion wild blanks cards against party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Nineteen real games by voice — Blackjack, Uno, War, Wild Blanks (the fill-in-the-blank party game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
   <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
@@ -491,6 +491,12 @@ PAGES.characters = {
 <h2>The specialists</h2>
 <p>A few characters have serious extra powers: <strong>Rio</strong> makes short <em>videos</em> from your description, <strong>Lux</strong> is the photography ace, <strong>Indie</strong> designs images with clean text in them (logos, cards, flyers), and <strong>Describe-It</strong> looks at a photo you upload and tells you everything that's in it — a favorite for screen-reader users. Video-making costs real money per clip (the character will tell you roughly how much before it runs), so it mentions the price the way a friend would — no surprises. See <a href="/help/images">Making Pictures</a>.</p>
 
+<h2>The Companions — everyday folks, just for company</h2>
+<p>New: a whole shelf of characters who aren't specialists at anything except being good company. Regular people of all sorts — <strong>Earl</strong> the retired trucker with a story for every mile marker, <strong>Miss Opal</strong> from the school cafeteria who remembers every birthday, <strong>Dottie</strong> at the diner who never lets your cup hit empty, <strong>Marcus</strong> the night-shift EMT who listens for real, <strong>Wanda</strong> the bingo-hall legend, <strong>Priya</strong> the midnight radio DJ for when you can't sleep, and a dozen more. No tasks, no agenda — somebody to talk to who remembers what you told them last time. They're friends, not sweethearts: warm company without any of the dating-app business.</p>
+
+<h2>Find your people — the Matchmaker</h2>
+<p>Don't feel like scrolling a hundred characters? Take the <strong>Matchmaker</strong> quiz: five quick questions — what you're in the mood for, what energy fits, what you love talking about — and it hands you your three best matches with a plain reason for each, and a button to start talking. There's a "surprise me" option if you'd rather leave it to fate. Open the account menu (bottom-left), choose <strong>Explore</strong>, then <strong>The Matchmaker</strong> — or go straight to <strong>kademurdock.com/matchmaker</strong>. Retake it as often as your mood changes; nothing is saved and nothing costs anything.</p>
+
 <h2>How to browse them</h2>
 <p>Look for the <strong>marketplace</strong> (sometimes shown as a grid or an "explore characters" option in the menu). Open it and you can scroll the whole list, each with a short description of what it's for.</p>
 
@@ -561,11 +567,31 @@ PAGES.games = {
   <li><strong>War</strong> — the simplest card game there is, and the loudest. You and the house each flip a card; higher card takes both. Tie? That means WAR: three cards face down, one face up, winner takes the whole pile. No decisions, all drama — a perfect first game for the littlest players.</li>
   <li><strong>Pig</strong> — the press-your-luck dice game. Roll to pile up points, hold to bank them — but roll a one and the whole turn's points vanish. First to 100 wins. Made for the phone: two choices, all sound.</li>
   <li><strong>Trivia Night</strong> — real quiz questions with four choices, A through D. Play solo, or race up to three characters who answer the same questions you do. Pick a topic (movies, music, science, history, animals and more) and a difficulty, or take a mix.</li>
+  <li><strong>In-Between</strong> — the old card-room classic. Two posts go up, you bet pretend chips on whether the next card lands between them. Smack a post dead-on and it costs double. Double your stack to win.</li>
 </ul>
-<p>More games are on the way — Battleship by voice, word games, and multi-character game nights.</p>
+
+<h2>The party games (new!)</h2>
+<ul>
+  <li><strong>Wild Blanks</strong> — our fill-in-the-blank party game, the one you know from game night. A judge flips a prompt like "Grandma keeps ____ in her purse at all times," everybody plays their funniest card, and the judge crowns a winner. You play cards from your own hand AND take your turn as judge. Over 500 original cards. The regular deck is for the grown folks' table; say "keep it clean" any time for the family deck.</li>
+  <li><strong>Crab Apples</strong> — our apples-to-apples. The judge flips a description card — "Squeaky," "Majestic," "Suspicious" — and everyone plays the thing that fits best (or funniest: sometimes "the DMV line" IS the most majestic answer). All ages, all clean.</li>
+  <li><strong>Fill-In Stories</strong> — you hand over a noun here and a verb there, then hear the whole ridiculous story read back with full drama. Eight original stories and the game holds the ending secret so nothing spoils.</li>
+  <li><strong>Guess the Sound</strong> — the table plays one of its own real sound effects, you name it from three choices. Ears only. Kids will run this one into the ground, which is the idea.</li>
+</ul>
+
+<h2>Dice, bluffing, and the rest</h2>
+<ul>
+  <li><strong>Farkle</strong> — roll six dice, set aside what scores (ones, fives, triples, a straight, three pairs), and push your luck on the rest. A roll with nothing scoring is a FARKLE and torches the turn. First to 4,000.</li>
+  <li><strong>Liar's Dice</strong> — five dice under your cup, ones are wild. The table trades rising bids — "three fours," "four fours" — until somebody calls LIAR and the cups come up. Lose the call, lose a die. Bluffing by voice at its finest.</li>
+  <li><strong>Battleship</strong> — call your shots out loud: "B seven!" … splash, or BOOM. Rows run A to J, columns 1 to 10, and the house hunts you back honestly (it only knows the squares it has already shot). Sink all five of its ships first.</li>
+  <li><strong>Hangman</strong> — the game holds a secret word from a category (critters, good eatin', places around here…), you call letters, six misses and the gallows wins. The word gets spelled out clean for screen readers every turn.</li>
+  <li><strong>Word Scramble</strong> — hear the letters, unscramble the word. Hints cost half the point. Beat par across five words.</li>
+  <li><strong>Tic-Tac-Toe</strong> — squares one through nine like a phone pad. The house plays decent-but-beatable on purpose.</li>
+  <li><strong>Rock Paper Scissors</strong> — best of five against the house, for when you've got ninety seconds and something to prove.</li>
+</ul>
+<p>Still queued: multi-character game nights (poker with a table full of personalities) and a persistent family chip bank.</p>
 
 <h2>How to start a game</h2>
-<p>Just ask. Tell Kiana — or any character with the games tool — something like "let's play Blackjack," "deal me into Go Fish," or "teach me Wild Eights." The dealer takes it from there: it deals you in, tells you your hand, and lays out your choices in plain words. You say what you want to do, and it plays it out.</p>
+<p>Just ask. Tell Kiana — or Deuce the house dealer, or any character with the games tool — something like "let's play Blackjack," "deal us into Wild Blanks," or "let's play Battleship." The dealer takes it from there: it deals you in, tells you your hand, and lays out your choices in plain words. You say what you want to do, and it plays it out.</p>
 
 <h2>Playing by ear</h2>
 <p>Everything is spoken. Instead of a pile of cards on a screen, you'll hear things like "You've got the Ace of Spades and the King of Hearts — that's twenty-one, blackjack!" You never have to picture a table. Say your move in normal words ("hit me," "I'll ask for kings," "play my red eight and call diamonds") and the dealer sorts out the details.</p>
@@ -750,6 +776,8 @@ PAGES.cheatsheet = {
     <tr><th scope="row">Hear today's news</th><td>Ask any character "what's the news this morning?" — or get a scheduled morning briefing call (contact Kade).</td></tr>
     <tr><th scope="row">Have a webpage read to me</th><td>Paste the link and say "read this to me" — it strips the ads and clutter first.</td></tr>
     <tr><th scope="row">Play a text adventure</th><td>Ask for an adventure game — it can SAVE your game and pick it up any day, any chat.</td></tr>
+    <tr><th scope="row">Play cards, dice, or a party game</th><td>Say "let's play" to Kiana or Deuce — nineteen games from Blackjack to Wild Blanks to Battleship. See <a href="/help/games">The Game Parlor</a>.</td></tr>
+    <tr><th scope="row">Find a character I'll click with</th><td>Account menu → Explore → <strong>The Matchmaker</strong>: five questions, three matches, one button to start talking.</td></tr>
     <tr><th scope="row">See what I've used this month</th><td>Account menu (bottom-left avatar) → Explore → Feed the Server.</td></tr>
     <tr><th scope="row">Get help from a human</th><td>Contact Kade.</td></tr>
   </tbody>
