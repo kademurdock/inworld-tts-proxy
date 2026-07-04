@@ -508,8 +508,37 @@ router.get("/balances", auth, async (req, res) => {
 // ---- /librechat/ask — proxy agent call, returns {text} ----
 // LibreChat uses a two-phase model: POST /api/agents/chat returns {streamId}
 // immediately; then GET /api/agents/chat/stream/:streamId delivers SSE tokens.
+
+// Call-transcript embedding (July 4 2026 — Kade: "she keeps forgetting what
+// game we're in"). ROOT CAUSE of phone/SMS amnesia: both lcAsk and
+// lcAskStream posted conversationId:"new" with text = ONLY the last user
+// message; the messages[] array rode along in the body but LibreChat's
+// /api/agents/chat ignores it entirely (verified: nothing in the fork
+// consumes req.body.messages). So every phone turn was the agent's FIRST —
+// the bridge's carefully-kept 30-turn history never reached the model.
+// Fix: fold prior turns into the text itself as a compact transcript block.
+// The last message keeps its suffixes ([PHONE CALL...], game mode, caller
+// line) untouched at the end, where reframe-proxy's marker detection and
+// the model's attention both live.
+const TRANSCRIPT_TURNS = parseInt(process.env.LC_TRANSCRIPT_TURNS || "24", 10);
+function composeTextWithHistory(messages) {
+  const last = messages[messages.length - 1] || {};
+  const lastText = last.content || "";
+  const prior = messages.slice(0, -1).filter((m) => m && m.content);
+  if (!prior.length) return lastText;
+  const lines = prior.slice(-TRANSCRIPT_TURNS).map((m) =>
+    `${m.role === "assistant" ? "YOU" : "THEM"}: ${String(m.content).slice(0, 600)}`
+  );
+  return (
+    "[EARLIER IN THIS CONVERSATION — context only, already handled, do not re-answer:\n" +
+    lines.join("\n") +
+    "\n— end of earlier context. Reply ONLY to what follows.]\n\n" +
+    lastText
+  );
+}
+
 async function lcAsk(agentId, messages) {
-  const userText = (messages[messages.length - 1] || {}).content || "";
+  const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
     agentId,
@@ -675,7 +704,7 @@ function messageText(msg) {
 }
 
 async function lcAskStream(agentId, messages, onToken) {
-  const userText = (messages[messages.length - 1] || {}).content || "";
+  const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
     agentId,
