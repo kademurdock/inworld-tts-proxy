@@ -448,7 +448,7 @@ PAGES.phone = {
 <p class="lead">Kade-AI isn't stuck inside a browser. It has an actual phone number, and the characters can use the phone themselves.</p>
 
 <h2>Call the place: 1-833-530-0313</h2>
-<p>Dial <strong>1-833-530-0313</strong> from any phone — it's toll-free. A character answers and you just… talk, like a regular call. You can interrupt it mid-sentence, it keeps up. Want somebody specific? Just ask — <em>"can I talk to Zadiana?"</em> — and it switches characters right on the call.</p>
+<p>Dial <strong>1-833-530-0313</strong> from any phone — it's toll-free. A character answers and you just… talk, like a regular call. You can interrupt it mid-sentence, it keeps up. Want somebody specific? Just ask — <em>"can I talk to Zadiana?"</em> — and it switches characters right on the call. Each character speaks in its own voice, so you'll hear the change; if the new one needs a second to pick up, you'll get a quick "one sec" while it does.</p>
 <div class="callout good">
   <p>If Kade set your phone number up in advance, the line already knows who you are and which character is yours — it greets you by name the moment you call. Want that? <strong>Contact Kade.</strong></p>
 </div>
