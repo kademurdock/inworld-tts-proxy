@@ -896,6 +896,7 @@ PAGES.accessibility = {
 <ul>
   <li><strong>Use the headings to jump around.</strong> Every page here, and the chat itself, uses real headings. In NVDA, press <strong>H</strong> to hop heading to heading; in VoiceOver, use the rotor set to Headings.</li>
   <li><strong>Replies get announced.</strong> When the AI answers, the new text is marked as a live update, so your screen reader can read it without you hunting for it.</li>
+  <li><strong>You always know if it's still working.</strong> Your screen reader hears "Working on a reply" the moment you send, a quiet "Still working" reminder if a long answer (or a bunch of tool use) takes a while, and "Reply ready" the second it finishes. No more guessing whether it's thinking or done.</li>
   <li><strong>Prefer listening?</strong> Turn on auto-play (Settings → Speech) so replies read themselves aloud in a chosen voice — that's separate from your screen reader and often nicer for long answers. Full details on <a href="/help/voice">Talking &amp; Listening</a>.</li>
 </ul>
 
