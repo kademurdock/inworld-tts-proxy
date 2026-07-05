@@ -437,7 +437,12 @@ function splitSentences(text) {
     );
   }
 
-  const matches = masked.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g);
+  // A sentence's terminal .!? may be followed by closing quotes/brackets
+  // (e.g. 'Nice tie."') before the whitespace boundary. Without allowing
+  // them here, the global match cannot close that sentence and silently
+  // SKIPS the whole quoted span -- dropping it from the audio (Kade, July
+  // 2026: read-aloud was losing jokes/dialogue that ended inside quotes).
+  const matches = masked.match(/[^.!?]+[.!?]+["'”’»)\]}]*(\s+|$)|[^.!?]+$/g);
   const restore = (s) =>
     s.split(ELLIPSIS_TOKEN).join("...").split(DOT_TOKEN).join(".");
 
