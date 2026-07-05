@@ -41,6 +41,7 @@ const SECTIONS = [
   { key: "build",           path: "/help/build",           label: "Build Your Own Character", group: "Using Kade-AI" },
   { key: "memory",          path: "/help/memory",          label: "What It Remembers",   group: "Using Kade-AI" },
   { key: "images",          path: "/help/images",          label: "Making Pictures",     group: "Using Kade-AI" },
+  { key: "audio",           path: "/help/audio",           label: "Making Audio & Voices", group: "Using Kade-AI" },
   { key: "temporary",       path: "/help/temporary",       label: "Starting Over & Private Chats", group: "Using Kade-AI" },
   { key: "cheatsheet",      path: "/help/cheatsheet",      label: "The Cheat Sheet",     group: "Using Kade-AI" },
 
@@ -253,6 +254,7 @@ PAGES.home = {
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
   <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
+  <li data-terms="audio sound cadence voice clone voices radio drama podcast narration text to speech tts music sound effects sfx seed audio make audio generate audio scene dialogue movie trailer"><a href="/help/audio"><span class="ico" aria-hidden="true">🎬</span><span class="ttl">Making Audio &amp; Voices</span><span class="desc">Turn a few sentences into a full audio scene — voices, effects, and music. Meet Cadence.</span></a></li>
   <li data-terms="temporary private starting over new chat fresh delete"><a href="/help/temporary"><span class="ico" aria-hidden="true">🧹</span><span class="ttl">Starting Over &amp; Private Chats</span><span class="desc">Fresh start, or a chat that doesn't get saved.</span></a></li>
   <li data-terms="cheat sheet buttons quick reference where shortcuts deep think brain reasoning slow careful"><a href="/help/cheatsheet"><span class="ico" aria-hidden="true">📋</span><span class="ttl">The Cheat Sheet</span><span class="desc">Where the buttons are and how to do the common stuff. One page.</span></a></li>
   <li data-terms="tokens context counter words cost meaning"><a href="/help/tokens"><span class="ico" aria-hidden="true">🔢</span><span class="ttl">What Are Tokens?</span><span class="desc">That little counter, explained without the math homework.</span></a></li>
@@ -713,7 +715,47 @@ PAGES.images = {
 
 <h2>For folks using a screen reader</h2>
 <p>When the AI makes an image, ask it to <strong>describe the picture in detail</strong> too — it's happy to paint the full scene in words so you know exactly what it created. And <strong>Describe-It</strong> in the marketplace does the reverse: upload any photo and it tells you what's in it.</p>
-${nextprev("memory", "temporary")}
+${nextprev("memory", "audio")}
+`,
+};
+
+// ---- 4e-audio. MAKING AUDIO ----------------------------------------------
+PAGES.audio = {
+  title: "Making Audio & Voices",
+  h1: "Making Audio & Voices",
+  tagline: "Describe a moment and a character can turn it into a real audio clip — voices, sound effects, and music, mixed together.",
+  main: `
+<p class="lead">Kade-AI can <strong>make audio</strong> — not just read text out loud, but generate a whole <em>scene</em>: characters talking, sound effects, music, and atmosphere, all from a few sentences you write.</p>
+
+<div class="term"><strong>Generate audio</strong> means the AI creates a brand-new sound clip from your description — voices, effects, and music mixed together. Nothing is recorded from real people; it's built fresh for your request.</div>
+
+<h2>Meet Cadence, your audio director</h2>
+<p><strong>Cadence</strong> is the character built for this. Find Cadence in the marketplace (the <a href="/help/characters">Characters</a> page shows you how), describe the moment you want to hear, and Cadence turns it into a real, playable clip. It plays right there in the chat, and it's saved to your <a href="/my-creations">My Creations</a> page so you can come back to it.</p>
+
+<h2>What you can ask for</h2>
+<ul>
+  <li><strong>A whole scene:</strong> <em>"A 90-second suspense radio drama in a late-night diner — rain outside, two nervous voices, a door slams at the end."</em></li>
+  <li><strong>Narration or a voiceover:</strong> <em>"Read this in a warm movie-trailer voice…"</em></li>
+  <li><strong>Your own script:</strong> paste a few lines of dialogue and let Cadence cast it and perform it with sound.</li>
+  <li><strong>Copy a voice:</strong> give it a short, clean recording and it can speak new lines in that voice.</li>
+  <li><strong>Fix or extend a clip:</strong> make an ending longer, swap a line, or stitch two clips into one.</li>
+</ul>
+
+<h2>The catch: it costs a little (not much)</h2>
+<div class="callout warn">
+  <p>Making audio pulls from the same small pot of credits as pictures and video. It's cheap — about <strong>7 or 8 cents a minute</strong>, so a full two-minute scene runs around 15 cents — but the pot isn't bottomless. Make all the audio you like; just don't fire off a thousand at once. The spend shows up on your <a href="/help/donate">Feed the Server</a> page. If audio ever stops working, the pot may need a top-up — <strong>contact Kade</strong>.</p>
+</div>
+
+<h2>Good to know</h2>
+<ul>
+  <li>Each clip is up to about <strong>2 minutes</strong> long. Want something longer? Ask for it in parts and Cadence can stitch them together.</li>
+  <li>It speaks <strong>English and Chinese</strong> right now.</li>
+  <li>Only copy a voice you have <strong>permission</strong> to use — your own, or one you're allowed to use.</li>
+</ul>
+
+<h2>For folks using a screen reader</h2>
+<p>Every clip comes with a short written note of <strong>what you'll hear</strong> — who's speaking, the mood, the key sounds — right next to the player, and it's saved with the clip on your My Creations page. The player itself is a normal audio player you can reach and control with the keyboard or your screen reader.</p>
+${nextprev("images", "temporary")}
 `,
 };
 
