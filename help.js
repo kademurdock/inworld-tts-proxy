@@ -261,7 +261,7 @@ PAGES.home = {
   <li data-terms="cost money bill credits balance economics pay"><a href="/help/costs"><span class="ico" aria-hidden="true">💸</span><span class="ttl">What This Costs Kade</span><span class="desc">The honest money side. Spoiler: a real person pays a real bill.</span></a></li>
   <li data-terms="donate paypal feed server support tip groceries help pay"><a href="/help/donate"><span class="ico" aria-hidden="true">🍕</span><span class="ttl">Feed the Server</span><span class="desc">The fridge doesn't refill itself. Chip in if you can. (No pressure.)</span></a></li>
   <li data-terms="accessibility screen reader voiceover nvda blind shortcuts"><a href="/help/accessibility"><span class="ico" aria-hidden="true">♿</span><span class="ttl">Accessibility Tips</span><span class="desc">Get the smoothest ride with VoiceOver or NVDA.</span></a></li>
-  <li data-terms="troubleshooting broken stuck fix audio microphone problem help"><a href="/help/troubleshooting"><span class="ico" aria-hidden="true">🔧</span><span class="ttl">When Something Breaks</span><span class="desc">The usual hiccups and how to get unstuck.</span></a></li>
+  <li data-terms="troubleshooting broken stuck fix audio microphone problem help report bug feedback feature request suggestion tell kade"><a href="/help/troubleshooting"><span class="ico" aria-hidden="true">🔧</span><span class="ttl">When Something Breaks</span><span class="desc">The usual hiccups and how to get unstuck.</span></a></li>
 </ul>
 
 <script>
@@ -1035,6 +1035,9 @@ PAGES.troubleshooting = {
 
 <h2>I can't log in / I want an account for someone</h2>
 <p>Accounts are set up by Kade personally (it's an invite-only place). If you're locked out or want to add a family member, <strong>contact Kade</strong>.</p>
+
+<h2>Found a bug, or wish it did something new? Just say so.</h2>
+<p>You don't have to track Kade down. Tell <em>any</em> character — Kiana, a companion, whoever you're already talking to — something like <em>"that's broken, can you report it?"</em> or <em>"I wish it could do this."</em> They'll offer to send it to Kade for you, and once you say yes it goes straight to her with your name on it so she can follow up. Works in chat and on the phone. Free, and it actually reaches her.</p>
 
 <div class="callout warn">
   <p><strong>Still stuck after trying the above?</strong> Don't wrestle with it. <strong>Contact Kade</strong> — that's what she's there for, and "it's doing a weird thing" is a perfectly good bug report.</p>
