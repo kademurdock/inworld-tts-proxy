@@ -254,7 +254,7 @@ PAGES.home = {
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
   <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
-  <li data-terms="audio sound cadence voice clone voices radio drama podcast narration text to speech tts music sound effects sfx seed audio make audio generate audio scene dialogue movie trailer"><a href="/help/audio"><span class="ico" aria-hidden="true">🎬</span><span class="ttl">Making Audio &amp; Voices</span><span class="desc">Turn a few sentences into a full audio scene — voices, effects, and music. Meet Cadence.</span></a></li>
+  <li data-terms="audio sound cadence muse voice clone voices radio drama podcast narration text to speech tts music sound effects sfx seed audio make audio generate audio scene dialogue movie trailer song songs sing singing make a song write a song lyria minimax lyrics track melody"><a href="/help/audio"><span class="ico" aria-hidden="true">🎬</span><span class="ttl">Making Audio &amp; Voices</span><span class="desc">Turn a few sentences into a full audio scene with Cadence — or a real, sung song with Muse.</span></a></li>
   <li data-terms="temporary private starting over new chat fresh delete"><a href="/help/temporary"><span class="ico" aria-hidden="true">🧹</span><span class="ttl">Starting Over &amp; Private Chats</span><span class="desc">Fresh start, or a chat that doesn't get saved.</span></a></li>
   <li data-terms="cheat sheet buttons quick reference where shortcuts deep think brain reasoning slow careful"><a href="/help/cheatsheet"><span class="ico" aria-hidden="true">📋</span><span class="ttl">The Cheat Sheet</span><span class="desc">Where the buttons are and how to do the common stuff. One page.</span></a></li>
   <li data-terms="tokens context counter words cost meaning"><a href="/help/tokens"><span class="ico" aria-hidden="true">🔢</span><span class="ttl">What Are Tokens?</span><span class="desc">That little counter, explained without the math homework.</span></a></li>
@@ -740,6 +740,16 @@ PAGES.audio = {
   <li><strong>Copy a voice:</strong> give it a short, clean recording and it can speak new lines in that voice.</li>
   <li><strong>Fix or extend a clip:</strong> make an ending longer, swap a line, or stitch two clips into one.</li>
 </ul>
+
+<h2>Meet Muse, for actual songs</h2>
+<p><strong>Muse</strong> is a different character for a different job: turning words into a real <em>song</em> — actual singing, over real music. Where Cadence builds a <em>scene</em>, Muse cuts a <em>track</em>. Find Muse in the marketplace (the <a href="/help/characters">Characters</a> page shows you how), hand over your lyrics and a vibe, and Muse sings them. It plays right there in the chat and saves to your <a href="/my-creations">My Creations</a> page, same as everything else.</p>
+<ul>
+  <li><strong>From your own lyrics:</strong> paste the words and describe the feel — <em>"a slow soul ballad, warm and aching, about 70 beats a minute"</em> — and Muse records it.</li>
+  <li><strong>Straight from Lyric:</strong> if the songwriter character <strong>Lyric</strong> wrote you a song, hand Muse what Lyric gave you and it turns it into the finished track.</li>
+  <li><strong>From just a feeling:</strong> no lyrics yet? Describe the mood and Muse can write and sing its own.</li>
+  <li><strong>An instrumental:</strong> ask for a backing track with no singing.</li>
+</ul>
+<p>Muse can sing with Google's <strong>Lyria 3 Pro</strong> (rich, up to about three minutes) or <strong>MiniMax</strong> — if the first take isn't quite right, just ask for the other. A song takes a minute or two to come back, and costs about <strong>8 to 15 cents</strong>, from the same pot as pictures and audio.</p>
 
 <h2>The catch: it costs a little (not much)</h2>
 <div class="callout warn">
