@@ -437,15 +437,15 @@ PAGES.voice = {
 <h2>Have a whole voice conversation</h2>
 <p>Next to the message box there's a <strong>phone button</strong>. Tap it and the screen turns into a call — you talk, the character talks back in its own voice, no typing at all. Tap the amber button if you want to jump in while it's speaking, and hang up whenever you're done. (The first tap will ask for microphone permission.)</p>
 
-<h2>NEW: the streaming call beta — replies start fast, and you can just talk over her</h2>
-<p>Inside that call screen there's now a button near the bottom: <strong>"Streaming call beta."</strong> Turn it on, hang up, and start your next call — and the whole thing runs on the same engine as the real phone line:</p>
+<h2>NEW: in-app calls run on the phone engine now — fast replies, interrupt by just talking</h2>
+<p>The call screen got the real phone line's whole engine. Nothing to turn on — tap the phone button and it's just how calls work now:</p>
 <ul>
   <li><strong>Replies start in a couple of seconds.</strong> The character speaks the first sentence while it's still writing the rest, instead of making you wait for the whole answer.</li>
-  <li><strong>Interrupt by just talking.</strong> No amber button hunting — start speaking and she stops mid-word, exactly like the phone line. (The amber button still works too.)</li>
+  <li><strong>Interrupt by just talking.</strong> No button hunting — start speaking and she stops mid-word, exactly like the phone line. (The amber button still works too.)</li>
   <li><strong>Little "mm-hm"s don't derail her.</strong> Nod along out loud all you want; she keeps going.</li>
   <li><strong>Spoken commands work.</strong> "Can I talk to Zadiana?", "speak faster", "slow down", "deep think on" — same as the phone.</li>
 </ul>
-<p>It's a beta: if a call ever won't connect or sounds wrong, turn the toggle off and you're instantly back on the classic call, which hasn't changed. Either way your calls land in <strong>Call History</strong> in the main menu.</p>
+<p>Every call — web or phone — is saved as a <strong>written transcript</strong> under <strong>Call History</strong> in the main menu. Transcripts only; no audio recordings of you are kept from these calls.</p>
 <p>And yes — there's a REAL phone line too. That's big enough to get <a href="/help/phone">its own page</a>.</p>
 ${nextprev("faq", "phone")}
 `,
