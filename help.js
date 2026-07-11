@@ -252,7 +252,7 @@ PAGES.home = {
   <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room, give them a topic, and jump in.</span></a></li>
   <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion cards against reality humanity wild blanks party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Nineteen real games by voice — Blackjack, Uno, War, Cards Against Reality (you know the game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
-  <li data-terms="memory remember forget notes saves recall"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">What sticks between chats, and what doesn't.</span></a></li>
+  <li data-terms="memory remember forget notes saves recall cards shared private clean up"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">Memory cards: what sticks between chats, and how to boss it around.</span></a></li>
   <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
   <li data-terms="audio sound cadence muse voice clone voices radio drama podcast narration text to speech tts music sound effects sfx seed audio make audio generate audio scene dialogue movie trailer song songs sing singing make a song write a song lyria minimax lyrics track melody"><a href="/help/audio"><span class="ico" aria-hidden="true">🎬</span><span class="ttl">Making Audio &amp; Voices</span><span class="desc">Turn a few sentences into a full audio scene with Cadence — or a real, sung song with Muse.</span></a></li>
   <li data-terms="temporary private starting over new chat fresh delete"><a href="/help/temporary"><span class="ico" aria-hidden="true">🧹</span><span class="ttl">Starting Over &amp; Private Chats</span><span class="desc">Fresh start, or a chat that doesn't get saved.</span></a></li>
@@ -677,26 +677,39 @@ PAGES.memory = {
   h1: "What It Remembers",
   tagline: "It can remember helpful things about you over time — but it's not reading your mind. Here's the honest version.",
   main: `
-<p class="lead">Kade-AI has a <strong>memory</strong> feature. Over time, it can hold onto useful facts you've shared, so you don't have to repeat yourself in every new chat.</p>
+<p class="lead">Kade-AI has a <strong>memory</strong> feature. Over time, it holds onto useful facts you've shared, so you don't have to repeat yourself in every new chat.</p>
 
-<div class="term"><strong>Memory</strong> here means a small set of notes the AI keeps about you across conversations — things like "prefers short answers" or "has a dog named Biscuit." It's like a friend remembering the gist of you, not a recording of everything you've ever said.</div>
+<div class="term"><strong>Memory cards</strong> — each thing it remembers is its own small card, one topic per card: "has a dog named Biscuit," "hates cilantro," "going to the Shinedown show in July." Like a friend remembering the gist of you, not a recording of everything you've ever said. Each card can be looked at, fixed, or thrown out on its own.</div>
 
 <h2>What it tends to remember</h2>
 <ul>
   <li>Preferences you mention ("I like things explained simply").</li>
-  <li>Handy facts about your life that come up naturally.</li>
-  <li>Things that help it be more useful to <em>you</em> specifically.</li>
+  <li>The people, pets, and goings-on in your life that come up naturally.</li>
+  <li>Ongoing stuff — a project, a health thing, plans — so next time it can just ask how it went.</li>
+</ul>
+
+<h2>Two kinds of cards: shared, and just-between-you-two</h2>
+<ul>
+  <li><strong>Shared cards</strong> are the basics every character should know — your name, your people, how you like to be talked to. Tell one character, they all catch up.</li>
+  <li><strong>A character's own cards</strong> belong to that one character alone. Inside jokes, story and roleplay threads, promises they made you — another character can't see those, so every relationship stays its own thing.</li>
+</ul>
+
+<h2>Bossing the memory around (just talk to it)</h2>
+<ul>
+  <li><strong>"Remember that..."</strong> — saves a card, even for little stuff.</li>
+  <li><strong>"Forget about..."</strong> — deletes the matching card(s), gone for real.</li>
+  <li><strong>"What do you remember about me?"</strong> — it'll tell you, plainly.</li>
+  <li><strong>"Clean up your memory"</strong> — it merges duplicates and tightens wordy cards.</li>
 </ul>
 
 <h2>What it does NOT do</h2>
 <ul>
-  <li>It doesn't memorize every word of every chat, perfectly, forever. It keeps the useful gist.</li>
-  <li>It can't read chats you had with a different character as if they were one big diary.</li>
-  <li>It won't share your memory notes with other people on the site. Your account, your notes.</li>
+  <li>It doesn't memorize every word of every chat, perfectly, forever. It keeps the useful gist — on purpose, so conversations stay quick.</li>
+  <li>It won't share your memory cards with other people on the site. Your account, your cards.</li>
 </ul>
 
 <div class="callout good">
-  <p>If it ever remembers something wrong or out of date, you can just tell it — "actually, I don't have that dog anymore" — and it'll update. And if you'd rather it forget something, say so, or <strong>contact Kade</strong> for a hand.</p>
+  <p>Want to see the cards yourself? Open the <strong>side panel</strong> in any chat and look for <strong>Memories</strong> — every card is listed with an edit and a delete button, and cards that belong to one character say so right on them (like "Only Kiana"). If something's wrong or out of date, you can just tell the character instead — "actually, I don't have that dog anymore" — and it updates the card. The system also does its own tidy-up once a week, quietly.</p>
 </div>
 ${nextprev("build", "images")}
 `,
