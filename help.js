@@ -32,6 +32,7 @@ const SECTIONS = [
   { key: "starthere",       path: "/help/start-here",      label: "Start Here (New to AI?)", group: "Getting started" },
   { key: "quickstart",      path: "/help/quickstart",      label: "Your First Five Minutes", group: "Getting started" },
   { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
+  { key: "whatsnew",        path: "/help/whats-new",       label: "What's New",          group: "Getting started" },
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
   { key: "phone",           path: "/help/phone",           label: "Phone Calls", group: "Using Kade-AI" },
@@ -247,6 +248,7 @@ PAGES.home = {
   <li data-terms="start here new ai beginner never used what is this chatgpt robot confused lost"><a href="/help/start-here"><span class="ico" aria-hidden="true">🌱</span><span class="ttl">Start Here (New to AI?)</span><span class="desc">Never used AI before? This page assumes nothing. Read this one first.</span></a></li>
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
+  <li data-terms="whats new what's new changelog updates latest features recently added new stuff toys"><a href="/help/whats-new"><span class="ico" aria-hidden="true">✨</span><span class="ttl">What's New</span><span class="desc">The latest toys, in plain language — updated every time something ships.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
   <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
@@ -407,6 +409,53 @@ ${nextprev("quickstart", "voice")}
 };
 
 // ---- 4a. VOICE ------------------------------------------------------------
+// ---- 2b. WHAT'S NEW (July 11 2026 — Kade's pick from the ideas list) -------
+// HOUSE RULE for future sessions: whenever a feature ships, add a dated entry
+// at the TOP of this list, in plain family language (help ships with features).
+PAGES.whatsnew = {
+  title: "What's New",
+  h1: "What's New",
+  tagline: "The latest around here, newest first — in plain language, no tech homework.",
+  main: `
+<p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
+
+<h2>July 11, 2026</h2>
+<ul>
+  <li><strong>Describe My World.</strong> Share or pick any photo, video, PDF, or document and hear it described in rich detail — or read to you word for word. Letters and appointment papers even offer to set reminders for dates they mention. Find it in the account menu ("Describe a Photo or Document") or read <a href="/help/describe">how it works</a>.</li>
+  <li><strong>Family check-in calls.</strong> A character can call somebody you love on a schedule — a warm companion chat — and send you a written report on how they're doing. Registered family only, honest AI introduction, starts paused until you test it. Details on the <a href="/help/phone">Phone Calls page</a>.</li>
+  <li><strong>VoiceOver got smoother.</strong> Messages no longer read twice as you swipe through a chat, and the automatic read-out of new replies now skips the internal computer tags it used to pronounce.</li>
+</ul>
+
+<h2>July 10, 2026</h2>
+<ul>
+  <li><strong>Memory cards.</strong> What characters remember is now tidy little one-topic cards you can see, edit, and delete one at a time (side panel &rarr; Memories). Tell any character "remember this," "forget that," or "clean up your memory" and it listens. More on <a href="/help/memory">What It Remembers</a>.</li>
+  <li><strong>Reminders &amp; nudges.</strong> Tell any character "remind me to take my meds at 9" and it actually will — in chat, as an iPhone notification, or by phone call, your choice on the new <a href="/notifications">Notifications &amp; Reminders</a> page. Birthday hellos are in there too (off unless you want them).</li>
+  <li><strong>Replies stream in live again</strong> for the whole cast — no more silence-then-wall-of-text, and voice calls start speaking almost immediately.</li>
+</ul>
+
+<h2>July 9, 2026</h2>
+<ul>
+  <li><strong>Better in-app voice calls.</strong> The phone button in the app now runs on the same engine as the real phone line: interrupt her just by talking, hear game sounds live, and it all lands in <a href="/help/voice">Call History</a>.</li>
+  <li><strong>A face on the call.</strong> Your character's picture now fills the call screen and gently "breathes" with the voice.</li>
+</ul>
+
+<h2>July 8, 2026</h2>
+<ul>
+  <li><strong>Muse sings.</strong> A new character who turns lyrics into a real, fully sung song. Pair her with Lyric (writes the words) and Cadence (cinematic audio scenes). See <a href="/help/audio">Making Audio &amp; Voices</a>.</li>
+</ul>
+
+<h2>Early July, 2026</h2>
+<ul>
+  <li><strong>The Game Parlor</strong> — nineteen real games by voice or phone with table sounds and a family <a href="/game-room">leaderboard</a>.</li>
+  <li><strong>The Debate Room</strong> — put a few characters in one room and let them go at it, radio-play style if you want. <a href="/help/debate-room">How it works</a>.</li>
+  <li><strong>Starting balance</strong> — every account starts with $10 of usage credit, and <a href="/help/donate">Feed the Server</a> shows exactly where it goes.</li>
+</ul>
+
+<p class="muted">Older history lives with Kade. If something here confuses you, the <a href="/help">help home</a> has a page for everything.</p>
+${nextprev("faq", "voice")}
+`,
+};
+
 PAGES.voice = {
   title: "Talking & Listening",
   h1: "Talking & Listening",
