@@ -820,6 +820,10 @@ function stripCitationMarkers(text) {
     // Catch-all: bare "turn0search0"-shaped token anywhere, even back-to-back
     // with no separating whitespace (no \b requirement -- that was the bug).
     .replace(/turn\d+[a-zA-Z]+\d+/g, "")
+    // KADE July 11 2026: models sometimes type "\u00A0" LITERALLY in prose
+    // (escape habit learned from the citation format; seen live from Hermes
+    // 405B). Never voice it -- speak a normal space.
+    .replace(/\\u00a0/gi, " ")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+([.,!?;:])/g, "$1")
     .trim();
