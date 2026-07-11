@@ -35,6 +35,7 @@ const SECTIONS = [
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
   { key: "phone",           path: "/help/phone",           label: "Phone Calls", group: "Using Kade-AI" },
+  { key: "describe",        path: "/help/describe",        label: "Describe My World",   group: "Using Kade-AI" },
   { key: "characters",      path: "/help/characters",      label: "Characters & the Marketplace", group: "Using Kade-AI" },
   { key: "rooms",           path: "/help/debate-room",     label: "The Debate Room",     group: "Using Kade-AI" },
   { key: "games",           path: "/help/games",           label: "The Game Parlor",     group: "Using Kade-AI" },
@@ -247,7 +248,8 @@ PAGES.home = {
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
-  <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — and they can make calls for you.</span></a></li>
+  <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
+  <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
   <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room, give them a topic, and jump in.</span></a></li>
   <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion cards against reality humanity wild blanks party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Nineteen real games by voice — Blackjack, Uno, War, Cards Against Reality (you know the game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard.</span></a></li>
@@ -485,7 +487,62 @@ PAGES.phone = {
 <h2>Your morning news briefing, by phone</h2>
 <p>New: you can sign up for a <strong>morning briefing call</strong>. At your chosen time, your character calls you and runs through the day's headlines — national news, world news, Springfield/Ozarks local, sports, music, whatever mix you want — morning-radio style, and you can ask about any story. <strong>Contact Kade</strong> to get set up.</p>
 <p>Prefer it on demand? Just ask any character <em>"what's the news this morning?"</em> in chat or on a call — same headlines, no schedule.</p>
-${nextprev("voice", "characters")}
+
+<h2>Family check-in calls</h2>
+<p>Newest of all: a character can <strong>check in on somebody you love, on a schedule</strong>. Pick a registered family member, a time, and the days — every day at 10, or just Monday and Thursday — and the character calls them for a warm, unhurried chat: how are you doing, what's new, whatever they feel like talking about. You can tell it things to weave in ("ask about his garden, make sure he's eating okay").</p>
+<p>Afterwards, <strong>you get a written report</strong> — how they seemed, what they talked about, anything they mentioned needing — delivered as a nudge, whichever way you chose on the <a href="/notifications">Notifications &amp; Reminders</a> page.</p>
+<p>Set one up either way:</p>
+<ul>
+  <li><strong>Just ask a character:</strong> <em>"set up a daily check-in call for Dad at 10am"</em> — or ask what schedules you have, pause one, cancel one.</li>
+  <li><strong>Or use the page:</strong> the "Family check-in calls" section on <a href="/notifications">Notifications &amp; Reminders</a> lists your schedules with pause, test, and delete buttons.</li>
+</ul>
+<p>The honest fine print, same spirit as everything here:</p>
+<ul>
+  <li><strong>Registered family only.</strong> These calls can only go to numbers Kade has registered — nobody can point them at strangers.</li>
+  <li><strong>Same up-front AI honesty.</strong> The call introduces itself as an AI calling on your behalf, and it's recorded. If your person says they'd rather not get the calls, that lands front and center in your report — and you can pause the schedule right there.</li>
+  <li><strong>New schedules start paused.</strong> Use <em>"Call me as a test"</em> first so YOU hear exactly what your family will hear, then resume it.</li>
+  <li><strong>It costs a little</strong> — roughly a nickel to a dime per call (a daily schedule runs a few dollars a month), on your <a href="/help/donate">Feed the Server</a> tab. Calls run between 8am and 9pm Central only.</li>
+</ul>
+${nextprev("voice", "describe")}
+`,
+};
+
+// ---- 4a2. DESCRIBE MY WORLD (July 11 2026) ---------------------------------
+PAGES.describe = {
+  title: "Describe My World",
+  h1: "Describe My World",
+  tagline: "Share any photo, video, or document and hear it described in rich detail — or read to you, word for word.",
+  main: `
+<p class="lead">This one was built blind-first from the ground up. Hand Kade-AI a photo, a video, a PDF, a Word file, or a text file — from your phone's share menu or a big friendly button — and seconds later a page opens, describes it richly, and starts reading it out loud.</p>
+
+<h2>What you get</h2>
+<ul>
+  <li><strong>Photos:</strong> a real description — who's in it, what they're wearing and doing, expressions, colors, lighting, what's in the background — and any words in the picture read out <em>verbatim</em>. Letters, signs, screenshots, receipts: it reads them word for word.</li>
+  <li><strong>Videos:</strong> what happens from start to finish, moment by moment, plus any on-screen text.</li>
+  <li><strong>PDFs, Word docs, and text files:</strong> a plain-language summary first — what is this, who's it from, what matters — then the full text, read aloud.</li>
+  <li><strong>Dates get noticed.</strong> If a document mentions an appointment or due date, you'll get a "Save reminder" button for each one — press it and it becomes a real reminder that nudges you the way you picked on <a href="/notifications">Notifications &amp; Reminders</a>.</li>
+</ul>
+<p>The page puts a big <strong>Play</strong> button first thing, starts reading automatically when your browser allows it, and has Stop and speed controls right there. Everything is labeled for screen readers.</p>
+
+<h2>The easiest way: right from the app</h2>
+<p>Open the account menu (top right) and choose <strong>Describe a Photo or Document</strong> — or go straight to <strong>kademurdock.com/describe</strong>. Press <strong>Choose a photo or document</strong>, pick from your camera roll or files, done.</p>
+
+<h2>iPhone: put it in your share sheet (one-time setup)</h2>
+<p>Apple doesn't let websites appear in the iPhone share menu on their own, so there's a one-time trick using the Shortcuts app — about two minutes, and the <a href="/describe">Describe page</a> walks you through it step by step with your own personal link. After that: any photo or PDF → <strong>Share</strong> → <strong>Describe with Kade-AI</strong> → the page opens and starts reading.</p>
+<div class="callout">
+  <p>Your personal link on that page works like a password for descriptions on your account — don't post it anywhere public. If it ever leaks, tell Kade and she can rotate it.</p>
+</div>
+
+<h2>Android: it just shows up</h2>
+<p>On Android, install Kade-AI to your home screen (Chrome menu → Add to Home Screen) and <strong>Kade-AI appears in the regular share menu by itself</strong> — share a photo to it like you'd share to Messages.</p>
+
+<h2>The honest fine print</h2>
+<ul>
+  <li><strong>Cost:</strong> around a tenth of a cent per description — pocket lint, but it's on your <a href="/help/donate">Feed the Server</a> tab like everything else.</li>
+  <li><strong>Privacy:</strong> the file itself is described and thrown away within the hour — it's never saved to the site. (The description text stays on your screen until you leave the page.)</li>
+  <li><strong>Size limit:</strong> about 30&nbsp;MB — photos and documents are always fine; a very long video might not fit.</li>
+</ul>
+${nextprev("phone", "characters")}
 `,
 };
 
