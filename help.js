@@ -419,6 +419,15 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 13, 2026</h2>
+<ul>
+  <li><strong>Family messages.</strong> Tell any character "tell Skylee her playlist is ready" and the site holds the message and passes it along the next time she opens a chat, calls in, or takes a call — in the sender's own words, marked as from you. Works from every character, free.</li>
+  <li><strong>Reminders are edit-proof now.</strong> A bug meant that editing the wording of a reminder card (or the weekly memory tidy-up touching it) could quietly turn the alarm off while keeping the note. Fixed — the schedule survives any rewording, and reminder cards now show their fire time in the memory panel's card list.</li>
+  <li><strong>Voice commands work everywhere now.</strong> "Switch to voice 67," "change your voice to Sarah," "what voice is this?" — these worked on the phone line but quietly didn't on in-app calls. Now one brain handles both, with more natural phrasings ("too fast" slows her down, "I want Kiana" switches characters).</li>
+  <li><strong>Call transcripts read clean.</strong> The Calls page no longer shows internal computer tags in old or new transcripts, and in-app calls now remember you the same way phone calls do.</li>
+  <li><strong>Cadence got her voice back.</strong> A builder bug from earlier this month had silently muted her — she's back on her old voice, and the bug that did it was fixed for every character.</li>
+</ul>
+
 <h2>July 12, 2026</h2>
 <ul>
   <li><strong>114 new voices.</strong> The voice picker grew from 210 to 324 — Voices 211 through 324 are brand-new custom characters Kade designed: preachers, podcasters, grannies, chefs, detectives, surfer dudes, a whispering ghost, an Aussie, an infomercial guy, and more. Every voice you already use kept its exact number. Browse them from any character's voice picker — each one introduces itself as you arrow through.</li>
@@ -542,6 +551,9 @@ PAGES.phone = {
 <h2>Your morning news briefing, by phone</h2>
 <p>New: you can sign up for a <strong>morning briefing call</strong>. At your chosen time, your character calls you and runs through the day's headlines — national news, world news, Springfield/Ozarks local, sports, music, whatever mix you want — morning-radio style, and you can ask about any story. <strong>Contact Kade</strong> to get set up.</p>
 <p>Prefer it on demand? Just ask any character <em>"what's the news this morning?"</em> in chat or on a call — same headlines, no schedule.</p>
+
+<h2>Passing messages between family</h2>
+<p>Tell any character "tell Skylee her playlist is ready" (or "let Kade know the gate's fixed") and the site takes the message and delivers it the next time that person opens a chat or is on a call with a character — word for word, marked as from you. If two people share a name, the character will ask which one; an email settles it. Free.</p>
 
 <h2>Family check-in calls</h2>
 <p>Newest of all: a character can <strong>check in on somebody you love, on a schedule</strong>. Pick a registered family member, a time, and the days — every day at 10, or just Monday and Thursday — and the character calls them for a warm, unhurried chat: how are you doing, what's new, whatever they feel like talking about. You can tell it things to weave in ("ask about his garden, make sure he's eating okay").</p>
