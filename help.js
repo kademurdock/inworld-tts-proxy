@@ -419,6 +419,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 12, 2026</h2>
+<ul>
+  <li><strong>93 new voices.</strong> The voice picker grew from 210 to 303 — Voices 211 through 303 are brand-new custom characters Kade designed: preachers, podcasters, grannies, chefs, detectives, surfer dudes, a whispering ghost, and more. Every voice you already use kept its exact number. Browse them from any character's voice picker.</li>
+  <li><strong>The whole cast writes better.</strong> A tuning pass on every character fixed a quirk where very long replies (big lists especially) would fall apart toward the end.</li>
+</ul>
+
 <h2>July 11, 2026</h2>
 <ul>
   <li><strong>Describe My World.</strong> Share or pick any photo, video, PDF, or document and hear it described in rich detail — or read to you word for word. Letters and appointment papers even offer to set reminders for dates they mention. Find it in the account menu ("Describe a Photo or Document") or read <a href="/help/describe">how it works</a>.</li>
