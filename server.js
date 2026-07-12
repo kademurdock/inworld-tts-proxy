@@ -1342,6 +1342,10 @@ const VOICE_ADDITIONS_2026_07_12 = {
     if (!target.startsWith("default-e-")) throw new Error(`voice additions: ${label} is not a custom voice id`);
     if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`voice additions: ${label} collides with an existing alias`);
     NUMBERED_VOICE_ALIASES[label] = target;
+    // VOICE_MAP was spread-snapshotted from the alias maps at definition time
+    // (line ~466) — late additions must land in it explicitly or synthesis
+    // passes the raw "Voice N" label to Inworld (found live July 12: 404).
+    VOICE_MAP[label] = target;
     VOICE_LIST.push(label);
     CUSTOM_VOICE_NUMBERS.add(label);
   });
