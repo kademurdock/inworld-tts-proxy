@@ -828,4 +828,17 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
 });
 
 
+// July 13 2026 cache-race audit: the login token was LAZY — the first
+// /librechat/* call after every proxy deploy paid a full login (plus pacing)
+// before doing its real work, which is exactly when the bridge's boot warm-up
+// storm arrives. Warm it once, quietly, shortly after boot. Fail-soft: a
+// failed warm just means the old lazy path (which still works) pays the cost.
+if (process.env.LIBRECHAT_USER && process.env.LIBRECHAT_PASS) {
+  setTimeout(() => {
+    login()
+      .then(() => console.log("[librechat.js] token warmed at boot"))
+      .catch((e) => console.warn("[librechat.js] boot token warm failed (lazy path still works):", e.message));
+  }, 4000);
+}
+
 module.exports = router;
