@@ -107,6 +107,28 @@ const CUSTOM_VOICE_MAP = {
   "Zadia": "default-e-m11vgtr9l-m7afw4kmnw__zadia",
   "Zadiana": "default-e-m11vgtr9l-m7afw4kmnw__zadiana",
   // ── 2026-07-12 additions (Kade's new designed voices, clone-vetted) ──
+  // ── same-day evening batch (21 more) ──
+  "Aussie": "default-e-m11vgtr9l-m7afw4kmnw__aussie",
+  "Beasty": "default-e-m11vgtr9l-m7afw4kmnw__beasty",
+  "Beddy": "default-e-m11vgtr9l-m7afw4kmnw__beddy",
+  "Biscut Female": "default-e-m11vgtr9l-m7afw4kmnw__biscut_female",
+  "Gania": "default-e-m11vgtr9l-m7afw4kmnw__gania",
+  "Hardware Guy": "default-e-m11vgtr9l-m7afw4kmnw__hardware_guy",
+  "Heather": "default-e-m11vgtr9l-m7afw4kmnw__heather",
+  "Historic Guy": "default-e-m11vgtr9l-m7afw4kmnw__historic_guy",
+  "Infomercial Guy": "default-e-m11vgtr9l-m7afw4kmnw__infomercial_guy",
+  "Irish Dude": "default-e-m11vgtr9l-m7afw4kmnw__irish_dude",
+  "Jason": "default-e-m11vgtr9l-m7afw4kmnw__jason",
+  "Josh": "default-e-m11vgtr9l-m7afw4kmnw__josh",
+  "Kylah": "default-e-m11vgtr9l-m7afw4kmnw__kylah",
+  "Marla": "default-e-m11vgtr9l-m7afw4kmnw__marla",
+  "Nate": "default-e-m11vgtr9l-m7afw4kmnw__nate",
+  "Ojo": "default-e-m11vgtr9l-m7afw4kmnw__ojo",
+  "Paul": "default-e-m11vgtr9l-m7afw4kmnw__paul",
+  "Paulina": "default-e-m11vgtr9l-m7afw4kmnw__paulina",
+  "Quiet Man (Another)": "default-e-m11vgtr9l-m7afw4kmnw__another_quiet_man",
+  "Southern Guy (Another)": "default-e-m11vgtr9l-m7afw4kmnw__southern_guy_another",
+  "Wendi": "default-e-m11vgtr9l-m7afw4kmnw__wendi",
   "Amazed Woman": "default-e-m11vgtr9l-m7afw4kmnw__amazed_woman",
   "Angry Cartoon Dad": "default-e-m11vgtr9l-m7afw4kmnw__angry_cartoon_dad",
   "Anna Teen Female": "default-e-m11vgtr9l-m7afw4kmnw__anna_teen_female",
@@ -1349,6 +1371,45 @@ const VOICE_ADDITIONS_2026_07_12 = {
     VOICE_LIST.push(label);
     CUSTOM_VOICE_NUMBERS.add(label);
   });
+}
+
+// ── 2026-07-12 EVENING ADDITIONS (21 more new voices from Kade) ──
+const VOICE_ADDITIONS_2026_07_12B = {
+  "Voice 304": "default-e-m11vgtr9l-m7afw4kmnw__aussie",
+  "Voice 305": "default-e-m11vgtr9l-m7afw4kmnw__beasty",
+  "Voice 306": "default-e-m11vgtr9l-m7afw4kmnw__beddy",
+  "Voice 307": "default-e-m11vgtr9l-m7afw4kmnw__biscut_female",
+  "Voice 308": "default-e-m11vgtr9l-m7afw4kmnw__gania",
+  "Voice 309": "default-e-m11vgtr9l-m7afw4kmnw__hardware_guy",
+  "Voice 310": "default-e-m11vgtr9l-m7afw4kmnw__heather",
+  "Voice 311": "default-e-m11vgtr9l-m7afw4kmnw__historic_guy",
+  "Voice 312": "default-e-m11vgtr9l-m7afw4kmnw__infomercial_guy",
+  "Voice 313": "default-e-m11vgtr9l-m7afw4kmnw__irish_dude",
+  "Voice 314": "default-e-m11vgtr9l-m7afw4kmnw__jason",
+  "Voice 315": "default-e-m11vgtr9l-m7afw4kmnw__josh",
+  "Voice 316": "default-e-m11vgtr9l-m7afw4kmnw__kylah",
+  "Voice 317": "default-e-m11vgtr9l-m7afw4kmnw__marla",
+  "Voice 318": "default-e-m11vgtr9l-m7afw4kmnw__nate",
+  "Voice 319": "default-e-m11vgtr9l-m7afw4kmnw__ojo",
+  "Voice 320": "default-e-m11vgtr9l-m7afw4kmnw__paul",
+  "Voice 321": "default-e-m11vgtr9l-m7afw4kmnw__paulina",
+  "Voice 322": "default-e-m11vgtr9l-m7afw4kmnw__another_quiet_man",
+  "Voice 323": "default-e-m11vgtr9l-m7afw4kmnw__southern_guy_another",
+  "Voice 324": "default-e-m11vgtr9l-m7afw4kmnw__wendi",
+};
+{
+  const addLabels = Object.keys(VOICE_ADDITIONS_2026_07_12B);
+  if (addLabels.length !== 21) throw new Error(`voice additions B: expected 21, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${304 + idx}`) throw new Error(`voice additions B: non-contiguous at ${label}`);
+    const target = VOICE_ADDITIONS_2026_07_12B[label];
+    if (!target.startsWith("default-e-")) throw new Error(`voice additions B: ${label} not a custom id`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`voice additions B: ${label} collides`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
 }const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
 // Short expressive audition line for the in-app picker's browse-as-you-go
 // samples (Kade 2026-07-01: the full SAMPLE_TEXT monologue lagged when
@@ -1357,7 +1418,7 @@ const VOICE_ADDITIONS_2026_07_12 = {
 // applySteeringTags on the synth path -- same pipeline as chat. {voice} is
 // replaced client-side with the numbered label so each voice introduces
 // itself by name.
-const AUDITION_TEXT = "%%%warm, playful, quietly showing off%%% Hey — {voice} here! And this right here? That's exactly how I sound.";
+const AUDITION_TEXT = "%%%confident, charismatic, quietly showing off%%% I'm {voice}, and this is my sound — every word, every mood, just like this. If it hits right, you found your voice.";
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
