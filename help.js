@@ -421,6 +421,7 @@ PAGES.whatsnew = {
 
 <h2>July 13, 2026</h2>
 <ul>
+  <li><strong>Kiana got a new brain.</strong> She moved to Grok 4.20 — conversations can run about fifteen times longer before she loses the early parts, replies come quicker, her storyteller rambles are back, and you can now drop a photo into chat for her to look at. Same Kiana, bigger engine.</li>
   <li><strong>Calls understand conversation better.</strong> Both the phone line and in-app calls switched to Deepgram's newest listening model (Flux) — it's built for back-and-forth talk, so it's smarter about knowing when you're done speaking versus just pausing for breath. If anything sounds off, Kade can flip back instantly.</li>
   <li><strong>Family messages.</strong> Tell any character "tell Skylee her playlist is ready" and the site holds the message and passes it along the next time she opens a chat, calls in, or takes a call — in the sender's own words, marked as from you. Works from every character, free.</li>
   <li><strong>Reminders are edit-proof now.</strong> A bug meant that editing the wording of a reminder card (or the weekly memory tidy-up touching it) could quietly turn the alarm off while keeping the note. Fixed — the schedule survives any rewording, and reminder cards now show their fire time in the memory panel's card list.</li>
