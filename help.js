@@ -424,6 +424,9 @@ PAGES.whatsnew = {
   <li><strong>New low-vision display options.</strong> Settings &rarr; General &rarr; Accessibility now has three new controls: a <strong>High contrast (true black)</strong> theme &mdash; pure black background, bright white text, stronger borders everywhere; an <strong>Easy-read font</strong> picker with Lexend (designed for low vision) and OpenDyslexic (dyslexia-friendly); and a <strong>Line spacing</strong> control that gives text room to breathe. All three work on the website and in the iPhone app, and they remember your choice per device.</li>
   <li><strong>Reading view.</strong> Every AI reply now has a book-icon button next to the play and copy buttons that opens the reply full-screen &mdash; big text, nothing else on screen, close with the button or Escape. Made for actually reading long answers with limited vision instead of squinting at chat bubbles. It follows your font and spacing choices above.</li>
   <li><strong>Describe-It plays it straight about certainty.</strong> The photo-describing specialist now tells you how sure it is when lighting or blur makes reading risky, gives both readings when two are plausible, and for high-stakes stuff &mdash; medication labels, dosages, expiration dates, money &mdash; it always recommends a human double-check and can pass a note to a family member to take a look. It also says where information comes from ("based on the photo you sent earlier," "that part's a best guess") so you're never guessing about its guessing.</li>
+  <li><strong>Video calls (in-app).</strong> On an in-app voice call, two new buttons next to Hang Up let a character see through your camera while you talk. <strong>Video</strong> (camera icon) is the casual, everyday lane on your front camera. <strong>HQ video</strong> (eye-scan icon) uses your rear camera and the platform's sharpest vision &mdash; built to read labels, mail, and screens word for word, and to describe a room's layout (what's left, right, ahead) for getting oriented. Either lane checks in automatically every few seconds AND takes a brand-new look the instant you ask anything, so it's never far behind what the camera's actually seeing. A camera-off button stops the meter without ending the call. First use of either mode gets a one-time spoken heads-up about the daily minute allowance &mdash; it costs more than voice, so it isn't unlimited the way talking is. Full explanation, including how it's different from Describe My World, on the <a href="/help/voice">Talking &amp; Listening page</a>.</li>
+  <li><strong>Describe-It sees sharper now.</strong> Describe My World &mdash; and a character's own eyes on a photo you drop into chat &mdash; now run on the platform's top vision model instead of the budget one, meaningfully better at reading small or blurry text: medication labels, mail, receipts, signs. Same page, same steps, just sharper eyes behind it.</li>
+  <li><strong>Building your own character got friendlier.</strong> Every tool in the character builder now has a plain-English hover explanation &mdash; what it does, what it can't do, and an example ask &mdash; so you don't need to be a programmer to pick the right ones. The model picker got the same treatment: an honest note under each curated model (fastest, sees images, best for uncensored writing, and so on) right where you're choosing.</li>
 </ul>
 
 <h2>July 15, 2026</h2>
@@ -527,6 +530,34 @@ PAGES.voice = {
 </ul>
 <p>Every call — web or phone — is saved as a <strong>written transcript</strong> under <strong>Call History</strong> in the main menu. Transcripts only; no audio recordings of you are kept from these calls.</p>
 <p>And yes — there's a REAL phone line too. That's big enough to get <a href="/help/phone">its own page</a>.</p>
+
+<h2>Seeing through your camera: video calls</h2>
+<p>On an in-app call (not the real phone line — a phone can't send video), a character can look through your camera while you talk. Two buttons appear next to Hang Up once you're on a call: a plain <strong>camera icon</strong> and an <strong>eye-scan icon</strong>.</p>
+<div class="term"><strong>Video</strong> (camera icon) uses your <strong>front</strong> camera — the everyday, casual lane, good for showing a character your face or what you're up to. <strong>HQ video</strong> (eye-scan icon) uses your <strong>rear</strong> camera and the platform's sharpest vision — built for reading labels, mail, screens, and small details out loud, word for word. "HQ" just means higher quality: it looks harder and takes a bit longer per look, but is far better at reading fine print. Use plain Video for casual company; use HQ video any time reading something correctly actually matters.</div>
+
+<h3>It's not a nonstop video feed — here's what it actually does</h3>
+<p>To be completely honest about how this works: the character isn't watching smooth, flowing video the way a person on a video call would. It's taking a fresh snapshot and describing it — automatically every several seconds while you talk, AND every single time you ask it something. The moment you say "what am I looking at?", it always takes a brand-new look first, so a direct question never gets a stale answer. Between questions, it also checks in on its own so it isn't sitting there blind the rest of the time.</p>
+<p>This is different from <a href="/help/describe">Describe My World</a>, which is a one-time "here's a photo, describe it once." Video calls keep re-checking automatically for as long as the camera's on, without you having to re-share anything — more like having someone stay on the line looking with you, less like snapping a single picture.</p>
+
+<h3>Getting oriented with HQ video</h3>
+<p>If you're blind or low-vision and using HQ video to get your bearings in a room, two habits help a lot: <strong>ask out loud as you go</strong> — "what's in front of me now," "what's to my left" — each question forces an instant fresh look, so it always matches wherever you've just pointed the camera. And <strong>pause a beat after you turn or pan</strong> before asking, so the look it takes isn't a blur. HQ is written to describe layout in plain terms — what's left, right, and ahead, and roughly how far — not just list objects, and to call out anything relevant to moving safely, like steps or obstacles, when it can see them.</p>
+
+<h3>Pointing a camera, if that's new to you</h3>
+<p>Not used to aiming a phone camera? A few basics: hold the phone with the camera lens (a small dark circle on the back, opposite the screen) facing what you want described. Keep it steady for a couple of seconds rather than sweeping it around fast — a still, held shot reads far better than a blur. Good light helps more than almost anything else; try not to point toward a bright window or lamp with the object sitting in shadow in front of it. If a description comes back confused or says it can't tell, that's the cue to hold it closer, steadier, or move to better light — the character will often ask for exactly that on its own.</p>
+
+<h3>Turning it off without hanging up</h3>
+<p>Once video's on, a third button (a camera with a line through it) appears — activate it and the camera turns off and stops using your daily minutes, but the call itself keeps going as a normal voice call. Handy the moment you're done showing something and want to save the rest of your allowance for later.</p>
+
+<h3>The honest fine print</h3>
+<ul>
+  <li><strong>It costs more than voice, so it's not unlimited.</strong> Video uses real per-look AI vision costs behind the scenes, so it gets its own daily minute allowance separate from voice (voice chat itself stays unlimited either way). The first time you ever turn a camera on, you'll hear a one-time heads-up explaining the allowance — after that it just works.</li>
+  <li><strong>Nothing is recorded or saved.</strong> Only the single newest camera frame ever sits in memory for the length of the call — never written to disk, never kept after you hang up or turn the camera off.</li>
+  <li><strong>Camera permission required.</strong> The first time, your browser will ask to use your camera — say yes. If it seems blocked, check your browser's site settings for this page.</li>
+  <li><strong>Web calls only, for now.</strong> Video works on in-app calls in a browser or the installed app. The real phone line (<a href="/help/phone">1-833-530-0313</a>) is voice-only.</li>
+</ul>
+<div class="callout">
+  <p><strong>The bigger dream — a truly continuous live camera, like smart glasses:</strong> Kade knows this is where a lot of people's minds go, and it's genuinely on her radar (the technology to do it now exists). It's deliberately not built yet because running continuously, instead of look-by-look, changes the cost math completely — that gets a real number put in front of Kade, and an actual yes, before it ever ships. What's live today is the look-and-report version described above.</p>
+</div>
 ${nextprev("faq", "phone")}
 `,
 };
@@ -595,6 +626,10 @@ PAGES.describe = {
   tagline: "Share any photo, video, or document and hear it described in rich detail — or read to you, word for word.",
   main: `
 <p class="lead">This one was built blind-first from the ground up. Hand Kade-AI a photo, a video, a PDF, a Word file, or a text file — from your phone's share menu or a big friendly button — and seconds later a page opens, describes it richly, and starts reading it out loud.</p>
+
+<div class="callout">
+  <p><strong>Not the same as a video call:</strong> this page is a one-time "here's a photo or video file, describe it" — you hand it something and get one description back. If you want a character to keep looking through your camera WHILE you talk — checking in automatically, live, and taking a fresh look every time you ask — that's <a href="/help/voice">video calls</a> on an in-app voice call instead.</p>
+</div>
 
 <h2>What you get</h2>
 <ul>
