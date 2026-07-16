@@ -547,6 +547,19 @@ async function lcAsk(agentId, messages) {
     messages,
     conversationId: "new",
     parentMessageId: "00000000-0000-0000-0000-000000000000",
+    // isTemporary (July 15 2026 -- Kade: 45 orphaned "shadow" conversations found
+    // cluttering chat history). ROOT CAUSE: every headless ask -- phone-call turns,
+    // voice-stream/Twilio turns, outreach/wellness generation via askAgentRich --
+    // hits this endpoint with conversationId:"new", so LibreChat mints a fresh,
+    // permanent, VISIBLE conversation every single turn. kadeCallMerge.js already
+    // creates the one real "Phone call with X" summary after the call ends from
+    // KadeCallTranscript, so these scratch turns were pure duplicate clutter.
+    // Fix: mark them temporary. LibreChat's buildRetentionVisibilityFilter
+    // (packages/data-schemas/src/utils/retention.ts) excludes isTemporary:true
+    // from the conversation list UNCONDITIONALLY (regardless of expiredAt), so
+    // this makes them invisible immediately, skips wasted title-gen calls, and
+    // auto-expires them later (default 30-day retention) as a bonus.
+    isTemporary: true,
   };
 
   return paced(async () => {
@@ -713,6 +726,7 @@ async function lcAskStream(agentId, messages, onToken) {
     messages,
     conversationId: "new",
     parentMessageId: "00000000-0000-0000-0000-000000000000",
+    isTemporary: true, // same fix as lcAsk above (July 15 2026) -- see comment there
   };
 
   return paced(async () => {
