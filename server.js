@@ -1471,7 +1471,51 @@ const VOICE_ADDITIONS_2026_07_12B = {
     VOICE_LIST.push(label);
     CUSTOM_VOICE_NUMBERS.add(label);
   });
-}const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
+}
+
+// ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
+// Scans the numbered map for (a) two numbers backed by the same real Inworld
+// voice id and (b) gaps in the numbering. WARN-ONLY by design — a dupe or gap
+// must never block boot (the hard assertions above already guard structural
+// corruption). Known accepted dupes are allowlisted so the log stays quiet
+// until something actually changes.
+{
+  const ACCEPTED_DUPES = new Set([
+    "122|314", // jason — accepted July 16 audit
+    "134|259", // luna
+    "145|318", // nate
+  ]);
+  const byTarget = new Map();
+  for (const [label, target] of Object.entries(NUMBERED_VOICE_ALIASES)) {
+    if (!byTarget.has(target)) byTarget.set(target, []);
+    byTarget.get(target).push(Number(label.replace("Voice ", "")));
+  }
+  for (const [target, nums] of byTarget) {
+    if (nums.length < 2) continue;
+    const key = nums.slice().sort((a, b) => a - b).join("|");
+    if (ACCEPTED_DUPES.has(key)) continue;
+    console.warn(
+      `⚠️⚠️⚠️ [voice-catalog] DUPLICATE BACKING ID: Voices ${nums.sort((a, b) => a - b).join(" & ")} ` +
+      `both resolve to "${target.split("__").pop()}" — two numbers, one voice. ` +
+      `Either intentional (add to ACCEPTED_DUPES) or a copy-paste slip in an additions block.`,
+    );
+  }
+  const have = new Set(
+    Object.keys(NUMBERED_VOICE_ALIASES).map((l) => Number(l.replace("Voice ", ""))),
+  );
+  const max = Math.max(...have);
+  const gaps = [];
+  for (let i = 1; i <= max; i++) if (!have.has(i)) gaps.push(i);
+  if (gaps.length) {
+    console.warn(
+      `⚠️⚠️⚠️ [voice-catalog] NUMBERING GAPS: missing Voice ${gaps.join(", Voice ")} ` +
+      `(catalog runs 1-${max}). Pickers and spoken switching assume a contiguous list.`,
+    );
+  } else {
+    console.log(`[voice-catalog] integrity check: ${have.size} numbered voices, contiguous 1-${max}, no unexpected dupes.`);
+  }
+}
+const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
 // Short expressive audition line for the in-app picker's browse-as-you-go
 // samples (Kade 2026-07-01: the full SAMPLE_TEXT monologue lagged when
 // swiping; this keeps the character but synthesizes in a fraction of the
@@ -1663,7 +1707,11 @@ app.get("/voices.json", (_req, res) => {
   res.set("Cache-Control", "public, max-age=300");
   // `sample` is the same expressive monologue the /voices page performs --
   // the fork's picker auditions use it so both surfaces sound identical.
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
+  // `aliases` (July 17 2026): the legacy NAMED labels the synth path still
+  // resolves ('Zadiana', 'Kiana (Comedian)', …) — lets the fork's unified
+  // voice resolver validate named picks and do agent-name matching against
+  // the live truth instead of a hardcoded copy.
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
 });
 
 // RETIRED July 3 2026 (Kade's call): the standalone Voice Library page is
