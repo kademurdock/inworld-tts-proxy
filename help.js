@@ -419,6 +419,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 16, 2026</h2>
+<ul>
+  <li><strong>New low-vision display options.</strong> Settings &rarr; General &rarr; Accessibility now has three new controls: a <strong>High contrast (true black)</strong> theme &mdash; pure black background, bright white text, stronger borders everywhere; an <strong>Easy-read font</strong> picker with Lexend (designed for low vision) and OpenDyslexic (dyslexia-friendly); and a <strong>Line spacing</strong> control that gives text room to breathe. All three work on the website and in the iPhone app, and they remember your choice per device.</li>
+  <li><strong>Reading view.</strong> Every AI reply now has a book-icon button next to the play and copy buttons that opens the reply full-screen &mdash; big text, nothing else on screen, close with the button or Escape. Made for actually reading long answers with limited vision instead of squinting at chat bubbles. It follows your font and spacing choices above.</li>
+  <li><strong>Describe-It plays it straight about certainty.</strong> The photo-describing specialist now tells you how sure it is when lighting or blur makes reading risky, gives both readings when two are plausible, and for high-stakes stuff &mdash; medication labels, dosages, expiration dates, money &mdash; it always recommends a human double-check and can pass a note to a family member to take a look. It also says where information comes from ("based on the photo you sent earlier," "that part's a best guess") so you're never guessing about its guessing.</li>
+</ul>
+
 <h2>July 15, 2026</h2>
 <ul>
   <li><strong>Any character can text your phone now.</strong> Ask one to ping you right now &mdash; <em>"send me a note that says the laundry's done"</em> &mdash; or to check in on you on a repeating schedule &mdash; <em>"text me every evening around 6"</em>. Ask what check-ins you have going, pause one, or cancel one just as easily, all in chat. This is a real lock-screen notification through the <strong>Kade-AI iPhone app</strong> specifically (not the browser push on the <a href="/notifications">Notifications &amp; Reminders</a> page) &mdash; free, and it shares the same quiet hours (9pm&ndash;8am Central) and daily caps as everything else here, so it can't turn into spam. More on the <a href="/notifications">Notifications &amp; Reminders page</a>.</li>
@@ -1154,6 +1161,24 @@ PAGES.accessibility = {
   <li><strong>Completion chime:</strong> Settings → General → Accessibility has an optional soft chime when a reply finishes — nice when you've tabbed away.</li>
   <li><strong>Skip straight to typing:</strong> there's a "skip to message box" link at the top of the chat, so you never have to walk the whole sidebar.</li>
   <li><strong>Webpages, without the junk:</strong> paste any link and say "read this to me" — the AI pulls just the article text, no ads or menus, in proper reading order.</li>
+</ul>
+
+<h2>Low vision? Three switches made for you</h2>
+<ul>
+  <li><strong>High contrast (true black):</strong> Settings &rarr; General &rarr; Accessibility &rarr; "High contrast (true black)" &mdash; pure black background, bright white text, stronger borders. Turning it on switches you to dark mode automatically.</li>
+  <li><strong>Easy-read font:</strong> same place &mdash; pick <strong>Lexend</strong> (designed for low-vision readability) or <strong>OpenDyslexic</strong> (weighted letters that resist flipping). Code and technical text stay in their normal font.</li>
+  <li><strong>Line spacing:</strong> same place &mdash; Relaxed or Loose gives lines room to breathe, which often matters more than raw text size.</li>
+  <li><strong>Reading view:</strong> on any AI reply, the book-icon button opens the reply full-screen in big print with nothing else on screen. Close button or Escape gets you back.</li>
+</ul>
+
+<h2>Free iPhone features that pair well with this place</h2>
+<p>These are Apple features already on your phone &mdash; nothing to install, just worth knowing about:</p>
+<ul>
+  <li><strong>Sound Recognition</strong> (Settings &rarr; Accessibility &rarr; Sound Recognition): your iPhone listens for fire alarms, doorbells, sirens, a crying baby, and taps you with a notification. Works alongside everything here.</li>
+  <li><strong>Share Accessibility Settings</strong> (iOS 26): temporarily push your exact VoiceOver, text-size, and display settings onto someone else's iPhone via AirDrop &mdash; great when you're handed a family member's phone.</li>
+  <li><strong>VoiceOver Activities</strong> (iOS 26): per-app VoiceOver profiles &mdash; set a different speech rate or verbosity just for this app versus the rest of your phone.</li>
+  <li><strong>Image Explorer</strong> (iOS 26): Apple's own on-device photo describing inside Photos and Safari. Handy as a quick fallback &mdash; though Describe here is conversational, remembers context, and takes follow-up questions, which Apple's can't.</li>
+  <li><strong>"Hey Siri" smart-home basics:</strong> if you have any HomeKit devices, "Hey Siri, good morning" scenes and light control already work hands-free, completely separate from this site &mdash; no setup needed here.</li>
 </ul>
 
 <h2>iPhone home-screen tip</h2>
