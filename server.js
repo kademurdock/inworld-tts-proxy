@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const app = express();
 app.use(express.json());
 
@@ -1187,6 +1188,14 @@ app.post("/v1/audio/speech", async (req, res) => {
 
   const inworldVoice = VOICE_MAP[voice] || voice;
   const inworldModel = MODEL_MAP[model] || "inworld-tts-2";
+  // Diagnostic (July 16 2026, Kade: voice samples reportedly drifting to the
+  // wrong timbre deeper into the picker, varying session to session, on
+  // every device -- ruled out client code, the concurrency limiter, and
+  // basic model-stochasticity via direct testing, so this logs the requested
+  // label -> resolved id mapping for every call. If it happens again, the
+  // exact request can be found in Railway logs by timestamp instead of
+  // guessed at after the fact.
+  console.log(`[TTS] voice request: label="${voice}" -> resolved="${inworldVoice}"`);
 
   // Strip web-search citation markers before speaking. The search-augmented
   // model embeds inline citation tokens (a private-use char U+E200-U+E20F
@@ -1247,6 +1256,8 @@ app.post("/v1/audio/speech", async (req, res) => {
       res.set("Content-Length", mulaw.length);
       return res.send(mulaw);
     }
+    const audioFingerprint = crypto.createHash("sha256").update(combinedData).digest("hex").slice(0, 16);
+    console.log(`[TTS] voice response: label="${voice}" resolved="${inworldVoice}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
     res.set("Content-Type", "audio/wav");
     res.set("Content-Length", finalAudio.length);
     res.send(finalAudio);
