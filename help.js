@@ -419,6 +419,11 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 15, 2026</h2>
+<ul>
+  <li><strong>Any character can text your phone now.</strong> Ask one to ping you right now &mdash; <em>"send me a note that says the laundry's done"</em> &mdash; or to check in on you on a repeating schedule &mdash; <em>"text me every evening around 6"</em>. Ask what check-ins you have going, pause one, or cancel one just as easily, all in chat. This is a real lock-screen notification through the <strong>Kade-AI iPhone app</strong> specifically (not the browser push on the <a href="/notifications">Notifications &amp; Reminders</a> page) &mdash; free, and it shares the same quiet hours (9pm&ndash;8am Central) and daily caps as everything else here, so it can't turn into spam. More on the <a href="/notifications">Notifications &amp; Reminders page</a>.</li>
+</ul>
+
 <h2>July 13, 2026</h2>
 <ul>
   <li><strong>Kiana and the main crew got new brains.</strong> Kiana, Zadiana, Deuce, Torch, and Lyric moved to Grok 4.20 — conversations run way longer before anyone forgets the early parts, replies come quicker, the storyteller rambles are back, Deep Think works, and you can drop a photo into chat for any of them to look at. Same personalities, bigger engines.</li>
