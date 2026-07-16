@@ -1074,6 +1074,20 @@ const TTS_NORM_ENABLED = process.env.TTS_NORM !== "0";
 const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-20"); // speech RMS target, dBFS
 const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "14");
 const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
+// July 16 2026 (Kade's web call, "starts loud then gets quieter" + distortion):
+// SNAP_DB = level-EMA divergence guard -- a clip measuring this far off the
+// running estimate means the estimate is stale evidence (different delivery/
+// style/session), so trust the clip and restart smoothing from it. Normal
+// clip-to-clip wobble within one voice+style is ~±3 dB; 6 is comfortably past.
+const TTS_NORM_SNAP_DB = parseFloat(process.env.TTS_NORM_SNAP_DB || "6");
+// Soft-knee output limiter (replaces the bare per-sample hard clamp): fully
+// transparent below KNEE, saturates smoothly toward -- never past -- full
+// scale above it (tanh < 1, so clipping is mathematically impossible). Knee
+// starts at 26000 (~2 dB below full scale): wide enough that a transient up
+// to ~3-4 dB over stays rounded and varied instead of plateauing; the cost is
+// at most ~0.1 dB of compression on the rare clean peaks in the 26-30k zone.
+const TTS_NORM_KNEE = parseInt(process.env.TTS_NORM_KNEE || "26000", 10);
+const TTS_NORM_KNEE_RANGE = 32767 - TTS_NORM_KNEE;
 
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
@@ -1119,7 +1133,15 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
     const prior = voiceLevelEma.get(voiceKey);
     const durSec = (pcmBuf.length >> 1) / sampleRate;
     const alpha = Math.min(0.5, Math.max(0.1, durSec / 20));
-    const level = prior == null ? rmsDb : prior + (rmsDb - prior) * alpha;
+    // Divergence guard (July 16 2026): the EMA smooths NORMAL wobble; when a
+    // clip lands > TTS_NORM_SNAP_DB off the estimate, following the estimate
+    // over-gains the clip and then audibly walks the level back as the EMA
+    // converges (Kade's web call: +7.5 dB on clip 1 decaying to +0.4 dB within
+    // 30 seconds, because fucia's estimate sat ~9 dB quiet from earlier
+    // audition clips). Snap to the clip; the peak estimate below snaps with it
+    // (same staleness, same reason).
+    const snapped = prior != null && Math.abs(rmsDb - prior) > TTS_NORM_SNAP_DB;
+    const level = prior == null || snapped ? rmsDb : prior + (rmsDb - prior) * alpha;
     voiceLevelEma.set(voiceKey, level);
 
     let gainDb = TTS_NORM_TARGET_DB - level;
@@ -1146,20 +1168,31 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
     // protection since priorPeak is null.
     if (peak > 0) {
       const priorPeak = voicePeakEma.get(voiceKey);
-      const peakLevel = priorPeak == null ? peak : priorPeak + (peak - priorPeak) * alpha;
+      const peakLevel = priorPeak == null || snapped ? peak : priorPeak + (peak - priorPeak) * alpha;
       voicePeakEma.set(voiceKey, peakLevel);
       gain = Math.min(gain, 32000 / peakLevel);
     }
 
     if (Math.abs(gain - 1) < 0.03) return pcmBuf; // ~0.25 dB, not worth touching
+    // Soft-knee limiter (July 16 2026, replaces the bare hard clamp). The
+    // smoothed peak cap above deliberately tolerates this clip's true peak
+    // exceeding the estimate -- that is exactly what stops one transient from
+    // ducking a whole clip -- so the overage must be absorbed HERE, gracefully.
+    // The old hard clamp turned it into flat-topped clipping (Kade's "very
+    // loud and low quality" web call). tanh knee: transparent below KNEE,
+    // saturates smoothly toward full scale above it, can never clip.
+    let kneed = 0;
     for (let i = 0; i < total; i++) {
-      let v = Math.round(pcmBuf.readInt16LE(i * 2) * gain);
-      if (v > 32767) v = 32767;
-      else if (v < -32768) v = -32768;
-      pcmBuf.writeInt16LE(v, i * 2);
+      let v = pcmBuf.readInt16LE(i * 2) * gain;
+      const a = Math.abs(v);
+      if (a > TTS_NORM_KNEE) {
+        v = Math.sign(v) * (TTS_NORM_KNEE + TTS_NORM_KNEE_RANGE * Math.tanh((a - TTS_NORM_KNEE) / TTS_NORM_KNEE_RANGE));
+        kneed++;
+      }
+      pcmBuf.writeInt16LE(Math.round(v), i * 2);
     }
     console.log(
-      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB`
+      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${kneed ? `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)` : ""}`
     );
   } catch (e) {
     console.warn("[TTS] normalize skipped:", e.message);
