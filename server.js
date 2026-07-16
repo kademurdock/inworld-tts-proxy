@@ -1075,6 +1075,7 @@ const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "1
 const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
 
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
+const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
 
 function measureSpeechRmsDb(pcmBuf, sampleRate) {
   const samples = pcmBuf.length >> 1;
@@ -1131,7 +1132,23 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
       const a = Math.abs(pcmBuf.readInt16LE(i * 2));
       if (a > peak) peak = a;
     }
-    if (peak > 0) gain = Math.min(gain, 32000 / peak);
+    // Smoothed peak (July 16 2026 fix -- Kade: intermittent "ducking"). Used to
+    // hard-clamp gain for the WHOLE clip off this clip's own raw instant peak --
+    // one emphasized word or hard consonant in an otherwise normal-level clip
+    // would yank gain down for the entire clip, audible as a dip against its
+    // neighbors. Now smoothed per-voice with the same duration-weighted alpha
+    // as the RMS level above, so one spike can't single-handedly duck a whole
+    // reply. The per-sample hard clamp a few lines down (32767/-32768) is the
+    // real safety net -- if a genuinely new peak ever exceeds this smoothed
+    // estimate, at most that instant briefly hard-clips rather than the whole
+    // clip getting ducked; first clip for a voice still gets full unsmoothed
+    // protection since priorPeak is null.
+    if (peak > 0) {
+      const priorPeak = voicePeakEma.get(voiceKey);
+      const peakLevel = priorPeak == null ? peak : priorPeak + (peak - priorPeak) * alpha;
+      voicePeakEma.set(voiceKey, peakLevel);
+      gain = Math.min(gain, 32000 / peakLevel);
+    }
 
     if (Math.abs(gain - 1) < 0.03) return pcmBuf; // ~0.25 dB, not worth touching
     for (let i = 0; i < total; i++) {
