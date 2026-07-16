@@ -49,7 +49,7 @@ const SECTIONS = [
 
   { key: "tokens",          path: "/help/tokens",          label: "What Are Tokens?",    group: "The money part" },
   { key: "costs",           path: "/help/costs",           label: "What This Costs Kade", group: "The money part" },
-  { key: "donate",          path: "/help/donate",          label: "Feed the Server",     group: "The money part" },
+  { key: "donate",          path: "/help/donate",          label: "Usage & Balance",     group: "The money part" },
 
   { key: "accessibility",   path: "/help/accessibility",   label: "Accessibility Tips",  group: "Getting the best experience" },
   { key: "troubleshooting", path: "/help/troubleshooting", label: "When Something Breaks", group: "Getting the best experience" },
@@ -263,7 +263,7 @@ PAGES.home = {
   <li data-terms="cheat sheet buttons quick reference where shortcuts deep think brain reasoning slow careful"><a href="/help/cheatsheet"><span class="ico" aria-hidden="true">📋</span><span class="ttl">The Cheat Sheet</span><span class="desc">Where the buttons are and how to do the common stuff. One page.</span></a></li>
   <li data-terms="tokens context counter words cost meaning"><a href="/help/tokens"><span class="ico" aria-hidden="true">🔢</span><span class="ttl">What Are Tokens?</span><span class="desc">That little counter, explained without the math homework.</span></a></li>
   <li data-terms="cost money bill credits balance economics pay"><a href="/help/costs"><span class="ico" aria-hidden="true">💸</span><span class="ttl">What This Costs Kade</span><span class="desc">The honest money side. Spoiler: a real person pays a real bill.</span></a></li>
-  <li data-terms="donate paypal feed server support tip groceries help pay"><a href="/help/donate"><span class="ico" aria-hidden="true">🍕</span><span class="ttl">Feed the Server</span><span class="desc">The fridge doesn't refill itself. Chip in if you can. (No pressure.)</span></a></li>
+  <li data-terms="donate paypal feed server support usage balance top up topup credit money pay tab"><a href="/help/donate"><span class="ico" aria-hidden="true">🍕</span><span class="ttl">Usage &amp; Balance</span><span class="desc">Your starting credit, what things cost, and topping up when it runs dry.</span></a></li>
   <li data-terms="accessibility screen reader voiceover nvda blind shortcuts"><a href="/help/accessibility"><span class="ico" aria-hidden="true">♿</span><span class="ttl">Accessibility Tips</span><span class="desc">Get the smoothest ride with VoiceOver or NVDA.</span></a></li>
   <li data-terms="troubleshooting broken stuck fix audio microphone problem help report bug feedback feature request suggestion tell kade"><a href="/help/troubleshooting"><span class="ico" aria-hidden="true">🔧</span><span class="ttl">When Something Breaks</span><span class="desc">The usual hiccups and how to get unstuck.</span></a></li>
 </ul>
@@ -315,7 +315,7 @@ PAGES.starthere = {
 <p>There's a microphone button to speak your message, and replies can be read out loud in a real voice. There's even a phone number you can call and just talk, no computer needed. See <a href="/help/voice">Talking &amp; Listening</a> and <a href="/help/phone">Phone Calls</a>.</p>
 
 <h2>Does this cost me money?</h2>
-<p>No. Kade pays the bill so friends and family can use it. If you're curious what your chats cost her (it's usually pocket change) or want to chip in, that's <a href="/help/donate">Feed the Server</a> — zero pressure, ever.</p>
+<p>Here's the deal, short version: <strong>your account starts with $10 of credit that Kade loads for you.</strong> Everything you do draws from it at exactly what it costs — usually fractions of a cent, so it lasts a long, long time. When it runs dry, you top it up through PayPal and keep going. No markup, no profit, no subscriptions — the full story is on <a href="/help/donate">Usage &amp; Balance</a>.</p>
 
 <h2>Once you're comfortable</h2>
 <ul>
@@ -379,7 +379,7 @@ PAGES.faq = {
 <p>No. This is Kade's own private setup that she built and runs herself. Under the hood it uses powerful AI models to do the thinking, but it isn't ChatGPT, and your stuff here isn't tied to any big company's account. Think of it as a cozy independent place rather than a chain restaurant.</p>
 
 <h2>Does it cost me anything?</h2>
-<p>Not a penny. It's free for you to use. Behind the scenes it does cost Kade a small amount of real money to run, which is why there's a (totally optional) <a href="/help/donate">tip jar</a>. But you will never be charged. See <a href="/help/costs">What This Costs Kade</a> if you're curious how it all works.</p>
+<p>It works like a prepaid phone: <strong>you start with $10 of credit, on the house.</strong> Chatting barely dents it — a heavy month of talking might cost a dollar or two — but pictures, videos, and phone calls draw it down faster. When your balance hits zero, things pause until you add more through the PayPal button on <a href="/help/donate">Usage &amp; Balance</a>. Everything is priced at exactly what it costs to run — Kade doesn't make a dime. And if money's genuinely tight, <strong>talk to Kade</strong> before you sit in silence; this place exists so her people have it.</p>
 
 <h2>Can other people see my chats?</h2>
 <p>No. Your conversations are tied to your own login — nobody else using the site can read them.</p>
@@ -393,7 +393,7 @@ PAGES.faq = {
 <p>If you're on an iPhone and added this to your home screen, Apple makes apps like this re-ask for microphone permission a lot — sometimes every time you start talking. It's an Apple limitation, not something Kade broke, and there's no magic switch to fully turn it off. Just tap "Allow" again. More on the <a href="/help/troubleshooting">When Something Breaks</a> page.</p>
 
 <h2>Can it really make phone calls?</h2>
-<p>Yes — two ways. You can <strong>call 1-833-530-0313</strong> and talk to any character by name, and characters can <strong>place calls for you</strong> (like checking if a store has something in stock). When a character calls someone on your behalf, it introduces itself as an AI calling for you — first name only — and the call's small cost shows up on your <a href="/help/donate">Feed the Server</a> page. Full story on the <a href="/help/phone">Phone Calls</a> page.</p>
+<p>Yes — two ways. You can <strong>call 1-833-530-0313</strong> and talk to any character by name, and characters can <strong>place calls for you</strong> (like checking if a store has something in stock). When a character calls someone on your behalf, it introduces itself as an AI calling for you — first name only — and the call's small cost shows up on your <a href="/help/donate">Usage &amp; Balance</a> page. Full story on the <a href="/help/phone">Phone Calls</a> page.</p>
 
 <h2>Can I make my own character?</h2>
 <p>Yes, and you don't need to know any tech. You give it a name, describe its personality in plain words, and it's yours. Walkthrough on the <a href="/help/build">Build Your Own Character</a> page.</p>
@@ -421,6 +421,8 @@ PAGES.whatsnew = {
 
 <h2>July 16, 2026</h2>
 <ul>
+  <li><strong>"Watch for my cat" &mdash; video calls can now interrupt you (only when you ask).</strong> On a video call, tell the character to watch for something &mdash; <em>"let me know when my cat comes into frame," "tell me when a car pulls up"</em> &mdash; and an automatic checker quietly looks every few seconds. The moment it's visible, she takes one fresh look and <strong>speaks up on her own</strong>, in her own voice. Alerts wait for a quiet moment (never talk over you), watches are one-shot and re-armable, and one that sees nothing for half an hour says so and stands down instead of dying silently. Full details on the <a href="/help/voice">Talking &amp; Listening page</a>.</li>
+  <li><strong>"Feed the Server" is now "Usage &amp; Balance" &mdash; and the money deal is official.</strong> Every account starts with $10 of credit loaded by Kade; everything draws from your balance at exactly what it costs (no markup, no profit); when it runs dry, top up any amount through the PayPal button and it's added to your account. Chat stays nearly free &mdash; the $10 lasts months of talking &mdash; it's pictures, calls, and video that draw it down. Same page as before, honest new name: <a href="/help/donate">Usage &amp; Balance</a>.</li>
   <li><strong>New low-vision display options.</strong> Settings &rarr; General &rarr; Accessibility now has three new controls: a <strong>High contrast (true black)</strong> theme &mdash; pure black background, bright white text, stronger borders everywhere; an <strong>Easy-read font</strong> picker with Lexend (designed for low vision) and OpenDyslexic (dyslexia-friendly); and a <strong>Line spacing</strong> control that gives text room to breathe. All three work on the website and in the iPhone app, and they remember your choice per device.</li>
   <li><strong>Reading view.</strong> Every AI reply now has a book-icon button next to the play and copy buttons that opens the reply full-screen &mdash; big text, nothing else on screen, close with the button or Escape. Made for actually reading long answers with limited vision instead of squinting at chat bubbles. It follows your font and spacing choices above.</li>
   <li><strong>Describe-It plays it straight about certainty.</strong> The photo-describing specialist now tells you how sure it is when lighting or blur makes reading risky, gives both readings when two are plausible, and for high-stakes stuff &mdash; medication labels, dosages, expiration dates, money &mdash; it always recommends a human double-check and can pass a note to a family member to take a look. It also says where information comes from ("based on the photo you sent earlier," "that part's a best guess") so you're never guessing about its guessing.</li>
@@ -480,7 +482,7 @@ PAGES.whatsnew = {
 <ul>
   <li><strong>The Game Parlor</strong> — nineteen real games by voice or phone with table sounds and a family <a href="/game-room">leaderboard</a>.</li>
   <li><strong>The Debate Room</strong> — put a few characters in one room and let them go at it, radio-play style if you want. <a href="/help/debate-room">How it works</a>.</li>
-  <li><strong>Starting balance</strong> — every account starts with $10 of usage credit, and <a href="/help/donate">Feed the Server</a> shows exactly where it goes.</li>
+  <li><strong>Starting balance</strong> — every account starts with $10 of usage credit, and <a href="/help/donate">Usage &amp; Balance</a> shows exactly where it goes.</li>
 </ul>
 
 <p class="muted">Older history lives with Kade. If something here confuses you, the <a href="/help">help home</a> has a page for everything.</p>
@@ -541,9 +543,20 @@ PAGES.voice = {
   <li><strong>In the background, it quietly refreshes its own notes every so often</strong> &mdash; roughly every 15&ndash;20 seconds, depending on the mode &mdash; just to keep what it "currently knows it's looking at" up to date. This part is silent. It does NOT speak up or interrupt when this happens; it's only updating what it would say if you asked.</li>
   <li><strong>Separately, every single time you say anything at all,</strong> it grabs one more guaranteed fresh look before replying &mdash; so a direct question like "what am I looking at?" is never answered with stale information.</li>
 </ul>
-<p>The upshot: it only ever <em>speaks</em> when you speak to it, like any normal conversation &mdash; it's turn-taking, not a running commentary. So if you say something like <em>"let me know when the cat comes into frame"</em>, it won't interrupt on its own the moment that happens &mdash; there's no background watcher that can trigger it to talk unprompted (yet &mdash; see the note below). Check in every so often instead &mdash; <em>"is she here yet?"</em> &mdash; and each check gets a genuinely fresh, current answer.</p>
+<p>The upshot: it speaks when you speak to it, like any normal conversation &mdash; turn-taking, not a running commentary &mdash; with exactly <strong>one exception you control</strong>: a watch you've armed (next section). Outside of a watch, it never interrupts on its own; check in whenever you like &mdash; <em>"is she here yet?"</em> &mdash; and each check gets a genuinely fresh, current answer.</p>
 <p>It also keeps a short memory of what it noticed changing &mdash; a few minutes' worth &mdash; so a check-in isn't limited to only the instant you happen to ask. "Did anything happen?" or "did a car pull up?" can be answered from something it noticed a couple of minutes ago, not just whatever's in frame right this second. It still won't volunteer that on its own; you still have to ask. Think of it as catching you up when you check in, not as it keeping watch and reporting back.</p>
 <p>This is different from <a href="/help/describe">Describe My World</a>, which is a one-time "here's a photo, describe it once." Video calls keep re-checking automatically for as long as the camera's on, without you having to re-share anything &mdash; more like having someone stay on the line looking with you (who only talks when you talk to them), less like snapping a single picture.</p>
+
+<h3>NEW: "Watch for my cat" &mdash; the one time it WILL speak up on its own</h3>
+<p>This is the feature the fine print used to say didn't exist. Now it does. On a video call, say something like <em>"watch for my cat and tell me when she comes into frame,"</em> or <em>"let me know when a car pulls into the driveway,"</em> or <em>"tell me if the oven light turns off."</em> The character confirms, and from that moment a quiet automatic checker looks at the camera every few seconds for exactly that thing. The moment it's actually visible, <strong>the character takes one fresh, careful look and speaks up on her own</strong> &mdash; a real interruption, in her own voice, with what she's seeing. You asked to be interrupted; that's the one time she will.</p>
+<ul>
+  <li><strong>It waits for a quiet moment.</strong> An alert never talks over you &mdash; if you're mid-sentence or she's mid-reply, it holds until the line is clear, then speaks.</li>
+  <li><strong>One watch at a time, and it's one-shot.</strong> After an alert fires, the watch turns itself off &mdash; say "keep watching" or just ask again to re-arm it. Asking to watch a new thing replaces the old one.</li>
+  <li><strong>To stop early,</strong> just say so: "stop watching," "never mind the cat."</li>
+  <li><strong>It won't run forever.</strong> A watch that hasn't seen its thing after about half an hour says so out loud and stands down &mdash; it never dies silently while you're counting on it.</li>
+  <li><strong>Point the camera where the action would happen.</strong> The checker can only see what the camera sees &mdash; a watch for the front door works best with the phone propped facing the front door.</li>
+  <li><strong>Cost, honestly:</strong> the repeated checking uses the cheapest possible look (well under a nickel an hour), and the alert itself costs about as much as any normal reply. It all comes out of the same video minutes and balance as the rest of the call.</li>
+</ul>
 
 <h3>Getting oriented with HQ video</h3>
 <p>If you're blind or low-vision and using HQ video to get your bearings in a room, two habits help a lot: <strong>ask out loud as you go</strong> — "what's in front of me now," "what's to my left" — each question forces an instant fresh look, so it always matches wherever you've just pointed the camera. And <strong>pause a beat after you turn or pan</strong> before asking, so the look it takes isn't a blur. HQ is written to describe layout in plain terms — what's left, right, and ahead, and roughly how far — not just list objects, and to call out anything relevant to moving safely, like steps or obstacles, when it can see them.</p>
@@ -560,8 +573,8 @@ PAGES.voice = {
   <li><strong>Nothing is recorded or saved.</strong> Only the single newest camera frame ever sits in memory for the length of the call — never written to disk, never kept after you hang up or turn the camera off.</li>
   <li><strong>Camera permission required.</strong> The first time, your browser will ask to use your camera — say yes. If it seems blocked, check your browser's site settings for this page.</li>
   <li><strong>Web calls only, for now.</strong> Video works on in-app calls in a browser or the installed app. The real phone line (<a href="/help/phone">1-833-530-0313</a>) is voice-only.</li>
-  <li><strong>No unprompted alerts yet.</strong> You can't currently say "watch for my cat and tell me when she comes into frame" and expect it to interrupt on its own the moment that happens &mdash; it only speaks when spoken to. Check in periodically instead. A real "watch and alert me" mode is a reasonable future ask, just not built yet.</li>
-  <li><strong>It does remember recent changes, though.</strong> A short rolling memory (roughly the last five minutes) of anything that noticeably changed is kept, so when you DO check in, it can catch you up on something you missed rather than only describing the current instant. That's different from an unprompted alert: it still waits for you to ask, it just has more to say when you do.</li>
+  <li><strong>Watch alerts are the one sanctioned interruption.</strong> Armed watches (see the "watch for my cat" section above) are the only time a character will ever speak unprompted &mdash; because you explicitly asked for it. Everything else stays strictly turn-taking: no watch armed, no surprises, ever.</li>
+  <li><strong>It also remembers recent changes.</strong> Separate from watches, a short rolling memory (roughly the last five minutes) of anything that noticeably changed is kept, so a check-in like "did anything happen?" can catch you up on something you missed rather than only describing the current instant. That part still waits for you to ask &mdash; it just has more to say when you do.</li>
 </ul>
 <div class="callout">
   <p><strong>The bigger dream — a truly continuous live camera, like smart glasses:</strong> Kade knows this is where a lot of people's minds go, and it's genuinely on her radar (the technology to do it now exists). It's deliberately not built yet because running continuously, instead of look-by-look, changes the cost math completely — that gets a real number put in front of Kade, and an actual yes, before it ever ships. What's live today is the look-and-report version described above.</p>
@@ -593,7 +606,7 @@ PAGES.phone = {
 <ul>
   <li><strong>The call says who it's for.</strong> Every call opens with the AI introducing itself and naming you (first name only) as the person who asked for it. That's on purpose — no anonymous prank calls, ever.</li>
   <li><strong>Calls are recorded</strong> and the other person is told so, so there's always a record of what was said.</li>
-  <li><strong>It costs a little</strong> — about a cent and a half per minute, added to your tab on the <a href="/help/donate">Feed the Server</a> page. The character will mention this before dialing.</li>
+  <li><strong>It costs a little</strong> — about a cent and a half per minute, added to your tab on the <a href="/help/donate">Usage &amp; Balance</a> page. The character will mention this before dialing.</li>
   <li><strong>There are limits</strong> — calls cap at 15 minutes and a handful per person per day, so nobody can go wild with it.</li>
 </ul>
 
@@ -621,7 +634,7 @@ PAGES.phone = {
   <li><strong>Registered family only.</strong> These calls can only go to numbers Kade has registered — nobody can point them at strangers.</li>
   <li><strong>Same up-front AI honesty.</strong> The call introduces itself as an AI calling on your behalf, and it's recorded. If your person says they'd rather not get the calls, that lands front and center in your report — and you can pause the schedule right there.</li>
   <li><strong>New schedules start paused.</strong> Use <em>"Call me as a test"</em> first so YOU hear exactly what your family will hear, then resume it.</li>
-  <li><strong>It costs a little</strong> — roughly a nickel to a dime per call (a daily schedule runs a few dollars a month), on your <a href="/help/donate">Feed the Server</a> tab. Calls run between 8am and 9pm Central only.</li>
+  <li><strong>It costs a little</strong> — roughly a nickel to a dime per call (a daily schedule runs a few dollars a month), on your <a href="/help/donate">Usage &amp; Balance</a> tab. Calls run between 8am and 9pm Central only.</li>
 </ul>
 ${nextprev("voice", "describe")}
 `,
@@ -662,7 +675,7 @@ PAGES.describe = {
 
 <h2>The honest fine print</h2>
 <ul>
-  <li><strong>Cost:</strong> around a tenth of a cent per description — pocket lint, but it's on your <a href="/help/donate">Feed the Server</a> tab like everything else.</li>
+  <li><strong>Cost:</strong> around a tenth of a cent per description — pocket lint, but it's on your <a href="/help/donate">Usage &amp; Balance</a> tab like everything else.</li>
   <li><strong>Privacy:</strong> the file itself is described and thrown away within the hour — it's never saved to the site. (The description text stays on your screen until you leave the page.)</li>
   <li><strong>Size limit:</strong> about 30&nbsp;MB — photos and documents are always fine; a very long video might not fit.</li>
 </ul>
@@ -737,7 +750,7 @@ PAGES.rooms = {
 <p>Had a conversation so good it deserves an audience? Press <strong>Share to the Hall</strong>, give it a title, and it appears in the <a href="${CHAT_URL}/conversation-hall">Conversation Hall</a> — the public greatest-hits shelf everyone on the site can read. You can unshare or delete your room anytime, and deleting the room removes it from the Hall too.</p>
 
 <h2>The small print (tiny, promise)</h2>
-<p>Each character turn costs a fraction of a cent, and it shows on your <a href="/help/donate">Feed the Server</a> tab like everything else. There's a daily limit high enough that you'll never notice it in normal use. Rooms stick around until you delete them, so you can come back to a good one tomorrow.</p>
+<p>Each character turn costs a fraction of a cent, and it shows on your <a href="/help/donate">Usage &amp; Balance</a> tab like everything else. There's a daily limit high enough that you'll never notice it in normal use. Rooms stick around until you delete them, so you can come back to a good one tomorrow.</p>
 `,
 };
 
@@ -807,7 +820,7 @@ PAGES.games = {
 <p>Only finished games count. Walking away from a table in the middle never counts as a loss — the board only knows about games played to the end. And like everything here, it reads top to bottom with a screen reader: plain tables, plain words, no charts to squint at.</p>
 
 <h2>The small print (tiny, promise)</h2>
-<p>The games themselves are free — no tokens, no cost. Chips in Blackjack are pretend and can never turn into real money. If a character sings you a song or draws a picture during game night, that part follows the usual costs on your <a href="/help/donate">Feed the Server</a> tab, but the card games are on the house.</p>
+<p>The games themselves are free — no tokens, no cost. Chips in Blackjack are pretend and can never turn into real money. If a character sings you a song or draws a picture during game night, that part follows the usual costs on your <a href="/help/donate">Usage &amp; Balance</a> tab, but the card games are on the house.</p>
 `,
 };
 
@@ -916,7 +929,7 @@ PAGES.images = {
 </div>
 
 <h2>Videos and designs, too</h2>
-<p>The specialists go further than pictures: <strong>Rio</strong> turns a description into a short <em>video clip</em>, and <strong>Indie</strong> makes designed images with clean readable text (flyers, logos, cards). Videos are the priciest thing on the whole site — roughly <strong>50 cents to a dollar per clip</strong> — so the character will casually tell you the ballpark cost before it runs, and the spend lands on your <a href="/help/donate">Feed the Server</a> page. Regular pictures stay cheap (a few cents) and skip the speech.</p>
+<p>The specialists go further than pictures: <strong>Rio</strong> turns a description into a short <em>video clip</em>, and <strong>Indie</strong> makes designed images with clean readable text (flyers, logos, cards). Videos are the priciest thing on the whole site — roughly <strong>50 cents to a dollar per clip</strong> — so the character will casually tell you the ballpark cost before it runs, and the spend lands on your <a href="/help/donate">Usage &amp; Balance</a> page. Regular pictures stay cheap (a few cents) and skip the speech.</p>
 
 <h2>For folks using a screen reader</h2>
 <p>When the AI makes an image, ask it to <strong>describe the picture in detail</strong> too — it's happy to paint the full scene in words so you know exactly what it created. And <strong>Describe-It</strong> in the marketplace does the reverse: upload any photo and it tells you what's in it.</p>
@@ -958,7 +971,7 @@ PAGES.audio = {
 
 <h2>The catch: it costs a little (not much)</h2>
 <div class="callout warn">
-  <p>Making audio pulls from the same small pot of credits as pictures and video. It's cheap — about <strong>7 or 8 cents a minute</strong>, so a full two-minute scene runs around 15 cents — but the pot isn't bottomless. Make all the audio you like; just don't fire off a thousand at once. The spend shows up on your <a href="/help/donate">Feed the Server</a> page. If audio ever stops working, the pot may need a top-up — <strong>contact Kade</strong>.</p>
+  <p>Making audio pulls from the same small pot of credits as pictures and video. It's cheap — about <strong>7 or 8 cents a minute</strong>, so a full two-minute scene runs around 15 cents — but the pot isn't bottomless. Make all the audio you like; just don't fire off a thousand at once. The spend shows up on your <a href="/help/donate">Usage &amp; Balance</a> page. If audio ever stops working, the pot may need a top-up — <strong>contact Kade</strong>.</p>
 </div>
 
 <h2>Good to know</h2>
@@ -1035,7 +1048,7 @@ PAGES.cheatsheet = {
     <tr><th scope="row">Play a text adventure</th><td>Ask for an adventure game — it can SAVE your game and pick it up any day, any chat.</td></tr>
     <tr><th scope="row">Play cards, dice, or a party game</th><td>Say "let's play" to Kiana or Deuce — nineteen games from Blackjack to Cards Against Reality to Battleship. See <a href="/help/games">The Game Parlor</a>.</td></tr>
     <tr><th scope="row">Find a character I'll click with</th><td>Account menu → Explore → <strong>The Matchmaker</strong>: five questions, three matches, one button to start talking.</td></tr>
-    <tr><th scope="row">See what I've used this month</th><td>Account menu (bottom-left avatar) → Explore → Feed the Server.</td></tr>
+    <tr><th scope="row">See my balance / what I've used</th><td>Account menu (bottom-left avatar) → Explore → Usage &amp; Balance.</td></tr>
     <tr><th scope="row">Get help from a human</th><td>Contact Kade.</td></tr>
   </tbody>
 </table>
@@ -1082,7 +1095,7 @@ PAGES.costs = {
   h1: "How This Actually Costs Kade Money",
   tagline: "The honest, friendly version of the money side — because a real person is footing a real (if small) bill.",
   main: `
-<p class="lead">You'll never be charged to use Kade-AI. But "free for you" isn't the same as "free." Here's exactly how it works, no mystery.</p>
+<p class="lead">Every account runs on real, prepaid credit — $10 of it loaded for you on day one, drawn down at exactly what things cost, topped up by you when it runs dry. Here's exactly how it works, no mystery.</p>
 
 <h2>Every message gets processed by an outside AI provider</h2>
 <p>Kade didn't build the AI brain from scratch — almost nobody does. When you send a message, it goes out to an outside AI service that does the actual thinking and sends a reply back. That service <strong>charges per token</strong> — those tiny text chunks from the <a href="/help/tokens">tokens page</a>. Every message, in and out, costs a sliver of a cent.</p>
@@ -1090,26 +1103,26 @@ PAGES.costs = {
 <h2>Kade pre-loads credits to cover it</h2>
 <p>So the lights stay on, Kade puts her own money in ahead of time as credits. Your chatting quietly draws that balance down, a few fractions of a cent at a time. It's small per message — but it's real, and it adds up across a whole family of people chatting away.</p>
 
-<h2>Nobody can accidentally run up her bill</h2>
+<h2>Nobody can accidentally run up anybody's bill</h2>
 <div class="callout good">
-  <p>Here's the reassuring part. Every user has a <strong>spending cap</strong> — roughly ten dollars' worth of usage per month — and it <strong>refills automatically every 30 days</strong>. That means no single person, no matter how chatty, can blow through Kade's whole budget. The guardrails are built in. So please relax and use it — you genuinely can't accidentally cost her a fortune.</p>
+  <p>Here's the reassuring part. Your <strong>balance is the guardrail</strong>: everything you do draws from your own prepaid credit, and when it's empty, spending simply stops until you top it up — no surprise bills, no overdraft, nothing quietly piling up in the background. You genuinely cannot accidentally cost anyone a fortune, including yourself. (Chat is so cheap that the $10 you start with can last months of heavy talking — it's the pictures, videos, and calls that draw it down faster.)</p>
 </div>
 
 <h2>Pictures, videos, and phone calls come from different jars</h2>
 <p>Making images is paid for separately, from its own little pot of credits (a few cents per picture). <strong>Videos</strong> are the big-ticket item — roughly 50 cents to a dollar per clip — and <strong>phone calls</strong> run about a cent and a half per minute. Same idea, different jars — and the characters give you a casual heads-up before doing the expensive stuff.</p>
-<p>Want to see your own numbers? Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Feed the Server</strong> — it shows your month so far, item by item, nothing hidden.</p>
+<p>Want to see your own numbers? Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Usage &amp; Balance</strong> — it shows your balance and your month so far, item by item, nothing hidden.</p>
 
 <h2>So why mention any of this?</h2>
-<p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about. Knowing there's a real bill behind it just helps everyone treat the place with a little respect… and maybe, if you're able, <a href="/help/donate">toss a few bucks toward the grocery fund</a>. Which brings us to the next page.</p>
+<p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about, priced at exactly what it costs and not a penny more. Knowing how the money actually flows helps everyone trust the place… and when your balance needs feeding, the next page is <a href="/help/donate">where that happens</a>.</p>
 ${nextprev("tokens", "donate")}
 `,
 };
 
-// ---- 8. DONATE ("Feed Your Friends on the Server") ------------------------
+// ---- 8. USAGE & BALANCE (was "Feed the Server" — renamed July 16 2026) ----
 PAGES.donate = {
-  title: "Feed the Server",
-  h1: "Feed Your Friends on the Server",
-  tagline: "There's a server living in this house. It eats. A lot. This page is its grocery fund.",
+  title: "Usage & Balance",
+  h1: "Usage & Balance: Your Tab, Your Top-Ups",
+  tagline: "Everything here costs exactly what it costs — no markup, no profit. This page is how the lights stay on.",
   main: `
 <div class="hero-art" aria-hidden="true" role="presentation">
 <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
@@ -1139,38 +1152,38 @@ PAGES.donate = {
   </g>
 </svg>
 </div>
-<p class="lead">Picture it: somewhere out there, a little server is humming along in a digital house. It's a good server. A <em>hungry</em> server. And every message you send is basically you opening its fridge.</p>
+<p class="lead">Picture it: somewhere out there, a little server is humming along in a digital house. It's a good server. A <em>hungry</em> server. And every message you send is basically you opening its fridge. Here's how the groceries get paid for — the whole deal, in plain language.</p>
 
-<h2>Meet the roommate</h2>
-<p>Think of this whole site as Kade's house, and the AI as the world's most enthusiastic roommate. It never sleeps. It answers every question at 3 a.m. without complaint. It'll draw you a cat in sunglasses for no reason. Truly, a delight to live with.</p>
-<p>It has exactly one flaw: <strong>the appetite of a teenage golden retriever.</strong> Every reply it gives nibbles a little snack off the grocery bill (the credits Kade pre-loads — see <a href="/help/costs">What This Costs Kade</a> if you want the receipts). And here's the thing nobody warns you about a roommate like this:</p>
-<p class="lead"><strong>The fridge does not refill itself.</strong></p>
-
-<h2>See your own tab</h2>
-<p>Curious what YOUR chatting actually added up to? In the app, open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Feed the Server</strong>. It shows your month — chat, voice, pictures, phone calls, the works — priced out honestly, framed as a suggested chip-in. No bill, no obligation, just receipts.</p>
-
-<h2>Where you come in (totally optional, zero guilt)</h2>
-<p>You're a welcome guest here. Genuinely. Nobody's standing at the door with a tip jar and a stern look. But if this place has made you laugh, helped you out, or saved your bacon even once — you can chip in for groceries and keep the robot fed.</p>
-
-<div class="btnrow">
-  <a class="cta big" href="${PAYPAL_URL}">🍕 Buy the server a snack</a>
-</div>
-
-<h2>What your few bucks actually do</h2>
+<h2>The deal (new as of July 2026)</h2>
+<p>This place used to run purely on Kade's wallet and an optional tip jar. It grew — more people, more voices, phone calls, pictures, video — and the honest way to keep it alive without anybody profiting off anybody is simple:</p>
 <ul>
-  <li><strong>$3</strong> — a coffee for the server. It will stay up all night anyway, but now it's caffeinated and grateful.</li>
-  <li><strong>$5</strong> — a proper snack run. Keeps the lights on and the roommate fed for a good while.</li>
-  <li><strong>$10</strong> — you are now the server's favorite. It won't say it out loud, but it knows.</li>
-  <li><strong>Whatever you've got</strong> — seriously, any amount helps, and "nothing right now" is a perfectly fine amount too.</li>
+  <li><strong>You start with $10 of credit, loaded by Kade.</strong> That's the house welcoming you in.</li>
+  <li><strong>Everything you do draws from your balance at exactly what it costs.</strong> Chat is fractions of a cent. Pictures are pennies. Phone calls are about a cent and a half a minute. Video and song-making are the big spenders. No markup on any of it — the receipts on this page are the same numbers the AI providers charge Kade.</li>
+  <li><strong>When your balance runs dry, things pause until you top it up.</strong> Send whatever amount through the PayPal button below — <strong>put your name in the PayPal note</strong> so Kade knows whose balance to load — and it gets added to your account, usually the same day.</li>
+</ul>
+<p>That's the whole model. No subscriptions, no monthly bill, no surprise charges — a prepaid tab you control completely. <strong>Kade makes zero dollars on this.</strong> The only thing your money buys is your own usage, at cost.</p>
+
+<h2>See your own tab and balance</h2>
+<p>Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Usage &amp; Balance</strong>. It shows what you have left and your month so far — chat, voice, pictures, phone calls, the works — priced out honestly, item by item. No mystery meat.</p>
+
+<h2>Topping up</h2>
+<div class="btnrow">
+  <a class="cta big" href="${PAYPAL_URL}">🍕 Top up your balance (PayPal)</a>
+</div>
+<p>Any amount works. For scale, from real usage on this site:</p>
+<ul>
+  <li><strong>$5</strong> — months of heavy chatting, honestly. Text conversation is nearly free.</li>
+  <li><strong>$10</strong> — chatting plus a steady diet of pictures, voice calls, and check-in calls.</li>
+  <li><strong>$20</strong> — the works: video calls, song-making, video clips, the expensive toys, without watching the meter.</li>
 </ul>
 
 <div class="callout good">
-  <p>No subscriptions. No pressure. No awkward reminders every time you log in. Just a link, a hungry server, and a thank-you from Kade — who's covering the bill so the whole family can have this. If you can feed it, the fridge thanks you. If you can't, pull up a chair anyway. There's always room at the table.</p>
+  <p><strong>If money's tight, say so.</strong> This whole place exists because Kade's people deserve this stuff at cost instead of Silicon Valley prices. Nobody's getting cut off from a lifeline over grocery money — if your balance is empty and your month is hard, talk to Kade. That's not charity, that's family.</p>
 </div>
 
 <div class="btnrow">
-  <a class="cta" href="${PAYPAL_URL}">💛 Chip in for groceries</a>
-  <a class="cta" href="${CHAT_URL}">← Back to chatting (the server's hungry again already)</a>
+  <a class="cta" href="${PAYPAL_URL}">💛 Send a top-up</a>
+  <a class="cta" href="${CHAT_URL}">← Back to chatting</a>
 </div>
 ${nextprev("costs", "accessibility")}
 `,
