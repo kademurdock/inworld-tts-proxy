@@ -18,6 +18,7 @@
 // Mounted in server.js via:  app.use(require("./help"));
 
 const express = require("express");
+const nodePath = require("path");
 const router = express.Router();
 
 const CHAT_URL = "https://kademurdock.com";
@@ -33,6 +34,7 @@ const SECTIONS = [
   { key: "quickstart",      path: "/help/quickstart",      label: "Your First Five Minutes", group: "Getting started" },
   { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
   { key: "whatsnew",        path: "/help/whats-new",       label: "What's New",          group: "Getting started" },
+  { key: "android",         path: "/help/android",         label: "The Android App",     group: "Getting started" },
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
   { key: "phone",           path: "/help/phone",           label: "Phone Calls", group: "Using Kade-AI" },
@@ -249,6 +251,7 @@ PAGES.home = {
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="whats new what's new changelog updates latest features recently added new stuff toys"><a href="/help/whats-new"><span class="ico" aria-hidden="true">✨</span><span class="ttl">What's New</span><span class="desc">The latest toys, in plain language — updated every time something ships.</span></a></li>
+  <li data-terms="android app apk install download sideload phone samsung google pixel motorola galaxy get the app"><a href="/help/android"><span class="ico" aria-hidden="true">🤖</span><span class="ttl">The Android App</span><span class="desc">Got an Android phone? Install Kade-AI as a real app, straight from here.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
   <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
@@ -421,6 +424,7 @@ PAGES.whatsnew = {
 
 <h2>July 17, 2026</h2>
 <ul>
+  <li><strong>The Android app is here.</strong> Android folks no longer watch from the porch — Kade-AI now installs as a real app on Android phones, downloaded straight from this help site (no app store, no invitation list). Own icon, full screen, microphone that behaves. The download and the step-by-step install walk-through live on the new <a href="/help/android">Android App page</a>.</li>
   <li><strong>Call your Spotter directly.</strong> There's now a second button right next to the phone button at the top of a conversation &mdash; the radio-tower icon. One tap starts a fresh call and puts your Spotter straight on the line, no need to call a character first and switch. Your character still picks up for a second to hand the call over, then it's all Spotter.</li>
   <li><strong>A flashlight for dark rooms &mdash; and it turns itself on.</strong> On a video call using the rear camera, a flashlight button appears next to the camera controls whenever your phone actually has one there. Even better: if the camera sees that it's genuinely dark for a few seconds, the flashlight now <strong>turns itself on once</strong> and says so out loud &mdash; no hunting for the button in the dark. Tap the flashlight button anytime to turn it off (or on); once you touch it yourself, it stays under your control.</li>
   <li><strong>Flip the camera.</strong> Regular video calls got a camera-flip button &mdash; switch between the rear camera (pointing at the world) and the front camera (pointing at you), with a spoken confirmation of which way it's now facing. Spotter calls always use the rear camera, since their whole job is seeing the world for you.</li>
@@ -1308,6 +1312,49 @@ PAGES.troubleshooting = {
 ${nextprev("accessibility", null)}
 `,
 };
+
+// ---- THE ANDROID APP -------------------------------------------------------
+PAGES.android = {
+  title: "The Android App",
+  h1: "The Android App",
+  tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
+  main: `
+<p class="lead">If you carry an Android phone, you can have Kade-AI as a real app: its own icon, opens full screen, microphone permission that sticks. It's the same Kade-AI you already know — the app is just a comfortable native wrapper around it.</p>
+
+<p>iPhone person instead? The iPhone app comes through Apple's TestFlight and works by invitation — <strong>contact Kade</strong> and she'll add you.</p>
+
+<p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI for Android (about 4&nbsp;MB)</a></p>
+
+<h2>Installing it, step by step</h2>
+<p>Because this app comes from Kade personally instead of the Google Play Store, Android will be a little suspicious the first time. That's normal, it's just Android being protective. Here's the whole dance:</p>
+<ol>
+  <li><strong>Tap the download link above</strong> on your Android phone. The file (Kade-AI.apk) lands in your Downloads.</li>
+  <li><strong>Open the downloaded file.</strong> Usually there's a notification you can tap, or open your Files app and look in Downloads for "Kade-AI".</li>
+  <li><strong>Android will likely say your browser "isn't allowed to install unknown apps."</strong> On that message, tap <strong>Settings</strong>, turn on <strong>Allow from this source</strong>, then go back once.</li>
+  <li><strong>Tap Install.</strong> If Google Play Protect pops up warning about an app from an unknown developer, tap <strong>Install anyway</strong> — on some phones it hides behind <strong>More details</strong> first. The warning only means Google hasn't reviewed it, which is true: it comes from Kade, not Google.</li>
+  <li><strong>Done.</strong> Kade-AI is in your app drawer like any other app. Sign in with the account Kade set up for you, and you're home.</li>
+</ol>
+
+<div class="callout warn">
+  <p><strong>Screen reader note (TalkBack):</strong> every step above is a plainly-labeled button — nothing is hidden in gestures. The trickiest moment is the "unknown apps" screen: the switch you want is named <strong>"Allow from this source."</strong> Flip it, then use Back to return to the install screen.</p>
+</div>
+
+<h2>When there's an update</h2>
+<p>Come back to this page and download again — the new version installs right over the old one. No uninstalling, no lost sign-in. When something app-worthy ships, it'll be mentioned on <a href="/help/whats-new">What's New</a>.</p>
+
+<h2>Is this safe?</h2>
+<p>Fair question — the honest answer: the app is built and signed by Kade, it simply skips the Play Store (which costs money and review time for a private family app). It only talks to <a href="${CHAT_URL}">kademurdock.com</a>, same as your browser does. If you're ever unsure a download really came from here, <strong>contact Kade</strong> before installing.</p>
+${nextprev("whatsnew", "voice")}
+`,
+};
+
+// ---- APK download + short link --------------------------------------------
+router.get("/Kade-AI.apk", (_req, res) => {
+  res.set("Content-Type", "application/vnd.android.package-archive");
+  res.set("Content-Disposition", 'attachment; filename="Kade-AI.apk"');
+  res.sendFile(nodePath.join(__dirname, "Kade-AI.apk"));
+});
+router.get("/android", (_req, res) => res.redirect(302, "/help/android"));
 
 // ---- Register a route for every page --------------------------------------
 for (const key of Object.keys(PAGES)) {
