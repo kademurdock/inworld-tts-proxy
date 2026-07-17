@@ -504,6 +504,75 @@ router.get("/balances", auth, async (req, res) => {
   res.json(out);
 });
 
+// ---- Codemagic (iOS CI — added July 17 2026) ----
+// Trigger + poll iOS TestFlight builds of the kade-ai-app shell, so Forge can
+// ship native app changes end-to-end (commit via the GitHub action, build here,
+// poll to green). Env: CODEMAGIC_TOKEN (sent as x-auth-token) and optional
+// CODEMAGIC_APP_ID (defaults to the kade-ai-app id). Builds auto-publish to
+// TestFlight internal on success (workflow ios-testflight).
+const CM_APP_ID = process.env.CODEMAGIC_APP_ID || "6a570159a79b1534242af0d9";
+async function codemagic(path, opts = {}) {
+  const tok = process.env.CODEMAGIC_TOKEN;
+  if (!tok) throw new Error("CODEMAGIC_TOKEN env var is not set on the proxy");
+  const r = await fetch(`https://api.codemagic.io${path}`, {
+    ...opts,
+    headers: { "x-auth-token": tok, "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`Codemagic ${r.status}: ${JSON.stringify(d).slice(0, 300)}`);
+  return d;
+}
+
+// POST /codemagic/build {workflowId?, branch?} -> {buildId}
+router.post("/codemagic/build", auth, async (req, res) => {
+  const { workflowId, branch } = req.body || {};
+  try {
+    const d = await codemagic("/builds", {
+      method: "POST",
+      body: JSON.stringify({
+        appId: CM_APP_ID,
+        workflowId: workflowId || "ios-testflight",
+        branch: branch || "main",
+      }),
+    });
+    res.json(d);
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// GET /codemagic/build?buildId=... -> one build's status; omit buildId for recent builds
+router.get("/codemagic/build", auth, async (req, res) => {
+  const { buildId } = req.query;
+  try {
+    if (buildId) {
+      const d = await codemagic(`/builds/${encodeURIComponent(buildId)}`);
+      const b = d.build || {};
+      return res.json({
+        id: b._id,
+        status: b.status,
+        commit: b.commit && b.commit.hash,
+        branch: b.branch,
+        workflow: b.workflowId,
+        startedAt: b.startedAt,
+        finishedAt: b.finishedAt,
+      });
+    }
+    const d = await codemagic(`/builds?appId=${CM_APP_ID}&limit=5`);
+    res.json({
+      builds: (d.builds || []).map((b) => ({
+        id: b._id,
+        status: b.status,
+        commit: b.commit && b.commit.hash,
+        branch: b.branch,
+        startedAt: b.startedAt,
+      })),
+    });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 
 // ---- /librechat/ask — proxy agent call, returns {text} ----
 // LibreChat uses a two-phase model: POST /api/agents/chat returns {streamId}
