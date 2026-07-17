@@ -198,6 +198,11 @@ const CUSTOM_VOICE_MAP = {
   "Professor Guy2": "default-e-m11vgtr9l-m7afw4kmnw__professor_guy2",
   "Ren, Professional Female": "default-e-m11vgtr9l-m7afw4kmnw__ren_professional_female",
   "Russian Storyteller": "default-e-m11vgtr9l-m7afw4kmnw__russian_storyteller",
+  // 2026-07-17 additions (Kade's new designed voices; clones still held back):
+  "Kaylin (Child)": "default-e-m11vgtr9l-m7afw4kmnw__kaylin_child",
+  "Kiki": "default-e-m11vgtr9l-m7afw4kmnw__kiki",
+  "Satarah": "default-e-m11vgtr9l-m7afw4kmnw__satarah",
+  "Trutia": "default-e-m11vgtr9l-m7afw4kmnw__trutia",
   "Sally May": "default-e-m11vgtr9l-m7afw4kmnw__sally_may",
   "Scary Male PA Announcer": "default-e-m11vgtr9l-m7afw4kmnw__scary_male_pa_announcer",
   "Southern Black Dude 1": "default-e-m11vgtr9l-m7afw4kmnw__southern_black_dude1",
@@ -1471,6 +1476,48 @@ const VOICE_ADDITIONS_2026_07_12B = {
     VOICE_LIST.push(label);
     CUSTOM_VOICE_NUMBERS.add(label);
   });
+}
+
+// ── 2026-07-17 VOICE ADDITIONS (the new designed voices since the July 12
+// sweep; the 15 held-back clones — Kade*, Amber*, Podcast Keighty fast, Sky,
+// Dale — remain OUT per Kade's vet). APPEND-ONLY as Voice 325+ so every
+// memorized number stays put. Same boot-crash rails as the blocks above.
+const VOICE_ADDITIONS_2026_07_17 = {
+  "Voice 325": "default-e-m11vgtr9l-m7afw4kmnw__kaylin_child",
+  "Voice 326": "default-e-m11vgtr9l-m7afw4kmnw__kiki",
+  "Voice 327": "default-e-m11vgtr9l-m7afw4kmnw__satarah",
+  "Voice 328": "default-e-m11vgtr9l-m7afw4kmnw__trutia",
+};
+{
+  const addLabels = Object.keys(VOICE_ADDITIONS_2026_07_17);
+  if (addLabels.length !== 4) throw new Error(`voice additions C: expected 4, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${325 + idx}`) throw new Error(`voice additions C: non-contiguous at ${label}`);
+    const target = VOICE_ADDITIONS_2026_07_17[label];
+    if (!target.startsWith("default-e-")) throw new Error(`voice additions C: ${label} not a custom id`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`voice additions C: ${label} collides`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
+// ── 2026-07-17 PICKER RETIREMENTS (Kade's call): Voice 118 (christa) and
+// Voice 270 (nanny) leave every picker/audition surface. Their numbered map
+// entries and name aliases STAY resolvable, so any agent default or saved
+// personal pick that still points at them keeps speaking (fail-soft) — they
+// just can't be newly chosen. This leaves display gaps at 118 and 270 on
+// purpose; the integrity check below scans the MAP (still contiguous), so
+// boot stays quiet.
+{
+  const RETIRED_PICKER_VOICES = ["Voice 118", "Voice 270"];
+  for (const label of RETIRED_PICKER_VOICES) {
+    const i = VOICE_LIST.indexOf(label);
+    if (i === -1) throw new Error(`picker retirement: ${label} not in VOICE_LIST`);
+    VOICE_LIST.splice(i, 1);
+    CUSTOM_VOICE_NUMBERS.delete(label);
+  }
 }
 
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
