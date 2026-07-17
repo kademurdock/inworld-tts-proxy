@@ -1520,6 +1520,35 @@ const VOICE_ADDITIONS_2026_07_17 = {
   }
 }
 
+// ── 2026-07-17 GAP REFILL (Kade's call, evening session): the display gaps
+// left by the picker retirements close by RENUMBERING two of today's four
+// additions into the empty slots — satarah (was Voice 327) becomes Voice 118,
+// trutia (was Voice 328) becomes Voice 270. Kade's exact words: "It doesn't
+// matter who... You'll just be replacing the numbers of those voices."
+// Consequences, on purpose: any saved pick that still pointed at the OLD 118
+// (christa) or 270 (nanny) now speaks as satarah/trutia respectively (the
+// name aliases "Christa" and "Nanny" still resolve for anything name-based);
+// the catalog is contiguous 1-326 again with no gaps and no 327/328.
+{
+  const GAP_REFILL = { "Voice 118": "Voice 327", "Voice 270": "Voice 328" };
+  for (const [slot, from] of Object.entries(GAP_REFILL)) {
+    const target = NUMBERED_VOICE_ALIASES[from];
+    if (!target) throw new Error(`gap refill: source ${from} missing from the numbered map`);
+    if (VOICE_LIST.includes(slot)) throw new Error(`gap refill: ${slot} unexpectedly still in the picker`);
+    NUMBERED_VOICE_ALIASES[slot] = target;
+    VOICE_MAP[slot] = target;
+    delete NUMBERED_VOICE_ALIASES[from];
+    delete VOICE_MAP[from];
+    const i = VOICE_LIST.indexOf(from);
+    if (i === -1) throw new Error(`gap refill: source ${from} missing from VOICE_LIST`);
+    VOICE_LIST.splice(i, 1);
+    CUSTOM_VOICE_NUMBERS.delete(from);
+    VOICE_LIST.push(slot);
+    CUSTOM_VOICE_NUMBERS.add(slot);
+  }
+  VOICE_LIST.sort((a, b) => Number(a.replace("Voice ", "")) - Number(b.replace("Voice ", "")));
+}
+
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
 // Scans the numbered map for (a) two numbers backed by the same real Inworld
 // voice id and (b) gaps in the numbering. WARN-ONLY by design — a dupe or gap
