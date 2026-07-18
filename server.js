@@ -1,7 +1,11 @@
 const express = require("express");
 const crypto = require("crypto");
 const app = express();
-app.use(express.json());
+// July 18 2026: raised from the 100kb default so /github/commit can carry
+// whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
+// commit proxy is whole-file by design, so its body limit must fit the
+// biggest file anyone needs to ship through it.
+app.use(express.json({ limit: "2mb" }));
 
 // Mount the accessible help system (/help and friends). See help.js.
 app.use(require("./help"));
