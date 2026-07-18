@@ -1802,6 +1802,61 @@ app.get(["/voices", "/voice-library"], (_req, res) => {
   res.redirect(302, "/help/voice");
 });
 
+// ── STT: OpenAI-compatible transcription shim → Deepgram (added July 18 2026) ──
+// Lets LibreChat's speech.stt.openai.url point HERE instead of OpenAI Whisper,
+// killing Whisper platform-wide: no per-minute OpenAI billing, no silence
+// hallucinations (the "ghost" bug). LibreChat POSTs multipart/form-data with a
+// `file` audio part + a `model` field (Bearer apiKey optional) and expects JSON
+// { text }. We forward the audio bytes to Deepgram pre-recorded /v1/listen
+// (nova-3) and return { text }. Rides the DEEPGRAM_API_KEY already on this svc.
+const Busboy = require("busboy");
+function sniffAudioType(b, fallback){
+  if(!b || b.length < 12) return fallback;
+  if(b[0]===0x1A && b[1]===0x45 && b[2]===0xDF && b[3]===0xA3) return "audio/webm"; // EBML
+  if(b[4]===0x66 && b[5]===0x74 && b[6]===0x79 && b[7]===0x70) return "audio/mp4";   // ftyp
+  if(b[0]===0x52 && b[1]===0x49 && b[2]===0x46 && b[3]===0x46) return "audio/wav";   // RIFF
+  if(b[0]===0x4F && b[1]===0x67 && b[2]===0x67 && b[3]===0x53) return "audio/ogg";   // OggS
+  if(b[0]===0x49 && b[1]===0x44 && b[2]===0x33) return "audio/mpeg";                 // ID3
+  if(b[0]===0xFF && (b[1]&0xE0)===0xE0) return "audio/mpeg";                          // mp3 frame
+  return fallback;
+}
+app.post("/v1/audio/transcriptions", (req, res) => {
+  const key = process.env.DEEPGRAM_API_KEY;
+  if(!key) return res.status(500).json({ error: "DEEPGRAM_API_KEY not set on this service." });
+  let bb;
+  try { bb = Busboy({ headers: req.headers, limits: { fileSize: 160*1024*1024 } }); }
+  catch(e){ return res.status(400).json({ error: "Bad multipart request." }); }
+  const chunks = []; let partType = "", language = "", gotFile = false;
+  bb.on("file", (name, stream, info) => {
+    gotFile = true; partType = (info && info.mimeType) || "";
+    stream.on("data", d => chunks.push(d));
+    stream.on("limit", () => {});
+  });
+  bb.on("field", (name, val) => { if(name === "language" && val) language = val; });
+  bb.on("error", () => { if(!res.headersSent) res.status(400).json({ error: "Upload parse error." }); });
+  bb.on("close", async () => {
+    if(!gotFile || !chunks.length) return res.status(200).json({ text: "" });
+    const audio = Buffer.concat(chunks);
+    const ct = sniffAudioType(audio, partType || "audio/webm");
+    const p = new URLSearchParams({ model: "nova-3", smart_format: "true", punctuate: "true" });
+    if(language && /^[a-z]{2}(-[A-Za-z]{2})?$/.test(language)) p.set("language", language);
+    try {
+      const dg = await fetch("https://api.deepgram.com/v1/listen?" + p.toString(), {
+        method: "POST",
+        headers: { Authorization: "Token " + key, "Content-Type": ct },
+        body: audio
+      });
+      const j = await dg.json();
+      if(!dg.ok) return res.status(502).json({ error: (j && (j.err_msg || j.message)) || "Deepgram error" });
+      const alt = (j && j.results && j.results.channels && j.results.channels[0] &&
+                   j.results.channels[0].alternatives && j.results.channels[0].alternatives[0]) || {};
+      return res.json({ text: (alt.transcript || "").trim() });
+    } catch(e){ return res.status(502).json({ error: String(e) }); }
+  });
+  req.pipe(bb);
+});
+
+
 // ── Flow: free voice dictation (press-to-talk) — added July 18 2026 ──────────
 // A Wispr-Flow-style dictation app that rides the SAME Deepgram key this account
 // already uses for phone-call STT. Design is SERVER-SIDE on purpose: the browser
