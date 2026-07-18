@@ -424,6 +424,8 @@ PAGES.whatsnew = {
 
 <h2>July 18, 2026</h2>
 <ul>
+  <li><strong>Turn voice memos into text.</strong> New in the account menu: "Transcribe a Voice Memo." Pick any audio recording &mdash; even an hour-plus ramble from a friend &mdash; and get back clean, punctuated text you can copy or download. Free. You can also just attach the audio in a chat and ask your character to transcribe it.</li>
+  <li><strong>Your characters keep your business to themselves now.</strong> What you tell one character stays with that character, the way real friendships work &mdash; only true basics every character needs (like how you want things described) are common knowledge. Private stuff is still remembered by whoever you told; they've also been asked to use judgment about when to bring it up.</li>
   <li><strong>Skip straight past the sidebar.</strong> For screen reader users: the very first thing on every page is now a "Skip to the message box" link. One swipe or Tab lands on it, press Enter, and you're right in the message box ready to type &mdash; no more wading through the whole sidebar just to say hello.</li>
   <li><strong>Hang up, land in the right chat.</strong> Ending a voice call now takes you to that call's own conversation instead of leaving you in whatever chat was open underneath. The full transcript is sitting right there when you arrive.</li>
   <li><strong>Smarter memory, less d&eacute;j&agrave; vu.</strong> The platform's memory keeper got firmer instructions about not filing the same fact twice in different drawers, and the site now does a little overnight housekeeping so it stays quick. If a character ever repeats your life story back like it's news, that should be fading fast.</li>
