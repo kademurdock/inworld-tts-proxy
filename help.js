@@ -422,6 +422,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 18, 2026</h2>
+<ul>
+  <li><strong>Skip straight past the sidebar.</strong> For screen reader users: the very first thing on every page is now a "Skip to the message box" link. One swipe or Tab lands on it, press Enter, and you're right in the message box ready to type &mdash; no more wading through the whole sidebar just to say hello.</li>
+  <li><strong>Hang up, land in the right chat.</strong> Ending a voice call now takes you to that call's own conversation instead of leaving you in whatever chat was open underneath. The full transcript is sitting right there when you arrive.</li>
+  <li><strong>Smarter memory, less d&eacute;j&agrave; vu.</strong> The platform's memory keeper got firmer instructions about not filing the same fact twice in different drawers, and the site now does a little overnight housekeeping so it stays quick. If a character ever repeats your life story back like it's news, that should be fading fast.</li>
+</ul>
+
 <h2>July 17, 2026</h2>
 <ul>
   <li><strong>The Android app is here.</strong> Android folks no longer watch from the porch — Kade-AI now installs as a real app on Android phones, downloaded straight from this help site (no app store, no invitation list). Own icon, full screen, microphone that behaves. The download and the step-by-step install walk-through live on the new <a href="/help/android">Android App page</a>.</li>
