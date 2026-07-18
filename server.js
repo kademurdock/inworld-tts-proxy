@@ -1507,15 +1507,19 @@ const VOICE_ADDITIONS_2026_07_17 = {
   });
 }
 
-// ── 2026-07-17 PICKER RETIREMENTS (Kade's call): Voice 118 (christa) and
-// Voice 270 (nanny) leave every picker/audition surface. Their numbered map
-// entries and name aliases STAY resolvable, so any agent default or saved
-// personal pick that still points at them keeps speaking (fail-soft) — they
-// just can't be newly chosen. This leaves display gaps at 118 and 270 on
-// purpose; the integrity check below scans the MAP (still contiguous), so
-// boot stays quiet.
+// ── 2026-07-17 PICKER RETIREMENTS (Kade's call): christa and nanny leave
+// every picker/audition surface. Their numbered map entries and name aliases
+// STAY resolvable, so any agent default or saved personal pick that still
+// points at them keeps speaking (fail-soft) — they just can't be newly chosen.
+// This leaves display gaps on purpose; the integrity check below scans the MAP
+// (still contiguous), so boot stays quiet.
+// FIX 2026-07-18: christa is "Voice 11" under the 2026-07-01 renumber (old
+// "Voice 118" - 107 = 11), NOT "Voice 118". The original block targeted the
+// pre-renumber number, so it retired an innocent stock voice and left the real
+// christa live at Voice 11 (Kade heard Voice 11 still playing christa). Nanny
+// at "Voice 270" is a post-renumber addition label and was correct — left as is.
 {
-  const RETIRED_PICKER_VOICES = ["Voice 118", "Voice 270"];
+  const RETIRED_PICKER_VOICES = ["Voice 11", "Voice 270"];
   for (const label of RETIRED_PICKER_VOICES) {
     const i = VOICE_LIST.indexOf(label);
     if (i === -1) throw new Error(`picker retirement: ${label} not in VOICE_LIST`);
@@ -1526,15 +1530,18 @@ const VOICE_ADDITIONS_2026_07_17 = {
 
 // ── 2026-07-17 GAP REFILL (Kade's call, evening session): the display gaps
 // left by the picker retirements close by RENUMBERING two of today's four
-// additions into the empty slots — satarah (was Voice 327) becomes Voice 118,
+// additions into the empty slots — satarah (was Voice 327) becomes Voice 11,
 // trutia (was Voice 328) becomes Voice 270. Kade's exact words: "It doesn't
 // matter who... You'll just be replacing the numbers of those voices."
-// Consequences, on purpose: any saved pick that still pointed at the OLD 118
-// (christa) or 270 (nanny) now speaks as satarah/trutia respectively (the
-// name aliases "Christa" and "Nanny" still resolve for anything name-based);
-// the catalog is contiguous 1-326 again with no gaps and no 327/328.
+// Consequences, on purpose: any saved pick that still pointed at christa
+// (Voice 11) or nanny (Voice 270) now speaks as satarah/trutia respectively
+// (the name aliases "Christa" and "Nanny" still resolve for anything
+// name-based); the catalog is contiguous 1-326 again with no gaps and no 327/328.
+// FIX 2026-07-18: slot corrected from "Voice 118" to "Voice 11" (see retirement
+// block above) so satarah actually replaces christa. Voice 118 (a stock voice)
+// is left untouched.
 {
-  const GAP_REFILL = { "Voice 118": "Voice 327", "Voice 270": "Voice 328" };
+  const GAP_REFILL = { "Voice 11": "Voice 327", "Voice 270": "Voice 328" };
   for (const [slot, from] of Object.entries(GAP_REFILL)) {
     const target = NUMBERED_VOICE_ALIASES[from];
     if (!target) throw new Error(`gap refill: source ${from} missing from the numbered map`);
