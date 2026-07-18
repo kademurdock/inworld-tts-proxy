@@ -1857,68 +1857,6 @@ app.post("/v1/audio/transcriptions", (req, res) => {
 });
 
 
-// ── Flow: free voice dictation (press-to-talk) — added July 18 2026 ──────────
-// A Wispr-Flow-style dictation app that rides the SAME Deepgram key this account
-// already uses for phone-call STT. Design is SERVER-SIDE on purpose: the browser
-// records a short clip and POSTs the audio here; we forward it to Deepgram's
-// pre-recorded /v1/listen with the key and hand back the text. The key never
-// reaches the browser. We use this relay (not Deepgram's short-lived browser
-// tokens) because this key has USAGE scope but not the key-minting/"member"
-// scope /v1/auth/grant requires. App is served at /flow.
-const path = require("path");
-const FLOW_ORIGINS = new Set([
-  "https://kademurdock.com",
-  "https://inworld-tts-proxy-production.up.railway.app",
-  "http://localhost:3080",
-  "http://localhost:3000"
-]);
-app.use("/api/deepgram-listen", (req, res, next) => {
-  const origin = req.headers.origin || "";
-  if (FLOW_ORIGINS.has(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-  }
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
-app.post(
-  "/api/deepgram-listen",
-  express.raw({ type: () => true, limit: "25mb" }),
-  async (req, res) => {
-    const key = process.env.DEEPGRAM_API_KEY;
-    if (!key) return res.status(500).json({ error: "DEEPGRAM_API_KEY not set on this service." });
-    const audio = req.body;
-    if (!audio || !audio.length) return res.status(400).json({ error: "No audio received." });
-    const mode = (req.query.mode || "clean").toString();
-    const p = new URLSearchParams({ model: "nova-3", smart_format: "true", punctuate: "true" });
-    // Verbatim keeps disfluencies ("um", "uh"); clean/notes strip them.
-    p.set("filler_words", mode === "verbatim" ? "true" : "false");
-    const ct = req.headers["content-type"] || "application/octet-stream";
-    try {
-      const dg = await fetch("https://api.deepgram.com/v1/listen?" + p.toString(), {
-        method: "POST",
-        headers: { Authorization: "Token " + key, "Content-Type": ct },
-        body: audio
-      });
-      const j = await dg.json();
-      if (!dg.ok) {
-        return res.status(dg.status).json({ error: (j && (j.err_msg || j.message)) || "Deepgram error", raw: j });
-      }
-      const alt = (j && j.results && j.results.channels && j.results.channels[0] &&
-                   j.results.channels[0].alternatives && j.results.channels[0].alternatives[0]) || {};
-      const para = alt.paragraphs && alt.paragraphs.transcript ? alt.paragraphs.transcript.trim() : "";
-      const transcript = para || (alt.transcript || "").trim();
-      return res.json({ transcript, confidence: alt.confidence != null ? alt.confidence : null, mode });
-    } catch (e) {
-      return res.status(502).json({ error: String(e) });
-    }
-  }
-);
-// Serve the dictation PWA at /flow (files live in ./flow in this repo).
-app.use("/flow", express.static(path.join(__dirname, "flow")));
-
-
 app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);
 });
