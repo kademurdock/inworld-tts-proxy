@@ -1081,7 +1081,7 @@ app.use("/v1/audio/speech", (req, res, next) => {
 // Peak-limited so a boost can never clip. Kill switch: TTS_NORM=0.
 const TTS_NORM_ENABLED = process.env.TTS_NORM !== "0";
 const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-15"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again.
-const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "14");
+const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "18");
 const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
 // July 16 2026 (Kade's web call, "starts loud then gets quieter" + distortion):
 // SNAP_DB = level-EMA divergence guard -- a clip measuring this far off the
@@ -1097,6 +1097,27 @@ const TTS_NORM_SNAP_DB = parseFloat(process.env.TTS_NORM_SNAP_DB || "6");
 // at most ~0.1 dB of compression on the rare clean peaks in the 26-30k zone.
 const TTS_NORM_KNEE = parseInt(process.env.TTS_NORM_KNEE || "26000", 10);
 const TTS_NORM_KNEE_RANGE = 32767 - TTS_NORM_KNEE;
+// Limiter headroom (July 19 2026, Kade: "it dips down still in a weird way" +
+// "some are a little more soft spoken and others are loud af"). Diagnosed off
+// 37 real voices in production logs, not theory: the peak cap below was so
+// conservative that 30 of 37 voices NEVER reached the loudness target -- they
+// were peak-limited, not target-limited -- landing anywhere from -22.8 to
+// -15.0 dBFS. That 7.8 dB spread IS the "dips down" and the soft/loud
+// inconsistency. Speech runs a 15-17 dB crest factor, so a flat gain big
+// enough to hit the target always wants peaks past full scale; capping gain
+// at the raw peak means the target is simply unreachable for most voices.
+// Meanwhile the soft-knee limiter built for exactly this job was doing
+// essentially nothing (measured 0.01-0.05% of samples). This lets gain exceed
+// the raw peak cap by a bounded amount and lets the knee absorb it -- which is
+// what a limiter is FOR. Verified on real synthesized clips: +4 dB headroom
+// yields +3.8 dB real loudness while touching only 0.35-0.57% of samples, and
+// tanh still makes clipping mathematically impossible. Projection across all
+// 37 voices: spread 7.8 -> 3.8 dB, voices at target 4/37 -> 32/37, and voices
+// ALREADY at target are unchanged (their own wanted-gain still binds them), so
+// this only lifts the ones falling short. Set to 0 to restore the old
+// peak-capped behavior exactly.
+const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "4");
+const TTS_NORM_LIMIT_HEADROOM = Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB / 20);
 
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
@@ -1179,7 +1200,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
       const priorPeak = voicePeakEma.get(voiceKey);
       const peakLevel = priorPeak == null || snapped ? peak : priorPeak + (peak - priorPeak) * alpha;
       voicePeakEma.set(voiceKey, peakLevel);
-      gain = Math.min(gain, 32000 / peakLevel);
+      gain = Math.min(gain, (32000 / peakLevel) * TTS_NORM_LIMIT_HEADROOM);
     }
 
     if (Math.abs(gain - 1) < 0.03) return pcmBuf; // ~0.25 dB, not worth touching
