@@ -422,6 +422,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 22, 2026</h2>
+<ul>
+  <li><strong>142 brand-new voices &mdash; the Beta wave.</strong> The voice picker just grew from 326 to 468. Every new one is numbered 327 and up and says <em>"(Beta)"</em> in its name &mdash; that's your heads-up that they're the newest arrivals and still being broken in, so if one sounds a little different week to week, that's the tuning, not your ears. They work everywhere the old ones do: read-aloud, voice calls, and the phone line &mdash; and saying <em>"switch to voice 340"</em> on a call works the same as always.</li>
+  <li><strong>A few of them have names.</strong> The very first voice in the picker is now <strong>Voice 327 (Beta) Kade calm and casual</strong> &mdash; and yes, that's exactly who it sounds like. Keep browsing and you'll also find Kade conversational, Kade Candid, Kade's child impression, and four voices from a friend of the family going by <strong>Miss A</strong>.</li>
+</ul>
+
 <h2>July 18, 2026</h2>
 <ul>
   <li><strong>Turn voice memos into text.</strong> New in the account menu: "Transcribe a Voice Memo." Pick any audio recording &mdash; even an hour-plus ramble from a friend &mdash; and get back clean, punctuated text you can copy or download. Free. You can also just attach the audio in a chat and ask your character to transcribe it.</li>
