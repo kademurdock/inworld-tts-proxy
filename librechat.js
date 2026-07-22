@@ -625,7 +625,7 @@ function composeTextWithHistory(messages) {
   );
 }
 
-async function lcAsk(agentId, messages) {
+async function lcAsk(agentId, messages, userEmail) {
   const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
@@ -633,6 +633,12 @@ async function lcAsk(agentId, messages) {
     agent_id: agentId,
     text: userText,
     messages,
+    // Session 23 — voice-lane identity threading: who is REALLY on the line
+    // (bridge session.lcEmail). The fork honors this ADMIN-ONLY and only for
+    // the per-user Kade tools (feedback/notify/message/transcribe), so
+    // Amber's report files as Amber instead of the service account. Absent
+    // field = old behavior.
+    kadeOnBehalfOf: userEmail || undefined,
     conversationId: "new",
     parentMessageId: "00000000-0000-0000-0000-000000000000",
     // isTemporary (July 15 2026 -- Kade: 45 orphaned "shadow" conversations found
@@ -746,7 +752,7 @@ router.post("/librechat/ask", auth, async (req, res) => {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
   try {
-    const text = await lcAsk(agentId, messages);
+    const text = await lcAsk(agentId, messages, (req.body || {}).userEmail);
     console.log("[lcAsk] success, reply length=", text.length);
     res.json({ text });
   } catch (err) {
@@ -804,7 +810,7 @@ function messageText(msg) {
   return contentToText(msg.content);
 }
 
-async function lcAskStream(agentId, messages, onToken) {
+async function lcAskStream(agentId, messages, onToken, userEmail) {
   const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
@@ -815,6 +821,7 @@ async function lcAskStream(agentId, messages, onToken) {
     conversationId: "new",
     parentMessageId: "00000000-0000-0000-0000-000000000000",
     isTemporary: true, // same fix as lcAsk above (July 15 2026) -- see comment there
+    kadeOnBehalfOf: userEmail || undefined, // session 23 identity threading -- see lcAsk
   };
 
   return paced(async () => {
@@ -902,8 +909,8 @@ async function lcAskStream(agentId, messages, onToken) {
 
 // POST /librechat/ask-stream  { agentId, messages[] } -> SSE { token } stream
 router.post("/librechat/ask-stream", auth, async (req, res) => {
-  const { agentId, messages } = req.body;
-  console.log("[lcAskStream] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array");
+  const { agentId, messages, userEmail } = req.body;
+  console.log("[lcAskStream] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array", userEmail ? `onBehalfOf=${userEmail}` : "");
   if (!agentId || !Array.isArray(messages)) {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
@@ -919,7 +926,7 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
   try {
     await lcAskStream(agentId, messages, (token) => {
       try { res.write(`data: ${JSON.stringify({ token })}\n\n`); } catch {}
-    });
+    }, userEmail);
     res.write("data: [DONE]\n\n");
   } catch (err) {
     console.error("[lcAskStream] error:", err.message);
