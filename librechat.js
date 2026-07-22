@@ -590,12 +590,31 @@ router.get("/codemagic/build", auth, async (req, res) => {
 // line) untouched at the end, where reframe-proxy's marker detection and
 // the model's attention both live.
 const TRANSCRIPT_TURNS = parseInt(process.env.LC_TRANSCRIPT_TURNS || "24", 10);
+// Session 22 cache shaping (Kade: "Check caching, because that saves money in
+// multiple places"): Moonshot k2.6 auto-caches repeated PREFIXES ($0.16/M hit
+// vs $0.95/M miss, and prefill time is the call lane's biggest latency leg --
+// receipts in reframe's msg-fingerprint/cached_tokens logs). The old exact
+// sliding window (slice(-TRANSCRIPT_TURNS)) dropped the OLDEST line every
+// turn once full, so the history block's HEAD changed per turn and nothing
+// after the persona ever cached -- and a continuity call seeds 12 turns, so
+// the slide started almost immediately (her thunderstorm call: turn 1 first
+// byte 2.9s, turns 2-3 5.3s+, zero hits). Fix: quantize the window's START
+// so it only advances every TRANSCRIPT_QUANTUM turns. Between advances the
+// block is append-only = near-full cache hits; the quantum turn pays one
+// re-prefill. Window length now varies TRANSCRIPT_TURNS..TURNS+QUANTUM-1
+// lines (the model briefly sees a little MORE history, never less).
+// LC_TRANSCRIPT_QUANTUM=0 restores the old exact slide.
+const TRANSCRIPT_QUANTUM = parseInt(process.env.LC_TRANSCRIPT_QUANTUM || "8", 10);
 function composeTextWithHistory(messages) {
   const last = messages[messages.length - 1] || {};
   const lastText = last.content || "";
   const prior = messages.slice(0, -1).filter((m) => m && m.content);
   if (!prior.length) return lastText;
-  const lines = prior.slice(-TRANSCRIPT_TURNS).map((m) =>
+  let start = Math.max(0, prior.length - TRANSCRIPT_TURNS);
+  if (TRANSCRIPT_QUANTUM > 0 && start > 0) {
+    start = Math.floor(start / TRANSCRIPT_QUANTUM) * TRANSCRIPT_QUANTUM;
+  }
+  const lines = prior.slice(start).map((m) =>
     `${m.role === "assistant" ? "YOU" : "THEM"}: ${String(m.content).slice(0, 600)}`
   );
   return (
