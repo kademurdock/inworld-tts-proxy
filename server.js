@@ -22,6 +22,27 @@ app.use(require("./librechat"));
 const PORT = process.env.PORT || 3000;
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
+// ── Fish Audio: second TTS provider beside Inworld (July 22 2026, Kade's pick) ──
+// Kade's fish.audio clone library rides the SAME numbered-voice plumbing:
+// VOICE_MAP targets prefixed "fish:<model_id>" route to fishSynthesizeChunk
+// below instead of Inworld; everything downstream (chunking, silence splice,
+// loudness EMA, telephony mu-law, /voices.json) is provider-blind.
+// Model tier is s2.1-pro by Kade's explicit choice July 22 (the free tier
+// s2.1-pro-free ends July 31 2026 AND retains audio for training — wrong fit
+// for a family platform; pro ≈ $15/M UTF-8 bytes ≈ a nickel per 10-min call).
+// Steering: fish s2.1 interprets the same [bracket] free-text word-level tags
+// applySteeringTags already emits for Inworld TTS-2, so %%% tags translate
+// with NO agent-side changes (s1 would need a preset-parentheses menu — do
+// not downgrade FISH_TTS_MODEL below s2 without revisiting steering).
+const FISH_API_KEY = process.env.FISH_API_KEY;
+const FISH_TTS_MODEL = process.env.FISH_TTS_MODEL || "s2.1-pro";
+const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|balanced|low
+// Fish clones speak at their source sample's natural pace — do NOT inherit
+// Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
+// like the people they were cloned from. Per-request `speed` still wins.
+const FISH_TTS_SPEED = parseFloat(process.env.FISH_TTS_SPEED || "1.0");
+const FISH_VOICE_PREFIX = "fish:";
+
 // Voice performance tuning for inworld-tts-2. Note: this model IGNORES the
 // `temperature` field entirely (per Inworld's own API docs -- "Ignored on
 // inworld-tts-2. Use deliveryMode instead."), so deliveryMode is the real
@@ -901,6 +922,97 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate) {
   });
 }
 
+// ── Fish Audio synthesis (sibling of synthesizeChunk above) ──────────────────
+// POST api.fish.audio/v1/tts returns RAW AUDIO BYTES (not base64). We request
+// `pcm` (s16le mono) at 24kHz — deliberately NOT `wav`: fish streams its WAV
+// with placeholder RIFF/data sizes (0xffffff24 seen live July 22 2026), which
+// parseWav must never be trusted with. Raw PCM + our own buildWavHeader gives
+// fishSynthesizeChunk the exact same return shape as the Inworld path, so
+// every downstream stage stays provider-blind.
+const FISH_TIMEOUT_MS = parseInt(process.env.FISH_TIMEOUT_MS || "30000", 10);
+// Fish caps concurrency account-wide by lifetime top-up tier (Kade's account:
+// ≥$100 paid → 15 concurrent). 6 mirrors the Inworld headroom philosophy —
+// well under the ceiling so auditions/other users never starve a reply.
+const MAX_CONCURRENT_FISH_CALLS = parseInt(process.env.FISH_MAX_CONCURRENT || "6", 10);
+const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
+const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
+
+async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch("https://api.fish.audio/v1/tts", {
+      signal: ac.signal,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${FISH_API_KEY}`,
+        "Content-Type": "application/json",
+        model: FISH_TTS_MODEL, // tier lives in a HEADER on fish's API, not the body
+      },
+      body: JSON.stringify({
+        text,
+        reference_id: fishModelId,
+        format: "pcm",
+        sample_rate: FISH_SAMPLE_RATE,
+        latency: FISH_TTS_LATENCY,
+        prosody: {
+          // Fish accepts 0.5–2.0; the endpoint's shared clamp (0.5–1.5, chosen
+          // for Inworld parity) arrives here already sane.
+          speed: speakingRate != null ? speakingRate : FISH_TTS_SPEED,
+        },
+      }),
+    });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      const e = new Error(`Fish request timed out after ${FISH_TIMEOUT_MS}ms`);
+      e.isTimeout = true;
+      throw e;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    const err = new Error(`Fish API error ${response.status}: ${errorText}`);
+    err.status = response.status;
+    err.isRateLimit = response.status === 429;
+    // 402 = fish credit ran dry — surface loudly, never retry (it can't heal).
+    if (response.status === 402) err.message += " (fish.audio API credit exhausted — top up at fish.audio)";
+    // Fish is a newer upstream than Inworld for us: treat transient 5xx as
+    // retryable too (bounded by the same 4-attempt backoff ladder).
+    err.isServerErr = response.status >= 500;
+    throw err;
+  }
+
+  let pcm = Buffer.from(await response.arrayBuffer());
+  if (!pcm.length) throw new Error("Empty audio from Fish API");
+  if (pcm.length % 2) pcm = pcm.slice(0, pcm.length - 1); // s16 alignment guard
+  const fmt = { numChannels: 1, sampleRate: FISH_SAMPLE_RATE, bitsPerSample: 16 };
+  return Buffer.concat([buildWavHeader(pcm.length, fmt), pcm]);
+}
+
+async function fishSynthesizeChunk(text, fishModelId, speakingRate) {
+  return fishLimiter(async () => {
+    const maxAttempts = 4;
+    let lastErr;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await fishSynthesizeChunkOnce(text, fishModelId, speakingRate);
+      } catch (err) {
+        lastErr = err;
+        const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
+        if (!retryable || attempt === maxAttempts) throw err;
+        console.warn(`[TTS] fish chunk attempt ${attempt}/${maxAttempts} failed (${err.message}) -- retrying`);
+        await sleep(300 * attempt + Math.random() * 200);
+      }
+    }
+    throw lastErr;
+  });
+}
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "inworld-tts-proxy" });
 });
@@ -1231,10 +1343,6 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
 }
 
 app.post("/v1/audio/speech", async (req, res) => {
-  if (!INWORLD_API_KEY) {
-    return res.status(500).json({ error: "INWORLD_API_KEY not set" });
-  }
-
   const { input, voice = "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
@@ -1251,6 +1359,16 @@ app.post("/v1/audio/speech", async (req, res) => {
 
   const inworldVoice = VOICE_MAP[voice] || voice;
   const inworldModel = MODEL_MAP[model] || "inworld-tts-2";
+  // Provider fork: "fish:<model_id>" targets go to fish.audio, everything else
+  // to Inworld. Key checks are per-provider so an unset FISH_API_KEY can never
+  // take down Inworld voices (and vice versa).
+  const isFishVoice = typeof inworldVoice === "string" && inworldVoice.startsWith(FISH_VOICE_PREFIX);
+  if (isFishVoice && !FISH_API_KEY) {
+    return res.status(500).json({ error: "FISH_API_KEY not set on this service (needed for Voice 327+)" });
+  }
+  if (!isFishVoice && !INWORLD_API_KEY) {
+    return res.status(500).json({ error: "INWORLD_API_KEY not set" });
+  }
   // Diagnostic (July 16 2026, Kade: voice samples reportedly drifting to the
   // wrong timbre deeper into the picker, varying session to session, on
   // every device -- ruled out client code, the concurrency limiter, and
@@ -1285,7 +1403,11 @@ app.post("/v1/audio/speech", async (req, res) => {
     // giant request -- this is the actual latency fix.
     const tSynth = Date.now();
     const wavBuffers = await Promise.all(
-      chunks.map((chunk) => synthesizeChunk(chunk, inworldVoice, inworldModel, speakingRate))
+      chunks.map((chunk) =>
+        isFishVoice
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate)
+          : synthesizeChunk(chunk, inworldVoice, inworldModel, speakingRate)
+      )
     );
     console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
 
@@ -1579,6 +1701,204 @@ const VOICE_ADDITIONS_2026_07_17 = {
     CUSTOM_VOICE_NUMBERS.add(slot);
   }
   VOICE_LIST.sort((a, b) => Number(a.replace("Voice ", "")) - Number(b.replace("Voice ", "")));
+}
+
+
+// ── 2026-07-22 FISH AUDIO ADDITIONS (Kade's picked 142 of her 195 fish.audio
+// clones; her supervised pick session, this date). APPEND-ONLY as Voice 327+
+// (327/328 are free slots again after the July 17 gap-refill renumber).
+// Targets are "fish:<fish model id>" — routed to fishSynthesizeChunk at synth.
+// BETA MARKING (Kade: "marked beta because we're just testing them"): pickers
+// display "Voice N (Beta)" (plus a name on her eight labeled ones), but the
+// BARE "Voice N" stays registered in NUMBERED_VOICE_ALIASES + VOICE_MAP so
+// the bridge's spoken number switching ("switch to 340") and the boot
+// integrity check keep working untouched. When beta graduates, keep the
+// "(Beta)" labels resolvable as hidden aliases FOREVER — saved personal picks
+// and agent defaults will still carry the old string (same fail-soft rule as
+// the christa/nanny retirements above).
+// PRIVACY NOTE: "Miss A" labels are deliberate — Kade's call, real first name
+// stays out of the picker.
+const FISH_NAMED_LABELS = {
+  "Voice 327": "Kade calm and casual",
+  "Voice 385": "Miss A Irish",
+  "Voice 391": "Miss A animated conversation",
+  "Voice 393": "Miss A pro reading",
+  "Voice 424": "Kade's child impression",
+  "Voice 463": "Miss A casual",
+  "Voice 464": "Kade conversational",
+  "Voice 466": "Kade Candid",
+};
+const FISH_VOICE_ADDITIONS_2026_07_22 = {
+  "Voice 327": "fish:05d77f76cf30488eaa27588e34e57dda", // Me as a Calm Inspirational Narrator
+  "Voice 328": "fish:0d5c43d170ab4fefa7408867cfd29de3", // Monstertruck synthwoman
+  "Voice 329": "fish:ffd42497a4cb4fd88a0279bf29c4a5cc", // Shy teacher synthwoman
+  "Voice 330": "fish:730b6b37d47648c995e1825500daa60a", // Crazy KG teacher synthwoman
+  "Voice 331": "fish:cbe91ef2f4c24da286801efecc1f3890", // Toaster2 synthman
+  "Voice 332": "fish:ac66b73cb77f4060abb4393cdbb12a24", // Toaster synthman
+  "Voice 333": "fish:bbbb0e9369a9426a8afdb033c90ecc79", // Car-guy synthman
+  "Voice 334": "fish:8f6151a6e0fa4ea1b213670e090508c6", // Synico Synthman
+  "Voice 335": "fish:0f03b64528e74c69aea012c3fe8a563f", // Southern nansy synthwoman
+  "Voice 336": "fish:8ae5c998cc5b473da03e0667224abe24", // Mad granny synthwoman
+  "Voice 337": "fish:c68ed04e686c40378bca163a57904c59", // Southern granny Synthwoman
+  "Voice 338": "fish:371a6ca8841c4bcebcad0dc9d2e3d159", // Tired flight attendant synthwoman
+  "Voice 339": "fish:f6d6c62137e54960b09f5c3bf8da4cc7", // Auctioneer synthman
+  "Voice 340": "fish:8a5aeabe1b2c47b7b429fe719ce6b406", // Planty synthman
+  "Voice 341": "fish:2d7d5455c8794a6f803ef577b804e22d", // Evil support synthman
+  "Voice 342": "fish:74522d3f60d44e8ba34ebf9e1b979cb1", // Shopping-host synthwoman
+  "Voice 343": "fish:e6c6631582194387a4e1fea6351e476b", // Water-guy synthman
+  "Voice 344": "fish:163096188b924ece8c71eca68fdc4084", // Nature-brit synthman
+  "Voice 345": "fish:ea710301cfd64ccfa835a314f022bc40", // Preacher synthman
+  "Voice 346": "fish:2291429b372d4d2c9886af71b29e5d88", // Preacher synthwoman
+  "Voice 347": "fish:be0f351c4f6b448b85e0e7784592fa76", // Southern preacher synthwoman
+  "Voice 348": "fish:1a09613c3b954d6ebbd5bd497cfefcab", // Southern preacher synthman
+  "Voice 349": "fish:d7695f2b7cab4869bcb1aa8fc623ba9e", // Evil scientist Synthman
+  "Voice 350": "fish:7b14ff9b6b3f41e18228498f79294ba7", // Nutso Synthman
+  "Voice 351": "fish:6556eebbf6d0428f87579ff03608aee2", // Barker synthman
+  "Voice 352": "fish:f23a98b8265e40c3857d0b52473e6914", // Tough-tex Synthman
+  "Voice 353": "fish:cb96c4b8e2234585b7748dde366ea6f7", // Ausie Synthman
+  "Voice 354": "fish:f9483be29e244b5aae25a172ed3af00c", // Untruthful narrator
+  "Voice 355": "fish:0c753c02d2f146eebcd5efcaeb40e678", // Creepy latenight dj
+  "Voice 356": "fish:bc0600808443478e9a97f98c19f11c36", // Ozark-grand synthman
+  "Voice 357": "fish:aa81cb78ba154b3d81faf2e5a68a8c98", // Copper synthman
+  "Voice 358": "fish:b34f6d46d6134e888df4b616f4fe0c1e", // Jockman synthteen
+  "Voice 359": "fish:edac64c14cb1431598d6e4730a0fc535", // Mean-girl synthteen
+  "Voice 360": "fish:320e581db28948a69d248b9a3d06a9d2", // Game-guy synthman
+  "Voice 361": "fish:8f0b374a76264f13860a84376f75b7aa", // Male-nerd synth-teen
+  "Voice 362": "fish:17189e9cf988441a9be6b459a450e25d", // Tough-girl synthteen
+  "Voice 363": "fish:c9eca4b3949347828b362f856df487bb", // Skater dude synthteen
+  "Voice 364": "fish:72943a366dad4cec874542efbdf17366", // Emo Synthteen
+  "Voice 365": "fish:5c2ca48e600c4250ada20fa8c292c887", // Teena synthteen
+  "Voice 366": "fish:204bd3857db64c8f95369ddbda029d9f", // Brattley
+  "Voice 367": "fish:4241821fa1b34d24b532f6acbdaf892d", // Marivia synthchild
+  "Voice 368": "fish:3bd0de2117d2478fb42f48c0852d8885", // Natasha, female black teen
+  "Voice 369": "fish:2036021eea1d42a1ac155e269f672022", // New york male Energetic Sales Voice
+  "Voice 370": "fish:bf1f58af2f58488cb8bb45f47fb76abf", // Female preschool Lively Event Host
+  "Voice 371": "fish:5c1143082e2940cca5d99b1113d5e8e0", // Ren, Clear Young Narrator
+  "Voice 372": "fish:fcd46f07b87141eab97ca1fd0c726315", // Retro strict female teacher
+  "Voice 373": "fish:47d3c1ef3a7144a493f38fc8795bf9ef", // Scarla female commercial child
+  "Voice 374": "fish:4663d335217943adacee8d6824d9adb2", // Worried woman2
+  "Voice 375": "fish:a998d03622ff43cfa7744ab3f500188c", // Southern used car guy
+  "Voice 376": "fish:cbb42be17ff44ef4ae61cf40a7f10f88", // Silvia, female child
+  "Voice 377": "fish:17079d6adb8b4ecc8e42c8e6f489492b", // Chill southern child
+  "Voice 378": "fish:63cabe52529c43c6a317d33b5a395cb6", // Snarky woman
+  "Voice 379": "fish:f61abb22f0c64fb79f6df982257ba078", // The cutest synth child
+  "Voice 380": "fish:54b0e05f6514475f846d9eba28c6dabb", // Child with unknown accent
+  "Voice 381": "fish:e05e7322fff046f5bfe9105140bc1dfd", // Vintage stranger danger guy
+  "Voice 382": "fish:185c72f02da24dad839711440a903a8c", // Old guy speech 2
+  "Voice 383": "fish:31e064eae4654f2c93656398b63965bb", // Natia
+  "Voice 384": "fish:5f87372b8739431187665ea33d1fcdba", // DJ velvet
+  "Voice 385": "fish:699eff962b0f4b0e98361bb86dcb4c42", // Amber Irish
+  "Voice 386": "fish:c51bca316d3c4bb68964d704153fc41d", // Honey synth child
+  "Voice 387": "fish:1085c78885e945c9a69b4cea4ffe87b4", // Cody synth child
+  "Voice 388": "fish:bf629aae231440b3bc341e00d2825cdd", // black synth child
+  "Voice 389": "fish:016b2a32f30c4f1fa48ffae2c6c5b560", // Synth child2
+  "Voice 390": "fish:517a0b184b9340fb9a388f8a9d0e1277", // Synth child
+  "Voice 391": "fish:8905624ef97b4adaa4b3cd821b567273", // Amber animated conversation
+  "Voice 392": "fish:b6fc3c185a7740379e6b95a171c18cf9", // Hannah the valley child
+  "Voice 393": "fish:335c58e39d904ef6ae9d5647ce10499e", // Pro amber reading
+  "Voice 394": "fish:000c81f95f0543b2abb8e368286bb393", // Ned
+  "Voice 395": "fish:056710137531402ea15afdddffcd86bd", // Ethan
+  "Voice 396": "fish:c4e1ba0562fa4dbe963bd43751852c17", // Paul
+  "Voice 397": "fish:ede205f29cc145a19844cd96c4899325", // Doc
+  "Voice 398": "fish:4a7dedfab6eb4906b8b70546ab0edd38", // Jason
+  "Voice 399": "fish:1263e0486bdc4fef8aaacb84020e7da6", // Raspia
+  "Voice 400": "fish:5f02b4d58dbc46178013a5e405ae4cf5", // Miriam
+  "Voice 401": "fish:75adee2586d64c4cb3dde0b284ccca7d", // Vadalia
+  "Voice 402": "fish:49ad7230fdb34ed1ba1b9fa93ae09e6a", // Courtland
+  "Voice 403": "fish:33a485a85eef46f88a013782ddc3f1af", // Maurilla
+  "Voice 404": "fish:220f311e4ad2498d9082983781be6248", // Maira
+  "Voice 405": "fish:f8adaa93e2944d4baeb62b93f4e3b277", // Yorkley
+  "Voice 406": "fish:22005cd910e6415e87221ce019716a73", // Kristy
+  "Voice 407": "fish:ae88891688d84cb1946bfd77c5e5a09a", // Judith
+  "Voice 408": "fish:67022a3dfed64a90bb1e1df67f77461c", // Malla
+  "Voice 409": "fish:22476e18ca6340e790869836d86a9bef", // Marryanne
+  "Voice 410": "fish:5e0fdd15a74147edbda0efde30cc92fe", // Sassy
+  "Voice 411": "fish:0fac1b9df2694c3082fca7c5d7300ce6", // Danielle
+  "Voice 412": "fish:32060217a430401dbe54a2469dbf4daa", // Amanda
+  "Voice 413": "fish:adf18a7fcaae4e1d86fd1ab2dea771ac", // Tammy  synthetic
+  "Voice 414": "fish:8f9ee666a57f4f3faa4363a1a3d3be27", // Valley girl 3
+  "Voice 415": "fish:72675cd9e42b44d0baa856e3c36446ce", // Krista synthetic
+  "Voice 416": "fish:a5e4afcd6c1d4e92a441640933536021", // Ashley
+  "Voice 417": "fish:e3435b56b4804fd081d73bcc1abcee79", // Fake Francene synthetic
+  "Voice 418": "fish:7325a072283b47a8949c696426ca8f10", // Valley girl2 synthetic
+  "Voice 419": "fish:0e1e4b07242045da99658bd1a674e7d3", // Valley girl1
+  "Voice 420": "fish:f42c0907ab9d458f970747c05b059e5b", // Sappy sammy synthetic
+  "Voice 421": "fish:1eb6e04c3b82467eab86cc1df7917ef3", // Ethrage
+  "Voice 422": "fish:76b9497d4abd49f9a1f454f8fa66a84e", // Rocky synthetic
+  "Voice 423": "fish:712ce58fbaf14952a2d2154827b894f8", // Yawning clown synthetic
+  "Voice 424": "fish:e019ab27027445f2a74a53067986030b", // Me child voice actor
+  "Voice 425": "fish:a4b3520cc73646199435d741de67d2ac", // Black teen narrator
+  "Voice 426": "fish:c685fed26d134dbb8933f55cc25ee6a2", // Cassia synthetic
+  "Voice 427": "fish:976cedd320f846fb98d542eac4935f11", // Mandi synthetic
+  "Voice 428": "fish:6c22a8d8a5cb4e0c9fa68a555512de46", // Elly May synthetic child
+  "Voice 429": "fish:008e29be7aa644e38e1dddabe69f34eb", // Sargeant synthetic
+  "Voice 430": "fish:0aac6ce23bd047dcb128990bdd985354", // Boss synthetic
+  "Voice 431": "fish:47489804822a4a1e96ff3097a6b54517", // Female Rev synthetic
+  "Voice 432": "fish:563f216353f34a7c928864e6631209bb", // Mob girl synthetic
+  "Voice 433": "fish:93fcaf07806c46758a23c6c814cd103a", // Jayda synthetic
+  "Voice 434": "fish:8c9ff80d60c2476b82a3194756985983", // CB trucker synthetic
+  "Voice 435": "fish:18a29126b2444525a96f4942466c305b", // Vintage gameshow host synthetic
+  "Voice 436": "fish:9b4d1d84549142c585ac9d4df8401304", // Sarina urban narrator synthetic
+  "Voice 437": "fish:dc3d71e00c1349fcad59e423eb8e6d13", // Scary aunt synthetic
+  "Voice 438": "fish:c708e45bfcf04b318cce053821dc2668", // Shocked Stephen synthetic
+  "Voice 439": "fish:2c9347b0f4d74aa29031bbbece941923", // Scary narrator1 synthetic
+  "Voice 440": "fish:777466d7710f4f79b41b49088d3851d4", // Ducky mcquackerson synthetic
+  "Voice 441": "fish:d2e2edb3b2f040008141793fdf4e7221", // Pukin reporter
+  "Voice 442": "fish:76b24095b38944c29e24b60bdf0f19e9", // Preacher male synthetic
+  "Voice 443": "fish:e391b5994c884a4d9603947ff81469cd", // Death metal devil
+  "Voice 444": "fish:e54b8c9561f74fa4acb042de28a454a0", // Old brit
+  "Voice 445": "fish:cf84ba23fa1044fca234d3ce3d64c461", // Nova Synthetic
+  "Voice 446": "fish:6da52d3ae05849eb9e83d0ac48c9ef8e", // Lilia synthetic
+  "Voice 447": "fish:64ce619ce6be47feba34bc7a34921a28", // Libby Synthetic
+  "Voice 448": "fish:1162eab1c2b44c6185d262e0334762ad", // Jamaiken granny
+  "Voice 449": "fish:df3096e17a3549de8be3cae0b969d93e", // Kyla Synthetic
+  "Voice 450": "fish:191ffc79b6784201b28211ee9703662d", // Kathlene synthetic
+  "Voice 451": "fish:73c27cf03e9c4399ac6dec38e59ef4d0", // Angel Synthetic
+  "Voice 452": "fish:f80c4d2d57a54498a82d4ce8addfa7c9", // Hiphop male 1 synthetic
+  "Voice 453": "fish:21bdcfe750824e62b0d2fa88e468c195", // Southern Granny synthetic
+  "Voice 454": "fish:a45899dd3a854410b9a2d78a902e7834", // Drunk sounding old man on the phone synthetic
+  "Voice 455": "fish:392292d274054bf89affc0173eea377b", // Depressed hipster
+  "Voice 456": "fish:e3abbbaef28a414ba50fbb634956900b", // Colbie synthetic
+  "Voice 457": "fish:e5bf590282c342818e97f479708f9b40", // Cartoonia Synthetic
+  "Voice 458": "fish:b6ecc06c7efa46ff964d7607231cf6ab", // Alegra synthetic
+  "Voice 459": "fish:98b45cf162ea4fec9674cdfe127c7fda", // Samaria
+  "Voice 460": "fish:f50747df0da34c4f9d4b4b5e0dc4cf9f", // Monique synthetic
+  "Voice 461": "fish:5255be4011ec404ab80e5716f2583bf8", // Kid mya, synthetic
+  "Voice 462": "fish:810855eb85924765b66b8b198d47ee78", // Deej
+  "Voice 463": "fish:21197f5e2e5f42cfb5846fcf7bc3734b", // Amber casual
+  "Voice 464": "fish:00644e8178f044f7a77891ef9b629b56", // Me casual
+  "Voice 465": "fish:3bf859ed5bca442ebc2ee4f146dbf742", // Emani
+  "Voice 466": "fish:87c5186b618e40f5a0f96e7fc37e6ed5", // Me talking casually
+  "Voice 467": "fish:cf8bfba715f74cd7a48da7cc346f3436", // Shaina
+  "Voice 468": "fish:d5abd19ff43a4f838a48e75da9edb4f8", // Kiddy
+};
+{
+  const addLabels = Object.keys(FISH_VOICE_ADDITIONS_2026_07_22);
+  if (addLabels.length !== 142) throw new Error(`fish additions: expected 142, got ${addLabels.length}`);
+  const displayOf = (label) => {
+    const named = FISH_NAMED_LABELS[label];
+    return `${label} (Beta)${named ? " " + named : ""}`;
+  };
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${327 + idx}`) throw new Error(`fish additions: non-contiguous at ${label}`);
+    const target = FISH_VOICE_ADDITIONS_2026_07_22[label];
+    if (!target.startsWith(FISH_VOICE_PREFIX)) throw new Error(`fish additions: ${label} is not a fish: target`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`fish additions: ${label} collides with an existing alias`);
+    NUMBERED_VOICE_ALIASES[label] = target; // bare number: spoken switching + integrity check
+    VOICE_MAP[label] = target;              // (VOICE_MAP spread-snapshot gotcha — must be explicit)
+    const display = displayOf(label);
+    VOICE_MAP[display] = target;            // pickers send the display label verbatim
+    VOICE_LIST.push(display);
+    CUSTOM_VOICE_NUMBERS.add(display);
+  });
+  // Kade's July 22 pick: her flagship fish voice LEADS the whole picker —
+  // display order only; numbering stays untouched. (VOICE_LIST was final-
+  // sorted numerically in the gap-refill block above; fish labels append
+  // after it by design. NEVER naively re-sort VOICE_LIST past this point:
+  // display labels like "Voice 327 (Beta) …" parse as NaN.)
+  const flagship = displayOf("Voice 327");
+  VOICE_LIST.splice(VOICE_LIST.indexOf(flagship), 1);
+  VOICE_LIST.unshift(flagship);
 }
 
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
