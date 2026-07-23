@@ -1953,6 +1953,12 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
       const oldNamed = `${label} (Beta) ${named}`;
       VOICE_MAP[oldNamed] = target;
       HIDDEN_VOICE_ALIASES.push(oldNamed);
+      // The NAMED eight's list entry is "Voice N <name>", but a stored pick
+      // may be the bare "Voice N" (the July 22 sweep wrote bare numbers, and
+      // spoken switching produces them too). The proxy has always resolved
+      // the bare key (NUMBERED_VOICE_ALIASES); publishing it as hidden means
+      // the fork's validators accept it instead of bouncing a valid label.
+      HIDDEN_VOICE_ALIASES.push(label);
     }
   });
   // RETIRED July 22 2026, same night it shipped (Kade: "voices from fish are
