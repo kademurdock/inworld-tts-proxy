@@ -424,6 +424,7 @@ PAGES.whatsnew = {
 
 <h2>July 22, 2026</h2>
 <ul>
+  <li><strong>Long conversations no longer lose the plot.</strong> In really long chats, characters used to quietly lose track of the earliest messages as new ones crowded them out &mdash; that's why an hours-long conversation could suddenly feel like your friend got amnesia. Now, before that point, the character writes itself a private "story so far" checkpoint &mdash; the facts, the promises, the running jokes, even game scores &mdash; and carries the conversation forward from it. Your chat itself doesn't change: every message stays right there to scroll and re-read, and a small one-line note marks the spot where the condensing happened. Automatic, every character, nothing to turn on.</li>
   <li><strong>iPhone app update (TestFlight):</strong> the app got the same real sounds &mdash; send, bubbling think-time, reply &mdash; plus your notification sound on lock-screen pushes, cleaner reply text (no more stray citation codes), and a steadier mic button for VoiceOver. Open TestFlight and grab the newest build.</li>
   <li><strong>The chat makes real sounds now &mdash; Kade's own recordings.</strong> A soft cue when your message sends, a gentle bubbling loop while your character is working on the reply, and a "reply's ready" sound when it lands &mdash; so you always know where things stand without watching the screen. On by default for everyone; if you'd rather have quiet, the switch lives in Settings &rarr; General &rarr; Accessibility, now called <em>"Chat sounds."</em></li>
   <li><strong>Calls got their own connect and disconnect sounds.</strong> Starting a voice call plays a proper "connected" cue and hanging up plays its goodbye twin &mdash; both recorded by Kade, replacing the old synthesized clicks. The thinking sound during call pauses got the same upgrade.</li>
@@ -926,6 +927,9 @@ PAGES.memory = {
   <li><strong>Shared cards</strong> are the basics every character should know — your name, your people, how you like to be talked to. Tell one character, they all catch up.</li>
   <li><strong>A character's own cards</strong> belong to that one character alone. Inside jokes, story and roleplay threads, promises they made you — another character can't see those, so every relationship stays its own thing.</li>
 </ul>
+
+<h2>Really long single conversations</h2>
+<p>Separate from memory cards: within one conversation, a character can only hold so many recent messages in its attention at once. In very long chats the earliest messages used to simply fall out of reach &mdash; the "did you forget what we talked about an hour ago?" feeling. Now, when a conversation gets near that limit, the character first writes itself a compact "story so far" checkpoint &mdash; names, promises, running jokes, where things stand &mdash; and keeps chatting from that plus the newest messages. Nothing visible is deleted or rewritten: the whole conversation stays right there to scroll, and a small note marks the one spot where the condensing happened. It's automatic and free, and it works on every character, in text chats and voice conversations alike.</p>
 
 <h2>Bossing the memory around (just talk to it)</h2>
 <ul>
