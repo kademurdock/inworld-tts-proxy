@@ -1910,14 +1910,16 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
     VOICE_LIST.push(display);
     CUSTOM_VOICE_NUMBERS.add(display);
   });
-  // Kade's July 22 pick: her flagship fish voice LEADS the whole picker —
-  // display order only; numbering stays untouched. (VOICE_LIST was final-
-  // sorted numerically in the gap-refill block above; fish labels append
-  // after it by design. NEVER naively re-sort VOICE_LIST past this point:
-  // display labels like "Voice 327 (Beta) …" parse as NaN.)
-  const flagship = displayOf("Voice 327");
-  VOICE_LIST.splice(VOICE_LIST.indexOf(flagship), 1);
-  VOICE_LIST.unshift(flagship);
+  // RETIRED July 22 2026, same night it shipped (Kade: "voices from fish are
+  // on top of the old ones, and the numbering looks weird that way"): the
+  // flagship-first prepend that moved "Voice 327 (Beta) …" to index 0. The
+  // list now stays in natural ascending order, 1 through 468, fish block
+  // after the classics exactly where its numbers say it lives. Her clone is
+  // still first OF THE BETAS and one search away. (The fork's picker sort
+  // was also made suffix-tolerant the same night — fork commit alongside
+  // this one — so display order no longer depends on this array's order,
+  // but hash-assigned fallback voices DO index into this array raw: keep it
+  // append-only and ascending, never decorative-reordered again.)
 }
 
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
