@@ -1192,7 +1192,7 @@ app.use("/v1/audio/speech", (req, res, next) => {
 // VOICE as a whole lands at the same loudness as every other voice.
 // Peak-limited so a boost can never clip. Kill switch: TTS_NORM=0.
 const TTS_NORM_ENABLED = process.env.TTS_NORM !== "0";
-const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-15"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again.
+const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-16.5"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again. July 23 2026: -15 -> -16.5 (Kade OK'd "turning down the volume a little" to stop the buzzy clipping on hot voices; Railway var updated to match the same day -- keep them in sync).
 const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "18");
 const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
 // July 16 2026 (Kade's web call, "starts loud then gets quieter" + distortion):
@@ -1228,8 +1228,26 @@ const TTS_NORM_KNEE_RANGE = 32767 - TTS_NORM_KNEE;
 // ALREADY at target are unchanged (their own wanted-gain still binds them), so
 // this only lifts the ones falling short. Set to 0 to restore the old
 // peak-capped behavior exactly.
-const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "4");
+// July 23 2026 (Kade: "some of the voices are clipping... that buzzy static
+// sound when things are too bassy or too trebly"): 4 dB of knee drive was too
+// hot for the peakier fish clones -- sustained stretches lived in the tanh
+// saturation zone, which is audible as fuzz/buzz even though it never hard-
+// clips. Halved to 2 dB: distortion drops superlinearly with drive; the cost
+// is the very quietest crest-heavy voices landing ~2 dB shy of target, which
+// beats them buzzing. Paired with the target drop below (-15 -> -16.5).
+const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "2");
 const TTS_NORM_LIMIT_HEADROOM = Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB / 20);
+// July 23 2026: absolute per-clip true-peak ceiling. The smoothed-peak cap
+// above deliberately tolerates THIS clip's raw peak exceeding the running
+// estimate (that's what stopped one transient from ducking a whole clip, July
+// 16) -- but when a clip lands FAR above the estimate (new emphatic delivery,
+// alpha as low as 0.1), the overshoot all lands in the tanh knee as heavy
+// saturation = Kade's "buzzy static". This caps how far THIS clip's own true
+// peak may be driven past full scale no matter what the estimate says. It
+// only binds when true peak > estimate by more than (overdrive - headroom) dB
+// -- normal wobble never touches it, so the anti-ducking behavior survives.
+const TTS_NORM_MAX_OVERDRIVE_DB = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB || "4");
+const TTS_NORM_MAX_OVERDRIVE = Math.pow(10, TTS_NORM_MAX_OVERDRIVE_DB / 20);
 
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
@@ -1313,6 +1331,8 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
       const peakLevel = priorPeak == null || snapped ? peak : priorPeak + (peak - priorPeak) * alpha;
       voicePeakEma.set(voiceKey, peakLevel);
       gain = Math.min(gain, (32000 / peakLevel) * TTS_NORM_LIMIT_HEADROOM);
+      // Absolute ceiling against THIS clip's raw true peak (see const above).
+      gain = Math.min(gain, (32000 * TTS_NORM_MAX_OVERDRIVE) / peak);
     }
 
     if (Math.abs(gain - 1) < 0.03) return pcmBuf; // ~0.25 dB, not worth touching
@@ -1439,9 +1459,17 @@ app.post("/v1/audio/speech", async (req, res) => {
 
     const silence = chunks.length > 1 ? buildSilence(GAP_MS, format) : Buffer.alloc(0);
 
+    // July 23 2026 (Kade: "some of them kinda pop and click"): each chunk is a
+    // separate synth response and can start/end at a non-zero sample (fish's
+    // raw-pcm responses especially) -- butting that against the silence gap or
+    // the player's own start is a step discontinuity, audible as a click/pop.
+    // ~5ms edge fades per chunk (scaled to the real sample rate; 48-sample
+    // floor) are inaudible as fades and remove the step entirely. The
+    // telephony lane keeps its whole-message fade after downsample too.
+    const edgeFade = Math.max(48, Math.round(format.sampleRate * 0.005));
     const pieces = [];
     parsed.forEach((p, i) => {
-      pieces.push(p.data);
+      pieces.push(fadePcmEdges(p.data, edgeFade));
       if (i < parsed.length - 1) pieces.push(silence);
     });
 
@@ -1723,18 +1751,25 @@ const VOICE_ADDITIONS_2026_07_17 = {
 }
 
 
+// Old picker spellings that must keep resolving but never show in a picker.
+// Served as /voices.json `hidden` for the fork's validators. APPEND-ONLY.
+const HIDDEN_VOICE_ALIASES = [];
+
 // ── 2026-07-22 FISH AUDIO ADDITIONS (Kade's picked 142 of her 195 fish.audio
 // clones; her supervised pick session, this date). APPEND-ONLY as Voice 327+
 // (327/328 are free slots again after the July 17 gap-refill renumber).
 // Targets are "fish:<fish model id>" — routed to fishSynthesizeChunk at synth.
-// BETA MARKING (Kade: "marked beta because we're just testing them"): pickers
-// display "Voice N (Beta)" (plus a name on her eight labeled ones), but the
-// BARE "Voice N" stays registered in NUMBERED_VOICE_ALIASES + VOICE_MAP so
-// the bridge's spoken number switching ("switch to 340") and the boot
-// integrity check keep working untouched. When beta graduates, keep the
-// "(Beta)" labels resolvable as hidden aliases FOREVER — saved personal picks
-// and agent defaults will still carry the old string (same fail-soft rule as
-// the christa/nanny retirements above).
+// BETA GRADUATED July 23 2026 (Kade: "I've decided I don't want to call the
+// fish voices beta, and I want to mix the fish voices up with the inworld
+// voices"): pickers now display plain "Voice N" (plus a name on her eight
+// labeled ones). Exactly as the original beta plan prescribed, every old
+// "(Beta)" spelling stays resolvable as a HIDDEN alias FOREVER — saved
+// personal picks and agent tts objects still carry the old strings (same
+// fail-soft rule as the christa/nanny retirements above). The hidden list is
+// also SERVED (/voices.json `hidden`) so the fork's validators can accept
+// stored old spellings without showing them in any picker. The BARE "Voice N"
+// keys stay registered in NUMBERED_VOICE_ALIASES + VOICE_MAP so spoken number
+// switching ("switch to 340") and the boot integrity check work untouched.
 // PRIVACY NOTE: "Miss A" labels are deliberate — Kade's call, real first name
 // stays out of the picker.
 const FISH_NAMED_LABELS = {
@@ -1896,7 +1931,7 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
   if (addLabels.length !== 142) throw new Error(`fish additions: expected 142, got ${addLabels.length}`);
   const displayOf = (label) => {
     const named = FISH_NAMED_LABELS[label];
-    return `${label} (Beta)${named ? " " + named : ""}`;
+    return `${label}${named ? " " + named : ""}`; // beta graduated July 23 2026
   };
   addLabels.forEach((label, idx) => {
     if (label !== `Voice ${327 + idx}`) throw new Error(`fish additions: non-contiguous at ${label}`);
@@ -1909,6 +1944,16 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
     VOICE_MAP[display] = target;            // pickers send the display label verbatim
     VOICE_LIST.push(display);
     CUSTOM_VOICE_NUMBERS.add(display);
+    // Old beta-era spellings: hidden aliases forever (see comment above).
+    const named = FISH_NAMED_LABELS[label];
+    const oldBare = `${label} (Beta)`;
+    VOICE_MAP[oldBare] = target;
+    HIDDEN_VOICE_ALIASES.push(oldBare);
+    if (named) {
+      const oldNamed = `${label} (Beta) ${named}`;
+      VOICE_MAP[oldNamed] = target;
+      HIDDEN_VOICE_ALIASES.push(oldNamed);
+    }
   });
   // RETIRED July 22 2026, same night it shipped (Kade: "voices from fish are
   // on top of the old ones, and the numbering looks weird that way"): the
@@ -1921,6 +1966,67 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
   // but hash-assigned fallback voices DO index into this array raw: keep it
   // append-only and ascending, never decorative-reordered again.)
 }
+
+// ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
+// categorised based on the description of them... so the madness and chaos
+// has some form and shape. Then when I add new voices they can kinda be snuck
+// in where they fit.") ──
+// Loose buckets derived from VOICE_CATALOG_2026-07-21.json's objective fields
+// (gender/age/pitch/texture/accent/energy) + nickname/vibe keywords, one
+// category per voice, reviewed set approved by Kade July 23. Categories are
+// PRESENTATION ONLY: they group picker rows under section headers. They do
+// NOT reorder VOICE_LIST (append-only ascending forever — hash-fallback
+// voices index the raw array) and they change no resolution behavior.
+// Numbers, not labels, so display-label changes never desync this table.
+// NEW VOICES: add the number to whichever bucket fits; anything unfiled shows
+// up in a trailing "More Voices" bucket (with a boot warning) so nothing can
+// silently vanish from a sectioned picker.
+const VOICE_CATEGORIES = {
+  "Everyday Women": [1, 6, 7, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 31, 36, 37, 38, 39, 42, 43, 45, 46, 47, 48, 49, 60, 61, 62, 63, 64, 65, 66, 67, 68, 71, 73, 74, 77, 78, 81, 82, 86, 88, 89, 97, 98, 105, 109, 111, 114, 117, 123, 124, 125, 126, 127, 128, 129, 132, 137, 138, 140, 141, 142, 143, 144, 148, 149, 150, 151, 153, 155, 157, 159, 163, 167, 169, 170, 171, 177, 180, 186, 190, 191, 192, 195, 197, 198, 199, 204, 205, 211, 213, 214, 216, 222, 223, 226, 229, 230, 232, 235, 236, 243, 247, 249, 252, 254, 255, 256, 257, 259, 262, 264, 265, 266, 267, 268, 269, 270, 271, 274, 277, 279, 282, 283, 293, 294, 295, 296, 297, 298, 300, 301, 302, 303, 306, 307, 308, 310, 314, 316, 319, 321, 324, 326, 359, 362, 365, 367, 370, 374, 380, 383, 391, 393, 402, 408, 410, 411, 414, 415, 417, 418, 419, 426, 427, 446, 449, 450, 451, 456, 464, 467],
+  "Everyday Men": [3, 35, 41, 53, 58, 75, 80, 84, 94, 95, 99, 107, 108, 110, 112, 119, 122, 130, 136, 145, 146, 160, 161, 162, 168, 172, 174, 178, 181, 189, 194, 200, 202, 210, 218, 219, 221, 224, 233, 238, 240, 242, 244, 248, 253, 260, 261, 263, 273, 284, 288, 289, 292, 299, 309, 312, 315, 333, 340, 350, 358, 360, 406],
+  "Calm & Soothing": [28, 44, 104, 158, 179, 184, 196, 207, 239, 327, 357, 378, 412, 413, 416, 460, 466],
+  "Deep & Smoky": [2, 4, 8, 27, 52, 69, 72, 79, 85, 87, 91, 102, 103, 133, 135, 185, 206, 212, 217, 220, 225, 228, 234, 237, 245, 246, 250, 251, 258, 275, 276, 278, 280, 281, 291, 318, 322, 343, 351, 361, 363, 364, 369, 398, 401, 404, 405, 407, 421, 422, 432, 452, 455, 463],
+  "Southern & Country": [34, 56, 57, 96, 285, 287, 317, 320, 323, 346, 348, 356, 375, 384, 425, 430, 433, 436, 440, 445, 459, 465],
+  "Accents from Abroad": [32, 76, 83, 90, 92, 93, 101, 113, 116, 118, 120, 121, 131, 134, 139, 147, 152, 154, 156, 164, 165, 166, 173, 175, 176, 183, 187, 193, 201, 203, 209, 215, 231, 304, 313, 344, 353, 354, 385],
+  "Storytellers & Pros": [70, 182, 188, 208, 241, 329, 330, 338, 342, 371, 429, 431, 438, 441],
+  "Wise & Seasoned": [33, 40, 55, 59, 106, 115, 227, 272, 286, 290, 311, 335, 336, 337, 339, 345, 347, 352, 372, 381, 382, 394, 395, 396, 397, 399, 400, 403, 409, 420, 434, 435, 437, 439, 442, 444, 448, 453, 454, 462],
+  "Kids & Teens": [5, 16, 29, 30, 50, 51, 54, 325, 366, 368, 373, 376, 377, 379, 386, 387, 388, 389, 390, 392, 424, 428, 458, 461, 468],
+  "Characters & Creatures": [9, 17, 100, 305, 328, 331, 332, 334, 341, 349, 355, 423, 443, 447, 457],
+};
+// Serve-time shape: ordered [{ name, voices: [display labels] }], built once
+// at boot (VOICE_LIST is final by this point in the file).
+const VOICE_PICKER_CATEGORIES = (() => {
+  const displayByNumber = new Map();
+  for (const label of VOICE_LIST) {
+    const m = /^Voice (\d+)\b/.exec(label);
+    if (m) displayByNumber.set(Number(m[1]), label);
+  }
+  const filed = new Set();
+  const out = [];
+  for (const [name, nums] of Object.entries(VOICE_CATEGORIES)) {
+    const voices = [];
+    for (const n of nums) {
+      const label = displayByNumber.get(n);
+      if (!label) {
+        console.warn(`⚠️ [voice-categories] Voice ${n} is filed under "${name}" but not in the picker (retired?) — skipping`);
+        continue;
+      }
+      if (filed.has(label)) {
+        console.warn(`⚠️ [voice-categories] ${label} filed twice — keeping first filing`);
+        continue;
+      }
+      filed.add(label);
+      voices.push(label);
+    }
+    out.push({ name, voices });
+  }
+  const unfiled = VOICE_LIST.filter((l) => !filed.has(l));
+  if (unfiled.length) {
+    console.warn(`⚠️ [voice-categories] ${unfiled.length} voice(s) not filed in any category — serving under "More Voices": ${unfiled.join(", ")}`);
+    out.push({ name: "More Voices", voices: unfiled });
+  }
+  return out;
+})();
 
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
 // Scans the numbered map for (a) two numbers backed by the same real Inworld
@@ -2165,7 +2271,11 @@ app.get("/voices.json", (_req, res) => {
   // resolves ('Zadiana', 'Kiana (Comedian)', …) — lets the fork's unified
   // voice resolver validate named picks and do agent-name matching against
   // the live truth instead of a hardcoded copy.
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
+  // `hidden` (July 23 2026): old picker spellings (the beta-era labels) that
+  // still resolve at synth but must never show in a picker — fork validators
+  // union these with `voices` so stored old picks keep working forever.
+  // `categories` (July 23 2026): ordered picker sections, presentation only.
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
 });
 
 // RETIRED July 3 2026 (Kade's call): the standalone Voice Library page is
