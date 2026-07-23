@@ -1963,14 +1963,19 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
   }
 }
 const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
-// Short expressive audition line for the in-app picker's browse-as-you-go
-// samples (Kade 2026-07-01: the full SAMPLE_TEXT monologue lagged when
-// swiping; this keeps the character but synthesizes in a fraction of the
-// time). The %%% sentinel becomes real [bracket] emotion steering in
-// applySteeringTags on the synth path -- same pipeline as chat. {voice} is
-// replaced client-side with the numbered label so each voice introduces
-// itself by name.
-const AUDITION_TEXT = "%%%confident, charismatic, quietly showing off%%% I'm {voice}, and this is my sound — every word, every mood, just like this. If it hits right, you found your voice.";
+// Short expressive audition monologue for every picker's browse-as-you-go
+// samples (rewritten July 22 2026 on Kade's spec: "something everyone can say
+// without saying their voice name... something that shows their range as
+// people are scrolling... a short short monologue" — the old line opened
+// with "I'm {voice}" which she explicitly retired). Four moods in ~15
+// seconds: warm-easy, lit-up excited, dead serious, playful invite. Each %%%
+// tag becomes an inline [bracket] direction in applySteeringTags — Inworld
+// and fish s2.1 both honor the same dialect, so the whole catalog performs
+// the same script. No {voice} placeholder anymore; the client-side
+// `split('{voice}').join(...)` substitution is a harmless no-op. Kept to
+// roughly half the old SAMPLE_TEXT so scroll-synth stays quick (the July 1
+// lesson: the full monologue lagged when swiping).
+const AUDITION_TEXT = "%%%calm, warm, unhurried, like the end of a long day%%% I can keep things soft and easy when that's what you need. %%%bright, delighted, grinning ear to ear%%% Or turn it all the way up — good news deserves loud! %%%low, slow, completely serious%%% And when it matters, I don't play around. %%%warm, playful, a little flirty%%% So... am I the one?";
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
