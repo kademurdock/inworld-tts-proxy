@@ -1357,6 +1357,25 @@ app.post("/v1/audio/speech", async (req, res) => {
     return res.status(400).json({ error: "Missing required field: input" });
   }
 
+  // Native-app voice previews (July 22 2026, Kade: picker previews said only
+  // "Hi there. This is how I sound." -- "I'd like it to be longer like in the
+  // agent builder on the web"): the iOS/Android apps hardcode that short
+  // sentence client-side (VoiceService.previewVoice's default sample), so the
+  // upgrade lives HERE at the synth funnel -- every build already installed
+  // gets it with no app update. Exact-match on the sentinel only (no other
+  // lane sends this string); it becomes the SAME performed audition line the
+  // web agent builder plays (AUDITION_TEXT, defined with the catalog below),
+  // with the requested voice label speaking its own name -- {voice} filled
+  // server-side since the app, unlike the web picker, never does it. The %%%
+  // steering resolves in applySteeringTags a few lines down, same pipeline as
+  // every other audition.
+  const NATIVE_PREVIEW_SENTINEL = "Hi there. This is how I sound.";
+  let effectiveInput = input;
+  if (typeof input === "string" && input.trim() === NATIVE_PREVIEW_SENTINEL) {
+    effectiveInput = AUDITION_TEXT.split("{voice}").join(String(voice));
+    console.log(`[TTS] native preview sentinel swapped for audition line, label="${voice}"`);
+  }
+
   const inworldVoice = VOICE_MAP[voice] || voice;
   const inworldModel = MODEL_MAP[model] || "inworld-tts-2";
   // Provider fork: "fish:<model_id>" targets go to fish.audio, everything else
@@ -1387,8 +1406,8 @@ app.post("/v1/audio/speech", async (req, res) => {
   // client/src/utils/gameSounds.ts): the web client plays these as real
   // clips; on the TTS path they must simply vanish so no surface ever
   // SPEAKS the token. Same hygiene class as citation markers.
-  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(input)))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
-  console.log(`[TTS] input len=${input.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
+  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(effectiveInput)))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
     console.log('[TTS] nothing to speak after stripping — returning empty audio');
