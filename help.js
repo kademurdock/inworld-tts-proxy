@@ -422,6 +422,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 24, 2026</h2>
+<ul>
+  <li><strong>Play cards WITH your people — party tables.</strong> Dealing Hearts or Five-Card Draw in the Parlor now offers <em>open seats for friends</em>: the table hands you a four-character code, your people punch it in on their end (web now, iPhone app next build), and everybody plays their own hand — characters can sit at the same table. Nobody sees anybody else's cards, out-of-turn moves bounce off the dealer, and the whole game lands in one shared transcript.</li>
+  <li><strong>The Lounge is on the way: real voice rooms with real stereo.</strong> A new page at <a href="https://kademurdock.com/lounge">kademurdock.com/lounge</a> — family voice rooms (The Porch, Game Night, Music Night), a mute button that behaves, a roster that says who's talking, and a <em>music seat</em>: pick a song and it streams to the whole room in high-quality stereo while everyone keeps talking. Join a Parlor party code's room to talk trash mid-game. The room server is being wired up now — the page will tell you the moment it's live. And your Lounge voices are person-to-person only, never the AI's business.</li>
+</ul>
+
 <h2>July 23, 2026</h2>
 <ul>
   <li><strong>The Parlor: every game on a menu, you in the driver's seat.</strong> New page at <a href="https://kademurdock.com/parlor">kademurdock.com/parlor</a> &mdash; browse all 21 games with plain descriptions, set the table your way, and play your own cards with real buttons (no narrating character required, RS-Games style). Seat characters if you want the company, pick the house narrator voice &mdash; Kade's own clones or Miss A's &mdash; or turn narration off and let your screen reader run it. Talk trash with whoever's seated in the table-talk box, and download the whole game transcript afterward for the bragging file. Same tables as chat and the phone: deal in the Parlor, say "deal me in" to any companion later, it picks right up.</li>
