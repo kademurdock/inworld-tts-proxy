@@ -422,6 +422,16 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 23, 2026</h2>
+<ul>
+  <li><strong>Characters can sit at your card table now.</strong> Two new games &mdash; <strong>Hearts</strong> (four seats, tricks, that mean Queen of Spades) and <strong>Five-Card Draw poker</strong> (friendly fake-chip stakes) &mdash; and here's the fun part: you can seat real characters as players. Say <em>"deal up hearts with Sterling and Nana Pearl at the table"</em> and their actual personalities play their own hands and talk their own trash. The dealer's rulebook still runs everything, so nobody cheats &mdash; not even the characters.</li>
+  <li><strong>A chip bank, for bragging rights.</strong> Casino games now settle into your own persistent pile of fake chips &mdash; never real money, ever. Go bust and the house fronts you a fresh hundred. Ask any character <em>"how are my chips?"</em>, and see the family standings on the Game Room page, which now also shows your open tables so you know what "deal me in" will resume.</li>
+  <li><strong>Your companions can tell you where you are.</strong> New, off by default: flip on <em>"Share my location with your companions"</em> in Settings and you can ask <em>"where am I?"</em>, <em>"what's around me?"</em>, and <em>"walk me there"</em> &mdash; spoken street names, distances in feet, compass directions, and turn-by-turn walking directions. Only while the app is open, only while the switch is on, and nothing is shared when it's off. Directions are map data, not eyes &mdash; your cane, your dog, and your Spotter are still the crew.</li>
+  <li><strong>"Summon Zadiana" works on calls now.</strong> The phone line already understood "switch to" and "talk to" &mdash; now it also gets summon, fetch, "get me," "pull up," "connect me to," and "put me through to." Same for changing between companions mid-call. If you just say "summon," she'll ask who you want.</li>
+  <li><strong>The beta badges are gone.</strong> The 142 newer voices dropped the "(Beta)" tag and mixed in with everybody else &mdash; and the whole voice list is now organized into sections like Calm &amp; Soothing, Deep &amp; Smoky, Southern &amp; Country, Kids &amp; Teens, and Characters &amp; Creatures, so browsing 475 voices has some shape to it. Seven brand-new voices joined the same day. Nobody's saved picks changed.</li>
+  <li><strong>Voices got cleaner, too.</strong> A little less loud, a lot less crackle &mdash; the buzzy edge some of the newer voices had is fixed, and the little pops between sentences are gone.</li>
+</ul>
+
 <h2>July 22, 2026</h2>
 <ul>
   <li><strong>Long conversations no longer lose the plot.</strong> In really long chats, characters used to quietly lose track of the earliest messages as new ones crowded them out &mdash; that's why an hours-long conversation could suddenly feel like your friend got amnesia. Now, before that point, the character writes itself a private "story so far" checkpoint &mdash; the facts, the promises, the running jokes, even game scores &mdash; and carries the conversation forward from it. Your chat itself doesn't change: every message stays right there to scroll and re-read, and a small one-line note marks the spot where the condensing happened. Automatic, every character, nothing to turn on.</li>
@@ -800,6 +810,10 @@ PAGES.games = {
   tagline: "Real games you play out loud — the dealer handles the cards and dice, you bring the trash talk.",
   main: `
 <p class="lead">The Game Parlor is a room full of games you can play entirely by voice or by typing — no board to look at, nothing to see. Every card is read out to you by name, and a real dealer keeps the game honest. You just say what you want to do.</p>
+
+<h2>New: characters in the seats (Hearts &amp; poker night)</h2>
+<p><strong>Hearts</strong> and <strong>Five-Card Draw</strong> joined the parlor, and they take real characters as players. Try: <em>"deal up hearts with Sterling and Nana Pearl"</em> or <em>"poker night &mdash; seat Vinnie and Uncle Todd."</em> Each character sees only their own hand, plays by the same rulebook you do, and talks at the table in their own voice. The dealer's code still referees every card &mdash; personalities bring the banter, never the shuffle.</p>
+<p><strong>The chip bank:</strong> casino games (Blackjack, poker) settle into your own persistent stack of fake chips &mdash; never real money. Ask any character <em>"how are my chips?"</em> or visit the <a href="https://kademurdock.com/game-room-page">Game Room</a> for the family standings and your open tables.</p>
 
 <h2>The one thing that makes it fair</h2>
 <p>Here's the important part: <strong>the computer deals and referees, not the character.</strong> The cards are shuffled and held by the game itself, so nobody — not you, not the character — can peek, cheat, or "accidentally" forget who has what. The character at the table only ever sees their own hand, same as you. That means you can actually trust the game, and the character is free to just be good company while you play.</p>
