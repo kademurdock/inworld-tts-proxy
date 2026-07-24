@@ -1973,6 +1973,37 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
   // append-only and ascending, never decorative-reordered again.)
 }
 
+// ── 2026-07-23 FISH ADDITIONS (Kade added 7 new clones to her fish.audio
+// library the same day beta graduated: "I added a few fish audio voices to my
+// collection can you add them... Just the ones I made today only"). Pulled
+// live from api.fish.audio (created_at 2026-07-23, cross-checked against
+// every fish: id already registered — zero overlap with the July 22 wave).
+// APPEND-ONLY as Voice 469+, plain labels (no beta — that era is over), no
+// named labels (their fish titles are generic, not her personal-clone names).
+const FISH_VOICE_ADDITIONS_2026_07_23 = {
+  "Voice 469": "fish:8bf0de5cad3e4b78a9988d9d54beea92", // Tiana
+  "Voice 470": "fish:e5974a7357834075a9f0277305a393df", // Playful Narrator
+  "Voice 471": "fish:869c973342d54ff7bbb494c6fd3d1c92", // Friendly Young Storyteller
+  "Voice 472": "fish:4f65dbc86cdb4187b31b6c6c49da1b1f", // Good Vibes Female
+  "Voice 473": "fish:dc2b954e85094e3997de914dd17776ff", // Casual Young Speaker
+  "Voice 474": "fish:614fcba09e104d73be283beb901451cc", // Calm Young Woman
+  "Voice 475": "fish:044d4c660a444bd9b1a8523db49b1ab0", // Smooth Soulful Male
+};
+{
+  const addLabels = Object.keys(FISH_VOICE_ADDITIONS_2026_07_23);
+  if (addLabels.length !== 7) throw new Error(`fish additions 07-23: expected 7, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${469 + idx}`) throw new Error(`fish additions 07-23: non-contiguous at ${label}`);
+    const target = FISH_VOICE_ADDITIONS_2026_07_23[label];
+    if (!target.startsWith(FISH_VOICE_PREFIX)) throw new Error(`fish additions 07-23: ${label} is not a fish: target`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`fish additions 07-23: ${label} collides with an existing alias`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target; // (VOICE_MAP spread-snapshot gotcha — must be explicit)
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
@@ -1988,13 +2019,13 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
 // up in a trailing "More Voices" bucket (with a boot warning) so nothing can
 // silently vanish from a sectioned picker.
 const VOICE_CATEGORIES = {
-  "Everyday Women": [1, 6, 7, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 31, 36, 37, 38, 39, 42, 43, 45, 46, 47, 48, 49, 60, 61, 62, 63, 64, 65, 66, 67, 68, 71, 73, 74, 77, 78, 81, 82, 86, 88, 89, 97, 98, 105, 109, 111, 114, 117, 123, 124, 125, 126, 127, 128, 129, 132, 137, 138, 140, 141, 142, 143, 144, 148, 149, 150, 151, 153, 155, 157, 159, 163, 167, 169, 170, 171, 177, 180, 186, 190, 191, 192, 195, 197, 198, 199, 204, 205, 211, 213, 214, 216, 222, 223, 226, 229, 230, 232, 235, 236, 243, 247, 249, 252, 254, 255, 256, 257, 259, 262, 264, 265, 266, 267, 268, 269, 270, 271, 274, 277, 279, 282, 283, 293, 294, 295, 296, 297, 298, 300, 301, 302, 303, 306, 307, 308, 310, 314, 316, 319, 321, 324, 326, 359, 362, 365, 367, 370, 374, 380, 383, 391, 393, 402, 408, 410, 411, 414, 415, 417, 418, 419, 426, 427, 446, 449, 450, 451, 456, 464, 467],
+  "Everyday Women": [1, 6, 7, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 31, 36, 37, 38, 39, 42, 43, 45, 46, 47, 48, 49, 60, 61, 62, 63, 64, 65, 66, 67, 68, 71, 73, 74, 77, 78, 81, 82, 86, 88, 89, 97, 98, 105, 109, 111, 114, 117, 123, 124, 125, 126, 127, 128, 129, 132, 137, 138, 140, 141, 142, 143, 144, 148, 149, 150, 151, 153, 155, 157, 159, 163, 167, 169, 170, 171, 177, 180, 186, 190, 191, 192, 195, 197, 198, 199, 204, 205, 211, 213, 214, 216, 222, 223, 226, 229, 230, 232, 235, 236, 243, 247, 249, 252, 254, 255, 256, 257, 259, 262, 264, 265, 266, 267, 268, 269, 270, 271, 274, 277, 279, 282, 283, 293, 294, 295, 296, 297, 298, 300, 301, 302, 303, 306, 307, 308, 310, 314, 316, 319, 321, 324, 326, 359, 362, 365, 367, 370, 374, 380, 383, 391, 393, 402, 408, 410, 411, 414, 415, 417, 418, 419, 426, 427, 446, 449, 450, 451, 456, 464, 467, 469, 471, 473],
   "Everyday Men": [3, 35, 41, 53, 58, 75, 80, 84, 94, 95, 99, 107, 108, 110, 112, 119, 122, 130, 136, 145, 146, 160, 161, 162, 168, 172, 174, 178, 181, 189, 194, 200, 202, 210, 218, 219, 221, 224, 233, 238, 240, 242, 244, 248, 253, 260, 261, 263, 273, 284, 288, 289, 292, 299, 309, 312, 315, 333, 340, 350, 358, 360, 406],
-  "Calm & Soothing": [28, 44, 104, 158, 179, 184, 196, 207, 239, 327, 357, 378, 412, 413, 416, 460, 466],
+  "Calm & Soothing": [28, 44, 104, 158, 179, 184, 196, 207, 239, 327, 357, 378, 412, 413, 416, 460, 466, 472, 474, 475],
   "Deep & Smoky": [2, 4, 8, 27, 52, 69, 72, 79, 85, 87, 91, 102, 103, 133, 135, 185, 206, 212, 217, 220, 225, 228, 234, 237, 245, 246, 250, 251, 258, 275, 276, 278, 280, 281, 291, 318, 322, 343, 351, 361, 363, 364, 369, 398, 401, 404, 405, 407, 421, 422, 432, 452, 455, 463],
   "Southern & Country": [34, 56, 57, 96, 285, 287, 317, 320, 323, 346, 348, 356, 375, 384, 425, 430, 433, 436, 440, 445, 459, 465],
   "Accents from Abroad": [32, 76, 83, 90, 92, 93, 101, 113, 116, 118, 120, 121, 131, 134, 139, 147, 152, 154, 156, 164, 165, 166, 173, 175, 176, 183, 187, 193, 201, 203, 209, 215, 231, 304, 313, 344, 353, 354, 385],
-  "Storytellers & Pros": [70, 182, 188, 208, 241, 329, 330, 338, 342, 371, 429, 431, 438, 441],
+  "Storytellers & Pros": [70, 182, 188, 208, 241, 329, 330, 338, 342, 371, 429, 431, 438, 441, 470],
   "Wise & Seasoned": [33, 40, 55, 59, 106, 115, 227, 272, 286, 290, 311, 335, 336, 337, 339, 345, 347, 352, 372, 381, 382, 394, 395, 396, 397, 399, 400, 403, 409, 420, 434, 435, 437, 439, 442, 444, 448, 453, 454, 462],
   "Kids & Teens": [5, 16, 29, 30, 50, 51, 54, 325, 366, 368, 373, 376, 377, 379, 386, 387, 388, 389, 390, 392, 424, 428, 458, 461, 468],
   "Characters & Creatures": [9, 17, 100, 305, 328, 331, 332, 334, 341, 349, 355, 423, 443, 447, 457],
