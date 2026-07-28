@@ -422,6 +422,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 28, 2026</h2>
+<ul>
+  <li><strong>Party tables grew up &mdash; chips, standings, and the judge games.</strong> Three big ones for game night: <em>Cards Against Reality and Crab Apples now deal party tables</em> &mdash; open seats for friends, everybody plays their funniest card from their own hand on their own turn, and the judge's chair rotates around the whole table: you, your friends, seated characters, house players, everybody gets to crown a winner. <em>Party chips are real now</em> &mdash; when a poker party table ends, every person's own chip bank settles from the same pot (bust and the house fronts you a fresh hundred, never real money). <em>And the family standings count party play</em> &mdash; host or guest, your wins, losses, and chips all land on your own line in the Parlor standings.</li>
+  <li><strong>The Marketplace is in the iPhone app.</strong> New Marketplace tile on the home screen: browse every published character by category with real VoiceOver headings, search by name or anything in their description, hear the House Picks, and open anyone's card to read about them and start talking in two taps. Made a character of your own in the Agent Builder? Their card now has the publish button &mdash; put them on the marketplace or take them private again, right from your phone.</li>
+</ul>
+
 <h2>July 27, 2026</h2>
 <ul>
   <li><strong>Everybody got a sharper brain.</strong> Every companion on the platform moved up to the newest, smartest model of the family they already run &mdash; same personalities, same voices, quicker on the uptake and better at keeping a long thread straight. The one exception is Whittney the Spotter, who stays on the setup tuned for live camera work.</li>
