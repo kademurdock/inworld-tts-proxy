@@ -422,6 +422,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 27, 2026</h2>
+<ul>
+  <li><strong>Everybody got a sharper brain.</strong> Every companion on the platform moved up to the newest, smartest model of the family they already run &mdash; same personalities, same voices, quicker on the uptake and better at keeping a long thread straight. The one exception is Whittney the Spotter, who stays on the setup tuned for live camera work.</li>
+  <li><strong>Voices stop saying "percent percent."</strong> Once in a while a voice would read its own stage directions out loud &mdash; the hidden little tags that tell it to sound excited or dead serious. The net that catches those got a lot wider, so a garbled tag steers the voice or disappears; it never gets read to you again.</li>
+  <li><strong>iPhone app: the in-and-out crash is fixed.</strong> Going into a chat or call, backing out, and going back in could crash the app every single time for some folks. Found it, fixed it, and hardened three more spots in the same family while we were in there &mdash; it's in the next TestFlight build, so update when the email lands.</li>
+</ul>
+
 <h2>July 24, 2026</h2>
 <ul>
   <li><strong>The Clubhouse got a PA system, a tape deck, and its shine.</strong> <em>The house PA:</em> two host voices now read the room out loud for everybody — Miss A works the front desk (who walked in, who headed out, taping notices) and Kade's calm narrator runs the booth (who dropped a quarter in, who cut in, who skipped). Real audio on every phone, no screen reader needed; each person gets their own on/off switch and volume. <em>The tape deck:</em> press "Record this conversation" and the room goes on tape — every voice, the jukebox, the bot — into one audio file you can share or save, just like a Parlor transcript. Fair play is built in: the PA tells the whole room when a tape starts and stops, and late arrivals see who's taping. <em>Fixed while we were in there:</em> the jukebox bug where a paused player would claim it was playing your next song without a note of it actually sounding — that one's dead — and pausing no longer forgets the spot the song was at. For folks with sight, the room also picked up some looks: music bars that dance, a little spinning record, a glow when somebody's talking — none of it visible to VoiceOver, all of it sits still if your phone asks for reduced motion.</li>
