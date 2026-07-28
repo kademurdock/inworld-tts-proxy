@@ -1133,8 +1133,19 @@ function applySteeringTags(text) {
   // Normalize any 2-4-percent delimited, short, direction-looking span to the
   // canonical form BEFORE parsing, so a typo'd tag still steers the voice
   // instead of being read aloud as "percent percent sigh".
-  text = text.replace(/%{2,4}([a-zA-Z][a-zA-Z ’',!-]{0,60}?)%{2,4}/g, "%%%$1%%%");
-  if (text.indexOf(STEERING_OPEN) === -1) return text;
+  // July 27 2026 (Kade: tags still spoken "sometimes"): the old class here
+  // ([a-zA-Z ’',!-]) refused digits, periods, slashes, parens, dashes -- so
+  // "%%80s radio DJ%%" or "%%dead serious.%%" fell through BOTH passes and
+  // synthesized as "percent percent ...". Widened: 2-5 percents either side,
+  // content = letter-or-digit-led (must contain a letter somewhere, so a
+  // bare "%%50%%" number never gets eaten), anything but % or newline,
+  // still length-capped.
+  text = text.replace(/%{2,5}((?=[^%\n]{0,79}[a-zA-Z])[a-zA-Z0-9][^%\n]{0,78}?)%{2,5}/g, "%%%$1%%%");
+  // July 27 2026: no canonical tag even after normalizing means whatever %%
+  // runs remain are mangled beyond steering (unclosed opener, stray runs) --
+  // never hand them to the synth to be read as "percent percent". Single "%"
+  // (real percentages) is untouched here and below.
+  if (text.indexOf(STEERING_OPEN) === -1) return text.replace(/%{2,}/g, "");
 
   const tagRe = new RegExp(`${STEERING_OPEN}([\\s\\S]*?)${STEERING_CLOSE}`, "g");
   // Pass 1: sentinel -> real brackets, everywhere in the text.
@@ -1159,7 +1170,10 @@ function applySteeringTags(text) {
     }
     if (active) parts[i] = `[${active}] ${parts[i]}`;
   }
-  return parts.join("");
+  // July 27 2026: same residual sweep as the early return -- any %%-run that
+  // survived conversion is a broken tag (asymmetric closer, 6+ percents),
+  // and a swallowed delimiter always beats a spoken one.
+  return parts.join("").replace(/%{2,}/g, "");
 }
 
 // ── CORS for browser-side voice conversation (F2 patch) ──────────────────────
