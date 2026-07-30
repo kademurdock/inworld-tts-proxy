@@ -422,6 +422,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>July 30, 2026</h2>
+<ul>
+  <li><strong>iPhone app: the Debate Room grew a voice and a will of its own.</strong> Every new line now plays out loud in that character&#39;s own voice the moment it lands. Catching up is on your terms &mdash; <em>Play this line</em> and <em>Play from here</em> live on every line (Actions rotor, or long-press). <em>Keep it going</em> runs the debate by itself, each clip finishing before the next turn starts, twelve turns at a stretch before it pauses and asks. The brain toggle makes every turn a <em>Deep Think</em> turn &mdash; slower, sharper arguments. And the cast is no longer locked at the door: add or remove characters mid-debate, with the Narrator noting arrivals and exits right in the transcript. Grab the newest TestFlight build.</li>
+  <li><strong>Companions think again when you ask them to.</strong> The chat Deep Think toggle had quietly stopped working for anyone with saved memories &mdash; the marker got buried under bookkeeping. Rewired at the source: flip Deep Think, get real deliberation, no exceptions. Deep turns also can&#39;t end wordless anymore &mdash; if the thinking runs long, the plain answer still arrives underneath the reasoning bubble.</li>
+  <li><strong>Kiana has a new voice.</strong> Voice 258 &mdash; lower, raspier, cozier. Same Kiana.</li>
+</ul>
+
 <h2>July 28, 2026</h2>
 <ul>
   <li><strong>Photos you attach in chat finally get looked at.</strong> Attaching a picture or file to a chat message is supposed to let your companion see it &mdash; and it quietly wasn't working for anyone, on the website or the app. Found and fixed today: attach a photo, ask about it, and your companion actually answers from what's in the picture now. (Under the hood the picture's size went missing on the way to storage, and everything downstream treated it as invisible. Receipts: a little orange test square, and Bandit calling the color first try.)</li>
