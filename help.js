@@ -422,6 +422,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 1, 2026</h2>
+<ul>
+  <li><strong>iPhone app: calls now sound like Kade made them &mdash; because she did.</strong> Start an in-app call and you'll hear her real connected chime ring in under your companion's hello, in place of the old robotic two-note beep. And for the first time, hanging up answers back: her disconnected chime plays as the call ends, the receiver going back down. If a call drops mid-conversation and reconnects itself, no chimes &mdash; the spoken "reconnecting" announcements still have that covered, so a chime always means what it says. The website's calls have played these same sounds since July 22; the app has caught up.</li>
+  <li><strong>Watch the thinking happen.</strong> When your companion puts real thought into a reply, a little "Thinking it through&hellip;" bubble now appears beside the typing indicator &mdash; closed by default, one tap (or VoiceOver double-tap) opens it, and the thoughts pour in live as they stream. VoiceOver manners by design: one quiet heads-up when the thinking starts, then silence &mdash; focus never gets yanked, and the bubble reads a running count on focus instead of narrating every word. When the answer lands, the live bubble hands off to the reply's own expandable thoughts, same as always. Grab the newest TestFlight build for both.</li>
+</ul>
+
 <h2>July 30, 2026</h2>
 <ul>
   <li><strong>iPhone app: the Debate Room grew a voice and a will of its own.</strong> Every new line now plays out loud in that character&#39;s own voice the moment it lands. Catching up is on your terms &mdash; <em>Play this line</em> and <em>Play from here</em> live on every line (Actions rotor, or long-press). <em>Keep it going</em> runs the debate by itself, each clip finishing before the next turn starts, twelve turns at a stretch before it pauses and asks. The brain toggle makes every turn a <em>Deep Think</em> turn &mdash; slower, sharper arguments. And the cast is no longer locked at the door: add or remove characters mid-debate, with the Narrator noting arrivals and exits right in the transcript. Grab the newest TestFlight build.</li>
