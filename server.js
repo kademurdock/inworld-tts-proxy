@@ -30,7 +30,11 @@ const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 // Model tier is s2.1-pro by Kade's explicit choice July 22 (the free tier
 // s2.1-pro-free ends July 31 2026 AND retains audio for training — wrong fit
 // for a family platform; pro ≈ $15/M UTF-8 bytes ≈ a nickel per 10-min call).
-// Steering: fish s2.1 interprets the same [bracket] free-text word-level tags
+// Steering (UPDATED Aug 3 2026): fish gets per-SENTENCE direction re-seeding
+// at synth (seedFishSteering) — fish cues are sentence-scoped, one leading tag
+// per paragraph left its later sentences flat. Inworld chunks get one-
+// direction-per-request shaping (shapeInworldSteering). Original note below:
+// fish s2.1 interprets the same [bracket] free-text word-level tags
 // applySteeringTags already emits for Inworld TTS-2, so %%% tags translate
 // with NO agent-side changes (s1 would need a preset-parentheses menu — do
 // not downgrade FISH_TTS_MODEL below s2 without revisiting steering).
@@ -1176,6 +1180,92 @@ function applySteeringTags(text) {
   return parts.join("").replace(/%{2,}/g, "");
 }
 
+
+// ── PROVIDER-AWARE STEERING SHAPING (Aug 3 2026 — Kade: fish voices come out
+// "flat and non-emotional for certain stretches"; her call: fix fish, and
+// bring Inworld along ONLY if it doesn't hurt) ────────────────────────────────
+// The two providers want steering DELIVERED differently (both docs re-read
+// this date):
+//  • Fish s2.1 (docs.fish.audio → Emotion Control): cues are SENTENCE-level —
+//    "Don't place sentence-level emotion cues far from the sentence they
+//    control." One leading [direction] on a 3-5 sentence paragraph steers the
+//    first sentence, then the clone decays to its source-sample baseline =
+//    exactly her "flat for stretches." Fix: re-seed the paragraph's direction
+//    at the start of every sentence (fish's own "emotion transitions" pattern;
+//    markers are free per their docs, byte cost is noise).
+//  • Inworld TTS-2 (docs.inworld.ai → Steering): "Use one set of instructions
+//    per input... Placing them midway through the text or using multiple
+//    instructions throughout will likely produce inconsistent results."
+//    Per-sentence seeding would HURT here, so Inworld instead gets the
+//    doc-exact cleanup: applySteeringTags' paragraph carry-forward can leave
+//    the SAME direction 2+ times inside one multi-paragraph chunk — keep the
+//    first, drop identical repeats, and if a genuinely NEW direction opens a
+//    later paragraph, SPLIT the chunk there so each request opens with
+//    exactly one instruction. (The audition line's mid-paragraph beats are
+//    untouched — this only looks at paragraph-leading tags.)
+const LEADING_TAG_RE = /^\s*\[([^\]]+)\]\s*/;
+
+function isDirectionTag(inner) {
+  return !NONVERBAL_TAGS.has(String(inner).trim().toLowerCase());
+}
+
+// Fish's documented audio-effect vocabulary uses -ing forms where Inworld's
+// fixed six use bare verbs. S2 is open-vocab so bare forms usually land, but
+// the documented spelling is the sure thing; only the three that differ are
+// mapped ([clear throat] matches fish verbatim, [breathe]/[cough] have no
+// documented fish twin and ride the open vocabulary).
+const FISH_NONVERBAL_DIALECT = { laugh: "laughing", sigh: "sighing", yawn: "yawning" };
+
+// Short interjections inherit the surrounding mood on their own; a tag longer
+// than its sentence is noise (fish: "don't overuse emotion tags in short text").
+const FISH_SEED_MIN_SENTENCE_LEN = 30;
+
+function seedFishSteering(chunk) {
+  if (!chunk || chunk.indexOf("[") === -1) return chunk;
+  let text = chunk.replace(/\[(laugh|sigh|yawn)\]/gi, (_, w) => `[${FISH_NONVERBAL_DIALECT[w.toLowerCase()]}]`);
+  const parts = text.split(/(\n\s*\n+)/);
+  for (let i = 0; i < parts.length; i += 2) {
+    const para = parts[i];
+    if (!para || !para.trim()) continue;
+    const m = para.match(LEADING_TAG_RE);
+    if (!m || !isDirectionTag(m[1])) continue;
+    const dir = m[1].trim();
+    const sentences = splitSentences(para.slice(m[0].length)).filter(Boolean);
+    if (sentences.length <= 1) continue;
+    const seeded = sentences.map((s, idx) => {
+      if (idx === 0) return s;
+      if (s.startsWith("[")) return s; // its own tag (direction or non-verbal) — leave it
+      if (s.length < FISH_SEED_MIN_SENTENCE_LEN) return s;
+      return `[${dir}] ${s}`;
+    });
+    parts[i] = `[${dir}] ` + seeded.join(" ");
+  }
+  return parts.join("");
+}
+
+function shapeInworldSteering(chunk) {
+  if (!chunk || chunk.indexOf("[") === -1) return [chunk];
+  const parts = chunk.split(/(\n\s*\n+)/);
+  const out = [];
+  let cur = "";
+  let curDir = null;
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) { cur += parts[i]; continue; } // paragraph separator rides along
+    const para = parts[i];
+    if (!para || !para.trim()) { cur += para; continue; }
+    const m = para.match(LEADING_TAG_RE);
+    const dir = m && isDirectionTag(m[1]) ? m[1].trim() : null;
+    if (dir == null) { cur += para; continue; } // untagged/non-verbal-led paragraph — ride along
+    if (!cur.trim()) { curDir = dir; cur += para; continue; } // opens the request
+    if (dir === curDir) { cur += para.slice(m[0].length); continue; } // identical carried repeat — drop the tag
+    out.push(cur.trimEnd()); // genuinely new direction — new request
+    cur = para;
+    curDir = dir;
+  }
+  if (cur.trim()) out.push(cur);
+  return out.length ? out : [chunk];
+}
+
 // ── CORS for browser-side voice conversation (F2 patch) ──────────────────────
 // Allows kademurdock.com PWA to call /v1/audio/speech directly from the browser
 // (the web/Skype-style voice mode). Restricted to our origin — not open CORS.
@@ -1450,7 +1540,12 @@ app.post("/v1/audio/speech", async (req, res) => {
   }
 
   try {
-    const chunks = chunkText(speakText);
+    // Provider-aware steering shaping (Aug 3 2026, see helpers above): fish
+    // re-seeds the active direction per sentence; Inworld gets one direction
+    // per request (identical repeats dropped, real changes split the chunk).
+    const chunks = isFishVoice
+      ? chunkText(speakText).map(seedFishSteering)
+      : chunkText(speakText).flatMap(shapeInworldSteering);
 
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
@@ -2018,6 +2113,109 @@ const FISH_VOICE_ADDITIONS_2026_07_23 = {
   });
 }
 
+// ── 2026-08-03 INWORLD VOICE ADDITIONS (Kade: "I have new voices on inworld
+// and fish audio that I need you to add to the catalog"). Pulled live from
+// api.inworld.ai/tts/v1/voices and diffed against every registered custom id —
+// these 3 are the only non-personal customs not yet registered (a live re-diff
+// caught that the other design voices from the account were ALREADY live —
+// Detective=228, Misty=38, bex=216, mac=260, the two Tasha Wexlers=61/62 etc). The
+// personal-clone hold-outs (Kade*, Amber*/Miss A, Sky, Dale, Keighty, Podcast
+// Keighty fast) remain OUT per her standing vet, reconfirmed by her today
+// ("don't add any of the inworld or fish voices I've said not to add in the
+// past"). APPEND-ONLY as Voice 476+; same boot-crash rails as prior blocks.
+const VOICE_ADDITIONS_2026_08_03 = {
+  "Voice 476": "default-e-m11vgtr9l-m7afw4kmnw__design-voice-63dc415d", // Naisha
+  "Voice 477": "default-e-m11vgtr9l-m7afw4kmnw__brooke", // brooke
+  "Voice 478": "default-e-m11vgtr9l-m7afw4kmnw__raven", // Raven
+};
+{
+  const addLabels = Object.keys(VOICE_ADDITIONS_2026_08_03);
+  if (addLabels.length !== 3) throw new Error(`voice additions 08-03: expected 3, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${476 + idx}`) throw new Error(`voice additions 08-03: non-contiguous at ${label}`);
+    const target = VOICE_ADDITIONS_2026_08_03[label];
+    if (!target.startsWith("default-e-")) throw new Error(`voice additions 08-03: ${label} not a custom id`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`voice additions 08-03: ${label} collides`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target; // (VOICE_MAP spread-snapshot gotcha — must be explicit)
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
+// ── 2026-08-03 FISH ADDITIONS (same session): her 15 designed clones from
+// July 24 plus all 35 she made today, pulled live from api.fish.audio and
+// cross-checked against every registered fish: id. The 53 clones she left
+// OUT at the July 22 supervised pick (Lacey, the old personal full-clones,
+// and the rest) STAY out — none of them are in this block. APPEND-ONLY as
+// Voice 493+, plain labels (no display names — titles are designed/generic).
+const FISH_VOICE_ADDITIONS_2026_08_03 = {
+  "Voice 479": "fish:cd40d8b325474589b06448f84499f8f4", // Relaxed Vibe Narrator
+  "Voice 480": "fish:f08106e8a65a409ab55ae98c04832662", // Youthful Reflective Voice
+  "Voice 481": "fish:69818565c43f40bd908ad0e55812d635", // Relaxed Young Female
+  "Voice 482": "fish:7bc01f7f1f714c1ca8b6c9fb25217b1a", // Authentic Young Female
+  "Voice 483": "fish:1993c52eaab14015a4038b7491cea8f4", // Lively Storyteller
+  "Voice 484": "fish:2faaa103181942249f9887ce0678103a", // Relaxed Young Female (second take)
+  "Voice 485": "fish:d9aa89060a2447e98338b7ba01b9f3ac", // Playful Young Voice
+  "Voice 486": "fish:73e2a035db5741568ac173a07d473ee0", // Playful Young Voice (second take)
+  "Voice 487": "fish:2b69712dd93e42bca0825a511904ce2a", // Casual Young Speaker
+  "Voice 488": "fish:bccb6c18b16646afaab3adb2d12d86ca", // Animated Young Female
+  "Voice 489": "fish:33c7a9bd372a4ccfae3d8b3ece4fdaf9", // Friendly Southern Narrator
+  "Voice 490": "fish:dafacaa7fe3341fbaf7daed65f97ddd9", // Casual Male Storyteller
+  "Voice 491": "fish:f7b2ec59022244dcaafc709b2ada1dd6", // Friendly Missouri Voice
+  "Voice 492": "fish:d89c5cc8e70b45d1b60053c12a13f6df", // Friendly Town Narrator
+  "Voice 493": "fish:3ef2e6b2b6d6488e89a2e6b82bfca346", // Friendly Local Voice
+  "Voice 494": "fish:1becffd505cf45e885976ce56c28af33", // Martayah
+  "Voice 495": "fish:6c4ddee6dc3a43118a980cfad35320ae", // Southern belle
+  "Voice 496": "fish:4e284a69fb0044ffa96fb32187b6896c", // Dola
+  "Voice 497": "fish:e5e85c45d0dc456384c62e9183341dae", // Whitney
+  "Voice 498": "fish:f461e09069394ecda51bf6334b71b316", // Daymond
+  "Voice 499": "fish:59c167219b0c4fceb15d7dee303bb00f", // Teefa
+  "Voice 500": "fish:1224cf0ae854460fbc792513c113f957", // Beautisha
+  "Voice 501": "fish:35219ffb4c584b939e54a9e89982f319", // Jordman
+  "Voice 502": "fish:8ae99548f39347bd9df47cd3363fa039", // Birtha
+  "Voice 503": "fish:6a9e7cbc9fc34ea5bae78000cebc3989", // Monique (new clone; Voice 460 is the older Monique synthetic)
+  "Voice 504": "fish:f6fd57afe2ad493cb10e92873c173ed8", // Nerdy nancy
+  "Voice 505": "fish:8f432247ef6f4e69a74d00472a14c0b0", // derna
+  "Voice 506": "fish:882ceebd885349b297c10c5d70809d6a", // Pam
+  "Voice 507": "fish:137f1ace2f13498abce503f52f8cf7f7", // Dezzarae
+  "Voice 508": "fish:33af52a8a70f49d282a3d366a1b14bc9", // Tasha
+  "Voice 509": "fish:8867d5fc32cf4f1593ffeca331e64d21", // Chadley
+  "Voice 510": "fish:753252a2e730413b95f233182caf4b52", // Ken
+  "Voice 511": "fish:c2810ae2ca5d47ef970bdab323de5595", // Fran
+  "Voice 512": "fish:7a17558792884653adabc6e6e4b3c491", // Scottsley
+  "Voice 513": "fish:0df87b91f70c42e4a1499a61e314d299", // Lil boy
+  "Voice 514": "fish:658b358662844f0190d3671bc1bf8d66", // Spineta
+  "Voice 515": "fish:a04e79b3003a4f01ae26b330a441862c", // Whyrana
+  "Voice 516": "fish:e772c2e1b76a4426adfaeb2eeb63974f", // Zanique
+  "Voice 517": "fish:9d51021e271b468094df7d0a053b281d", // Kyra
+  "Voice 518": "fish:05ae62dda1aa49b395b86d1841fb09c9", // Sharey
+  "Voice 519": "fish:0bce010bd51a4fd790ce50f86296f7aa", // Sondra
+  "Voice 520": "fish:4145214bc6374d8883fea7a8914c5876", // Cookie
+  "Voice 521": "fish:4d12380d8227402493b62f8232353e41", // Brentlyn
+  "Voice 522": "fish:b83b4fed33b44978ac477c669a759e27", // Daynah
+  "Voice 523": "fish:64cc2eede5494d998834910cc2aad23a", // Earlman
+  "Voice 524": "fish:9ed13f467ce14ef0b025fef7575ceba8", // Marondro
+  "Voice 525": "fish:265eabb66c8f4ef0aa8b6e5d2be5535e", // Tanayah
+  "Voice 526": "fish:6c7b6688018347b2ba7777788b2bb912", // Moxxi
+  "Voice 527": "fish:3ba3f3354b614dc99bc90c3cc975e254", // Brenton
+  "Voice 528": "fish:0e21e15778dd40318803c412ca7db5e3", // Lillian
+};
+{
+  const addLabels = Object.keys(FISH_VOICE_ADDITIONS_2026_08_03);
+  if (addLabels.length !== 50) throw new Error(`fish additions 08-03: expected 50, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${479 + idx}`) throw new Error(`fish additions 08-03: non-contiguous at ${label}`);
+    const target = FISH_VOICE_ADDITIONS_2026_08_03[label];
+    if (!target.startsWith(FISH_VOICE_PREFIX)) throw new Error(`fish additions 08-03: ${label} is not a fish: target`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`fish additions 08-03: ${label} collides`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target; // (VOICE_MAP spread-snapshot gotcha — must be explicit)
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
@@ -2032,6 +2230,13 @@ const FISH_VOICE_ADDITIONS_2026_07_23 = {
 // NEW VOICES: add the number to whichever bucket fits; anything unfiled shows
 // up in a trailing "More Voices" bucket (with a boot warning) so nothing can
 // silently vanish from a sectioned picker.
+// RETIRED FROM SERVING Aug 3 2026 (Kade: category gender mixups — "there's
+// guys and girls mixed up... put them back in the numaric order or something
+// so it doesn't confuse people"). Root cause: the buckets were derived from
+// the catalog's BY-EAR gender labels, and Gemini's ear was wrong on some
+// clones (receipt: Voice 431, her own fish title says "Female Rev", catalog
+// said Male, filed with the men). The table below is kept DORMANT for a
+// future re-audit; the picker serves one flat numeric section instead.
 const VOICE_CATEGORIES = {
   "Everyday Women": [1, 6, 7, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 31, 36, 37, 38, 39, 42, 43, 45, 46, 47, 48, 49, 60, 61, 62, 63, 64, 65, 66, 67, 68, 71, 73, 74, 77, 78, 81, 82, 86, 88, 89, 97, 98, 105, 109, 111, 114, 117, 123, 124, 125, 126, 127, 128, 129, 132, 137, 138, 140, 141, 142, 143, 144, 148, 149, 150, 151, 153, 155, 157, 159, 163, 167, 169, 170, 171, 177, 180, 186, 190, 191, 192, 195, 197, 198, 199, 204, 205, 211, 213, 214, 216, 222, 223, 226, 229, 230, 232, 235, 236, 243, 247, 249, 252, 254, 255, 256, 257, 259, 262, 264, 265, 266, 267, 268, 269, 270, 271, 274, 277, 279, 282, 283, 293, 294, 295, 296, 297, 298, 300, 301, 302, 303, 306, 307, 308, 310, 314, 316, 319, 321, 324, 326, 359, 362, 365, 367, 370, 374, 380, 383, 391, 393, 402, 408, 410, 411, 414, 415, 417, 418, 419, 426, 427, 446, 449, 450, 451, 456, 464, 467, 469, 471, 473],
   "Everyday Men": [3, 35, 41, 53, 58, 75, 80, 84, 94, 95, 99, 107, 108, 110, 112, 119, 122, 130, 136, 145, 146, 160, 161, 162, 168, 172, 174, 178, 181, 189, 194, 200, 202, 210, 218, 219, 221, 224, 233, 238, 240, 242, 244, 248, 253, 260, 261, 263, 273, 284, 288, 289, 292, 299, 309, 312, 315, 333, 340, 350, 358, 360, 406],
@@ -2044,40 +2249,13 @@ const VOICE_CATEGORIES = {
   "Kids & Teens": [5, 16, 29, 30, 50, 51, 54, 325, 366, 368, 373, 376, 377, 379, 386, 387, 388, 389, 390, 392, 424, 428, 458, 461, 468],
   "Characters & Creatures": [9, 17, 100, 305, 328, 331, 332, 334, 341, 349, 355, 423, 443, 447, 457],
 };
-// Serve-time shape: ordered [{ name, voices: [display labels] }], built once
-// at boot (VOICE_LIST is final by this point in the file).
-const VOICE_PICKER_CATEGORIES = (() => {
-  const displayByNumber = new Map();
-  for (const label of VOICE_LIST) {
-    const m = /^Voice (\d+)\b/.exec(label);
-    if (m) displayByNumber.set(Number(m[1]), label);
-  }
-  const filed = new Set();
-  const out = [];
-  for (const [name, nums] of Object.entries(VOICE_CATEGORIES)) {
-    const voices = [];
-    for (const n of nums) {
-      const label = displayByNumber.get(n);
-      if (!label) {
-        console.warn(`⚠️ [voice-categories] Voice ${n} is filed under "${name}" but not in the picker (retired?) — skipping`);
-        continue;
-      }
-      if (filed.has(label)) {
-        console.warn(`⚠️ [voice-categories] ${label} filed twice — keeping first filing`);
-        continue;
-      }
-      filed.add(label);
-      voices.push(label);
-    }
-    out.push({ name, voices });
-  }
-  const unfiled = VOICE_LIST.filter((l) => !filed.has(l));
-  if (unfiled.length) {
-    console.warn(`⚠️ [voice-categories] ${unfiled.length} voice(s) not filed in any category — serving under "More Voices": ${unfiled.join(", ")}`);
-    out.push({ name: "More Voices", voices: unfiled });
-  }
-  return out;
-})();
+// Aug 3 2026: the picker serves ONE flat "All Voices" section in ascending
+// numeric order (VOICE_LIST is append-only ascending; hash-fallback voices
+// index the raw array — that contract is untouched). Shape is identical to
+// the sectioned era ([{ name, voices }]) so the web and native pickers need
+// zero changes. To revive categories: rebuild the section list from the
+// dormant VOICE_CATEGORIES table above (and re-audit its genders first).
+const VOICE_PICKER_CATEGORIES = [{ name: "All Voices", voices: [...VOICE_LIST] }];
 
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
 // Scans the numbered map for (a) two numbers backed by the same real Inworld

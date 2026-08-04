@@ -422,6 +422,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 3, 2026</h2>
+<ul>
+  <li><strong>53 new voices &mdash; the picker now counts 1 through 528.</strong> Three brand-new designed characters (Naisha, brooke, and Raven) plus fifty fresh clones from Kade's collection &mdash; July's designed narrators and today's whole crew, Martayah through Lillian. Same rules as always: nobody's saved number moved, and saying <em>"switch to voice 500"</em> on a call works like it should.</li>
+  <li><strong>The voice list is one clean numbered line again.</strong> The category sections (Everyday Women, Deep &amp; Smoky, and friends) had a few voices filed under the wrong header, so the sections are retired for now &mdash; the picker just counts straight up from Voice 1. The voices themselves didn't change a bit.</li>
+  <li><strong>Cloned voices stopped going flat mid-reply.</strong> The newer cloned voices could hold a feeling for about one sentence, then drift back to neutral. Now the mood a companion sets carries through the whole reply, sentence by sentence &mdash; and the classic voices got a matching tune-up so a mid-reply mood change lands clean instead of muddy.</li>
+</ul>
+
 <h2>August 1, 2026</h2>
 <ul>
   <li><strong>iPhone app: calls now sound like Kade made them &mdash; because she did.</strong> Start an in-app call and you'll hear her real connected chime ring in under your companion's hello, in place of the old robotic two-note beep. And for the first time, hanging up answers back: her disconnected chime plays as the call ends, the receiver going back down. If a call drops mid-conversation and reconnects itself, no chimes &mdash; the spoken "reconnecting" announcements still have that covered, so a chime always means what it says. The website's calls have played these same sounds since July 22; the app has caught up.</li>
