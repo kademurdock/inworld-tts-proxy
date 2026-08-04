@@ -354,7 +354,7 @@ PAGES.quickstart = {
 <p>You can have replies read out loud instead of reading them yourself. There's a play button on each reply, and you can turn on automatic read-aloud so it just happens. The full how-to is on the <a href="/help/voice">Talking &amp; Listening</a> page.</p>
 
 <h2>5. Don't love the voice? Change it</h2>
-<p>Most characters now come with their own voice already picked out. Want something different? Open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick from over two hundred voices, and tap <strong>Preview</strong> to hear a sample before you commit.</p>
+<p>Most characters now come with their own voice already picked out. Want something different? Open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick from over five hundred voices, and tap <strong>Preview</strong> to hear a sample before you commit.</p>
 
 <h2>6. Want a clean slate?</h2>
 <p>To start a brand-new conversation, look for the <strong>New chat</strong> button (usually top of the screen or in the side menu). Your old chats are saved in the list on the side, so you can always go back to one.</p>
@@ -605,7 +605,7 @@ PAGES.voice = {
 <div class="term"><strong>Speech-to-text</strong> is the feature that listens to your voice and writes down the words. <strong>Text-to-speech</strong> is the reverse — it reads written words out loud. This site does both.</div>
 
 <h2>Changing the voice you hear</h2>
-<p>Most characters come with a voice their creator picked for them, so they each sound like themselves. Prefer something else? There are <strong>over two hundred</strong> voices — calm ones, warm ones, dramatic ones, silly ones.</p>
+<p>Most characters come with a voice their creator picked for them, so they each sound like themselves. Prefer something else? There are <strong>over five hundred</strong> voices — calm ones, warm ones, dramatic ones, silly ones.</p>
 <p>You can hear any of them right in the chat — no separate page needed. Open <strong>Settings → Speech → Text-to-Speech → Voice</strong>, pick a voice from the list, then tap the <strong>Preview</strong> button to hear a short sample. When one sounds right, just leave it selected and that becomes your voice.</p>
 <div class="callout good">
   <p><strong>Hearing a flat, robotic "system" voice instead of the nice ones?</strong> Check <strong>Settings → Speech → Text to Speech → Engine</strong> — it should say <strong>External</strong>. Flip it there once and the real voices come back.</p>
