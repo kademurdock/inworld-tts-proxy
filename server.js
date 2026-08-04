@@ -2274,6 +2274,32 @@ const FISH_VOICE_ADDITIONS_2026_08_04 = {
   });
 }
 
+// ── 2026-08-04 KADE PROFESSIONAL SELF-CLONE (Kade: "there are one or 2
+// professional voice clones on inworld of me I'd like to add." She picked the
+// 'Keighty pro' inworld clone, labeled under the 'Kade' brand to keep her real
+// first name out of the picker — same privacy rule as the 'Miss A' labels.)
+// APPEND-ONLY as Voice 541, NAMED: bare "Voice 541" + display "Voice 541 Kade
+// professional" both resolve (same pattern as the fish named labels above).
+const KADE_PRO_ADDITION_2026_08_04 = {
+  "Voice 541": { target: "default-e-m11vgtr9l-m7afw4kmnw__keighty_pro", name: "Kade professional" },
+};
+{
+  const entries = Object.entries(KADE_PRO_ADDITION_2026_08_04);
+  if (entries.length !== 1) throw new Error(`kade pro: expected 1, got ${entries.length}`);
+  for (const [label, info] of entries) {
+    if (!/^Voice \d+$/.test(label)) throw new Error(`kade pro: bad label ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`kade pro: ${label} not a custom id`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`kade pro: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target; // bare: spoken switching + integrity check
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // picker sends the display label verbatim
+    VOICE_LIST.push(display);
+    CUSTOM_VOICE_NUMBERS.add(display);
+    HIDDEN_VOICE_ALIASES.push(label);            // stored bare "Voice 541" stays valid for the fork
+  }
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
