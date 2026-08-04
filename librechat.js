@@ -118,7 +118,11 @@ const fail = (res, e) => res.status(e.status && e.status >= 400 ? e.status : 502
 // GET /librechat/agents -> compact list of ALL agents (the marketplace + private)
 router.get("/librechat/agents", auth, async (req, res) => {
   try {
-    const d = await lc("GET", "/api/agents?limit=150");
+    // Aug 3 2026: cursor/limit passthrough — the fleet outgrew the old fixed
+    // limit=150 (has_more was true and the tail was unreachable through here).
+    const qs = new URLSearchParams({ limit: String(Math.min(parseInt(req.query.limit, 10) || 150, 500)) });
+    if (req.query.cursor) qs.set("cursor", String(req.query.cursor));
+    const d = await lc("GET", `/api/agents?${qs.toString()}`);
     const agents = (d.data || []).map((a) => ({
       id: a.id,
       _id: a._id,
@@ -129,7 +133,7 @@ router.get("/librechat/agents", auth, async (req, res) => {
       model: a.model || null,
       tools: a.tools || null,
     }));
-    res.json({ count: agents.length, has_more: d.has_more === true, agents });
+    res.json({ count: agents.length, has_more: d.has_more === true, after: d.after ?? d.next_cursor ?? null, agents });
   } catch (e) {
     fail(res, e);
   }
