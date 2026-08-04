@@ -422,6 +422,16 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 4, 2026</h2>
+<ul>
+  <li><strong>Thoughts stream in live now &mdash; for real this time.</strong> The "Thinking it through&hellip;" bubble used to sit empty until the reply was nearly done, then dump everything at once. Found the culprit (a middleman holding the thoughts hostage) and fixed it at the source: on Deep Think turns, the thoughts now pour into the bubble the moment your companion starts thinking &mdash; word by word, website and app alike, no app update needed. On the newest app build the bubble even opens itself while the thinking streams and tucks itself away when the answer lands.</li>
+  <li><strong>App: the voice button learned some manners.</strong> The old square Stop button next to the speed control is now one smart button that changes with the moment &mdash; Pause while a voice message plays, Resume while it's paused, and Stop while the voice is still warming up. A full "Stop and clear" stays one gesture away: it rides the VoiceOver actions rotor and a long-press. And on the message itself, "Play as voice message" now reads "Pause voice message" while that exact message is the one talking.</li>
+  <li><strong>App: hypnotic thinking bubbles, just like the website's.</strong> While a companion works on a reply, a tiny run of soft bubbles drifts up next to the typing indicator &mdash; the visual twin of the bubbling sound. Purely decorative: screen readers never hear about it, and it holds still if you use Reduce Motion.</li>
+  <li><strong>App: quiet progress updates during long thinks.</strong> Optional and on by default &mdash; during a long Deep Think, VoiceOver murmurs about every twenty seconds how much thinking has streamed so far, so a long wait never feels like a dead line. The thoughts themselves are never read out loud. Flip it under Settings &rarr; Speech &rarr; Spoken thinking progress.</li>
+  <li><strong>App: if it ever crashes, it can tell on itself now.</strong> New under Settings &rarr; Support: "Share diagnostics" hands over the crash report plus a short timeline of what the app was doing &mdash; never your conversations. If the app ever dies on you, open it back up and share that with Kade instead of trying to remember what happened.</li>
+  <li><strong>The Clubhouse announces comings and goings with sound.</strong> When someone walks into your room or heads out, you hear Kade's connected or disconnected chime alongside the spoken announcement &mdash; website and app both.</li>
+</ul>
+
 <h2>August 3, 2026</h2>
 <ul>
   <li><strong>53 new voices &mdash; the picker now counts 1 through 528.</strong> Three brand-new designed characters (Naisha, brooke, and Raven) plus fifty fresh clones from Kade's collection &mdash; July's designed narrators and today's whole crew, Martayah through Lillian. Same rules as always: nobody's saved number moved, and saying <em>"switch to voice 500"</em> on a call works like it should.</li>
