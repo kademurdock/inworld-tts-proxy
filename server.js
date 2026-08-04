@@ -2216,6 +2216,37 @@ const FISH_VOICE_ADDITIONS_2026_08_03 = {
   });
 }
 
+// ── 2026-08-04 INWORLD VOICE ADDITIONS (Kade: "I just added a few new voices
+// to inworld, can you add them"). Pulled live from api.inworld.ai and diffed
+// against every registered custom id — these 8 are the new NON-personal voices
+// (real names, not clones). Her personal clone hold-outs (Kade*, Amber*/Miss A,
+// Keighty*, Sky, Dale, Podcast Keighty fast) remain OUT per her standing vet.
+// APPEND-ONLY as Voice 529+; same boot-crash rails as every prior block.
+const VOICE_ADDITIONS_2026_08_04 = {
+  "Voice 529": "default-e-m11vgtr9l-m7afw4kmnw__raiche", // Raiche
+  "Voice 530": "default-e-m11vgtr9l-m7afw4kmnw__kandi", // Kandi
+  "Voice 531": "default-e-m11vgtr9l-m7afw4kmnw__maliah", // Maliah
+  "Voice 532": "default-e-m11vgtr9l-m7afw4kmnw__trayvan", // Trayvan
+  "Voice 533": "default-e-m11vgtr9l-m7afw4kmnw__fabricia", // Fabricia
+  "Voice 534": "default-e-m11vgtr9l-m7afw4kmnw__toyabelle", // Toyabelle
+  "Voice 535": "default-e-m11vgtr9l-m7afw4kmnw__darce", // Darce
+  "Voice 536": "default-e-m11vgtr9l-m7afw4kmnw__nivea", // Nivea
+};
+{
+  const addLabels = Object.keys(VOICE_ADDITIONS_2026_08_04);
+  if (addLabels.length !== 8) throw new Error(`voice additions 08-04: expected 8, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${529 + idx}`) throw new Error(`voice additions 08-04: non-contiguous at ${label}`);
+    const target = VOICE_ADDITIONS_2026_08_04[label];
+    if (!target.startsWith("default-e-")) throw new Error(`voice additions 08-04: ${label} not a custom id`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`voice additions 08-04: ${label} collides`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target; // (VOICE_MAP spread-snapshot gotcha — must be explicit)
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
