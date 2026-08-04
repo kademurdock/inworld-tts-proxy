@@ -2247,6 +2247,33 @@ const VOICE_ADDITIONS_2026_08_04 = {
   });
 }
 
+// ── 2026-08-04 FISH ADDITIONS (Kade: "I added some to fish audio can you add
+// them too?"). Pulled live from api.fish.audio, created_at 2026-08-04 — the 4
+// new designed voices she made today. Cross-checked: zero overlap with any
+// registered fish: id. The 53 older unregistered clones (Lacey + the personal
+// Kade/Amber/Keighty/Sky full-clones and the July-22 leave-outs) STAY out per
+// her standing pick. APPEND-ONLY as Voice 537+.
+const FISH_VOICE_ADDITIONS_2026_08_04 = {
+  "Voice 537": "fish:a8f5aaf5195b44c8970f888a36f477f8", // Authentic Young Woman
+  "Voice 538": "fish:d53b913f611c4574b01194c11dbeb58e", // Warm Confidante
+  "Voice 539": "fish:656e669b40a64e058e5244b63fdf1a33", // Empathetic Young Woman
+  "Voice 540": "fish:eaf7c0a753b145698c8e89b8aa823c7c", // Empathetic Young Female
+};
+{
+  const addLabels = Object.keys(FISH_VOICE_ADDITIONS_2026_08_04);
+  if (addLabels.length !== 4) throw new Error(`fish additions 08-04: expected 4, got ${addLabels.length}`);
+  addLabels.forEach((label, idx) => {
+    if (label !== `Voice ${537 + idx}`) throw new Error(`fish additions 08-04: non-contiguous at ${label}`);
+    const target = FISH_VOICE_ADDITIONS_2026_08_04[label];
+    if (!target.startsWith(FISH_VOICE_PREFIX)) throw new Error(`fish additions 08-04: ${label} is not a fish: target`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`fish additions 08-04: ${label} collides`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target; // (VOICE_MAP spread-snapshot gotcha — must be explicit)
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
