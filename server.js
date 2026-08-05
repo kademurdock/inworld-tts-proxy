@@ -1296,7 +1296,7 @@ app.use("/v1/audio/speech", (req, res, next) => {
 // VOICE as a whole lands at the same loudness as every other voice.
 // Peak-limited so a boost can never clip. Kill switch: TTS_NORM=0.
 const TTS_NORM_ENABLED = process.env.TTS_NORM !== "0";
-const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-16.5"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again. July 23 2026: -15 -> -16.5 (Kade OK'd "turning down the volume a little" to stop the buzzy clipping on hot voices; Railway var updated to match the same day -- keep them in sync).
+const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-15"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again. July 23 2026: -15 -> -16.5 (Kade OK'd "turning down the volume a little" to stop the buzzy clipping on hot voices; Railway var updated to match the same day -- keep them in sync). Aug 5 2026: -16.5 -> -15 (Kade: "turn the voices up a little... don't want them to clip" vs VoiceOver's own volume) -- the July-23 buzz was the 2dB limiter headroom letting brief hard-clips through on hot voices, so this raise ships WITH the headroom drop below (2 -> 0.5dB): quiet voices gain the full ~1.5dB, hot voices hit a CLEAN peak ceiling instead of the buzz. Railway var updated same hour -- keep in sync.
 const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "18");
 const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
 // July 16 2026 (Kade's web call, "starts loud then gets quieter" + distortion):
@@ -1339,7 +1339,7 @@ const TTS_NORM_KNEE_RANGE = 32767 - TTS_NORM_KNEE;
 // clips. Halved to 2 dB: distortion drops superlinearly with drive; the cost
 // is the very quietest crest-heavy voices landing ~2 dB shy of target, which
 // beats them buzzing. Paired with the target drop below (-15 -> -16.5).
-const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "2");
+const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "0.5"); // Aug 5 2026: 2 -> 0.5 (see TTS_NORM_TARGET_DB note -- the old 2dB overshoot allowance over the smoothed peak was the buzzy-clipping source; 0.5dB keeps limiting clean while the hard per-sample clamp stays as the absolute net).
 const TTS_NORM_LIMIT_HEADROOM = Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB / 20);
 // July 23 2026: absolute per-clip true-peak ceiling. The smoothed-peak cap
 // above deliberately tolerates THIS clip's raw peak exceeding the running
