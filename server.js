@@ -45,6 +45,8 @@ const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|bal
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
 // like the people they were cloned from. Per-request `speed` still wins.
 const FISH_TTS_SPEED = parseFloat(process.env.FISH_TTS_SPEED || "1.0");
+const FISH_TEMPERATURE = parseFloat(process.env.FISH_TEMPERATURE || "0.9");
+const FISH_TOP_P = parseFloat(process.env.FISH_TOP_P || "0.7");
 const FISH_VOICE_PREFIX = "fish:";
 
 // Voice performance tuning for inworld-tts-2. Note: this model IGNORES the
@@ -967,6 +969,13 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate) {
         format: "pcm",
         sample_rate: FISH_SAMPLE_RATE,
         latency: FISH_TTS_LATENCY,
+        // Aug 6 2026 (Kade: "hopefully fish is tuned to be as expressive as it
+        // can be... temp and whatever else"): fish's own docs — temperature
+        // "controls expressiveness, higher is more varied" (0-1, default 0.7).
+        // We never sent it = stock 0.7 the whole time. 0.9 = expressive with a
+        // margin off the hallucination edge; both knobs env-tunable.
+        temperature: FISH_TEMPERATURE,
+        top_p: FISH_TOP_P,
         prosody: {
           // Fish accepts 0.5–2.0; the endpoint's shared clamp (0.5–1.5, chosen
           // for Inworld parity) arrives here already sane.
@@ -1046,6 +1055,33 @@ function stripThinkingBlock(text) {
     .replace(/<think>[\s\S]*?<\/think>\n?/g, "") // <think>...</think> from reframe-proxy
     .replace(/\uF001[\s\S]*?\uF002/g, "")        // PUA-wrapped reasoning text (extracted from think part by LibreChat before sending to TTS)
     .trim();
+}
+
+// Aug 6 2026 (Kade, native this morning: voices "reading star star or number
+// sign or asterisk" — fish especially reads markdown literally where inworld
+// mostly shrugs). The platform note asks characters for speakable prose, but
+// models still emit markdown on listy replies; this is the deterministic net.
+// Markers vanish, TEXT SURVIVES: **bold**/*italic*/__underline__ keep their
+// words, headers lose their #, list bullets become plain lines, [text](url)
+// keeps text, code ticks drop, table pipes become spaces. Runs BEFORE
+// applySteeringTags so %%% sentinels are untouched, and never touches bare
+// [bracket] spans (fish emotion cues ride those after conversion).
+function stripSpeechMarkdown(text) {
+  if (!text) return text;
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1$2")
+    .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, "$1$2")
+    .replace(/~~([^~]+)~~/g, "$1")
+    .replace(/\[([^\]]+)\]\(([^)]*)\)/g, "$1")
+    .replace(/`{1,3}([^`]*)`{1,3}/g, "$1")
+    .replace(/^\s*[-*•]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/^>\s+/gm, "")
+    .replace(/\|/g, " ")
+    .replace(/[ \t]{2,}/g, " ");
 }
 
 function stripCitationMarkers(text) {
@@ -1221,15 +1257,35 @@ function isDirectionTag(inner) {
 // the documented spelling is the sure thing; only the three that differ are
 // mapped ([clear throat] matches fish verbatim, [breathe]/[cough] have no
 // documented fish twin and ride the open vocabulary).
-const FISH_NONVERBAL_DIALECT = { laugh: "laughing", sigh: "sighing", yawn: "yawning" };
+const FISH_NONVERBAL_DIALECT = { laugh: "laughing", sigh: "sighing", yawn: "yawning", breathe: "break" };
+// Aug 6 2026 (her fish-docs pointer: "they say emphasis on some words in the
+// fish api sample material"): fish's canonical stress = "[emphasis]" placed
+// RIGHT BEFORE the word — our house idiom is CAPITALIZING the word (native to
+// Inworld). Translate for the fish lane only: a mid-text ALL-CAPS word (3+
+// letters, not a common acronym) gains [emphasis] in front; the word itself
+// stays as written. Docs receipt: "This is [emphasis] really important."
+// Stoplist = acronyms/initialisms only. Deliberately NOT stopping words like
+// NOT/YOU/ALL — a model that capitalizes those MEANT the stress (the fish
+// docs' own example is "I told you NOT to open that door").
+const FISH_EMPHASIS_STOPLIST = new Set(["TTS","URL","USA","ASAP","LOL","OMG","FYI","DIY","CEO","GPS","FAQ","API","USB","GPT","LLM","FBI","NASA","DNA","PDF","HTML","WIFI"]);
+function fishEmphasisFromCaps(text) {
+  return text.replace(/(^|[\s"'(—-])([A-Z]{3,12})(?=$|[\s.,!?;:)"'—-])/g, (m, pre, word) => {
+    if (FISH_EMPHASIS_STOPLIST.has(word)) return m;
+    return `${pre}[emphasis] ${word}`;
+  });
+}
 
 // Short interjections inherit the surrounding mood on their own; a tag longer
 // than its sentence is noise (fish: "don't overuse emotion tags in short text").
 const FISH_SEED_MIN_SENTENCE_LEN = 30;
 
 function seedFishSteering(chunk) {
-  if (!chunk || chunk.indexOf("[") === -1) return chunk;
-  let text = chunk.replace(/\[(laugh|sigh|yawn)\]/gi, (_, w) => `[${FISH_NONVERBAL_DIALECT[w.toLowerCase()]}]`);
+  if (!chunk) return chunk;
+  // CAPS->[emphasis] runs even when no [cues] exist — stressed words deserve
+  // stress regardless of whether the reply carried steering tags.
+  chunk = fishEmphasisFromCaps(chunk);
+  if (chunk.indexOf("[") === -1) return chunk;
+  let text = chunk.replace(/\[(laugh|sigh|yawn|breathe)\]/gi, (_, w) => `[${FISH_NONVERBAL_DIALECT[w.toLowerCase()]}]`);
   const parts = text.split(/(\n\s*\n+)/);
   for (let i = 0; i < parts.length; i += 2) {
     const para = parts[i];
@@ -1575,7 +1631,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // client/src/utils/gameSounds.ts): the web client plays these as real
   // clips; on the TTS path they must simply vanish so no surface ever
   // SPEAKS the token. Same hygiene class as citation markers.
-  const speakText = applySteeringTags(fixPronunciations(stripCitationMarkers(stripThinkingBlock(effectiveInput)))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  const speakText = applySteeringTags(fixPronunciations(stripSpeechMarkdown(stripCitationMarkers(stripThinkingBlock(effectiveInput))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
   console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
