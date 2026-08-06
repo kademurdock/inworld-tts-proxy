@@ -2350,6 +2350,36 @@ const VOICE_ADDITIONS_2026_08_06 = {
   });
 }
 
+// ── 2026-08-06 LATE ADDITIONS (Kade: "Just added a couple more voices to
+// inworld for you to include."). Six new workspace clones since the evening
+// sweep (workspace count 223 -> 229, exact match). Numbered-only displays per
+// her same-night rule; names live here and in the catalog only. Hold-outs
+// unchanged (17 still parked per her standing vet).
+const VOICE_ADDITIONS_2026_08_06_LATE = {
+  "Voice 553": { target: "default-e-m11vgtr9l-m7afw4kmnw__nayeema", name: "Nayeema" },
+  "Voice 554": { target: "default-e-m11vgtr9l-m7afw4kmnw__soofy", name: "Soofy" },
+  "Voice 555": { target: "default-e-m11vgtr9l-m7afw4kmnw__karma_rae", name: "Karma rae" },
+  "Voice 556": { target: "default-e-m11vgtr9l-m7afw4kmnw__karreetha", name: "Karreetha" },
+  "Voice 557": { target: "default-e-m11vgtr9l-m7afw4kmnw__synthetic_ki", name: "Synthetic Ki" },
+  "Voice 558": { target: "default-e-m11vgtr9l-m7afw4kmnw__torana", name: "Torana" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_08_06_LATE);
+  if (entries.length !== 6) throw new Error(`late additions 08-06: expected 6, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${553 + idx}`) throw new Error(`late additions 08-06: non-contiguous at ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`late additions 08-06: ${label} target shape`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`late additions 08-06: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form resolves as a hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
