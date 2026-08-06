@@ -554,7 +554,7 @@ const MODEL_MAP = {
 // genuinely-parallel Inworld calls instead of one slow one -- the GAP_MS
 // silence between chunks (below) is what keeps the seams sounding natural,
 // not the chunk size itself.
-const MAX_CHUNK_LEN = 500;
+const MAX_CHUNK_LEN = parseInt(process.env.TTS_MAX_CHUNK_LEN || "500", 10);
 
 function splitParagraphs(text) {
   const paras = text.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
@@ -721,9 +721,16 @@ function buildWavHeader(dataLength, { numChannels, sampleRate, bitsPerSample }) 
   return header;
 }
 
-// ~140ms of silence between chunks -- long enough to sound like a natural
-// pause, short enough not to feel like dead air.
-const GAP_MS = 350;
+// Aug 6 2026 (Kade: "you can tell it's being read in sections... more loose"):
+// the comment said ~140ms but the value had drifted to 350 -- a third of a
+// second of dead air at EVERY paragraph joint reads as sectioning. Down to
+// 160ms (a natural beat, not a stop), env-tunable for her future taste.
+// MAX_CHUNK_LEN stays 500 on purpose (the June-27 receipt: one 1600-char
+// Inworld call takes 60-90s; parallelism IS the no-dead-air design) but is
+// env-tunable now too. The other half of the seam fix is content-side: the
+// platform note teaches direction CHANGES at paragraph turns (a new mood
+// makes the joint sound like a gear change, not a reader's breath).
+const GAP_MS = parseInt(process.env.TTS_GAP_MS || "160", 10);
 
 function buildSilence(ms, { sampleRate, numChannels, bitsPerSample }) {
   const bytesPerSample = bitsPerSample / 8;
@@ -1296,7 +1303,7 @@ app.use("/v1/audio/speech", (req, res, next) => {
 // VOICE as a whole lands at the same loudness as every other voice.
 // Peak-limited so a boost can never clip. Kill switch: TTS_NORM=0.
 const TTS_NORM_ENABLED = process.env.TTS_NORM !== "0";
-const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-15"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again. July 23 2026: -15 -> -16.5 (Kade OK'd "turning down the volume a little" to stop the buzzy clipping on hot voices; Railway var updated to match the same day -- keep them in sync). Aug 5 2026: -16.5 -> -15 (Kade: "turn the voices up a little... don't want them to clip" vs VoiceOver's own volume) -- the July-23 buzz was the 2dB limiter headroom letting brief hard-clips through on hot voices, so this raise ships WITH the headroom drop below (2 -> 0.5dB): quiet voices gain the full ~1.5dB, hot voices hit a CLEAN peak ceiling instead of the buzz. Railway var updated same hour -- keep in sync.
+const TTS_NORM_TARGET_DB = parseFloat(process.env.TTS_NORM_TARGET_DB || "-13.5"); // speech RMS target, dBFS. July 19 2026 (Kade: "a little louder" through the website, not iOS volume) -- checked Railway first and found a stray env var override already sitting at -18.5 (from the July 16 tuning session) that the old "-20" default here never matched live; moved the code default to -15 (~3.5dB over what was actually live) and updated the Railway var to match, so this default is genuinely the live source of truth again. July 23 2026: -15 -> -16.5 (Kade OK'd "turning down the volume a little" to stop the buzzy clipping on hot voices; Railway var updated to match the same day -- keep them in sync). Aug 5 2026: -16.5 -> -15 (Kade: "turn the voices up a little... don't want them to clip" vs VoiceOver's own volume) -- the July-23 buzz was the 2dB limiter headroom letting brief hard-clips through on hot voices, so this raise ships WITH the headroom drop below (2 -> 0.5dB): quiet voices gain the full ~1.5dB, hot voices hit a CLEAN peak ceiling instead of the buzz. Railway var updated same hour -- keep in sync. Aug 6: -15 -> -13.5 (her "still too quiet" after the knee-budget shipped -- the budget now owns the buzz line, so the target can chase room-carry volume; Railway var synced same minute).
 const TTS_NORM_MAX_BOOST_DB = parseFloat(process.env.TTS_NORM_MAX_BOOST_DB || "18");
 const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
 // July 16 2026 (Kade's web call, "starts loud then gets quieter" + distortion):
