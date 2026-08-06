@@ -487,9 +487,78 @@ async function fluxCredits() {
   }
 }
 
-// GET /balances -> Flux image credits + Twilio balance in one shot.
+/* Aug 6 2026 (idea 42, the spend heartbeat): /balances grew the three bills
+ * that actually matter — Moonshot (the fleet's brain), OpenRouter (the
+ * fallback lane), and fish.audio (TTS provider two; the key already lives on
+ * this service for synthesis). Inworld publishes no balance API — its spend
+ * stays visible via synth volume in the logs. Each provider fails soft to an
+ * {error} so one dead dashboard never hides the others. The bridge snapshots
+ * this daily (balance-history.jsonl on its volume) and /platform-status
+ * turns the deltas into the spoken spend line. */
+async function moonshotBalance() {
+  const key = process.env.MOONSHOT_KEY || process.env.MOONSHOT_API_KEY;
+  if (!key) return { error: "MOONSHOT_KEY not set on this service" };
+  try {
+    const r = await fetch("https://api.moonshot.ai/v1/users/me/balance", {
+      headers: { Authorization: `Bearer ${key}`, "User-Agent": UA },
+    });
+    const text = await r.text();
+    if (!r.ok) return { error: `moonshot ${r.status}: ${text.slice(0, 120)}` };
+    const j = JSON.parse(text);
+    const d = j.data || j;
+    const bal = d.available_balance ?? d.availableBalance ?? d.balance;
+    return bal != null ? { balance: bal, raw: d } : { error: "no balance field", raw: d };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+async function openrouterCredits() {
+  const key = process.env.OPENROUTER_KEY || process.env.OPENROUTER_API_KEY;
+  if (!key) return { error: "OPENROUTER_KEY not set on this service" };
+  try {
+    const r = await fetch("https://openrouter.ai/api/v1/credits", {
+      headers: { Authorization: `Bearer ${key}`, "User-Agent": UA },
+    });
+    const text = await r.text();
+    if (!r.ok) return { error: `openrouter ${r.status}: ${text.slice(0, 120)}` };
+    const j = JSON.parse(text);
+    const d = j.data || j;
+    if (d.total_credits != null && d.total_usage != null) {
+      return { balance: d.total_credits - d.total_usage, usage: d.total_usage, raw: d };
+    }
+    return { error: "no credits fields", raw: d };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+async function fishCredit() {
+  const key = process.env.FISH_API_KEY;
+  if (!key) return { error: "FISH_API_KEY not set on this service" };
+  try {
+    const r = await fetch("https://api.fish.audio/wallet/self/api-credit", {
+      headers: { Authorization: `Bearer ${key}`, "User-Agent": UA },
+    });
+    const text = await r.text();
+    if (!r.ok) return { error: `fish ${r.status}: ${text.slice(0, 120)}` };
+    const j = JSON.parse(text);
+    const credit = j.credit ?? (j.data && j.data.credit);
+    return credit != null ? { credit, raw: j } : { error: "no credit field", raw: j };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+// GET /balances -> Flux image credits + Twilio balance + Moonshot/OpenRouter/fish in one shot.
 router.get("/balances", auth, async (req, res) => {
-  const out = { flux: await fluxCredits(), twilio: null, search: null };
+  const [flux, moonshot, openrouter, fish] = await Promise.all([
+    fluxCredits(),
+    moonshotBalance(),
+    openrouterCredits(),
+    fishCredit(),
+  ]);
+  const out = { flux, moonshot, openrouter, fish, twilio: null, search: null };
   try {
     const t = await twilio(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Balance.json`);
     out.twilio = { balance: t.balance, currency: t.currency };
