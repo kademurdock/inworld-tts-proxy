@@ -2457,6 +2457,39 @@ const VOICE_ADDITIONS_2026_08_06_NIGHT = {
   });
 }
 
+// ── 2026-08-06 FISH ADDITIONS, evening (Kade: "Add the new fish audio voices
+// now."). Ten clones created this afternoon (17:10-18:27 UTC), oldest first.
+// The 53 older unregistered fish stay skipped per her standing pick.
+// Numbered-only displays; names live here and in the catalog.
+const FISH_ADDITIONS_2026_08_06_EVE = {
+  "Voice 568": { target: "fish:8efc1b81728a4a288541bbcc4851b0d2", name: "Bostonio" },
+  "Voice 569": { target: "fish:ad6cf47c480042fba7542041c363f4a3", name: "Friendly Young Speaker" },
+  "Voice 570": { target: "fish:c987a861142e493e8306f785e35ba4b5", name: "Friendly Young Voice" },
+  "Voice 571": { target: "fish:1ac1f093b32746878906e832f4e6167f", name: "Friendly Youthful Voice" },
+  "Voice 572": { target: "fish:d10d0aefa4004985885d6caa0d3c4aee", name: "Vennayah" },
+  "Voice 573": { target: "fish:820fa315023845138d0493b444f14248", name: "Energetic Friend" },
+  "Voice 574": { target: "fish:a4000529ceab4267873aa9c363bec5e6", name: "Energetic Young Speaker" },
+  "Voice 575": { target: "fish:2f28159df6e4471db50127b6a52de6e2", name: "Laymarrah" },
+  "Voice 576": { target: "fish:25f20fd9eac742f3b5a776567ce0927a", name: "Expressive Casual Male" },
+  "Voice 577": { target: "fish:9da98880dbe24a3993787602bcbc9b43", name: "Friendly Young Male" },
+};
+{
+  const entries = Object.entries(FISH_ADDITIONS_2026_08_06_EVE);
+  if (entries.length !== 10) throw new Error(`fish eve additions: expected 10, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${568 + idx}`) throw new Error(`fish eve additions: non-contiguous at ${label}`);
+    if (!info.target.startsWith("fish:")) throw new Error(`fish eve additions: ${label} target shape`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`fish eve additions: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
