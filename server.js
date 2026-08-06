@@ -1339,7 +1339,7 @@ const TTS_NORM_KNEE_RANGE = 32767 - TTS_NORM_KNEE;
 // clips. Halved to 2 dB: distortion drops superlinearly with drive; the cost
 // is the very quietest crest-heavy voices landing ~2 dB shy of target, which
 // beats them buzzing. Paired with the target drop below (-15 -> -16.5).
-const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "0.5"); // Aug 5 2026: 2 -> 0.5 (see TTS_NORM_TARGET_DB note -- the old 2dB overshoot allowance over the smoothed peak was the buzzy-clipping source; 0.5dB keeps limiting clean while the hard per-sample clamp stays as the absolute net).
+const TTS_NORM_LIMIT_HEADROOM_DB = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB || "2"); // Aug 5 2026: 2 -> 0.5 (see TTS_NORM_TARGET_DB note -- the old 2dB overshoot allowance over the smoothed peak was the buzzy-clipping source; 0.5dB keeps limiting clean while the hard per-sample clamp stays as the absolute net).
 const TTS_NORM_LIMIT_HEADROOM = Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB / 20);
 // July 23 2026: absolute per-clip true-peak ceiling. The smoothed-peak cap
 // above deliberately tolerates THIS clip's raw peak exceeding the running
@@ -1353,6 +1353,20 @@ const TTS_NORM_LIMIT_HEADROOM = Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB / 20);
 const TTS_NORM_MAX_OVERDRIVE_DB = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB || "4");
 const TTS_NORM_MAX_OVERDRIVE = Math.pow(10, TTS_NORM_MAX_OVERDRIVE_DB / 20);
 
+// Aug 6 2026 (Kade: "voices sometimes pop when the levels are balancing out...
+// I still like the voices to be loud, so they can carry conversationally in a
+// room"): two additions. (1) GAIN RAMP — consecutive clips for a voice used to
+// STEP between gains while the EMA converged (her pop); now each clip GLIDES
+// from the voice's previous applied gain to its own over the first
+// TTS_NORM_RAMP_MS. (2) KNEE BUDGET — gain chases the RMS target but backs off
+// whenever more than TTS_NORM_KNEE_BUDGET of samples would hit the tanh
+// saturator: that engagement fraction IS the audible line between loud and
+// buzzy (the July-23 buzz was heavy knee engagement, not the knee itself).
+// With the budget owning quality, the smoothed-peak headroom loosens back to
+// 2 dB so peaky voices stop getting ducked below the room-carrying target.
+const TTS_NORM_RAMP_MS = parseFloat(process.env.TTS_NORM_RAMP_MS || "90");
+const TTS_NORM_KNEE_BUDGET = parseFloat(process.env.TTS_NORM_KNEE_BUDGET || "0.015");
+const voiceGainMemory = new Map(); // resolved voice id -> last applied linear gain
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
 
@@ -1439,7 +1453,28 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
       gain = Math.min(gain, (32000 * TTS_NORM_MAX_OVERDRIVE) / peak);
     }
 
-    if (Math.abs(gain - 1) < 0.03) return pcmBuf; // ~0.25 dB, not worth touching
+    // KNEE BUDGET (Aug 6): trim gain until saturator engagement fits the
+    // budget — loudness up to the point of audible texture change, never past.
+    if (gain > 1) {
+      for (let guard = 0; guard < 12; guard++) {
+        let over = 0;
+        for (let i = 0; i < total; i += 4) { // stride-4 scan: plenty of samples, quarter cost
+          if (Math.abs(pcmBuf.readInt16LE(i * 2)) * gain > TTS_NORM_KNEE) over++;
+        }
+        if (over / Math.ceil(total / 4) <= TTS_NORM_KNEE_BUDGET) break;
+        gain *= 0.92;
+        if (gain <= 1) { gain = Math.max(gain, 1); break; }
+      }
+    }
+
+    const prevGain = voiceGainMemory.get(voiceKey);
+    voiceGainMemory.set(voiceKey, gain);
+    const rampSamples =
+      prevGain != null && Math.abs(prevGain - gain) > 0.02
+        ? Math.min(total, Math.max(32, Math.round((sampleRate * TTS_NORM_RAMP_MS) / 1000)))
+        : 0;
+
+    if (Math.abs(gain - 1) < 0.03 && rampSamples === 0) return pcmBuf; // ~0.25 dB, not worth touching
     // Soft-knee limiter (July 16 2026, replaces the bare hard clamp). The
     // smoothed peak cap above deliberately tolerates this clip's true peak
     // exceeding the estimate -- that is exactly what stops one transient from
@@ -1449,7 +1484,10 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
     // saturates smoothly toward full scale above it, can never clip.
     let kneed = 0;
     for (let i = 0; i < total; i++) {
-      let v = pcmBuf.readInt16LE(i * 2) * gain;
+      // Ramp: glide from the voice's previous clip gain to this clip's over
+      // the opening TTS_NORM_RAMP_MS — level changes become inaudible slopes.
+      const g = i < rampSamples ? prevGain + ((gain - prevGain) * i) / rampSamples : gain;
+      let v = pcmBuf.readInt16LE(i * 2) * g;
       const a = Math.abs(v);
       if (a > TTS_NORM_KNEE) {
         v = Math.sign(v) * (TTS_NORM_KNEE + TTS_NORM_KNEE_RANGE * Math.tanh((a - TTS_NORM_KNEE) / TTS_NORM_KNEE_RANGE));
@@ -1458,7 +1496,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
       pcmBuf.writeInt16LE(Math.round(v), i * 2);
     }
     console.log(
-      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${kneed ? `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)` : ""}`
+      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${kneed ? `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)` : ""}`
     );
   } catch (e) {
     console.warn("[TTS] normalize skipped:", e.message);
