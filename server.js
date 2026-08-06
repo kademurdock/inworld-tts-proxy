@@ -20,6 +20,10 @@ app.use(require("./github"));
 app.use(require("./librechat"));
 
 const PORT = process.env.PORT || 3000;
+
+// Multi-speaker scenes (Aug 6 2026, ideas 16+52) — pure script/text helpers.
+// Audio glue lives beside the /v1/audio/speech handler below.
+const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = require("./scene-engine");
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
 // ── Fish Audio: second TTS provider beside Inworld (July 22 2026, Kade's pick) ──
@@ -1127,9 +1131,48 @@ function stripCitationMarkers(text) {
 // the brand handles out wrong ("kah-day-mur-dock"). Rewrite the SPOKEN form to a
 // phonetic spelling. This only touches the text sent to Inworld for synthesis —
 // the visible chat text the user reads on screen is never modified.
+// ── Pronunciation lexicon (Aug 6 2026, idea 12) ─────────────────────────────
+// The old hardcoded brand rules stay exactly as they were (below), and a
+// data-driven lexicon rides after them: whole-word, case-insensitive
+// respellings applied at the synth funnel, so EVERY lane (web read-aloud,
+// voice messages, conversation mode, the phone bridge) says family and
+// Ozarks names right. AUDIO ONLY — visible chat text is never touched.
+// Extend without a deploy: env TTS_LEXICON on this service, format
+// "word=respelling;word2=respelling2" (semicolons or newlines between
+// pairs; env entries override the defaults on the same key). Keys match
+// whole words only, so "cabool" can never fire inside another word.
+const PRONUNCIATION_LEXICON_DEFAULTS = {
+  // Family. Keighty is spoken "Katie" — same KAY sound the Kade brand rules
+  // below already enforce for kade/kademurdock.
+  "keighty": "Katie",
+  // Ozarks and Missouri places TTS reliably mangles, respelled the way
+  // locals say them. Deliberately conservative: only entries with one known
+  // local reading. Kade corrects or adds by ear via TTS_LEXICON.
+  "bois d'arc": "Bodark",
+  "bois darc": "Bodark",
+  "cabool": "Kabool",
+  "hayti": "Haytie",
+};
+const PRONUNCIATION_LEXICON = (() => {
+  const entries = new Map(Object.entries(PRONUNCIATION_LEXICON_DEFAULTS));
+  for (const [k, v] of parseAssignments(process.env.TTS_LEXICON)) entries.set(k.toLowerCase(), v);
+  const compiled = [];
+  for (const [k, v] of entries) {
+    if (!k || !v) continue;
+    const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    try {
+      compiled.push({ re: new RegExp(`\\b${escaped}\\b`, "gi"), to: v });
+    } catch (e) {
+      console.warn(`[TTS] lexicon entry skipped (bad pattern "${k}"): ${e.message}`);
+    }
+  }
+  console.log(`[TTS] pronunciation lexicon loaded: ${compiled.length} entries`);
+  return compiled;
+})();
+
 function fixPronunciations(text) {
   if (!text) return text;
-  return text
+  let out = text
     // Most specific first so stems don't get half-replaced.
     .replace(/kademurdock[-_ ]?ai/gi, "Kadie Murdock A.I.")
     .replace(/kademurdock/gi, "Kadie Murdock")   // also covers kademurdock.com, @kademurdock
@@ -1141,6 +1184,8 @@ function fixPronunciations(text) {
     // flat ("Zad-ee-ana") on Voice 14 — audition WAVs went to her folder;
     // set TTS_ZADIANA_SPELLING on this service to apply the winner.
     .replace(/\bzadiana\b/gi, process.env.TTS_ZADIANA_SPELLING || "Zaydionna");
+  for (const { re, to } of PRONUNCIATION_LEXICON) out = out.replace(re, to);
+  return out;
 }
 
 // ── TTS-2 emotion/performance tags (LLM-authored, sentinel-wrapped) ──────────
@@ -1574,6 +1619,202 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
   return pcmBuf;
 }
 
+// ── Multi-speaker scenes — synth glue (Aug 6 2026, ideas 16+52) ─────────────
+// Script format + parser live in scene-engine.js. This side owns casting and
+// audio: each segment synthesizes on its own voice through the SAME chunking,
+// steering shaping, retry ladders, and per-voice loudness memory as a normal
+// reply, then segments stitch with a speaker gap. One WAV out — so save-voice-
+// message, read-aloud, conversation mode AND the phone (telephony=1) all get
+// scenes for free.
+//
+// CASTING, three rungs (first hit wins), all fail-soft to the base voice:
+//   1. "[[Voice 214]]" — a numbered voice straight out of VOICE_MAP.
+//   2. "[[Deuce]]" + SCENE_CAST env ("deuce=Voice 33;miss opal=Voice 214") —
+//      zero-latency name casting, survives restarts, no deploy to change.
+//   3. "[[Deuce]]" dynamic — the proxy asks its own /librechat/agents lane
+//      (same admin session Forge uses) for an agent by that name and reads
+//      the builder-set tts.voiceId off the record; cached 6h, negative-cached
+//      15min, and skipped entirely when LIBRECHAT_PROXY_SECRET isn't set.
+//      First-time lookups ride the librechat.js 4s pacing queue, so a brand
+//      new name can add a few seconds ONCE — then it's instant from cache.
+const SCENE_MAX_SEGMENTS = parseInt(process.env.SCENE_MAX_SEGMENTS || "24", 10);
+const SCENE_GAP_MS = parseInt(process.env.SCENE_GAP_MS || "280", 10); // beat between speakers; GAP_MS still rules within one speaker
+const SCENE_CAST_ENV = parseAssignments(process.env.SCENE_CAST);
+if (SCENE_CAST_ENV.size) console.log(`[TTS] scene cast env loaded: ${SCENE_CAST_ENV.size} names`);
+
+const sceneNameCache = new Map(); // lowercased name -> { value: voiceId|null, at }
+const SCENE_CAST_HIT_TTL_MS = 6 * 60 * 60 * 1000;
+const SCENE_CAST_MISS_TTL_MS = 15 * 60 * 1000;
+let sceneAgentIndex = { at: 0, byName: null }; // lowercased name -> agent id
+
+async function sceneSelfFetch(path) {
+  const secret = process.env.LIBRECHAT_PROXY_SECRET;
+  if (!secret) throw new Error("LIBRECHAT_PROXY_SECRET not set (dynamic scene casting off)");
+  const r = await fetch(`http://127.0.0.1:${PORT}${path}`, {
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  if (!r.ok) throw new Error(`self ${path} -> ${r.status}`);
+  return r.json();
+}
+
+async function sceneAgentIndexFresh() {
+  if (sceneAgentIndex.byName && Date.now() - sceneAgentIndex.at < SCENE_CAST_MISS_TTL_MS) return sceneAgentIndex.byName;
+  const byName = new Map();
+  let cursor = null;
+  for (let page = 0; page < 3; page++) {
+    const qs = cursor ? `?limit=500&cursor=${encodeURIComponent(cursor)}` : "?limit=500";
+    const d = await sceneSelfFetch(`/librechat/agents${qs}`);
+    for (const a of d.agents || []) if (a && a.name && a.id) byName.set(String(a.name).trim().toLowerCase(), a.id);
+    if (!d.has_more || !d.after) break;
+    cursor = d.after;
+  }
+  sceneAgentIndex = { at: Date.now(), byName };
+  return byName;
+}
+
+// Resolve one script label to a synthesizable voice id. Returns null when the
+// label can't cast (caller falls back to the message's base voice + logs).
+async function resolveSceneVoiceId(label) {
+  if (!label) return null;
+  if (VOICE_MAP[label]) return VOICE_MAP[label]; // rung 1: "Voice 214"
+  const key = label.toLowerCase();
+  const envHit = SCENE_CAST_ENV.get(key); // rung 2: env cast
+  if (envHit) return VOICE_MAP[envHit] || envHit;
+  const cached = sceneNameCache.get(key);
+  if (cached && Date.now() - cached.at < (cached.value ? SCENE_CAST_HIT_TTL_MS : SCENE_CAST_MISS_TTL_MS)) {
+    return cached.value;
+  }
+  try { // rung 3: agent record lookup
+    const byName = await sceneAgentIndexFresh();
+    const agentId = byName.get(key);
+    if (!agentId) throw new Error(`no agent named "${label}"`);
+    const rec = await sceneSelfFetch(`/librechat/agent?id=${encodeURIComponent(agentId)}`);
+    const voiceId = rec && rec.tts && rec.tts.voiceId ? (VOICE_MAP[rec.tts.voiceId] || rec.tts.voiceId) : null;
+    sceneNameCache.set(key, { value: voiceId, at: Date.now() });
+    console.log(`[TTS] scene cast resolved: "${label}" -> ${voiceId || "(no builder voice; base will cover)"}`);
+    return voiceId;
+  } catch (e) {
+    sceneNameCache.set(key, { value: null, at: Date.now() });
+    console.warn(`[TTS] scene cast lookup failed for "${label}": ${e.message} — base voice covers the line`);
+    return null;
+  }
+}
+
+// Synthesize one cast segment through the normal per-provider pipeline and
+// return { pcm, fmt } with loudness already normalized on ITS voice's memory.
+async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
+  const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
+  const steered = applySteeringTags(seg.text);
+  const chunks = segIsFish
+    ? chunkText(steered).map(seedFishSteering)
+    : chunkText(steered).flatMap(shapeInworldSteering);
+  const wavs = await Promise.all(
+    chunks.map((c) =>
+      segIsFish
+        ? fishSynthesizeChunk(c, seg.voiceId.slice(FISH_VOICE_PREFIX.length), speakingRate)
+        : synthesizeChunk(c, seg.voiceId, inworldModel, speakingRate)
+    )
+  );
+  const parsed = wavs.map(parseWav);
+  const fmt = {
+    numChannels: parsed[0].numChannels,
+    sampleRate: parsed[0].sampleRate,
+    bitsPerSample: parsed[0].bitsPerSample,
+  };
+  const gap = parsed.length > 1 ? buildSilence(GAP_MS, fmt) : Buffer.alloc(0);
+  const edgeFade = Math.max(48, Math.round(fmt.sampleRate * 0.005));
+  const pieces = [];
+  parsed.forEach((p, i) => {
+    pieces.push(fadePcmEdges(p.data, edgeFade));
+    if (i < parsed.length - 1) pieces.push(gap);
+  });
+  const pcm = Buffer.concat(pieces);
+  normalizeLoudness(pcm, fmt.sampleRate, seg.voiceId);
+  return { pcm, fmt };
+}
+
+// The scene lane. Returns true when it fully answered the request; false
+// hands the text (tags stripped) back to the single-voice lane — which is
+// also the error posture: a castmate's provider having a bad minute must
+// never kill the message, it just plays on the base voice.
+async function trySynthesizeScene(req, res, preppedText, ctx) {
+  let segments;
+  try {
+    segments = parseSceneScript(preppedText);
+  } catch (e) {
+    console.warn(`[TTS] scene parse failed (${e.message}) — single-voice lane takes it`);
+    return false;
+  }
+  if (segments.length < 2 && !(segments.length === 1 && segments[0].label)) return false;
+  if (segments.length > SCENE_MAX_SEGMENTS) {
+    // Cost cap: overflow lines merge into the final speaker instead of 409ing
+    // a family radio drama that ran long.
+    const keep = segments.slice(0, SCENE_MAX_SEGMENTS - 1);
+    const tail = segments.slice(SCENE_MAX_SEGMENTS - 1);
+    keep.push({ label: tail[0].label, text: tail.map((s) => s.text).join("\n\n") });
+    segments = keep;
+    console.warn(`[TTS] scene segment cap hit — merged overflow into final speaker (cap ${SCENE_MAX_SEGMENTS})`);
+  }
+
+  const cast = [];
+  for (const seg of segments) {
+    let voiceId = seg.label == null ? ctx.baseVoiceId : await resolveSceneVoiceId(seg.label);
+    if (!voiceId) voiceId = ctx.baseVoiceId;
+    const segIsFish = typeof voiceId === "string" && voiceId.startsWith(FISH_VOICE_PREFIX);
+    if ((segIsFish && !FISH_API_KEY) || (!segIsFish && !INWORLD_API_KEY)) {
+      console.warn(`[TTS] scene segment provider key missing for ${voiceId} — base voice covers the line`);
+      voiceId = ctx.baseVoiceId;
+    }
+    cast.push({ ...seg, voiceId });
+  }
+  // A real scene = two-plus distinct voices, OR a whole-message recast onto a
+  // single castmate ("read this in Deuce's voice") that differs from base.
+  const distinctIds = new Set(cast.map((c) => c.voiceId));
+  if (distinctIds.size < 2 && !cast.some((c) => c.voiceId !== ctx.baseVoiceId)) {
+    console.log("[TTS] scene tags present but every line cast to the base voice — single-voice lane takes it");
+    return false;
+  }
+
+  try {
+    const t0 = Date.now();
+    const rendered = await Promise.all(cast.map((seg) => synthesizeSceneSegment(seg, ctx.inworldModel, ctx.speakingRate)));
+
+    // Common-format guard: both providers run 24k/mono/16 today, but a drift
+    // must degrade to a downsample, never to chipmunk audio.
+    const minRate = Math.min(...rendered.map((r) => r.fmt.sampleRate));
+    const format = { numChannels: rendered[0].fmt.numChannels, sampleRate: minRate, bitsPerSample: rendered[0].fmt.bitsPerSample };
+    const sceneGap = buildSilence(SCENE_GAP_MS, format);
+    const pieces = [];
+    rendered.forEach((r, i) => {
+      pieces.push(r.fmt.sampleRate === minRate ? r.pcm : downsamplePcm(r.pcm, r.fmt.sampleRate, minRate));
+      if (i < rendered.length - 1) pieces.push(sceneGap);
+    });
+    const combinedData = Buffer.concat(pieces);
+    const header = buildWavHeader(combinedData.length, format);
+    const finalAudio = Buffer.concat([header, combinedData]);
+    console.log(`[TTS] scene ok: ${cast.length} segments, ${new Set(cast.map((c) => c.voiceId)).size} voices, ${Date.now() - t0}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
+
+    if (req.query.telephony === "1") {
+      const wav = parseWav(finalAudio);
+      const pcm8k = fadePcmEdges(downsamplePcm(wav.data, wav.sampleRate, 8000));
+      const mulaw = pcm16ToMulaw(pcm8k);
+      res.set("Content-Type", "audio/basic");
+      res.set("Content-Length", mulaw.length);
+      res.send(mulaw);
+      return true;
+    }
+    const audioFingerprint = crypto.createHash("sha256").update(combinedData).digest("hex").slice(0, 16);
+    console.log(`[TTS] scene response: base="${ctx.baseVoiceLabel}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
+    res.set("Content-Type", "audio/wav");
+    res.set("Content-Length", finalAudio.length);
+    res.send(finalAudio);
+    return true;
+  } catch (err) {
+    console.error(`[TTS] scene synth failed (${err.message}) — single-voice lane takes the message`);
+    return false;
+  }
+}
+
 app.post("/v1/audio/speech", async (req, res) => {
   const { input, voice = "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
@@ -1638,7 +1879,25 @@ app.post("/v1/audio/speech", async (req, res) => {
   // client/src/utils/gameSounds.ts): the web client plays these as real
   // clips; on the TTS path they must simply vanish so no surface ever
   // SPEAKS the token. Same hygiene class as citation markers.
-  const speakText = applySteeringTags(fixPronunciations(stripSpeechMarkdown(stripCitationMarkers(stripThinkingBlock(effectiveInput))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  // Prep chain minus steering first: scenes must split BEFORE steering so
+  // each speaker's %%% carry-forward stays inside their own lines.
+  const preppedText = fixPronunciations(stripSpeechMarkdown(stripCitationMarkers(stripThinkingBlock(effectiveInput)))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+
+  // Multi-speaker scene lane (Aug 6 2026): double-bracket speaker tags turn a
+  // message into a stitched multi-voice performance. Anything short of a real
+  // 2+ voice scene falls straight through to the classic single-voice lane
+  // with the tags stripped — never spoken, never fatal.
+  if (SCENE_TAG_RE.test(preppedText)) {
+    const handled = await trySynthesizeScene(req, res, preppedText, {
+      baseVoiceLabel: voice,
+      baseVoiceId: inworldVoice,
+      inworldModel,
+      speakingRate,
+    });
+    if (handled) return;
+  }
+
+  const speakText = applySteeringTags(preppedText.replace(SCENE_TAG_G, " ").replace(/[ \t]{2,}/g, " "));
   console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
