@@ -2300,6 +2300,48 @@ const KADE_PRO_ADDITION_2026_08_04 = {
   }
 }
 
+// ── 2026-08-06 VOICE ADDITIONS (Kade: "I have new voices on fish audio and
+// inworld. Can you add them?"). Live-diffed both providers against every
+// registered id. NEW since the Aug-3 sweep: six inworld workspace clones
+// (family names — none on her standing hold-out vet) + five fish clones
+// created the same night. Kayshia/Doachah/Londranno exist on BOTH providers
+// (her side-by-side comparison pattern) — the fish twins carry a " fish"
+// suffix so spoken switching stays unambiguous. THE HOLD-OUTS (Kade*,
+// Amber*/Miss A, Sky, Dale, Keighty, Podcast Keighty fast) REMAIN OUT per
+// her standing vet, reconfirmed Aug 3 — only "Kade professional" (541) has
+// ever been individually invited. APPEND-ONLY as Voice 542+; same
+// boot-crash rails as prior blocks.
+const VOICE_ADDITIONS_2026_08_06 = {
+  "Voice 542": { target: "default-e-m11vgtr9l-m7afw4kmnw__kayshia", name: "Kayshia" },
+  "Voice 543": { target: "default-e-m11vgtr9l-m7afw4kmnw__chancey", name: "Chancey" },
+  "Voice 544": { target: "default-e-m11vgtr9l-m7afw4kmnw__nashay", name: "Nashay" },
+  "Voice 545": { target: "default-e-m11vgtr9l-m7afw4kmnw__puddin", name: "Puddin" },
+  "Voice 546": { target: "default-e-m11vgtr9l-m7afw4kmnw__doachah", name: "Doachah" },
+  "Voice 547": { target: "default-e-m11vgtr9l-m7afw4kmnw__londranno", name: "Londranno" },
+  "Voice 548": { target: "fish:1e70a5539a8e495eadfce5fff533f08f", name: "Kayshia fish" },
+  "Voice 549": { target: "fish:1fc3e2fea4034ebf9a49132d390008d7", name: "Doachah fish" },
+  "Voice 550": { target: "fish:25644d4b4f6c42c49694323accb2a952", name: "Londranno fish" },
+  "Voice 551": { target: "fish:6b040e42410740e49c31aa1d0088c8a5", name: "Supportive Friend" },
+  "Voice 552": { target: "fish:d9a9b510642f41e49086b8f17e08851c", name: "Friendly Young Female" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_08_06);
+  if (entries.length !== 11) throw new Error(`additions 08-06: expected 11, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${542 + idx}`) throw new Error(`additions 08-06: non-contiguous at ${label}`);
+    const okTarget = info.target.startsWith("default-e-") || info.target.startsWith("fish:");
+    if (!okTarget) throw new Error(`additions 08-06: ${label} target shape`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`additions 08-06: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;
+    VOICE_LIST.push(display);
+    CUSTOM_VOICE_NUMBERS.add(display);
+    HIDDEN_VOICE_ALIASES.push(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
