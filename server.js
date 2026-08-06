@@ -2050,9 +2050,13 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
     NUMBERED_VOICE_ALIASES[label] = target; // bare number: spoken switching + integrity check
     VOICE_MAP[label] = target;              // (VOICE_MAP spread-snapshot gotcha — must be explicit)
     const display = displayOf(label);
-    VOICE_MAP[display] = target;            // pickers send the display label verbatim
-    VOICE_LIST.push(display);
-    CUSTOM_VOICE_NUMBERS.add(display);
+    VOICE_MAP[display] = target;            // named form resolves forever (stored selections)
+    // Aug 6 2026 (Kade: "take the names off the voices. They should be
+    // numbered only") — the picker lists the bare number; the named display
+    // string lives on as a hidden alias so nothing anyone saved ever breaks.
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+    if (display !== label) HIDDEN_VOICE_ALIASES.push(display);
     // Old beta-era spellings: hidden aliases forever (see comment above).
     const named = FISH_NAMED_LABELS[label];
     const oldBare = `${label} (Beta)`;
@@ -2293,10 +2297,12 @@ const KADE_PRO_ADDITION_2026_08_04 = {
     const display = `${label} ${info.name}`;
     NUMBERED_VOICE_ALIASES[label] = info.target; // bare: spoken switching + integrity check
     VOICE_MAP[label] = info.target;
-    VOICE_MAP[display] = info.target;            // picker sends the display label verbatim
-    VOICE_LIST.push(display);
-    CUSTOM_VOICE_NUMBERS.add(display);
-    HIDDEN_VOICE_ALIASES.push(label);            // stored bare "Voice 541" stays valid for the fork
+    VOICE_MAP[display] = info.target;            // named form resolves forever (stored selections)
+    // Aug 6 2026: numbered-only picker (her ask) — bare label listed, named
+    // display demoted to hidden alias.
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
   }
 }
 
@@ -2335,10 +2341,12 @@ const VOICE_ADDITIONS_2026_08_06 = {
     const display = `${label} ${info.name}`;
     NUMBERED_VOICE_ALIASES[label] = info.target;
     VOICE_MAP[label] = info.target;
-    VOICE_MAP[display] = info.target;
-    VOICE_LIST.push(display);
-    CUSTOM_VOICE_NUMBERS.add(display);
-    HIDDEN_VOICE_ALIASES.push(label);
+    VOICE_MAP[display] = info.target;            // named form resolves forever
+    // Aug 6 2026: numbered-only picker (her ask) — bare label listed, named
+    // display demoted to hidden alias.
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
   });
 }
 
