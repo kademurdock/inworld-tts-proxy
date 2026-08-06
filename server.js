@@ -2425,6 +2425,38 @@ const VOICE_ADDITIONS_2026_08_06_LATE = {
   });
 }
 
+// ── 2026-08-06 NIGHTCAP ADDITIONS (Kade: "Last task of the night. add the few
+// new voices I just added to inworld."). Nine new workspace clones since batch
+// two (workspace 229 -> 238, exact match). Numbered-only displays; hold-outs
+// unchanged (17 parked).
+const VOICE_ADDITIONS_2026_08_06_NIGHT = {
+  "Voice 559": { target: "default-e-m11vgtr9l-m7afw4kmnw__traymon", name: "Traymon" },
+  "Voice 560": { target: "default-e-m11vgtr9l-m7afw4kmnw__gianne", name: "Gianne" },
+  "Voice 561": { target: "default-e-m11vgtr9l-m7afw4kmnw__lolo", name: "Lolo" },
+  "Voice 562": { target: "default-e-m11vgtr9l-m7afw4kmnw__vennya", name: "Vennya" },
+  "Voice 563": { target: "default-e-m11vgtr9l-m7afw4kmnw__magnolia", name: "Magnolia" },
+  "Voice 564": { target: "default-e-m11vgtr9l-m7afw4kmnw__navita", name: "Navita" },
+  "Voice 565": { target: "default-e-m11vgtr9l-m7afw4kmnw__nomi", name: "Nomi" },
+  "Voice 566": { target: "default-e-m11vgtr9l-m7afw4kmnw__hailya", name: "Hailya" },
+  "Voice 567": { target: "default-e-m11vgtr9l-m7afw4kmnw__diamond", name: "Diamond" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_08_06_NIGHT);
+  if (entries.length !== 9) throw new Error(`nightcap additions: expected 9, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${559 + idx}`) throw new Error(`nightcap additions: non-contiguous at ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`nightcap additions: ${label} target shape`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`nightcap additions: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
