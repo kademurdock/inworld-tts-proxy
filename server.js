@@ -1081,6 +1081,13 @@ function stripSpeechMarkdown(text) {
     .replace(/^\s*\d+\.\s+/gm, "")
     .replace(/^>\s+/gm, "")
     .replace(/\|/g, " ")
+    // Inline hardening (Aug 6, second pass — the live receipt caught a
+    // mid-sentence "##" spoken as "hash hash"; the header rule only fired at
+    // line starts). Runs of #/* anywhere are formatting, never speech; a
+    // lone # before a digit is spoken as "number".
+    .replace(/#(?=\d)/g, "number ")
+    .replace(/#{2,}/g, "")
+    .replace(/\*{2,}/g, "")
     .replace(/[ \t]{2,}/g, " ");
 }
 
