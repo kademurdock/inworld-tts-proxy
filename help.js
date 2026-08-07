@@ -422,6 +422,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 7, 2026</h2>
+<ul>
+  <li><strong>Your companions keep a diary now.</strong> Beside the little memory cards they've always kept, each companion now keeps a private, dated diary of your day-to-day life &mdash; the show you binged, how the appointment went, the kind of day it was. It has no size limit, because it stays quietly on the shelf instead of riding along in every conversation. Nothing changes about how you talk: share your day like always, and the diary takes care of itself.</li>
+  <li><strong>And they can actually look things up in it.</strong> Ask <em>"what was I up to last week?"</em> or <em>"have I told you about that show before?"</em> and your companion checks the real entries &mdash; real dates, your actual words' gist &mdash; instead of guessing. Old entries also drift back naturally when they fit the moment, the way a friend goes <em>"wait, didn't you say&hellip;"</em> &mdash; never recited at you out of nowhere. Starting today the diary begins filling as you talk; give it a few days of living and it gets good.</li>
+  <li><strong>Same privacy rules as always.</strong> A diary entry belongs to the companion you told, period &mdash; other characters can't read it. And the memory switch you already have covers the diary too: remembering off means diary closed, both directions.</li>
+</ul>
+
 <h2>August 6, 2026</h2>
 <ul>
   <li><strong>Voice scenes &mdash; characters share one recording now.</strong> Ask a companion for a scene, a skit, or a little radio drama with other characters, and the voice message that comes back is the real thing: each character speaking their own lines in their own voice, one recording, a natural beat between speakers. It works everywhere voices work &mdash; read-aloud, saved voice messages, even the phone line. On screen the scene reads like a clean script, with each speaker's name in front of their lines.</li>
