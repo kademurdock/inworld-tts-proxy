@@ -2812,6 +2812,47 @@ const FISH_ADDITIONS_2026_08_06_EVE = {
   });
 }
 
+// ── 2026-08-06 INWORLD ADDITIONS, round four (Kade: "Add my new inworld
+// voices to the catalogue"). 16 fresh workspace clones (workspace count
+// 238→254; 33 unregistered found, 17 parked by her standing hold-out vet —
+// incl. "Pro amber reading", an Amber the prefix check nearly missed).
+// Numbered-only picker per her rule; names live here, in the hidden aliases,
+// and in the catalog. Ear-described via the Gemini pipeline same session.
+const VOICE_ADDITIONS_2026_08_06_EVE2 = {
+  "Voice 578": { target: "default-e-m11vgtr9l-m7afw4kmnw__jadabell", name: "Jadabell" },
+  "Voice 579": { target: "default-e-m11vgtr9l-m7afw4kmnw__snoley", name: "Snoley" },
+  "Voice 580": { target: "default-e-m11vgtr9l-m7afw4kmnw__mobley", name: "Mobley" },
+  "Voice 581": { target: "default-e-m11vgtr9l-m7afw4kmnw__lanore", name: "Lanore" },
+  "Voice 582": { target: "default-e-m11vgtr9l-m7afw4kmnw__lorissa", name: "Lorissa" },
+  "Voice 583": { target: "default-e-m11vgtr9l-m7afw4kmnw__mayflower", name: "Mayflower" },
+  "Voice 584": { target: "default-e-m11vgtr9l-m7afw4kmnw__cooxy", name: "Cooxy" },
+  "Voice 585": { target: "default-e-m11vgtr9l-m7afw4kmnw__ashe", name: "Ashe" },
+  "Voice 586": { target: "default-e-m11vgtr9l-m7afw4kmnw__kellsey", name: "Kellsey" },
+  "Voice 587": { target: "default-e-m11vgtr9l-m7afw4kmnw__casual_ki", name: "Casual Ki" },
+  "Voice 588": { target: "default-e-m11vgtr9l-m7afw4kmnw__melody", name: "Melody" },
+  "Voice 589": { target: "default-e-m11vgtr9l-m7afw4kmnw__sagen", name: "Sagen" },
+  "Voice 590": { target: "default-e-m11vgtr9l-m7afw4kmnw__pebbsey", name: "Pebbsey" },
+  "Voice 591": { target: "default-e-m11vgtr9l-m7afw4kmnw__bevvy", name: "Bevvy" },
+  "Voice 592": { target: "default-e-m11vgtr9l-m7afw4kmnw__coco", name: "coco" },
+  "Voice 593": { target: "default-e-m11vgtr9l-m7afw4kmnw__alissa", name: "Alissa" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_08_06_EVE2);
+  if (entries.length !== 16) throw new Error(`eve2 additions: expected 16, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${578 + idx}`) throw new Error(`eve2 additions: non-contiguous at ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`eve2 additions: ${label} target shape`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`eve2 additions: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
