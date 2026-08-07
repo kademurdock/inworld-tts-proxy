@@ -667,6 +667,20 @@ function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
   return chunks.length ? chunks : [text];
 }
 
+// Aug 7 2026 (Kade: native "refuses to generate an audio voice message" —
+// Railway receipts: three Inworld 400s, "text contains only a bracketed
+// speaking-style instruction and no words to speak"). Under the hotter
+// steering knob a paragraph can be ONLY a %%%direction%%% (often next to a
+// markdown header the scrub just emptied), which shapes into a words-free
+// [bracket] chunk — Inworld hard-rejects those and one bad chunk failed the
+// whole message. The rule: a direction with nothing to say says nothing —
+// words-free chunks are dropped before synthesis, on every lane (single,
+// fish, scenes). If NOTHING survives, the caller returns clean silence
+// instead of a 500.
+function chunkHasSpeakableWords(chunk) {
+  return /[a-zA-Z0-9]/.test(String(chunk || "").replace(/\[[^\]]*\]/g, " "));
+}
+
 // ---- WAV helpers ----
 // Inworld returns base64 WAV (16-bit PCM). We parse out the raw PCM samples
 // from each chunk's WAV, splice in a short silence gap between chunks so
@@ -1705,9 +1719,15 @@ async function resolveSceneVoiceId(label) {
 async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
   const steered = applySteeringTags(seg.text);
-  const chunks = segIsFish
+  const chunks = (segIsFish
     ? chunkText(steered).map(seedFishSteering)
-    : chunkText(steered).flatMap(shapeInworldSteering);
+    : chunkText(steered).flatMap(shapeInworldSteering)
+  ).filter(chunkHasSpeakableWords);
+  if (!chunks.length) {
+    // a castmate whose whole part was a bare direction contributes silence
+    const fmt = { numChannels: 1, sampleRate: 24000, bitsPerSample: 16 };
+    return { pcm: Buffer.alloc(0), fmt };
+  }
   const wavs = await Promise.all(
     chunks.map((c) =>
       segIsFish
@@ -1910,9 +1930,15 @@ app.post("/v1/audio/speech", async (req, res) => {
     // Provider-aware steering shaping (Aug 3 2026, see helpers above): fish
     // re-seeds the active direction per sentence; Inworld gets one direction
     // per request (identical repeats dropped, real changes split the chunk).
-    const chunks = isFishVoice
+    const chunks = (isFishVoice
       ? chunkText(speakText).map(seedFishSteering)
-      : chunkText(speakText).flatMap(shapeInworldSteering);
+      : chunkText(speakText).flatMap(shapeInworldSteering)
+    ).filter(chunkHasSpeakableWords);
+    if (!chunks.length) {
+      console.log('[TTS] every chunk was words-free after shaping — returning silence, not a 500');
+      res.set({ 'Content-Type': 'audio/wav', 'Content-Length': '0' });
+      return res.status(200).end();
+    }
 
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
