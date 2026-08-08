@@ -10,6 +10,11 @@ app.use(express.json({ limit: "2mb" }));
 // Mount the accessible help system (/help and friends). See help.js.
 app.use(require("./help"));
 
+// KADE Aug 8 2026: unlisted plain-text mirrors of her MOO design docs at
+// /design/:doc so any character can kade_read_page the FULL canon while
+// spitballing (her folder stays canon; sessions refresh on change).
+app.use(require("./designdocs"));
+
 // Forge's read-only Railway ops routes. See railway.js.
 app.use(require("./railway"));
 
