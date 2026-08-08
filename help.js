@@ -1023,6 +1023,9 @@ PAGES.memory = {
   <li>Ongoing stuff — a project, a health thing, plans — so next time it can just ask how it went.</li>
 </ul>
 
+<h2>The Logbook: the long story of you</h2>
+<div class="term"><strong>Your Logbook</strong> &mdash; beside the cards, every companion keeps a dated logbook of your day-to-day: what happened, how it went, the rabbit holes you went down together. Cards hold who you ARE; the logbook holds what HAPPENED &mdash; and it has no size limit, because it stays on the shelf until a moment calls for it. Ask "what was I up to last week?" or "have I mentioned that before?" and your companion checks the real entries. Old moments also drift back naturally when they fit &mdash; the way a friend goes "wait, didn't you say&hellip;" Browse it all under You &rarr; Your Logbook: every entry by date, who holds it, a Forget button on each, and a box to add a line yourself. Same privacy as cards: an entry belongs to the companion you told. And two magic words work everywhere: say <em>"off the record"</em> and nothing gets remembered &mdash; cards or logbook &mdash; until you say you're back on.</div>
+
 <h2>Two kinds of cards: shared, and just-between-you-two</h2>
 <ul>
   <li><strong>Shared cards</strong> are the basics every character should know — your name, your people, how you like to be talked to. Tell one character, they all catch up.</li>
