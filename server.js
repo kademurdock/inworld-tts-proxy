@@ -1139,6 +1139,140 @@ function stripCitationMarkers(text) {
     .trim();
 }
 
+// ── Spoken-text normalizer (Aug 7 2026, her ask: "dot com websites and
+// numbers get butchered — convert those into a TTS-friendly format, voice
+// only") ─────────────────────────────────────────────────────────────────────
+// The industry name for this layer is TEXT NORMALIZATION — every serious TTS
+// front-end (Polly, Azure, espeak) runs one before synthesis: expand the
+// things writing-notation says but a voice shouldn't read literally. Ours is
+// deterministic, ordered, and AUDIO-ONLY: it sits in the prep chain between
+// markdown-strip and the pronunciation lexicon, so the visible chat text is
+// never touched and user lexicon entries still win afterward.
+//
+// ORDER MATTERS and is load-bearing: emails before URLs (an email contains a
+// domain), ISO dates before phone numbers and ranges (2026-08-07 must never
+// become a phone group or "2026 to 08"), money before bare-number ranges
+// ($3-6 → dollars first, then "to"), phones before ranges (417-555-1234 is
+// digits, not arithmetic). Every rule is conservative on purpose — when in
+// doubt a shape is LEFT ALONE, because a wrong expansion is worse to the ear
+// than a robotic read. Kill switch: KADE_TTS_NORMALIZE=0.
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TLD_SPOKEN = 'com|org|net|edu|gov|io|ai|app|dev|co|us|fm|tv|me|audio|info|biz';
+
+function speakDigits(s) {
+  return String(s).replace(/\D/g, '').split('').join(' ');
+}
+
+function normalizeForSpeech(text) {
+  if (!text || process.env.KADE_TTS_NORMALIZE === '0') return text;
+  let t = String(text);
+
+  // 1) EMAILS → "name at domain dot tld" (before URLs — an email contains a domain)
+  t = t.replace(/\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,10})\b/g, (_, user, dom, tld) => {
+    return `${user.replace(/\./g, ' dot ')} at ${dom.replace(/\./g, ' dot ')} dot ${tld}`;
+  });
+
+  // 2+3) URLS AND BARE DOMAINS, one path-aware rule — protocol and www are
+  //    dropped, dots become "dot", short paths become "slash" words, and long
+  //    or query-stringed paths collapse to just the domain (nobody wants a
+  //    UTM parameter performed dramatically). File names like server.js and
+  //    decimals like 3.14 are safe: the last label must be a real TLD word.
+  t = t.replace(
+    new RegExp(String.raw`(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:${TLD_SPOKEN}))\b(\/[^\s)\]}"'<>]*)?`, 'g'),
+    (_, host, path) => {
+      const spokenHost = host.replace(/\./g, ' dot ');
+      if (!path || path === '/') return spokenHost;
+      const clean = path.replace(/[?#].*$/, '');
+      const segs = clean.split('/').filter(Boolean);
+      if (segs.length === 0 || segs.length > 3 || clean.length > 40) return spokenHost;
+      return `${spokenHost} slash ${segs.join(' slash ')}`;
+    },
+  );
+
+  // 4) ISO DATES 2026-08-07 → "August 7, 2026" (before phones/ranges ever see the digits)
+  t = t.replace(/\b(20\d{2})-(\d{2})-(\d{2})\b/g, (_, y, mo, d) => {
+    const mi = parseInt(mo, 10);
+    const di = parseInt(d, 10);
+    if (mi < 1 || mi > 12 || di < 1 || di > 31) return `${y}-${mo}-${d}`;
+    return `${MONTH_NAMES[mi - 1]} ${di}, ${y}`;
+  });
+
+  // 5) US PHONE NUMBERS → spoken digit groups with pause periods
+  //    (417) 555-1234 / 417-555-1234 / +1 417 555 1234 → "4 1 7. 5 5 5. 1 2 3 4"
+  t = t.replace(/(?:\+1[-. ]?)?\(?(\d{3})\)?[-. ](\d{3})[-. ](\d{4})\b/g, (_, a, b, c) => {
+    return `${speakDigits(a)}. ${speakDigits(b)}. ${speakDigits(c)}`;
+  });
+
+  // 6a) MONEY RANGES first ($3-6 → "3 to 6 dollars") so the plain money rule
+  //     never leaves a dangling "-6" behind
+  t = t.replace(/\$(\d{1,4})\s?-\s?\$?(\d{1,4})\b/g, '$1 to $2 dollars');
+
+  // 6) MONEY → words. $4.99 "4 dollars and 99 cents", $10 "10 dollars",
+  //    $0.20 "20 cents", $1 "1 dollar", $1.5M-style left alone (letters after).
+  t = t.replace(/\$(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d{2}))?(?![\d.,]?[a-zA-Z])/g, (_, whole, cents) => {
+    const w = whole.replace(/,/g, '');
+    const wn = parseInt(w, 10);
+    const dollarWord = wn === 1 ? 'dollar' : 'dollars';
+    if (cents && cents !== '00') {
+      if (wn === 0) return `${parseInt(cents, 10)} cents`;
+      return `${whole} ${dollarWord} and ${parseInt(cents, 10)} cents`;
+    }
+    return `${whole} ${dollarWord}`;
+  });
+
+  // 7) PERCENT → the word (92% → "92 percent")
+  t = t.replace(/(\d+(?:\.\d+)?)\s?%/g, '$1 percent');
+
+  // 8) UNITS the voice mangles: data sizes, mph, degrees
+  const UNIT_WORDS = { KB: 'kilobytes', MB: 'megabytes', GB: 'gigabytes', TB: 'terabytes' };
+  t = t.replace(/\b(\d+(?:\.\d+)?)\s?(KB|MB|GB|TB)\b/g, (_, n, u) => `${n} ${UNIT_WORDS[u]}`);
+  t = t.replace(/\b(\d+(?:\.\d+)?)\s?mph\b/gi, '$1 miles an hour');
+  t = t.replace(/(\d+(?:\.\d+)?)\s?°\s?F\b/g, '$1 degrees Fahrenheit');
+  t = t.replace(/(\d+(?:\.\d+)?)\s?°\s?C\b/g, '$1 degrees Celsius');
+  t = t.replace(/(\d+(?:\.\d+)?)\s?°(?![FC])/g, '$1 degrees');
+
+  // 9) BARE 24-HOUR TIMES → 12-hour (17:30 → "5:30 PM"). Only hours 13-23
+  //    convert (unambiguously 24-hour); anything else could be a ratio or
+  //    verse and is left alone. Times already wearing am/pm are untouched.
+  t = t.replace(/\b(1[3-9]|2[0-3]):([0-5]\d)\b(?!\s?[apAP]\.?[mM])/g, (_, h, m) => {
+    return `${parseInt(h, 10) - 12}:${m} PM`;
+  });
+  t = t.replace(/\b00:([0-5]\d)\b/g, '12:$1 AM');
+
+  // 10) NUMBER RANGES 2-3 / 5 - 10 → "2 to 3" (dates and phones already
+  //     consumed their digits above; leading zeros bow out so 08-07 style
+  //     date fragments are never misread as arithmetic)
+  t = t.replace(/(?<![\d.])(\d{1,4})\s?-\s?(\d{1,4})(?![\d.%-])/g, (m, a, b) => {
+    if (a.length > 1 && a[0] === '0') return m;
+    if (b.length > 1 && b[0] === '0') return m;
+    return `${a} to ${b}`;
+  });
+
+  // 11) RATE NOTATION a voice reads as "slash mo": /mo /yr /day /hr /wk
+  t = t.replace(/\/mo(?:nth)?\b/g, ' a month');
+  t = t.replace(/\/yr\b|\/year\b/g, ' a year');
+  t = t.replace(/\/day\b/g, ' a day');
+  t = t.replace(/\/hr\b|\/hour\b/g, ' an hour');
+  t = t.replace(/\/wk\b|\/week\b/g, ' a week');
+
+  // 12) SYMBOLS a voice shouldn't skip: standalone & → and, ~ before a number
+  //     → "about " (unless the word about is already sitting right there)
+  t = t.replace(/\s&\s/g, ' and ');
+  t = t.replace(/\babout\s+~\s?/gi, 'about ');
+  t = t.replace(/~\s?(?=\d|\$)/g, 'about ');
+
+  // 13) WRITTEN-ONLY ABBREVIATIONS → spoken forms (whole-word, tight list)
+  t = t.replace(/\be\.g\.,?\s/gi, 'for example, ');
+  t = t.replace(/\bi\.e\.,?\s/gi, 'that is, ');
+  t = t.replace(/\betc\.(?=\s|$)/gi, 'et cetera.');
+  t = t.replace(/\betc\.(?=[,!?)])/gi, 'et cetera');
+  t = t.replace(/\bvs\.?\s(?=[a-zA-Z])/gi, 'versus ');
+  t = t.replace(/\bapprox\.\s/gi, 'approximately ');
+
+  // tidy any doubled spaces the expansions left
+  return t.replace(/[ \t]{2,}/g, ' ');
+}
+
 // This is the endpoint LibreChat will hit -- it expects OpenAI's /v1/audio/speech path
 // ── Brand/name pronunciation normalization (AUDIO ONLY) ──────────────────────
 // Kade's name is pronounced "Kadie" (KAY-dee) Murdock. Left as-is, Inworld sounds
@@ -1901,7 +2035,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // SPEAKS the token. Same hygiene class as citation markers.
   // Prep chain minus steering first: scenes must split BEFORE steering so
   // each speaker's %%% carry-forward stays inside their own lines.
-  const preppedText = fixPronunciations(stripSpeechMarkdown(stripCitationMarkers(stripThinkingBlock(effectiveInput)))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(stripThinkingBlock(effectiveInput))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
 
   // Multi-speaker scene lane (Aug 6 2026): double-bracket speaker tags turn a
   // message into a stitched multi-voice performance. Anything short of a real
