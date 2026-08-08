@@ -422,6 +422,14 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 8, 2026</h2>
+<ul>
+  <li><strong>The diary has a proper name now: your Logbook.</strong> Same thing, better jacket. Find it under You, then Your Logbook &mdash; and it just got seeded with real history: the housekeeping pass sorted your companions' memory so day-by-day happenings (the July project beats, the paperwork saga milestones) now live as dated logbook entries, while the always-remembered cards keep just the lasting stuff. Fewer duplicate notes, cleaner recall, nothing lost. From here on the nightly tidy-up keeps things sorted on its own.</li>
+  <li><strong>Companions keep their word now.</strong> When a character tells you they'll do something &mdash; have that verse ready, look into a thing &mdash; they remember promising, and the next conversation opens with them honoring it instead of you re-asking. And when you mention something coming up, like an appointment you're dreading, they may offer once to check in with you afterward. Say yes and it happens; say nothing and it doesn't.</li>
+  <li><strong>"Off the record" works everywhere.</strong> Say it and nothing from that stretch gets remembered &mdash; no memory, no logbook &mdash; until you say you're back on the record. Your companion will keep it between you, for real.</li>
+  <li><strong>Voice messages perform; drafts paste clean.</strong> Ask for a voice message and it's written to be HEARD from the first word &mdash; spoken rhythm, real delivery, feeling on every beat. Ask a companion to write a text or email you're going to send, and the reply is the message itself, ready to copy &mdash; no "here's a draft," no quotes to trim. And when you ramble at them about something you love, they've been told: that's earned depth, not a two-line summary.</li>
+</ul>
+
 <h2>August 7, 2026</h2>
 <ul>
   <li><strong>Your companions keep a diary now.</strong> Beside the little memory cards they've always kept, each companion now keeps a private, dated diary of your day-to-day life &mdash; the show you binged, how the appointment went, the kind of day it was. It has no size limit, because it stays quietly on the shelf instead of riding along in every conversation. Nothing changes about how you talk: share your day like always, and the diary takes care of itself.</li>
