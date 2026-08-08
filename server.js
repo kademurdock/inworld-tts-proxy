@@ -1378,6 +1378,41 @@ const NONVERBAL_TAGS = new Set(["laugh", "breathe", "clear throat", "sigh", "cou
 // multi-paragraph reply would only sound expressive on the first chunk, since
 // Inworld only honors a leading direction once, at an utterance's start.
 // Inline non-verbals need no such treatment; they stay exactly where written.
+/* KADE Aug 8 2026 — VOCALIZE PHYSICAL DIRECTIONS (her live catch: the deep
+ * payload showed [cracks knuckles] reaching Inworld — stage business no voice
+ * can perform, and the likely culprit behind flat deliveries: hand the
+ * synthesizer a body and it shrugs off the whole direction). The platform
+ * note now teaches the ONE LAW upstream (a direction must be something a
+ * VOICE can do); this is the last-line net for what still slips through.
+ * Known physical idioms translate into the vocal color they imply; a tag
+ * that is PURELY silent body language (nods, shrugs) drops entirely. Runs on
+ * the tag TEXT before bracket conversion, both providers. */
+const PHYSICAL_TO_VOCAL = [
+  [/\bcracks?(?:ing)? (?:his |her |their )?knuckles\b/gi, 'limbering up, ready for business'],
+  [/\bleans? (?:in|forward|closer)\b/gi, 'dropping closer, conspiratorial'],
+  [/\bleans? back\b/gi, 'settling back, relaxed and unhurried'],
+  [/\bshifts? (?:his |her |their )?weight\b/gi, 'a beat of restless energy in the voice'],
+  [/\brubs? (?:his |her |their )?hands\b/gi, 'gleeful anticipation'],
+  [/\bsmirk(?:s|ing)?\b/gi, 'you can hear the smirk'],
+  [/\bgrin(?:s|ning)?\b/gi, 'grinning audibly'],
+  [/\bsmil(?:es?|ing)\b/gi, 'warmth you can hear'],
+  [/\brolls? (?:his |her |their )?eyes\b/gi, 'dry, audibly unimpressed'],
+  [/\braises? (?:an |her |his |their )?eyebrows?\b/gi, 'skeptical lilt'],
+  [/\bwink(?:s|ing)?\b/gi, 'playful, in on the joke'],
+  [/\btilts? (?:his |her |their )?head\b/gi, 'curious lilt'],
+  [/\bcrosses? (?:his |her |their )?arms\b/gi, 'firm, planted'],
+  [/\bshak(?:es?|ing) (?:his |her |their )?head\b/gi, 'disbelief in the voice'],
+];
+const PURELY_SILENT = /^(?:nods?(?:ding)?|shrugs?(?:ging)?|blinks?|waves?|points?(?:ing)?|paces?(?:ing)?|stretch(?:es)?|looks? (?:around|away|up|down)|glances? \w+)$/i;
+function vocalizeDirection(tagText) {
+  let t = String(tagText).trim();
+  if (PURELY_SILENT.test(t)) return null; /* silent body language: drop the tag */
+  for (const [re, repl] of PHYSICAL_TO_VOCAL) {
+    t = t.replace(re, repl);
+  }
+  return t;
+}
+
 function applySteeringTags(text) {
   if (!text || text.indexOf("%%") === -1) return text;
   // Tag-typo tolerance (July 2 2026, seen live from Kiana): models sometimes
@@ -1401,7 +1436,12 @@ function applySteeringTags(text) {
 
   const tagRe = new RegExp(`${STEERING_OPEN}([\\s\\S]*?)${STEERING_CLOSE}`, "g");
   // Pass 1: sentinel -> real brackets, everywhere in the text.
-  const converted = text.replace(tagRe, (_, raw) => `[${raw.trim()}]`);
+  const converted = text.replace(tagRe, (_, raw) => {
+    /* Aug 8 2026: physical stage business becomes vocal color or vanishes —
+     * see vocalizeDirection above. A dropped tag leaves no bracket at all. */
+    const vocal = vocalizeDirection(raw);
+    return vocal && vocal.length > 0 ? `[${vocal}]` : '';
+  });
 
   // Pass 2: carry the most recent leading direction across paragraph breaks.
   // chunkText() groups whole paragraphs into a chunk and only sub-splits a
