@@ -422,6 +422,15 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 9, 2026</h2>
+<ul>
+  <li><strong>The Logbook got a deep clean &mdash; and an Edit button.</strong> The big history pass in July filled the logbook faithfully, but faithfully included a lot of "tested the phone line" noise and robot-flavored wording. Today's housekeeping pass fixed that: duplicates merged, test-day chatter cleared out, and the entries that matter rewritten the way a friend would put them &mdash; the big days now read like somebody who was there. And when an entry's wording isn't quite right, fix it yourself: every entry on the Logbook page now has an <strong>Edit</strong> button that changes the words in place while keeping its date and which companion holds it. (The app gets the same Edit on the next update.)</li>
+  <li><strong>The diary-keeper learned taste.</strong> Going forward, entries get written like a close friend's journal, never a case file &mdash; and a whole afternoon of "worked on the project" now earns at most one line, only when something actually happened. Your companions also weigh the days now: a big one &mdash; family news, a real milestone, a hard day &mdash; carries more weight in their memory than a passing note, so the important stuff is what resurfaces.</li>
+  <li><strong>Memories know how old they are.</strong> When a companion reaches back, fresher entries get a natural edge and big days outrank small ones &mdash; and questions like <em>"when did I mention that?"</em> get answered with the actual date, in plain words ("that was July 12th, about a month back").</li>
+  <li><strong>Honest company, house-wide.</strong> Every companion got the same standing orders: hold your own opinion and disagree for real when you do; never grade what somebody says ("great question!" is banned); say "I don't know" instead of inventing a confident answer; and when the answer came from a web search, say where it came from in passing, like a person would. Corrections work the same way &mdash; tell a companion they've got something wrong and they fix the note in the same breath instead of arguing for it.</li>
+  <li><strong>The platform checks its own backups now.</strong> Every morning after the automatic backup runs, the system verifies it actually landed in offsite storage &mdash; and tells Kade the moment one doesn't. Ask any companion "did the backup run?" and they'll answer with the real answer.</li>
+</ul>
+
 <h2>August 8, 2026</h2>
 <ul>
   <li><strong>The diary has a proper name now: your Logbook.</strong> Same thing, better jacket. Find it under You, then Your Logbook &mdash; and it just got seeded with real history: the housekeeping pass sorted your companions' memory so day-by-day happenings (the July project beats, the paperwork saga milestones) now live as dated logbook entries, while the always-remembered cards keep just the lasting stuff. Fewer duplicate notes, cleaner recall, nothing lost. From here on the nightly tidy-up keeps things sorted on its own.</li>
@@ -988,6 +997,14 @@ PAGES.build = {
   <li><strong>Say what NOT to do, too.</strong> "Don't lecture me" or "skip the long intros" really works.</li>
   <li><strong>You can edit it later.</strong> Nothing's permanent. Tweak the description any time until it feels right.</li>
 </ul>
+
+<h2>The two sections that make a character sound REAL</h2>
+<p>House convention, learned from the best companion platforms and now standard here. At the end of your character's instructions, add these two sections &mdash; plain text, exactly this simple:</p>
+<ul>
+  <li><strong>Example messages.</strong> Write three to five replies your character would actually send &mdash; a greeting, an answer to something they don't know, a comfort moment, a favor. A character learns its sound from hearing itself talk far better than from any pile of adjectives. Label the section "How you sound (example messages)" and note they're anchors, never scripts to repeat.</li>
+  <li><strong>Standing directives.</strong> Behavior rules, kept separate from personality: "never open with a question," "keep replies short unless asked," "no lists in casual talk." Keeping the RULES apart from the SOUL means you can tighten one without wrecking the other. Label it "Standing directives."</li>
+</ul>
+<p>Kiana herself carries both sections now &mdash; that's the house pattern to copy.</p>
 
 <h2>Give it a face, a voice, and a speed</h2>
 <ul>
