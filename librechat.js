@@ -698,7 +698,7 @@ function composeTextWithHistory(messages) {
   );
 }
 
-async function lcAsk(agentId, messages, userEmail) {
+async function lcAsk(agentId, messages, userEmail, opts = {}) {
   const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
@@ -762,6 +762,11 @@ async function lcAsk(agentId, messages, userEmail) {
     const startData = await r.json();
     const streamId = startData.streamId;
     if (!streamId) throw new Error(`no streamId returned: ${JSON.stringify(startData)}`);
+    // Aug 9 2026 (her bloat pass): opts.deleteAfter — the probe erases its
+    // own conversation once the reply is read. Stronger than isTemporary
+    // alone, which still surfaces in the admin logs drill-down and lingers
+    // ~30 days; a deleted probe never haunts anyone's account, hers least.
+    const bornConversationId = startData.conversationId || null;
 
     // Phase 2: subscribe to SSE stream (give job ~300ms to start)
     await new Promise((res) => setTimeout(res, 300));
@@ -813,6 +818,13 @@ async function lcAsk(agentId, messages, userEmail) {
     console.log("[lcAsk] first 5 lines:", JSON.stringify(rawLines.slice(0, 5)));
     console.log("[lcAsk] last 3 lines:", JSON.stringify(rawLines.slice(-3)));
     if (!reply) throw new Error("empty reply from agent");
+    if (opts.deleteAfter && bornConversationId) {
+      // Fire-and-forget through the same paced lane; a failed delete is
+      // only cosmetic (the convo is still isTemporary), never a failed ask.
+      lc("DELETE", "/api/convos/", { arg: { conversationId: bornConversationId } })
+        .then(() => console.log(`[lcAsk] probe convo deleted (${bornConversationId.slice(0, 8)}…)`))
+        .catch((e) => console.warn("[lcAsk] probe delete failed (harmless):", e.message));
+    }
     return stripCitationAnchors(reply);
   });
 }
@@ -825,7 +837,9 @@ router.post("/librechat/ask", auth, async (req, res) => {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
   try {
-    const text = await lcAsk(agentId, messages, (req.body || {}).userEmail);
+    const text = await lcAsk(agentId, messages, (req.body || {}).userEmail, {
+      deleteAfter: (req.body || {}).deleteAfter === true,
+    });
     console.log("[lcAsk] success, reply length=", text.length);
     res.json({ text });
   } catch (err) {
@@ -1022,5 +1036,84 @@ if (process.env.LIBRECHAT_USER && process.env.LIBRECHAT_PASS) {
       .catch((e) => console.warn("[librechat.js] boot token warm failed (lazy path still works):", e.message));
   }, 4000);
 }
+
+// ── THE JANITOR (Aug 9 2026 — her ask, near-verbatim: "I like the idea of
+// not having to keep track of these things personally. Automation is great
+// when it's free/cheap, easy to control, and damn good at what it does.")
+//
+// A deterministic librarian for the admin account's conversation list:
+// finds obvious TEST conversations by title and ARCHIVES them — never
+// deletes, so one wrong guess is a two-tap recovery in the web archive
+// view, not a loss. Free (no model anywhere), controlled by env, honest
+// about every move (returns the full list it touched; the bridge logs it).
+//
+// MATCH DISCIPLINE — why two nets: a bare /test/ match would have archived
+// "Kasper Testing My Patience" (her CAT, a real chat — caught live during
+// this build, Aug 9). So: STRONG patterns archive on their own (canary/
+// probe/sweep/diagnostic — words with no civilian use here), while the
+// word "test" only counts beside a tech word (voice, bridge, TTS, call,
+// system…). New patterns land via env JANITOR_EXTRA_PATTERNS (comma-
+// separated regexes) — no deploy needed to teach it a new mess.
+const JANITOR_STRONG = [/^canary check/i, /\bprobe\b/i, /\bsweep\b/i, /\bdiagnostic\b/i];
+const JANITOR_TEST_WORD = /\btest(s|ing|ed)?\b/i;
+const JANITOR_TECH_WORD = /\b(system|systems|voice|haptics|tts|beta|debug|debugging|bridge|outbound|overnight|save file|chunk|chunking|flow|phone|call|calls|mode|tool|file|game|conversation|request|redo|image|news|headline|stream|earcon|chime|spotter|frame|api|memory update)\b/i;
+const JANITOR_MIN_AGE_DAYS = parseInt(process.env.JANITOR_MIN_AGE_DAYS || "3", 10);
+function janitorExtra() {
+  return String(process.env.JANITOR_EXTRA_PATTERNS || "")
+    .split(",").map((s) => s.trim()).filter(Boolean)
+    .map((s) => { try { return new RegExp(s, "i"); } catch { return null; } })
+    .filter(Boolean);
+}
+function janitorMatch(title) {
+  const t = String(title || "");
+  if (JANITOR_STRONG.some((re) => re.test(t))) return true;
+  if (janitorExtra().some((re) => re.test(t))) return true;
+  return JANITOR_TEST_WORD.test(t) && JANITOR_TECH_WORD.test(t);
+}
+
+// POST /librechat/janitor { dryRun?: true, maxPages?: 12 }
+//   -> { scanned, matched: [{conversationId,title,updatedAt}], archived }
+// dryRun lists what WOULD move and touches nothing.
+router.post("/librechat/janitor", auth, async (req, res) => {
+  const dryRun = (req.body || {}).dryRun === true;
+  const maxPages = Math.min(30, parseInt((req.body || {}).maxPages, 10) || 12);
+  try {
+    const cutoff = Date.now() - JANITOR_MIN_AGE_DAYS * 24 * 3600 * 1000;
+    const matched = [];
+    let scanned = 0;
+    let cursor = null;
+    for (let page = 0; page < maxPages; page++) {
+      const path = "/api/convos?limit=50" + (cursor ? `&cursor=${encodeURIComponent(cursor)}` : "");
+      const d = await lc("GET", path);
+      const convos = (d && d.conversations) || [];
+      scanned += convos.length;
+      for (const c of convos) {
+        const updated = Date.parse(c.updatedAt || c.createdAt || "") || 0;
+        if (updated > cutoff) continue; // never yank something mid-use
+        if (janitorMatch(c.title)) {
+          matched.push({ conversationId: c.conversationId, title: c.title, updatedAt: c.updatedAt });
+        }
+      }
+      cursor = d && d.nextCursor;
+      if (!cursor) break;
+    }
+    let archived = 0;
+    if (!dryRun) {
+      for (const m of matched) {
+        try {
+          await lc("POST", "/api/convos/archive", { arg: { conversationId: m.conversationId, isArchived: true } });
+          archived++;
+        } catch (e) {
+          console.warn(`[janitor] archive failed for "${String(m.title).slice(0, 40)}":`, e.message);
+        }
+      }
+    }
+    console.log(`[janitor] ${dryRun ? "DRY RUN" : "RUN"}: scanned=${scanned} matched=${matched.length} archived=${archived}`);
+    res.json({ dryRun, scanned, matched, archived });
+  } catch (err) {
+    console.error("[janitor] error:", err.message);
+    res.status(typeof err.status === "number" ? err.status : 500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
