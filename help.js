@@ -422,6 +422,11 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 10, 2026</h2>
+<ul>
+  <li><strong>Real research, on request.</strong> Ask a companion to really dig into something &mdash; comparing products, checking whether a claim holds up, weighing a big decision &mdash; and instead of a quick guess, the question goes through a genuine research run: a dozen or more sources searched, read, and cross-checked in the background while you keep right on talking. A few minutes later your phone gets a tap, and your companion has the full story: the answer up front, every fact tied to a numbered source, where the sources disagree, and &mdash; the honest part &mdash; what could NOT be confirmed. Say how deep to go: quick, standard, or deep, depending on what the question deserves. Reports are written to be listened to on purpose &mdash; no tables, no bullet-point walls, just the story of what the digging found. Starting with Kiana and Forge; the rest of the crew gets the skill soon.</li>
+</ul>
+
 <h2>August 9, 2026</h2>
 <ul>
   <li><strong>The Logbook got a deep clean &mdash; and an Edit button.</strong> The big history pass in July filled the logbook faithfully, but faithfully included a lot of "tested the phone line" noise and robot-flavored wording. Today's housekeeping pass fixed that: duplicates merged, test-day chatter cleared out, and the entries that matter rewritten the way a friend would put them &mdash; the big days now read like somebody who was there. And when an entry's wording isn't quite right, fix it yourself: every entry on the Logbook page now has an <strong>Edit</strong> button that changes the words in place while keeping its date and which companion holds it. (The app gets the same Edit on the next update.)</li>
