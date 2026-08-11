@@ -423,6 +423,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 11, 2026</h2>
+<ul>
+  <li><strong>There's a real privacy page now: <a href="/help/privacy">Privacy &amp; Your Data</a>.</strong> Plain English, no legal fog. What actually gets stored and why, every outside company that touches any of it and exactly what they receive, how children's accounts work, and how to download all of yours or have it deleted. The short version, which was always true and is now written down: nothing here is sold, there are no ads and no advertising trackers, and your words are kept so your companions can know you and so you can find them again &mdash; for no other reason.</li>
+  <li><strong>Every companion can do deep research now.</strong> The real-research skill that launched last week on Kiana and Forge is now on the whole crew &mdash; ask anybody to properly dig into something and they can.</li>
+</ul>
+
 <h2>August 10, 2026</h2>
 <ul>
   <li><strong>Real research, on request.</strong> Ask a companion to really dig into something &mdash; comparing products, checking whether a claim holds up, weighing a big decision &mdash; and instead of a quick guess, the question goes through a genuine research run: a dozen or more sources searched, read, and cross-checked in the background while you keep right on talking. A few minutes later your phone gets a tap, and your companion has the full story: the answer up front, every fact tied to a numbered source, where the sources disagree, and &mdash; the honest part &mdash; what could NOT be confirmed. Say how deep to go: quick, standard, or deep, depending on what the question deserves. Reports are written to be listened to on purpose &mdash; no tables, no bullet-point walls, just the story of what the digging found. Starting with Kiana and Forge; the rest of the crew gets the skill soon.</li>
