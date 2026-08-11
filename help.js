@@ -55,6 +55,7 @@ const SECTIONS = [
 
   { key: "accessibility",   path: "/help/accessibility",   label: "Accessibility Tips",  group: "Getting the best experience" },
   { key: "troubleshooting", path: "/help/troubleshooting", label: "When Something Breaks", group: "Getting the best experience" },
+  { key: "privacy",         path: "/help/privacy",         label: "Privacy & Your Data", group: "Getting the best experience" },
 ];
 
 const GROUP_ORDER = ["Getting started", "Using Kade-AI", "The money part", "Getting the best experience"];
@@ -1462,7 +1463,70 @@ PAGES.troubleshooting = {
 <div class="callout warn">
   <p><strong>Still stuck after trying the above?</strong> Don't wrestle with it. <strong>Contact Kade</strong> — that's what she's there for, and "it's doing a weird thing" is a perfectly good bug report.</p>
 </div>
-${nextprev("accessibility", null)}
+${nextprev("accessibility", "privacy")}
+`,
+};
+
+// ---- PRIVACY & YOUR DATA ---------------------------------------------------
+PAGES.privacy = {
+  title: "Privacy & Your Data",
+  h1: "Privacy & Your Data",
+  tagline: "What gets stored, who else sees it, and how to take it all with you. In plain English.",
+  main: `
+<p class="lead">Kade-AI is a small, invite-only place run by one person, Kade Murdock, out of her own pocket. It is not a company and it does not make money from you. Nothing here is sold, rented, or handed to advertisers &mdash; there are no ads on this platform and no advertising or tracking code in it. This page explains, honestly, what is kept and why.</p>
+
+<h2>The short version</h2>
+<ul>
+  <li>Your conversations are stored so you can come back to them. They belong to you.</li>
+  <li>Nothing is sold. No ads. No advertising trackers or analytics companies.</li>
+  <li>Some things you type or say are sent to outside companies that do the actual work &mdash; the AI models, the voices, the transcribing. They're listed below by name.</li>
+  <li>You can download everything, any time, from your account menu.</li>
+  <li>Ask Kade to delete your account and it gets deleted.</li>
+</ul>
+
+<h2>What gets stored</h2>
+<p><strong>Your account.</strong> Your email address, a scrambled (hashed) version of your password, your display name, and whether you're an adult or child account.</p>
+<p><strong>Your conversations.</strong> Messages you send and the replies you get, so your history is there when you come back. Private chats are the exception &mdash; see <a href="/help/temporary">Starting Over &amp; Private Chats</a>.</p>
+<p><strong>What it remembers about you.</strong> Memory cards and logbook entries the characters save as you talk. You can read, edit, and delete every one of these yourself &mdash; see <a href="/help/memory">What It Remembers</a>.</p>
+<p><strong>Your settings.</strong> Voice picks, playback speed, notification preferences, and similar choices.</p>
+<p><strong>Phone calls.</strong> If you register a phone number, that number is stored. Calls are recorded and transcribed so the character can remember the conversation, and so Kade can fix things when a call goes wrong. Every outbound call opens by telling the person they're speaking with an AI.</p>
+<p><strong>Pictures, audio, and video you make.</strong> Kept in your gallery, with a written description generated for each so they're usable by ear.</p>
+<p><strong>Usage and cost.</strong> A running tally of what each feature costs, per person &mdash; how many characters were spoken aloud, how many pictures made, how many call minutes. This is how the shared balance works. It records amounts, not the contents.</p>
+<p><strong>Crash reports.</strong> The iPhone app sends Apple's technical crash logs to Kade's server so breakage gets found and fixed. These are stack traces and device model &mdash; not your messages.</p>
+<p><strong>Location.</strong> Only if you deliberately use a feature that asks for it, like sharing where you are with a companion. It is not collected in the background, ever.</p>
+
+<h2>Who else touches it</h2>
+<p>The platform doesn't build its own AI models or voices &mdash; it rents them. That means parts of what you write or say pass through other companies to get the work done. Under their business terms these are service providers processing data on Kade-AI's behalf; they are not given your data to sell.</p>
+<ul>
+  <li><strong>OpenRouter and Moonshot AI</strong> &mdash; the language models that write the replies. They receive your message and the conversation context.</li>
+  <li><strong>Inworld AI and Fish Audio</strong> &mdash; text-to-speech. They receive the text being read aloud.</li>
+  <li><strong>Deepgram</strong> &mdash; speech-to-text. It receives your voice audio when you talk instead of type.</li>
+  <li><strong>Twilio</strong> &mdash; the phone line. It carries and records phone calls.</li>
+  <li><strong>Google</strong> &mdash; describing photos and documents, the live video lane, and search inside your own memories. It receives the image, file, or video you shared.</li>
+  <li><strong>fal.ai and Black Forest Labs</strong> &mdash; picture, video, and music generation. They receive your prompt.</li>
+  <li><strong>Tavily</strong> &mdash; web search, when a character looks something up. It receives the search wording.</li>
+  <li><strong>Railway</strong> &mdash; the servers everything runs on. <strong>Backblaze</strong> &mdash; where files and nightly backups are stored. <strong>Apple</strong> &mdash; delivers push notifications to iPhones.</li>
+</ul>
+<p>These companies keep their own records under their own policies. If a feature matters to you and you'd rather it not run, don't use that feature &mdash; or say so to Kade and she'll turn it off for your account.</p>
+
+<h2>Children's accounts</h2>
+<p>Accounts for kids are set up by a parent or family administrator, never by the child. They're limited to age-appropriate content platform-wide, can't reach the open rooms, and can't place calls to numbers outside the family. A parent can read, export, or delete everything on that account by asking Kade.</p>
+
+<h2>Getting your data, or getting rid of it</h2>
+<p><strong>Download it all.</strong> Account menu &rarr; <strong>Download Your Data</strong>. You get a zip file with your conversations, memory cards, and logbook in plain readable text, plus the raw data. It's yours, it's readable in Notepad, and it doesn't ask permission.</p>
+<p><strong>Delete pieces.</strong> Delete any conversation or memory card from inside the app, whenever you want.</p>
+<p><strong>Delete everything.</strong> Ask Kade to close your account and it's removed. Nightly backups are kept on a rolling basis and age out on their own.</p>
+
+<h2>Security, told straight</h2>
+<p>Passwords are hashed, everything travels over encrypted connections, and access to the server is limited to Kade. It's an honestly-run small platform, not a bank &mdash; use it accordingly. Don't put anything in here you'd be harmed by losing or by someone else reading.</p>
+
+<h2>Changes and questions</h2>
+<p>If how any of this works changes, this page changes with it, and it'll show up on <a href="/help/whats-new">What's New</a>. Questions about your data go straight to <strong>Kade</strong> &mdash; there's no support department, just her.</p>
+
+<div class="callout">
+  <p><strong>The plain-language promise:</strong> your words are yours. They're kept so the characters can know you and so you can find them again, and for no other reason.</p>
+</div>
+${nextprev("troubleshooting", null)}
 `,
 };
 
