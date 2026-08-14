@@ -131,7 +131,12 @@ router.get("/librechat/agents", auth, async (req, res) => {
       category: a.category || null,
       description: a.description || null,
       model: a.model || null,
-      tools: a.tools || null,
+      provider: a.provider || null,
+      /* Aug 14 2026: avatar joined the projection for the marketplace avatar
+       * audit (her ask: "do all the market agents have avatars that actually
+       * fit them?"). Kept compact — just the filepath/source, enough to know
+       * WHETHER one exists and WHERE it lives without shipping whole docs. */
+      avatar: a.avatar ? { filepath: a.avatar.filepath || null, source: a.avatar.source || null } : null,
     }));
     res.json({ count: agents.length, has_more: d.has_more === true, after: d.after ?? d.next_cursor ?? null, agents });
   } catch (e) {
