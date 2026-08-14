@@ -155,7 +155,7 @@ router.post("/librechat/avatar-gen", auth, express.json({ limit: "64kb" }), asyn
         r.end();
       });
     const jsonOf = (b) => { try { return JSON.parse(b.toString("utf8")); } catch (_) { return {}; } };
-    const bflBase = process.env.FLUX_API_BASE_URL || "https://api.us1.bfl.ai";
+    const bflBase = process.env.FLUX_API_BASE_URL || "https://api.bfl.ai";
     const submit = await httpsReq(`${bflBase}/v1/flux-2-pro-preview`, {
       method: "POST",
       headers: { "x-key": key, "Content-Type": "application/json", Accept: "application/json" },
