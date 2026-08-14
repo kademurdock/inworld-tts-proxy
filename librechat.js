@@ -115,6 +115,62 @@ async function lc(method, path, body) {
 
 const fail = (res, e) => res.status(e.status && e.status >= 400 ? e.status : 502).json({ error: e.message });
 
+// POST /librechat/agent-avatar -> set an agent's avatar from an image URL or
+// base64 payload. Built Aug 14 2026 for the marketplace avatar backfill (34
+// faceless agents) and kept for good: Forge can now give any fleet-mate a
+// face. Downloads the image server-side, then forwards it as multipart to the
+// fork's POST /api/agents/:id/avatar with the cached token + built-in pacing.
+// Node 18 fetch only — no new dependencies; the multipart body is hand-rolled.
+router.post("/librechat/agent-avatar", auth, express.json({ limit: "8mb" }), async (req, res) => {
+  try {
+    const { id, image_url, image_b64, filename, content_type } = req.body || {};
+    if (!id || (!image_url && !image_b64)) {
+      return res.status(400).json({ error: "id plus image_url or image_b64 required" });
+    }
+    let bytes, ctype;
+    if (image_url) {
+      const ir = await fetch(String(image_url));
+      if (!ir.ok) return res.status(502).json({ error: `image fetch failed: ${ir.status}` });
+      bytes = Buffer.from(await ir.arrayBuffer());
+      ctype = content_type || ir.headers.get("content-type") || "image/png";
+    } else {
+      bytes = Buffer.from(String(image_b64), "base64");
+      ctype = content_type || "image/png";
+    }
+    if (!bytes.length || bytes.length > 6 * 1024 * 1024) {
+      return res.status(400).json({ error: `bad image size: ${bytes.length}` });
+    }
+    const name = String(filename || "avatar.png").replace(/[^\w.\-]/g, "_");
+    const boundary = "----kadeAvatar" + Date.now().toString(36);
+    const head = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${name}"\r\nContent-Type: ${ctype}\r\n\r\n`,
+    );
+    const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
+    const body = Buffer.concat([head, bytes, tail]);
+    const data = await paced(async () => {
+      if (!_token) await login();
+      const doPost = async (tok) =>
+        fetch(`${BASE}/api/agents/${encodeURIComponent(id)}/avatar/`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${tok}`,
+            "Content-Type": `multipart/form-data; boundary=${boundary}`,
+            "User-Agent": UA,
+          },
+          body,
+        });
+      let r = await doPost(_token);
+      if (r.status === 401) { _token = null; await login(); r = await doPost(_token); }
+      const text = await r.text();
+      if (!r.ok) { const e = new Error(`avatar upload ${r.status}: ${text.slice(0, 160)}`); e.status = 502; throw e; }
+      try { return JSON.parse(text); } catch (_) { return { raw: text.slice(0, 200) }; }
+    });
+    res.json({ ok: true, id, bytes: bytes.length, avatar: data && data.avatar ? data.avatar : data });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // GET /librechat/agents -> compact list of ALL agents (the marketplace + private)
 router.get("/librechat/agents", auth, async (req, res) => {
   try {
