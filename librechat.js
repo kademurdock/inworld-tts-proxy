@@ -128,8 +128,35 @@ router.post("/librechat/avatar-gen", auth, express.json({ limit: "64kb" }), asyn
     if (!key) return res.status(503).json({ error: "FLUX_API_KEY not configured on this service" });
     const { prompt, width, height, seed } = req.body || {};
     if (!prompt || String(prompt).length < 8) return res.status(400).json({ error: "prompt required" });
+    /* Node-18 fetch (undici) reported bare "fetch failed" against bfl.ai from
+     * this container on the first live try — the classic AAAA-first/IPv6
+     * dead-end shape. The raw https module pinned to family:4 is boring and
+     * works, and it names its errors properly. */
+    const https = require("https");
+    const httpsReq = (url, { method = "GET", headers = {}, body = null } = {}) =>
+      new Promise((resolve, reject) => {
+        const u = new URL(url);
+        const r = https.request(
+          { hostname: u.hostname, path: u.pathname + u.search, method, headers, family: 4, timeout: 45000 },
+          (resp) => {
+            /* BFL's sample delivery redirects to signed storage — follow once. */
+            if (resp.statusCode >= 301 && resp.statusCode <= 308 && resp.headers.location) {
+              resp.resume();
+              return httpsReq(resp.headers.location, { headers: { Accept: headers.Accept || "*/*" } }).then(resolve, reject);
+            }
+            const chunks = [];
+            resp.on("data", (c) => chunks.push(c));
+            resp.on("end", () => resolve({ status: resp.statusCode, buf: Buffer.concat(chunks) }));
+          },
+        );
+        r.on("timeout", () => r.destroy(new Error("timeout")));
+        r.on("error", (err) => reject(new Error(`${err.code || err.message} @ ${u.hostname}`)));
+        if (body) r.write(body);
+        r.end();
+      });
+    const jsonOf = (b) => { try { return JSON.parse(b.toString("utf8")); } catch (_) { return {}; } };
     const bflBase = process.env.FLUX_API_BASE_URL || "https://api.us1.bfl.ai";
-    const gen = await fetch(`${bflBase}/v1/flux-2-pro-preview`, {
+    const submit = await httpsReq(`${bflBase}/v1/flux-2-pro-preview`, {
       method: "POST",
       headers: { "x-key": key, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
@@ -141,18 +168,21 @@ router.post("/librechat/avatar-gen", auth, express.json({ limit: "64kb" }), asyn
         ...(seed !== undefined ? { seed: Number(seed) } : {}),
       }),
     });
-    const task = await gen.json().catch(() => ({}));
-    if (!gen.ok || !task.id) return res.status(502).json({ error: `bfl submit failed: ${gen.status}`, detail: task });
+    const task = jsonOf(submit.buf);
+    if (submit.status !== 200 || !task.id) {
+      return res.status(502).json({ error: `bfl submit ${submit.status}`, detail: task });
+    }
     const pollUrl = task.polling_url || `${bflBase}/v1/get_result?id=${task.id}`;
     for (let i = 0; i < 75; i++) {
       await new Promise((r) => setTimeout(r, 2000));
-      const pr = await fetch(pollUrl, { headers: { "x-key": key, Accept: "application/json" } });
-      const pd = await pr.json().catch(() => ({}));
+      const pr = await httpsReq(pollUrl, { headers: { "x-key": key, Accept: "application/json" } });
+      const pd = jsonOf(pr.buf);
       if (pd.status === "Ready") {
-        const ir = await fetch(pd.result.sample);
-        if (!ir.ok) return res.status(502).json({ error: `sample fetch failed: ${ir.status}` });
-        const buf = Buffer.from(await ir.arrayBuffer());
-        return res.json({ ok: true, bytes: buf.length, image_b64: buf.toString("base64") });
+        const img = await httpsReq(pd.result.sample);
+        if (img.status !== 200 || !img.buf.length) {
+          return res.status(502).json({ error: `sample fetch ${img.status}` });
+        }
+        return res.json({ ok: true, bytes: img.buf.length, image_b64: img.buf.toString("base64") });
       }
       if (["Error", "Content Moderated", "Request Moderated", "Task not found"].includes(pd.status)) {
         return res.status(502).json({ error: `bfl: ${pd.status}` });
