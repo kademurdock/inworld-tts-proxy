@@ -115,6 +115,55 @@ async function lc(method, path, body) {
 
 const fail = (res, e) => res.status(e.status && e.status >= 400 ? e.status : 502).json({ error: e.message });
 
+// POST /librechat/avatar-gen -> generate a square character portrait via
+// Black Forest Labs (FLUX.2 pro preview, ~$0.03/image) and hand back base64.
+// Aug 14 2026, born for the 34-agent avatar backfill; stays for Forge, who can
+// now conjure a face AND attach it (see agent-avatar below) — the full
+// give-a-fleet-mate-a-face loop with no human hands. Admin bearer only, and
+// the Cowork sandbox can't reach bfl.ai directly (egress allowlist), which is
+// the other reason this lives here: Railway's egress is open.
+router.post("/librechat/avatar-gen", auth, express.json({ limit: "64kb" }), async (req, res) => {
+  try {
+    const key = process.env.FLUX_API_KEY || "";
+    if (!key) return res.status(503).json({ error: "FLUX_API_KEY not configured on this service" });
+    const { prompt, width, height, seed } = req.body || {};
+    if (!prompt || String(prompt).length < 8) return res.status(400).json({ error: "prompt required" });
+    const bflBase = process.env.FLUX_API_BASE_URL || "https://api.us1.bfl.ai";
+    const gen = await fetch(`${bflBase}/v1/flux-2-pro-preview`, {
+      method: "POST",
+      headers: { "x-key": key, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        prompt: String(prompt).slice(0, 2400),
+        width: Math.min(Number(width) || 1024, 1440),
+        height: Math.min(Number(height) || 1024, 1440),
+        safety_tolerance: 6,
+        output_format: "png",
+        ...(seed !== undefined ? { seed: Number(seed) } : {}),
+      }),
+    });
+    const task = await gen.json().catch(() => ({}));
+    if (!gen.ok || !task.id) return res.status(502).json({ error: `bfl submit failed: ${gen.status}`, detail: task });
+    const pollUrl = task.polling_url || `${bflBase}/v1/get_result?id=${task.id}`;
+    for (let i = 0; i < 75; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const pr = await fetch(pollUrl, { headers: { "x-key": key, Accept: "application/json" } });
+      const pd = await pr.json().catch(() => ({}));
+      if (pd.status === "Ready") {
+        const ir = await fetch(pd.result.sample);
+        if (!ir.ok) return res.status(502).json({ error: `sample fetch failed: ${ir.status}` });
+        const buf = Buffer.from(await ir.arrayBuffer());
+        return res.json({ ok: true, bytes: buf.length, image_b64: buf.toString("base64") });
+      }
+      if (["Error", "Content Moderated", "Request Moderated", "Task not found"].includes(pd.status)) {
+        return res.status(502).json({ error: `bfl: ${pd.status}` });
+      }
+    }
+    res.status(504).json({ error: "bfl polling timed out (150s)" });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // POST /librechat/agent-avatar -> set an agent's avatar from an image URL or
 // base64 payload. Built Aug 14 2026 for the marketplace avatar backfill (34
 // faceless agents) and kept for good: Forge can now give any fleet-mate a
