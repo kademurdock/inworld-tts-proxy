@@ -229,7 +229,7 @@ router.post("/librechat/agent-avatar", auth, express.json({ limit: "8mb" }), asy
     const data = await paced(async () => {
       if (!_token) await login();
       const doPost = async (tok) =>
-        fetch(`${BASE}/api/agents/${encodeURIComponent(id)}/avatar/`, {
+        fetch(`${BASE}/api/files/images/agents/${encodeURIComponent(id)}/avatar` /* the v1 avatar router mounts under /files/images/agents — /api/agents/:id/avatar is a 404, learned live */, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${tok}`,
