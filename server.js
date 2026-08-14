@@ -5,7 +5,10 @@ const app = express();
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
 // commit proxy is whole-file by design, so its body limit must fit the
 // biggest file anyone needs to ship through it.
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "10mb" })); /* Aug 14 2026: was 2mb — the agent-avatar
+ * lane ships base64 PNGs (~2MB image = ~2.7MB JSON) and the GLOBAL parser
+ * runs before any route-level limit can raise it (the bridge paid for this
+ * same lesson on /app-crashes). TTS bodies are tiny; only avatars are big. */
 
 // Mount the accessible help system (/help and friends). See help.js.
 app.use(require("./help"));
