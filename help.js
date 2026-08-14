@@ -34,6 +34,7 @@ const SECTIONS = [
   { key: "quickstart",      path: "/help/quickstart",      label: "Your First Five Minutes", group: "Getting started" },
   { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
   { key: "whatsnew",        path: "/help/whats-new",       label: "What's New",          group: "Getting started" },
+  { key: "createacharacter", path: "/help/create-a-character", label: "Create a Character", group: "Getting started" },
   { key: "android",         path: "/help/android",         label: "The Android App",     group: "Getting started" },
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
@@ -252,6 +253,7 @@ PAGES.home = {
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="whats new what's new changelog updates latest features recently added new stuff toys"><a href="/help/whats-new"><span class="ico" aria-hidden="true">✨</span><span class="ttl">What's New</span><span class="desc">The latest toys, in plain language — updated every time something ships.</span></a></li>
+  <li data-terms="create a character builder quiz make my own agent custom companion portrait picture avatar model engine"><a href="/help/create-a-character"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Create a Character</span><span class="desc">Eight easy questions, a painted portrait, and a friend of your own making — no tech knowledge needed.</span></a></li>
   <li data-terms="android app apk install download sideload phone samsung google pixel motorola galaxy get the app"><a href="/help/android"><span class="ico" aria-hidden="true">🤖</span><span class="ttl">The Android App</span><span class="desc">Got an Android phone? Install Kade-AI as a real app, straight from here.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
@@ -416,12 +418,36 @@ ${nextprev("quickstart", "voice")}
 // ---- 2b. WHAT'S NEW (July 11 2026 — Kade's pick from the ideas list) -------
 // HOUSE RULE for future sessions: whenever a feature ships, add a dated entry
 // at the TOP of this list, in plain family language (help ships with features).
+PAGES.createacharacter = {
+  title: "Create a Character",
+  h1: "Create a Character",
+  tagline: "Eight easy questions. No wrong answers. A friend of your own making at the end — portrait and all.",
+  main: `
+<p class="lead">You don't need to know anything about AI to make somebody worth talking to. Go to <strong>kademurdock.com/create-a-character</strong> and answer eight quick questions. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink.</p>
+<h2>How it works</h2>
+<p>Every question is answered by picking from choices — typing is always optional, never required. When the questions are done, the page writes a full first draft of your character: their name (pick from five offers or type your own), a one-line description, and a whole personality written out in plain words. You can change any of it, or none of it.</p>
+<h2>The engine, in plain language</h2>
+<p>Every character runs on a thinking engine, and picking one used to mean reading robot code names. Now they're plain choices: <strong>The all-rounder</strong> (quick, warm, good memory — what nearly every character here runs), <strong>The deep thinker</strong> (slower, writes long and thorough), <strong>The chatterbox</strong> (snappy and playful), <strong>The speedster</strong> (fastest answers, lighter on nuance). If you're the technical sort, one toggle shows the real model names underneath. Nothing is hidden; it's just not required reading.</p>
+<h2>The portrait</h2>
+<p>One button paints their portrait in the same warm storybook style as every face on the marketplace. It costs <strong>three cents</strong> of picture credit from the same allowance everything else on your account uses, it says so right on the button, and you can repaint up to eight times a day or skip the picture entirely. When you bring them to life, the portrait hangs itself on their page.</p>
+<h2>For the pros</h2>
+<p>The regular builder — every field, every tool, every knob — is exactly where it always was. The quiz is a front porch, not a replacement. Anything the quiz builds can be fine-tuned in the full builder afterward, including on the phone app.</p>
+`,
+};
+
 PAGES.whatsnew = {
   title: "What's New",
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
+
+<h2>August 14, 2026</h2>
+<ul>
+  <li><strong>Making your own character no longer requires knowing what you're doing.</strong> New page: <a href="/help/create-a-character">Create a Character</a> — eight questions with no wrong answers, a personality written out for you in plain words, engine choices you can actually understand ("The all-rounder — quick, warm, good memory"), and a button that paints their portrait for three cents. Experts lose nothing: the full builder is untouched and one toggle shows every technical name.</li>
+  <li><strong>Thirty-seven marketplace characters finally got their faces.</strong> The whole roleplay wing — the elder dragon, the sentient thunderstorm, the 1962 jukebox, the ghost librarian, the cast-iron skillet with opinions — plus Deuce the card dealer, painted in the same warm style as everyone else. Browse the marketplace and say hello; you'll know them when you see them now.</li>
+  <li><strong>Picture-making got fixed while nobody was looking.</strong> The image engine behind the scenes had quietly moved house and every character's picture tool had been failing since. It's repaired — ask a character with the picture skill to draw something and it works again.</li>
+</ul>
 
 <h2>August 11, 2026</h2>
 <ul>
