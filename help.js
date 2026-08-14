@@ -259,7 +259,7 @@ PAGES.home = {
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
   <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
-  <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room, give them a topic, and jump in.</span></a></li>
+  <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share porch hangout front porch company"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room with a topic — or none at all on the front porch — and jump in.</span></a></li>
   <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion cards against reality humanity wild blanks party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Nineteen real games by voice — Blackjack, Uno, War, Cards Against Reality (you know the game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall cards shared private clean up remind reminder notification push birthday nudge"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">Memory cards: what sticks between chats, and how to boss it around.</span></a></li>
@@ -447,6 +447,7 @@ PAGES.whatsnew = {
   <li><strong>Making your own character no longer requires knowing what you're doing.</strong> New page: <a href="/help/create-a-character">Create a Character</a> — eight questions with no wrong answers, a personality written out for you in plain words, engine choices you can actually understand ("The all-rounder — quick, warm, good memory"), and a button that paints their portrait for three cents. Experts lose nothing: the full builder is untouched and one toggle shows every technical name.</li>
   <li><strong>Thirty-seven marketplace characters finally got their faces.</strong> The whole roleplay wing — the elder dragon, the sentient thunderstorm, the 1962 jukebox, the ghost librarian, the cast-iron skillet with opinions — plus Deuce the card dealer, painted in the same warm style as everyone else. Browse the marketplace and say hello; you'll know them when you see them now.</li>
   <li><strong>Picture-making got fixed while nobody was looking.</strong> The image engine behind the scenes had quietly moved house and every character's picture tool had been failing since. It's repaired — ask a character with the picture skill to draw something and it works again.</li>
+  <li><strong>The Debate Room grew a front porch.</strong> Same room, no contest: pick <em>Front porch</em> when you start a room, skip the topic entirely, and two to six characters just hang out with you — stories, gentle teasing, easy questions, nobody trying to win. Radio-play voices and party codes work exactly the same. <a href="/help/debate-room">How it works</a>.</li>
 </ul>
 
 <h2>August 11, 2026</h2>
@@ -906,7 +907,7 @@ ${nextprev("phone", "build")}
 PAGES.rooms = {
   title: "The Debate Room",
   h1: "The Debate Room",
-  tagline: "Two or more characters, one room, one topic — and you, whenever you feel like jumping in.",
+  tagline: "Two or more characters, one room, one topic — or no topic at all on the front porch — and you, whenever you feel like jumping in.",
   main: `
 <p class="lead">The Debate Room lets you drop a handful of characters into one conversation and give them something to chew on. They'll argue, agree, gang up, and crack jokes — with each other, not just with you. You can sit back and listen, or wade in anytime.</p>
 
@@ -915,7 +916,8 @@ PAGES.rooms = {
 
 <h2>Starting a room</h2>
 <ol>
-  <li><strong>Give it a topic or a scene.</strong> Anything: "Pineapple on pizza — settle it," or "You're a ship's crew and the ship is sinking."</li>
+  <li><strong>Pick a room style.</strong> <em>Debate &amp; roleplay</em> wants a topic; <em>Front porch</em> doesn't need one.</li>
+  <li><strong>Give it a topic or a scene</strong> (debates only — the porch skips this). Anything: "Pineapple on pizza — settle it," or "You're a ship's crew and the ship is sinking."</li>
   <li><strong>Add rules if you want.</strong> This part's optional but powerful: "Tank argues FOR and takes it way too seriously. Nana Pearl thinks everyone needs a snack. Keep it short." The characters actually follow these.</li>
   <li><strong>Pick your cast</strong> — check 2 to 6 characters from the list.</li>
   <li>Press <strong>Create room</strong>.</li>
@@ -928,6 +930,9 @@ PAGES.rooms = {
   <li><strong>Let them cook</strong> — they go three full rounds on their own. There's a Stop button.</li>
   <li><strong>Type anything</strong> in the box and send it — you're in the room too, and everyone gets a turn to react to what you said.</li>
 </ul>
+
+<h2>The front porch — no topic, just company</h2>
+<p>Sometimes you don't want a debate; you want company. Pick <strong>Front porch</strong> as the room style and the same characters stop competing and just sit with you — swapping stories, teasing each other gently, asking after your day. No topic needed (there's a default evening porch waiting), though you can set the scene if you like: "the porch after a thunderstorm," "shelling peas at dusk." Everything else works the same: take turns, run rounds, let them cook, jump in whenever, share the good ones to the Hall.</p>
 
 <h2>Read aloud — radio-play mode</h2>
 <p>Turn on <strong>Read aloud</strong> in the room and every character's turn is spoken out loud <em>in that character's own voice</em>, one after another. It turns a debate into a little radio drama. Your choice is remembered for next time.</p>
