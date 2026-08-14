@@ -163,7 +163,7 @@ router.post("/librechat/avatar-gen", auth, express.json({ limit: "64kb" }), asyn
         prompt: String(prompt).slice(0, 2400),
         width: Math.min(Number(width) || 1024, 1440),
         height: Math.min(Number(height) || 1024, 1440),
-        safety_tolerance: 6,
+        safety_tolerance: 5, /* current public API cap — 6 got 403 "requires authorization" */
         output_format: "png",
         ...(seed !== undefined ? { seed: Number(seed) } : {}),
       }),
