@@ -484,6 +484,61 @@ router.post("/librechat/memory/consolidate", auth, async (req, res) => {
 });
 
 // ============================================================================
+// Part 69 (Aug 15 2026) — THE MEMORY SYSTEM lanes. consolidate2 = the
+// CONNECTION pass (entity linking + honest inference + contradiction trails,
+// auto-apply + ledger, her checkpoint call). -all/-status = the platform-wide
+// backfill ("all seats quietly") + its progress read. /ledger = the edit
+// trail, newest first. /rag-sync = one-shot card-embedding backfill for the
+// relevant-recall lane. All ride the same cached login + pacing as the rest.
+// ============================================================================
+router.post("/librechat/memory/consolidate2", auth, async (req, res) => {
+  const { agentId } = req.body || {};
+  const body = {};
+  if (typeof agentId === "string" && agentId.trim()) body.agentId = agentId.trim();
+  try {
+    res.json(await lc("POST", "/api/memories/consolidate-v2", body));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.post("/librechat/memory/consolidate2-all", auth, async (req, res) => {
+  try {
+    res.json(await lc("POST", "/api/memories/consolidate-v2-all", {}));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.get("/librechat/memory/consolidate2-status", auth, async (req, res) => {
+  try {
+    res.json(await lc("GET", "/api/memories/consolidate-v2-status"));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.get("/librechat/memory/ledger", auth, async (req, res) => {
+  const q = [];
+  if (req.query.agentId) q.push("agentId=" + encodeURIComponent(req.query.agentId));
+  if (req.query.limit) q.push("limit=" + encodeURIComponent(req.query.limit));
+  if (req.query.sinceDays) q.push("sinceDays=" + encodeURIComponent(req.query.sinceDays));
+  try {
+    res.json(await lc("GET", "/api/memories/ledger" + (q.length ? "?" + q.join("&") : "")));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.post("/librechat/memory/rag-sync", auth, async (req, res) => {
+  try {
+    res.json(await lc("POST", "/api/memories/rag-sync", {}));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// ============================================================================
 // TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
 // and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
 // queue and use their own creds. Read/registration only; NO outbound calls, NO
