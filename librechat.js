@@ -538,6 +538,24 @@ router.post("/librechat/memory/rag-sync", auth, async (req, res) => {
   }
 });
 
+// POST /librechat/memory/diary-voice-repair -> Part 70's one-time logbook
+// retrofit (pre-taste-rules entries get the friend voice; facts sacred,
+// originals kept on-doc). body = { dryRun?, before?, limit? } — dryRun
+// DEFAULTS TRUE server-side (a census, zero writes); pass dryRun:false to
+// actually run it. The real run can take a couple of minutes for a big census.
+router.post("/librechat/memory/diary-voice-repair", auth, async (req, res) => {
+  const { dryRun, before, limit } = req.body || {};
+  const body = {};
+  if (dryRun === false) body.dryRun = false;
+  if (typeof before === "string" && before.trim()) body.before = before.trim();
+  if (Number.isInteger(limit) && limit > 0) body.limit = limit;
+  try {
+    res.json(await lc("POST", "/api/memories/diary-voice-repair", body));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // ============================================================================
 // TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
 // and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
