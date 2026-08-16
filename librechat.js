@@ -796,7 +796,16 @@ router.get("/balances", auth, async (req, res) => {
 // poll to green). Env: CODEMAGIC_TOKEN (sent as x-auth-token) and optional
 // CODEMAGIC_APP_ID (defaults to the kade-ai-app id). Builds auto-publish to
 // TestFlight internal on success (workflow ios-testflight).
-const CM_APP_ID = process.env.CODEMAGIC_APP_ID || "6a570159a79b1534242af0d9";
+// Aug 16 2026 (Part 70.8): the hardcoded default here is the OLD Capacitor
+// shell -- a native build fired through this lane landed on the wrong app and
+// failed instantly on a missing workflow (buildId 6a8148677a198c3f535a92c6,
+// the receipt). Named ids so callers can say which app they mean; native is
+// the default now because every build since 203 has been native.
+const CM_APP_ID = process.env.CODEMAGIC_APP_ID || "6a5c05bc7ed64e858ce8a6d6"; // kade-ai-native
+const CM_APP_IDS = {
+  native: "6a5c05bc7ed64e858ce8a6d6", // kade-ai-native (SwiftUI)
+  shell: "6a570159a79b1534242af0d9", // kade-ai-app (Capacitor)
+};
 async function codemagic(path, opts = {}) {
   const tok = process.env.CODEMAGIC_TOKEN;
   if (!tok) throw new Error("CODEMAGIC_TOKEN env var is not set on the proxy");
@@ -811,12 +820,13 @@ async function codemagic(path, opts = {}) {
 
 // POST /codemagic/build {workflowId?, branch?} -> {buildId}
 router.post("/codemagic/build", auth, async (req, res) => {
-  const { workflowId, branch } = req.body || {};
+  const { workflowId, branch, appId, app } = req.body || {};
   try {
     const d = await codemagic("/builds", {
       method: "POST",
       body: JSON.stringify({
-        appId: CM_APP_ID,
+        // app: "native"|"shell" by name, or appId raw; default native.
+        appId: appId || CM_APP_IDS[app] || CM_APP_ID,
         workflowId: workflowId || "ios-testflight",
         branch: branch || "main",
       }),
