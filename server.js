@@ -628,8 +628,37 @@ function groupSentences(text, maxChunkLen) {
         chunks.push(current);
         current = "";
       }
-      for (let i = 0; i < sentence.length; i += maxChunkLen) {
-        chunks.push(sentence.slice(i, i + maxChunkLen));
+      // Aug 18 2026 (Kade: read-aloud "pauses randomly in the middle of a
+      // sentence"). This fallback used to be a BLIND slice(i, i+maxChunkLen),
+      // and a blind slice lands wherever it lands: on her long Fox reply 18 of
+      // 51 seams cut through the middle of a WORD ("...overseas newspapers
+      // just pic" | "ked sides openly"). Each half is its own Inworld
+      // utterance, so the word gets spoken as two fragments with dead air
+      // between them. Back off to the last real break instead -- clause
+      // punctuation if there is one in the back half of the window, else the
+      // last space. Only a single unbroken 500+ char "word" (not a thing in
+      // prose) still falls through to a hard cut, and the loop can never stall.
+      let pos = 0;
+      while (pos < sentence.length) {
+        let end = Math.min(pos + maxChunkLen, sentence.length);
+        if (end < sentence.length) {
+          const window = sentence.slice(pos, end);
+          const half = Math.floor(maxChunkLen / 2);
+          const clause = Math.max(
+            window.lastIndexOf(", "),
+            window.lastIndexOf("; "),
+            window.lastIndexOf(": "),
+            window.lastIndexOf(" \u2014 "),
+            window.lastIndexOf(" - ")
+          );
+          const space = window.lastIndexOf(" ");
+          if (clause > half) end = pos + clause + 1;
+          else if (space > half) end = pos + space;
+        }
+        if (end <= pos) end = Math.min(pos + maxChunkLen, sentence.length); // never stall
+        const piece = sentence.slice(pos, end).trim();
+        if (piece) chunks.push(piece);
+        pos = end;
       }
       continue;
     }
@@ -758,12 +787,72 @@ function buildWavHeader(dataLength, { numChannels, sampleRate, bitsPerSample }) 
 // env-tunable now too. The other half of the seam fix is content-side: the
 // platform note teaches direction CHANGES at paragraph turns (a new mood
 // makes the joint sound like a gear change, not a reader's breath).
-const GAP_MS = parseInt(process.env.TTS_GAP_MS || "160", 10);
+// ⚠️ AUG 18 2026 — GAP_MS NOW MEANS THE WHOLE SEAM, NOT AN ADDITION TO IT.
+// Kade: read-aloud "pauses randomly in the middle of a sentence... like there
+// are commas in places they shouldn't be." Measured on her actual voice
+// (Voice 578 Jadabell) against the live service: every chunk Inworld returns
+// carries 460-605ms of its own TRAILING silence and 15-65ms of leading
+// silence. We were butting that ragged tail straight against 160ms of our
+// own gap, so a real seam measured ~655ms while a natural sentence break
+// INSIDE a chunk measured ~410ms. Every seam was therefore one-and-a-half
+// periods long -- audible as an extra comma, and completely invisible in the
+// code because the 160 constant looked modest.
+//
+// Fix: trim the provider's own silence off the inner edges first, then insert
+// exactly GAP_MS. GAP_MS's default moves 160 -> 340 because it is now the
+// ENTIRE seam and has to stand in for the sentence break it replaces (aiming
+// just under Inworld's own ~410ms so seams read as breaths, not stops).
+// TTS_TRIM_SEAMS=0 restores the old butt-splice exactly. Outer edges are
+// deliberately NOT trimmed -- clipping the first phoneme or the last word is
+// a worse bug than a little air at the ends.
+const GAP_MS = parseInt(process.env.TTS_GAP_MS || "340", 10);
+const TRIM_SEAMS = process.env.TTS_TRIM_SEAMS !== "0";
+// Never eat more than this much from one edge: if a chunk really does end in
+// a long deliberate silence, that is the model performing, not slop.
+const MAX_TRIM_MS = parseInt(process.env.TTS_MAX_TRIM_MS || "900", 10);
 
 function buildSilence(ms, { sampleRate, numChannels, bitsPerSample }) {
   const bytesPerSample = bitsPerSample / 8;
   const samples = Math.round((sampleRate * ms) / 1000);
   return Buffer.alloc(samples * numChannels * bytesPerSample, 0);
+}
+
+// Trim provider silence off one or both edges of a 16-bit PCM buffer.
+// Threshold is relative to the clip's own peak (so a quiet voice is not
+// treated as silence) with an absolute floor for near-silent clips. Fully
+// fail-soft: anything unexpected returns the buffer untouched.
+function trimEdgeSilence(pcm, fmt, { head = false, tail = false } = {}) {
+  try {
+    if (!TRIM_SEAMS || !pcm || !pcm.length || fmt.bitsPerSample !== 16) return pcm;
+    const frame = fmt.numChannels * 2;                 // bytes per sample frame
+    const win = Math.max(1, Math.round(fmt.sampleRate * 0.005)) * frame; // 5ms
+    const total = Math.floor(pcm.length / win);
+    if (total < 4) return pcm;
+    let peak = 0;
+    const rms = new Float64Array(total);
+    for (let w = 0; w < total; w++) {
+      let sum = 0;
+      const base = w * win;
+      for (let b = base; b < base + win; b += 2) { const v = pcm.readInt16LE(b); sum += v * v; }
+      const r = Math.sqrt(sum / (win / 2));
+      rms[w] = r;
+      if (r > peak) peak = r;
+    }
+    const thr = Math.max(peak * 0.01, 60);
+    let first = 0, last = total - 1;
+    while (first < total && rms[first] < thr) first++;
+    while (last > first && rms[last] < thr) last--;
+    if (first >= last) return pcm;                     // all silence: leave it alone
+    const maxWin = Math.round(MAX_TRIM_MS / 5);
+    const startWin = head ? Math.min(first, maxWin) : 0;
+    const endWin = tail ? Math.min(total - 1 - last, maxWin) : 0;
+    if (!startWin && !endWin) return pcm;
+    const out = pcm.slice(startWin * win, pcm.length - endWin * win);
+    return out.length ? out : pcm;
+  } catch (err) {
+    console.warn(`[TTS] seam trim skipped (${err.message})`);
+    return pcm;
+  }
 }
 
 
@@ -1416,6 +1505,8 @@ function vocalizeDirection(tagText) {
   return t;
 }
 
+const STEER_CARRY_MAX = parseInt(process.env.TTS_STEER_CARRY || "2", 10);
+
 function applySteeringTags(text) {
   if (!text || text.indexOf("%%") === -1) return text;
   // Tag-typo tolerance (July 2 2026, seen live from Kiana): models sometimes
@@ -1456,14 +1547,29 @@ function applySteeringTags(text) {
   const bracketAtStart = /^\s*\[([^\]]+)\]/;
   const parts = converted.split(/(\n\s*\n+)/); // odd indices are the blank-line separators themselves
   let active = null;
+  let carried = 0;
   for (let i = 0; i < parts.length; i++) {
     if (i % 2 === 1 || !parts[i].trim()) continue; // separator or blank -- leave untouched
     const opens = parts[i].match(bracketAtStart);
     if (opens) {
-      if (!NONVERBAL_TAGS.has(opens[1].trim().toLowerCase())) active = opens[1].trim();
+      if (!NONVERBAL_TAGS.has(opens[1].trim().toLowerCase())) { active = opens[1].trim(); carried = 0; }
       continue; // paragraph already opens with its own tag -- don't double up
     }
-    if (active) parts[i] = `[${active}] ${parts[i]}`;
+    // ⚠️ AUG 18 2026 — THE CARRY-FORWARD IS NOW CAPPED. It used to run to the
+    // END OF THE MESSAGE, and that is the second half of her "random pauses"
+    // complaint. Receipts from her Fox conversation: 3 authored %%% tags
+    // became 12 applied [tags] (msg 5), and 6 became 53 (msg 3). One
+    // "%%%a beat, then the landing%%%" she wrote for a single closing moment
+    // was being re-stamped onto every paragraph after it, and Inworld pays a
+    // mood direction off in PACING -- measured on Voice 578, the same
+    // sentence ran 14.51s with two natural pauses untagged vs 15.98s with
+    // three (375/825/585ms) once that tag led it. A direction should color
+    // the thought it was written for and the next beat or two, not haunt the
+    // rest of the reply. TTS_STEER_CARRY=99 restores the old behavior;
+    // 0 disables carry-forward entirely (chunks past the first read flat --
+    // that is the bug this mechanism was built to fix, so don't).
+    if (active && carried >= STEER_CARRY_MAX) active = null;
+    if (active) { parts[i] = `[${active}] ${parts[i]}`; carried++; }
   }
   // July 27 2026: same residual sweep as the early return -- any %%-run that
   // survived conversion is a broken tag (asymmetric closer, 6+ percents),
@@ -1927,7 +2033,10 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
   const edgeFade = Math.max(48, Math.round(fmt.sampleRate * 0.005));
   const pieces = [];
   parsed.forEach((p, i) => {
-    pieces.push(fadePcmEdges(p.data, edgeFade));
+    // Aug 18 2026: trim the provider's own ragged silence off INNER edges only
+    // so `gap` is the whole seam (see GAP_MS). Outer edges stay untouched.
+    const trimmed = trimEdgeSilence(p.data, fmt, { head: i > 0, tail: i < parsed.length - 1 });
+    pieces.push(fadePcmEdges(trimmed, edgeFade));
     if (i < parsed.length - 1) pieces.push(gap);
   });
   const pcm = Buffer.concat(pieces);
@@ -2152,10 +2261,21 @@ app.post("/v1/audio/speech", async (req, res) => {
     // telephony lane keeps its whole-message fade after downsample too.
     const edgeFade = Math.max(48, Math.round(format.sampleRate * 0.005));
     const pieces = [];
+    let trimmedMs = 0;
     parsed.forEach((p, i) => {
-      pieces.push(fadePcmEdges(p.data, edgeFade));
+      // Aug 18 2026 (her "random commas"): Inworld hands back 460-605ms of
+      // trailing silence per chunk. Butting that against our gap made every
+      // seam ~655ms -- longer than a real period. Trim the INNER edges so
+      // `silence` (GAP_MS) is the entire seam. Outer edges untouched on
+      // purpose: better a little air than a clipped first or last word.
+      const trimmed = trimEdgeSilence(p.data, format, { head: i > 0, tail: i < parsed.length - 1 });
+      trimmedMs += Math.round(((p.data.length - trimmed.length) / (format.numChannels * 2)) / format.sampleRate * 1000);
+      pieces.push(fadePcmEdges(trimmed, edgeFade));
       if (i < parsed.length - 1) pieces.push(silence);
     });
+    if (parsed.length > 1) {
+      console.log(`[TTS] seams: ${parsed.length - 1} @ ${GAP_MS}ms (trimmed ${trimmedMs}ms of provider dead air, trim=${TRIM_SEAMS ? "on" : "off"})`);
+    }
 
     const combinedData = Buffer.concat(pieces);
     normalizeLoudness(combinedData, format.sampleRate, inworldVoice);
