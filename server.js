@@ -1552,7 +1552,39 @@ function applySteeringTags(text) {
     if (i % 2 === 1 || !parts[i].trim()) continue; // separator or blank -- leave untouched
     const opens = parts[i].match(bracketAtStart);
     if (opens) {
-      if (!NONVERBAL_TAGS.has(opens[1].trim().toLowerCase())) { active = opens[1].trim(); carried = 0; }
+      if (!NONVERBAL_TAGS.has(opens[1].trim().toLowerCase())) {
+        active = opens[1].trim();
+        carried = 0;
+        /* ⚠️ AUG 18 2026 — THE DOUBLE-TAG WART, KILLED AT THE SOURCE.
+         * Characters routinely write a direction ALONE on its own line:
+         *
+         *     %%%a beat, then the landing%%%
+         *
+         *     Ailes himself got forced out...
+         *
+         * That converts to a paragraph that is NOTHING BUT `[direction]`, and
+         * then the carry-forward below re-states the very same direction on
+         * the paragraph after it -- so the text handed to the provider reads
+         * `[a beat, then the landing]\n\n[a beat, then the landing] Ailes...`.
+         * Inworld survived it by accident (shapeInworldSteering drops an
+         * identical carried repeat inside a chunk), but the FISH lane has no
+         * such dedupe, and the same message measured 31 bracket tags on fish
+         * against 9 on Inworld. Fish reads a doubled cue as two cues.
+         * A direction-only paragraph is a stage note, not a line to perform,
+         * and the next paragraph is about to carry it anyway -- so drop it,
+         * for every lane at once. Only when something actually follows: a
+         * trailing direction with nothing after it is left alone for the
+         * existing words-free filter to handle. */
+        let nextIdx = -1;
+        for (let j = i + 1; j < parts.length; j++) {
+          if (j % 2 === 1) continue;
+          if (parts[j] && parts[j].trim()) { nextIdx = j; break; }
+        }
+        if (nextIdx !== -1 && !parts[i].slice(opens[0].length).trim()) {
+          parts[i] = "";
+          if (i + 1 < parts.length && i % 2 === 0) parts[i + 1] = ""; // its trailing blank line too
+        }
+      }
       continue; // paragraph already opens with its own tag -- don't double up
     }
     // ⚠️ AUG 18 2026 — THE CARRY-FORWARD IS NOW CAPPED. It used to run to the
@@ -1633,8 +1665,25 @@ function fishEmphasisFromCaps(text) {
 // than its sentence is noise (fish: "don't overuse emotion tags in short text").
 const FISH_SEED_MIN_SENTENCE_LEN = 30;
 
+// Aug 18 2026: last line of defence for the fish lane. applySteeringTags now
+// drops direction-only paragraphs at the source, but fish reads a doubled cue
+// as two cues, so any adjacent identical [tag][tag] pair -- however it got
+// here -- collapses to one before synthesis.
+function collapseAdjacentTags(text) {
+  if (!text || text.indexOf("[") === -1) return text;
+  let out = text, prev;
+  do {
+    prev = out;
+    out = out.replace(/\[([^\]]+)\](\s*)\[([^\]]+)\]/g, (m, a, gap, b) =>
+      a.trim().toLowerCase() === b.trim().toLowerCase() ? `[${a}]${gap.includes("\n") ? "\n\n" : " "}` : m
+    );
+  } while (out !== prev);
+  return out.replace(/[ \t]{2,}/g, " ");
+}
+
 function seedFishSteering(chunk) {
   if (!chunk) return chunk;
+  chunk = collapseAdjacentTags(chunk);
   // CAPS->[emphasis] runs even when no [cues] exist — stressed words deserve
   // stress regardless of whether the reply carried steering tags.
   chunk = fishEmphasisFromCaps(chunk);
