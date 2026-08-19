@@ -3230,6 +3230,46 @@ const VOICE_ADDITIONS_2026_08_06_EVE2 = {
   });
 }
 
+// ── 2026-08-19 INWORLD ADDITIONS (Kade: "Add the new inworld voices I just
+// made ... taking care to not add the ones I left out before."). Pulled live
+// from api.inworld.ai/tts/v1/voices (263 workspace customs) and diffed against
+// all 237 registered ids: 26 unregistered, of which 17 are her standing
+// personal-clone HOLD-OUTS kept OUT per her vet, reconfirmed this session —
+// every Kade*/Amber*, Sky, Dale, Podcast Keighty fast, the sneaky
+// pro_amber_reading, AND a NEW kade_professional that is NOT the individually
+// invited keighty_pro (= Voice 541). The 17 parked exactly matches the Aug-6
+// round-four count, the confidence check that the vet caught the right set.
+// These 9 are the new NON-personal designed voices. Numbered-only picker per
+// her rule; names live here + as hidden aliases. APPEND-ONLY as Voice 594+;
+// same boot-crash rails as every prior block.
+const VOICE_ADDITIONS_2026_08_19 = {
+  "Voice 594": { target: "default-e-m11vgtr9l-m7afw4kmnw__quartney", name: "quartney" },
+  "Voice 595": { target: "default-e-m11vgtr9l-m7afw4kmnw__koda", name: "Koda" },
+  "Voice 596": { target: "default-e-m11vgtr9l-m7afw4kmnw__manayah", name: "Manayah" },
+  "Voice 597": { target: "default-e-m11vgtr9l-m7afw4kmnw__evala", name: "Evala" },
+  "Voice 598": { target: "default-e-m11vgtr9l-m7afw4kmnw__needa", name: "Needa" },
+  "Voice 599": { target: "default-e-m11vgtr9l-m7afw4kmnw__dolya", name: "Dolya" },
+  "Voice 600": { target: "default-e-m11vgtr9l-m7afw4kmnw__niah", name: "Niah" },
+  "Voice 601": { target: "default-e-m11vgtr9l-m7afw4kmnw__fammy", name: "Fammy" },
+  "Voice 602": { target: "default-e-m11vgtr9l-m7afw4kmnw__rayray", name: "Rayray" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_08_19);
+  if (entries.length !== 9) throw new Error(`additions 08-19: expected 9, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${594 + idx}`) throw new Error(`additions 08-19: non-contiguous at ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`additions 08-19: ${label} target shape`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`additions 08-19: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
