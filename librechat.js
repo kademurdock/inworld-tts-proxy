@@ -283,11 +283,23 @@ const AGENT_MODEL_TTL_MS = parseInt(process.env.LIBRECHAT_AGENT_MODEL_TTL_MS, 10
 const AGENT_MODEL_CAP = Math.min(parseInt(process.env.LIBRECHAT_AGENT_MODEL_CAP, 10) || 12, 40);
 const _modelCache = new Map(); // id -> { model, provider, at }
 
-async function resolveAgentModels(agents, want) {
+async function resolveAgentModels(agents, want, only) {
   const cap = Math.min(want, AGENT_MODEL_CAP);
   const now = Date.now();
   let resolved = 0;
-  for (const a of agents) {
+  /* `only` (from ?modelsFor=Kiana,Forge,...) spends the cap on the agents the
+   * caller actually asked about instead of whoever happens to sort first.
+   * Without it a cap of 12 against 223 agents resolves an arbitrary dozen --
+   * which is how the first cut of this shipped a fleet table with half the
+   * named characters reading "(not resolved)". Same class of half-truth this
+   * whole route exists to kill. */
+  const ordered = only && only.length
+    ? [
+        ...agents.filter((a) => only.includes(String(a.name || "").trim().toLowerCase())),
+        ...agents.filter((a) => !only.includes(String(a.name || "").trim().toLowerCase())),
+      ]
+    : agents;
+  for (const a of ordered) {
     const hit = _modelCache.get(a.id);
     if (hit && now - hit.at < AGENT_MODEL_TTL_MS) {
       a.model = hit.model;
@@ -337,8 +349,12 @@ router.get("/librechat/agents", auth, async (req, res) => {
     // See resolveAgentModels above: model/provider are NULL from LibreChat's
     // list projection unless explicitly resolved. Say so, always.
     const withModels = String(req.query.withModels || "") === "1";
+    const only = String(req.query.modelsFor || "")
+      .split(",")
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean);
     let modelsResolved = 0;
-    if (withModels) modelsResolved = await resolveAgentModels(agents, agents.length);
+    if (withModels) modelsResolved = await resolveAgentModels(agents, agents.length, only);
     res.json({
       count: agents.length,
       has_more: d.has_more === true,
