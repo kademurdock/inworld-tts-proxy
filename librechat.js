@@ -251,6 +251,67 @@ router.post("/librechat/agent-avatar", auth, express.json({ limit: "8mb" }), asy
 });
 
 // GET /librechat/agents -> compact list of ALL agents (the marketplace + private)
+/* ⭐⭐ AGENT MODEL RESOLUTION (Aug 19 2026) — WHY THIS EXISTS, so it is never
+ * quietly removed again.
+ *
+ * THE BUG IT FIXES: this list endpoint has projected `model` and `provider`
+ * since Aug 3, and they have been `null` for EVERY agent that whole time --
+ * LibreChat's `/api/agents` list projection simply does not include them. The
+ * single-agent route returns them fine. So anything reading the fleet in bulk
+ * (Forge, chiefly) got 150+ nulls and no hint that the nulls were an artifact
+ * rather than the truth.
+ *
+ * WHAT THAT COST: asked "what model is Kiana on", Forge answered DEEPSEEK. Her
+ * record plainly says `z-ai/glm-5.2` on OpenRouter. He had no authoritative
+ * source -- nulls here, nothing in PLATFORM_SNAPSHOT.md -- and the two things
+ * he COULD see both point at deepseek: a shelf of research docs weighing it as
+ * a candidate, and proxy logs where `deepseek/deepseek-v4-flash` is the single
+ * most common model by volume (279 of 374 turns on Aug 18) because it is the
+ * TITLER, firing once per conversation. Given nothing true, he assembled
+ * something plausible. A silent null is worse than an error.
+ *
+ * WHY IT IS BOUNDED: every kademurdock.com call goes through `paced()` with a
+ * 4s global gap (anti-abuse, and rightly so). Resolving all 150+ agents would
+ * pound her site for ten straight minutes. So: opt-in, hard-capped, and cached
+ * for 6h -- the daily snapshot pays ~8 lookups once and everything else is free.
+ *
+ * AND IT NEVER LIES BY OMISSION: the response always carries `modelsNote`
+ * saying why model/provider are null when they are, plus `modelsResolved` and
+ * `modelsTruncated`, so partial data can never be mistaken for the whole fleet.
+ * That is the entire lesson of the bug above. */
+const AGENT_MODEL_TTL_MS = parseInt(process.env.LIBRECHAT_AGENT_MODEL_TTL_MS, 10) || 6 * 60 * 60 * 1000;
+const AGENT_MODEL_CAP = Math.min(parseInt(process.env.LIBRECHAT_AGENT_MODEL_CAP, 10) || 12, 40);
+const _modelCache = new Map(); // id -> { model, provider, at }
+
+async function resolveAgentModels(agents, want) {
+  const cap = Math.min(want, AGENT_MODEL_CAP);
+  const now = Date.now();
+  let resolved = 0;
+  for (const a of agents) {
+    const hit = _modelCache.get(a.id);
+    if (hit && now - hit.at < AGENT_MODEL_TTL_MS) {
+      a.model = hit.model;
+      a.provider = hit.provider;
+      resolved += 1;
+      continue;
+    }
+    if (resolved >= cap) continue;
+    try {
+      const full = await lc("GET", `/api/agents/${encodeURIComponent(a.id)}`);
+      const rec = (full && (full.agent || full)) || {};
+      a.model = rec.model ?? null;
+      a.provider = rec.provider ?? null;
+      _modelCache.set(a.id, { model: a.model, provider: a.provider, at: now });
+      resolved += 1;
+    } catch (e) {
+      // One bad agent must never sink the list.
+      a.model = null;
+      a.provider = null;
+    }
+  }
+  return resolved;
+}
+
 router.get("/librechat/agents", auth, async (req, res) => {
   try {
     // Aug 3 2026: cursor/limit passthrough — the fleet outgrew the old fixed
@@ -273,7 +334,22 @@ router.get("/librechat/agents", auth, async (req, res) => {
        * WHETHER one exists and WHERE it lives without shipping whole docs. */
       avatar: a.avatar ? { filepath: a.avatar.filepath || null, source: a.avatar.source || null } : null,
     }));
-    res.json({ count: agents.length, has_more: d.has_more === true, after: d.after ?? d.next_cursor ?? null, agents });
+    // See resolveAgentModels above: model/provider are NULL from LibreChat's
+    // list projection unless explicitly resolved. Say so, always.
+    const withModels = String(req.query.withModels || "") === "1";
+    let modelsResolved = 0;
+    if (withModels) modelsResolved = await resolveAgentModels(agents, agents.length);
+    res.json({
+      count: agents.length,
+      has_more: d.has_more === true,
+      after: d.after ?? d.next_cursor ?? null,
+      modelsResolved,
+      modelsTruncated: withModels && modelsResolved < agents.length,
+      modelsNote: withModels
+        ? `model/provider resolved for ${modelsResolved} of ${agents.length} agents (cap ${AGENT_MODEL_CAP}, cached ${Math.round(AGENT_MODEL_TTL_MS / 3600000)}h). Any agent still showing null was NOT resolved -- it does not mean the agent has no model.`
+        : "model/provider are NULL here by default: LibreChat's list projection omits them. Pass withModels=1 to resolve them (bounded + cached), or GET /librechat/agent?id=... for one full record. A null in this response is NOT evidence an agent has no model.",
+      agents,
+    });
   } catch (e) {
     fail(res, e);
   }
