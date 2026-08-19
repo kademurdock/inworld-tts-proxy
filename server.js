@@ -1505,6 +1505,84 @@ function vocalizeDirection(tagText) {
   return t;
 }
 
+/* ⭐⭐⭐ LOOSE-DIRECTION RESCUE (Aug 19 2026 — Amber's report: "it's reading
+ * 'a beat' as the words").
+ *
+ * THE BUG, reproduced end-to-end before writing a line of this: the same
+ * sentence synthesized on her voice four ways, then transcribed back off the
+ * audio with Deepgram —
+ *
+ *   %%%a beat%%%  -> "She said it. Then she left the room."        CLEAN
+ *   (a beat)      -> "She said it A BEAT. Then she left the room." SPOKEN
+ *   *a beat*      -> "She said it A BEAT. ..."                     SPOKEN
+ *   (softly)      -> "She said it, SOFTLY. ..."                    SPOKEN
+ *
+ * The %%% path was always right. The other two never had a guard at all:
+ * `stripSpeechMarkdown` strips asterisk MARKERS and keeps the text (correct
+ * for markdown emphasis, ruinous for stage directions, which share the
+ * syntax), and NOTHING in the whole prep chain has ever touched parentheses.
+ *
+ * WHY IT SURFACED NOW: the fleet moved to glm-5.2 on Aug 18, and parenthetical
+ * stage directions are a deep prose-fiction habit. The platform note already
+ * tells every character to use three percent signs and names "a beat" as the
+ * Second Law's own bad example — but it ALSO promises "a tag is NEVER read
+ * aloud, so reaching for one is never a risk." That promise was false for two
+ * common forms, which punished a character for following its instincts. This
+ * makes the promise true.
+ *
+ * DELIBERATELY VOCABULARY-GATED, HER CALL: only spans that MATCH a known
+ * direction are touched. "I called her (twice) and she never picked up" and a
+ * genuine *emphasised* word are left completely alone — a false positive here
+ * eats real speech, which is far worse than the bug being fixed.
+ *
+ * TIMING DIRECTIONS ARE DROPPED, NOT CONVERTED, per the note's Second Law:
+ * a direction that describes WAITING gets paid off as literal silence
+ * sprinkled through the paragraph. Punctuation already does the timing. */
+const LOOSE_TIMING = /^(?:a\s+)?(?:beat|pause|long pause|short pause|beat of silence|silence)(?:\s*[,.]?\s*(?:then|before|and)\b[\s\S]{0,40})?$/i;
+const LOOSE_DELIVERY = new RegExp(
+  "^(?:(?:very|so|a bit|slightly|almost)\\s+)?(?:" +
+  "softly|quietly|gently|firmly|dryly|flatly|warmly|coldly|sharply|slowly|quickly|carefully|" +
+  "hesitantly|nervously|cheerfully|sadly|bitterly|wryly|tenderly|sternly|playfully|teasing(?:ly)?|" +
+  "deadpan|whisper(?:s|ing)?|mutter(?:s|ing)?|sigh(?:s|ing)?|laugh(?:s|ing)?|chuckl(?:es|ing)|" +
+  "giggl(?:es|ing)|grin(?:s|ning)?|smil(?:es|ing)|smirk(?:s|ing)?|scoff(?:s|ing)?|snort(?:s|ing)?|" +
+  "groan(?:s|ing)?|gasp(?:s|ing)?|breath(?:es|ing)|exhal(?:es|ing)|inhal(?:es|ing)" +
+  ")$", "i");
+
+function looksLikeDirection(raw) {
+  const t = String(raw || "").trim();
+  if (!t || t.length > 60) return false;
+  if (LOOSE_TIMING.test(t)) return "timing";
+  if (LOOSE_DELIVERY.test(t)) return "delivery";
+  if (PURELY_SILENT.test(t)) return "silent";
+  for (const [re] of PHYSICAL_TO_VOCAL) {
+    re.lastIndex = 0;              // these carry /g, so test() is stateful
+    if (re.test(t)) return "physical";
+  }
+  return false;
+}
+
+function rescueLooseDirections(text) {
+  if (!text) return text;
+  const rescue = (inner) => {
+    const kind = looksLikeDirection(inner);
+    if (!kind) return null;                       // not a direction: leave it exactly as written
+    if (kind === "timing") return "";             // Second Law: the clock is never a direction
+    return `${STEERING_OPEN}${String(inner).trim()}${STEERING_CLOSE}`;
+  };
+  let out = text.replace(/\(([^()\n]{1,60})\)/g, (whole, inner) => {
+    const r = rescue(inner);
+    return r === null ? whole : r;
+  });
+  // Same shape stripSpeechMarkdown uses for single-asterisk italics, so the two
+  // agree on what an asterisk span IS. Must run BEFORE it, or the markers are
+  // already gone and the direction is indistinguishable from ordinary words.
+  out = out.replace(/(^|[^*\w])\*([^*\n]{1,60})\*(?!\*)/g, (whole, pre, inner) => {
+    const r = rescue(inner);
+    return r === null ? whole : pre + r;
+  });
+  return out;
+}
+
 const STEER_CARRY_MAX = parseInt(process.env.TTS_STEER_CARRY || "2", 10);
 
 function applySteeringTags(text) {
@@ -2241,7 +2319,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // SPEAKS the token. Same hygiene class as citation markers.
   // Prep chain minus steering first: scenes must split BEFORE steering so
   // each speaker's %%% carry-forward stays inside their own lines.
-  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(stripThinkingBlock(effectiveInput))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(rescueLooseDirections(stripThinkingBlock(effectiveInput)))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
 
   // Multi-speaker scene lane (Aug 6 2026): double-bracket speaker tags turn a
   // message into a stitched multi-voice performance. Anything short of a real
