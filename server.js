@@ -1583,6 +1583,71 @@ function rescueLooseDirections(text) {
   return out;
 }
 
+/* ── MARKDOWN EMPHASIS -> SPOKEN EMPHASIS (Aug 20 2026) ──────────────────────
+ * Kade, reading a Kiana reply: "I saw some word with emphasis having stars
+ * around it, and I wonder if she meant to do that or if that was supposed to
+ * make it look a certain way visually. If we're talking speech, I'd say there
+ * should probably be an emphasis tag before that word."
+ *
+ * She is right, and the intent was being thrown away. Measured across 1,641
+ * stored assistant messages: 10.1% carry `*emphasis*` or `**bold**`, and
+ * there are 178 single-asterisk spans. Until now every one of them died here:
+ * `rescueLooseDirections` deliberately leaves a genuine *emphasised* word
+ * alone (correct — a false positive there eats real speech), and then
+ * `stripSpeechMarkdown` removes the markers and keeps the bare word. The
+ * model asked for stress; the listener got a flat word. On a screen the
+ * italics would at least render. Kade is blind. Nothing rendered.
+ *
+ * THE FIX IS A ROUTE, NOT A NEW MECHANISM. This platform already HAS a
+ * working emphasis path, and it is CAPITALIZATION:
+ *   • Inworld (docs.inworld.ai → Steering → Emphasis, re-read this date):
+ *     "Capitalize letters within your input text to draw attention to
+ *     specific words or syllables. Fully capitalizing a word stresses the
+ *     entire word, while capitalizing individual letters within a word
+ *     emphasizes a specific syllable." Their own example: "I told you NOT to
+ *     open that door."
+ *   • Fish: `fishEmphasisFromCaps` (Aug 6) already turns a mid-text ALL-CAPS
+ *     word into fish's documented `[emphasis] WORD`.
+ * So converting `*word*` -> `WORD` lands it in machinery that is already
+ * proven on BOTH providers. No new tag vocabulary, no provider fork here.
+ *
+ * ⚠️ NOTE THE TWO DIFFERENT PLACES CAPITALS MATTER, because they look
+ * contradictory and are not: Inworld's best practices say "avoid capital
+ * letters and punctuation in YOUR INSTRUCTIONS" — that is about the text
+ * INSIDE a [steering tag]. Capitals in the SPOKEN TEXT are their documented
+ * emphasis mechanism. Different place, opposite advice, both correct.
+ *
+ * SINGLE WORDS ONLY, and the corpus is why. Of 178 spans: 74% are one word
+ * (`can`, `you`, `felt`, `real`, `opposite`) — the clean case. The rest are
+ * not emphasis at all: `*Script:*` appears THIRTY times as a label, one span
+ * is a malformed `*%%cough%%*` steering tag, and multi-word spans like
+ * `*while you were on them*` or `*the 7th floor*` would become shouting.
+ * Letters-only (plus apostrophe/hyphen) rejects the label and the broken tag
+ * for free. House rule from the normalization layer applies: when in doubt a
+ * shape is LEFT ALONE, because a wrong read is worse to the ear than a
+ * missed nicety.
+ *
+ * Underscores (`_word_`) are deliberately NOT handled: identifiers like
+ * kade_ai_bridge would match, and that trade is bad.
+ *
+ * ORDER IS LOAD-BEARING: must run AFTER rescueLooseDirections (so `*sigh*`
+ * has already become a %%% tag rather than the word SIGH) and BEFORE
+ * stripSpeechMarkdown (which deletes the markers). AUDIO-ONLY, like every
+ * other prep-chain step — the visible chat text is never touched.
+ * Kill switch: KADE_TTS_MD_EMPHASIS=0. */
+const MD_EMPHASIS_ON = process.env.KADE_TTS_MD_EMPHASIS !== "0";
+
+function emphasisFromMarkdown(text) {
+  if (!text || !MD_EMPHASIS_ON || text.indexOf("*") === -1) return text;
+  return text.replace(
+    /(^|[^*\w])\*([A-Za-z][A-Za-z'\u2019-]{1,13})\*(?!\*)/g,
+    (whole, pre, word) => {
+      if (word === word.toUpperCase()) return whole;   // already stressed
+      return pre + word.toUpperCase();
+    }
+  );
+}
+
 const STEER_CARRY_MAX = parseInt(process.env.TTS_STEER_CARRY || "2", 10);
 
 function applySteeringTags(text) {
@@ -2319,7 +2384,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // SPEAKS the token. Same hygiene class as citation markers.
   // Prep chain minus steering first: scenes must split BEFORE steering so
   // each speaker's %%% carry-forward stays inside their own lines.
-  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(rescueLooseDirections(stripThinkingBlock(effectiveInput)))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(emphasisFromMarkdown(rescueLooseDirections(stripThinkingBlock(effectiveInput))))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
 
   // Multi-speaker scene lane (Aug 6 2026): double-bracket speaker tags turn a
   // message into a stitched multi-voice performance. Anything short of a real
