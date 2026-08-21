@@ -1709,7 +1709,12 @@ function applySteeringTags(text) {
   // content = letter-or-digit-led (must contain a letter somewhere, so a
   // bare "%%50%%" number never gets eaten), anything but % or newline,
   // still length-capped.
-  text = text.replace(/%{2,5}((?=[^%\n]{0,79}[a-zA-Z])[a-zA-Z0-9][^%\n]{0,78}?)%{2,5}/g, "%%%$1%%%");
+  // Aug 21 2026 (the length-cap sweep): v130+ personas teach LAYERED
+  // directions that outgrew the July-27 cap -- a TYPO'D long tag fell through
+  // this normalizer, and the residual %-sweep then stripped its delimiters
+  // and SPOKE THE WORDS: the exact "slightly amused" disease, one typo away.
+  // Widened 79/78 -> 160.
+  text = text.replace(/%{2,5}((?=[^%\n]{0,160}[a-zA-Z])[a-zA-Z0-9][^%\n]{0,159}?)%{2,5}/g, "%%%$1%%%");
   // July 27 2026: no canonical tag even after normalizing means whatever %%
   // runs remain are mangled beyond steering (unclosed opener, stray runs) --
   // never hand them to the synth to be read as "percent percent". Single "%"
