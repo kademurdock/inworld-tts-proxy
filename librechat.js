@@ -445,6 +445,22 @@ router.get("/librechat/usage", auth, async (req, res) => {
   }
 });
 
+// ADMIN: add credits to a user's balance (the Feed-the-Server top-up lane).
+// Added Aug 21 2026 while refunding the $6/M default-rate hole (tx.ts had no
+// glm-5.x keys, so the fleet billed families at fantasy rates for days).
+// body = { userId, amountUSD } -> fork /api/kade/add-credits.
+router.post("/librechat/add-credits", auth, express.json({ limit: "16kb" }), async (req, res) => {
+  const { userId, amountUSD } = req.body || {};
+  if (!userId || !(Number(amountUSD) > 0)) {
+    return res.status(400).json({ error: "userId and a positive amountUSD are required" });
+  }
+  try {
+    res.json(await lc("POST", "/api/kade/add-credits", { userId, amountUSD: Number(amountUSD) }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // ============================================================================
 // MEMORIES — /api/memories (LibreChat native memory). Same anti-abuse path as
 // the agent routes (goes through lc()). Standing rule: anything that can CHANGE
