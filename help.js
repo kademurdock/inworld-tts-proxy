@@ -444,6 +444,7 @@ PAGES.whatsnew = {
 
 <h2>August 21, 2026</h2>
 <ul>
+  <li><strong>Every character can look up song lyrics now.</strong> Ask about a song's words &mdash; <em>"pull up the lyrics to Gethsemane by Sleep Token"</em>, <em>"what's the second verse of..."</em> &mdash; and they fetch the real text from an open lyrics library instead of guessing or getting blocked by lyric websites. Free, instant, every companion. If a song's too new or too obscure for the library, they'll say so plainly and you can paste the lines you mean.</li>
   <li><strong>Your characters can CALL you now.</strong> Tell any companion <em>"call me tomorrow at 8 about my meds"</em> or <em>"wake me up at 7"</em> and at that exact moment your iPhone app <strong>rings like a real call</strong> &mdash; with a ringtone you pick by ear in Settings &mdash; and answering drops you straight into a live voice conversation where it already knows why it called. Quiet hours are respected unless you tell a specific call to ring through (wake-up calls, mostly), a missed call leaves a friendly "call me back" note, and a daily cap keeps it from ever getting spammy. Free &mdash; it rings through the app, not the phone line &mdash; and it needs a current iPhone app from TestFlight. The full story is on the <a href="/help/phone">Phone Calls</a> page.</li>
 </ul>
 
