@@ -256,7 +256,7 @@ PAGES.home = {
   <li data-terms="create a character builder quiz make my own agent custom companion portrait picture avatar model engine"><a href="/help/create-a-character"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Create a Character</span><span class="desc">Eight easy questions, a painted portrait, and a friend of your own making — no tech knowledge needed.</span></a></li>
   <li data-terms="android app apk install download sideload phone samsung google pixel motorola galaxy get the app"><a href="/help/android"><span class="ico" aria-hidden="true">🤖</span><span class="ttl">The Android App</span><span class="desc">Got an Android phone? Install Kade-AI as a real app, straight from here.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
-  <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
+  <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report call me calls you ringtone wake-up wake me up alarm agent call answer rings"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
   <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
   <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share porch hangout front porch company"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room with a topic — or none at all on the front porch — and jump in.</span></a></li>
@@ -441,6 +441,11 @@ PAGES.whatsnew = {
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
+
+<h2>August 21, 2026</h2>
+<ul>
+  <li><strong>Your characters can CALL you now.</strong> Tell any companion <em>"call me tomorrow at 8 about my meds"</em> or <em>"wake me up at 7"</em> and at that exact moment your iPhone app <strong>rings like a real call</strong> &mdash; with a ringtone you pick by ear in Settings &mdash; and answering drops you straight into a live voice conversation where it already knows why it called. Quiet hours are respected unless you tell a specific call to ring through (wake-up calls, mostly), a missed call leaves a friendly "call me back" note, and a daily cap keeps it from ever getting spammy. Free &mdash; it rings through the app, not the phone line &mdash; and it needs a current iPhone app from TestFlight. The full story is on the <a href="/help/phone">Phone Calls</a> page.</li>
+</ul>
 
 <h2>August 15, 2026</h2>
 <ul>
@@ -795,6 +800,17 @@ PAGES.phone = {
 
 <h2>The in-app call button</h2>
 <p>Don't want to dial? The <strong>phone button next to the message box</strong> starts a voice conversation right in the app — same idea, no phone plan needed. See <a href="/help/voice">Talking &amp; Listening</a>.</p>
+
+<h2>Your characters can call YOU</h2>
+<p>Newest trick of all: ask a character to <strong>call you</strong> — a wake-up call, a <em>"call me at 8 about my meds,"</em> a Sunday catch-up by voice — and at that exact moment your <strong>iPhone app rings like a real call</strong>, with a ringtone you picked. Tap <strong>Answer</strong> and you're instantly in a live voice conversation, and the character already knows why it called — no "what did you need?", it just gets into it.</p>
+<ul>
+  <li><strong>Set it up in plain words:</strong> <em>"call me tomorrow at 8 about my meds"</em> &middot; <em>"wake me up at 7 every weekday"</em> &middot; <em>"call me Sunday afternoon to catch up."</em> Ask what calls you have set, pause one, or cancel one — all in chat.</li>
+  <li><strong>Pick your ringtone.</strong> The app's Settings has an <strong>Agent call ringtone</strong> section — five sounds, and tapping one plays it out loud so you choose by ear. A character can also set a different tone for one specific call ("use the harp for my wake-up").</li>
+  <li><strong>Quiet hours are respected.</strong> Scheduled calls don't ring between 9pm and 8am Central unless you specifically told that call to — a wake-up call can, because you asked it to. If quiet hours hold a call back, you get an honest morning note about it instead.</li>
+  <li><strong>Miss it? No drama.</strong> If you don't answer, the ringing stops on its own and the character leaves a note on your lock screen — "tried to call you at 8, call me back when you're free."</li>
+  <li><strong>It's free.</strong> These ring through the app, not the phone line — no per-minute anything. A sensible daily cap keeps it from ever turning into spam.</li>
+  <li><strong>Needs the iPhone app</strong> — a current version from TestFlight. The 833 number and the browser can't do this one yet.</li>
+</ul>
 
 <h2>Characters can make calls FOR you</h2>
 <p>This is the wild one. Ask a character to call a real place — <em>"call the pharmacy and ask if my refill is ready"</em> — and it actually dials, has the conversation out loud, and reports back what was said.</p>
