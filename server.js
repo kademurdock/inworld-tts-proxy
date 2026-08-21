@@ -1539,14 +1539,31 @@ function vocalizeDirection(tagText) {
  * a direction that describes WAITING gets paid off as literal silence
  * sprinkled through the paragraph. Punctuation already does the timing. */
 const LOOSE_TIMING = /^(?:a\s+)?(?:beat|pause|long pause|short pause|beat of silence|silence)(?:\s*[,.]?\s*(?:then|before|and)\b[\s\S]{0,40})?$/i;
-const LOOSE_DELIVERY = new RegExp(
-  "^(?:(?:very|so|a bit|slightly|almost)\\s+)?(?:" +
+/* Aug 20 2026 (Kade: TTS spoke "slightly amused" — her exact phrase was in
+ * NO vocabulary here, so a parenthetical or asterisk form of it was spoken as
+ * words DETERMINISTICALLY, every time, on every provider). Two widenings,
+ * both still vocabulary-gated per her standing call:
+ * (1) intensifiers grew the natural family (a little / half / mildly / kind
+ *     of …); (2) a set of emotion ADJECTIVES with essentially no standalone-
+ *     parenthetical use outside stage direction (amused, wry, smug, sheepish
+ *     …). Deliberately EXCLUDED: bare adjectives with real non-direction
+ *     parenthetical collisions — warm, dry, soft, quiet, flat, cold, low —
+ *     a recipe's "(warm)" must never become a voice direction. And (3) short
+ *     combos: up to three matching items joined by commas/and/but, so
+ *     "(slightly amused, a little smug)" rescues whole or not at all. */
+const LOOSE_INTENSIFIER = "(?:(?:very|so|a bit|a little|slightly|almost|half|mildly|faintly|kind of|kinda|sort of)\\s+)?";
+const LOOSE_DELIVERY_WORD = "(?:" +
   "softly|quietly|gently|firmly|dryly|flatly|warmly|coldly|sharply|slowly|quickly|carefully|" +
   "hesitantly|nervously|cheerfully|sadly|bitterly|wryly|tenderly|sternly|playfully|teasing(?:ly)?|" +
   "deadpan|whisper(?:s|ing)?|mutter(?:s|ing)?|sigh(?:s|ing)?|laugh(?:s|ing)?|chuckl(?:es|ing)|" +
   "giggl(?:es|ing)|grin(?:s|ning)?|smil(?:es|ing)|smirk(?:s|ing)?|scoff(?:s|ing)?|snort(?:s|ing)?|" +
-  "groan(?:s|ing)?|gasp(?:s|ing)?|breath(?:es|ing)|exhal(?:es|ing)|inhal(?:es|ing)" +
-  ")$", "i");
+  "groan(?:s|ing)?|gasp(?:s|ing)?|breath(?:es|ing)|exhal(?:es|ing)|inhal(?:es|ing)|" +
+  "amused|bemused|wry|sarcastic|serious|sincere|fond|smug|sheepish|apologetic|" +
+  "exasperated|annoyed|thoughtful|hesitant|wistful|somber|sly|flirty|conspiratorial" +
+  ")";
+const LOOSE_ITEM = LOOSE_INTENSIFIER + LOOSE_DELIVERY_WORD;
+const LOOSE_DELIVERY = new RegExp(
+  "^" + LOOSE_ITEM + "(?:(?:\\s*,\\s*(?:and\\s+)?|\\s+and\\s+|\\s+but\\s+)" + LOOSE_ITEM + "){0,2}$", "i");
 
 function looksLikeDirection(raw) {
   const t = String(raw || "").trim();
@@ -1648,6 +1665,34 @@ function emphasisFromMarkdown(text) {
   );
 }
 
+/* ⭐ TAG-TEXT SANITIZER (Aug 20 2026 — Kade: "it read one of the tags as a
+ * word, slightly amused or something like that," and the tag never showed in
+ * her transcript). The live receipt (00:25Z, Voice 14): this converter handed
+ * Inworld `[warm, a little amused]` VERBATIM — comma-spliced, exactly the
+ * shape Inworld's best practices warn against ("avoid capital letters and
+ * punctuation in your instructions", docs re-read Aug 20). The v130 persona
+ * fix teaches models to WRITE clean tags going forward, but old-shape tags
+ * still arrive — from 220+ untouched personas, from relapse, from
+ * PHYSICAL_TO_VOCAL's own comma-carrying replacements ("dry, audibly
+ * unimpressed"). 18 direct synth probes could not force the read-aloud on
+ * demand — the leak is stochastic (July 27 "tags still spoken sometimes",
+ * Aug 19 "a beat") — so the fix is to never ship the malformed shape at all:
+ * every direction is made doc-conformant at this ONE chokepoint, whoever
+ * wrote it, however old. Lowercase, commas become "and" joins, terminal
+ * punctuation dropped. Apostrophes are KEPT (contractions are normal inside
+ * a direction). NONVERBAL_TAGS are single lowercase words — untouched by
+ * construction, so fish's dialect mapping still matches. Kill switch:
+ * KADE_TTS_TAG_SANITIZE=0. */
+const TAG_SANITIZE_ON = process.env.KADE_TTS_TAG_SANITIZE !== "0";
+function sanitizeDirectionText(t) {
+  if (t == null || !TAG_SANITIZE_ON) return t;
+  let s = String(t).trim().toLowerCase();
+  s = s.replace(/\s*,\s*(?:and\s+)?/g, " and ");
+  s = s.replace(/[.!?;:"()\u201c\u201d\u2014]+/g, " ");
+  s = s.replace(/\s{2,}/g, " ").trim();
+  return s;
+}
+
 const STEER_CARRY_MAX = parseInt(process.env.TTS_STEER_CARRY || "2", 10);
 
 function applySteeringTags(text) {
@@ -1676,7 +1721,7 @@ function applySteeringTags(text) {
   const converted = text.replace(tagRe, (_, raw) => {
     /* Aug 8 2026: physical stage business becomes vocal color or vanishes —
      * see vocalizeDirection above. A dropped tag leaves no bracket at all. */
-    const vocal = vocalizeDirection(raw);
+    const vocal = sanitizeDirectionText(vocalizeDirection(raw));
     return vocal && vocal.length > 0 ? `[${vocal}]` : '';
   });
 
