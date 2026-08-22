@@ -651,6 +651,19 @@ router.post("/librechat/memory-admin-set", auth, async (req, res) => {
   }
 });
 
+// POST /librechat/memory-admin-retire -> Part 85.5: supersede one key in one
+// bucket of any seat (no new row). body = { userId, key, agentId? } — omit
+// agentId to target the SHARED bucket.
+router.post("/librechat/memory-admin-retire", auth, async (req, res) => {
+  const { userId, key, agentId } = req.body || {};
+  if (!userId || !key) return res.status(400).json({ error: "userId and key are required" });
+  try {
+    res.json(await lc("POST", "/api/memories/admin-retire", { userId, key, agentId }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // POST /librechat/memory/delete -> delete a memory (its ENTIRE history, not just
 // the current value). body = { key, agentId? }. agentId must match the bucket
 // the entry is in (omit for shared).
