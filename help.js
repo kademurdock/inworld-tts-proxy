@@ -442,6 +442,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 22, 2026</h2>
+<ul>
+  <li><strong>The ringtones are in &mdash; all 72 of Kade's homemade tones.</strong> The picker groups them by feel (Dreamy &amp; gentle, Calm &amp; lo-fi, Soul &amp; groove, Bright &amp; playful, Driving &amp; bold, World &amp; cinematic) so a screen reader jumps by heading instead of flicking seventy rows, every tone plays its <em>full minute</em> when you tap it, and there's finally a <strong>Stop preview</strong> button. Pick by ear in the app's Settings &mdash; and every tone has a real name (Warm Coffee, Boom Bap, Screen Door...), so you can tell a character <em>"use Morning Raga for my wake-up call."</em></li>
+  <li><strong>Settings has a search box now.</strong> Type the word you have &mdash; <em>ring</em>, <em>speed</em>, <em>vibrate</em>, <em>password</em>, <em>font</em> &mdash; and the actual control comes to you, spoken with the section it lives in ("Calls. Agent call ringtone"). A found switch IS the switch: flip it right there in the results. The whole screen was also reorganized so everything sits one tap deep, with the big ringtone picker on its own page. Needs the current iPhone app from TestFlight.</li>
+  <li><strong>The mid-task stall is fixed.</strong> For a while, a character would sometimes take the first step of a request &mdash; look something up, start a plan &mdash; and then just stop: no reply, no error, nothing done. That bug is found and fixed at the root. If a companion ever seemed to ignore a command halfway through, that was this, not them being moody &mdash; and it's gone.</li>
+</ul>
+
 <h2>August 21, 2026</h2>
 <ul>
   <li><strong>Characters have ears and eyes for media now.</strong> Send any companion a YouTube link &mdash; a song, a music video, a clip &mdash; and say <em>"describe this"</em> or <em>"what instruments are in this?"</em> They actually take it in and tell you what happens on screen and how the music is built: the instruments, the arrangement, the vocals, section by section. Direct audio files work too. Long videos get the first ten minutes described, and they'll say so.</li>
@@ -807,7 +814,7 @@ PAGES.phone = {
 <p>Newest trick of all: ask a character to <strong>call you</strong> — a wake-up call, a <em>"call me at 8 about my meds,"</em> a Sunday catch-up by voice — and at that exact moment your <strong>iPhone app rings like a real call</strong>, with a ringtone you picked. Tap <strong>Answer</strong> and you're instantly in a live voice conversation, and the character already knows why it called — no "what did you need?", it just gets into it.</p>
 <ul>
   <li><strong>Set it up in plain words:</strong> <em>"call me tomorrow at 8 about my meds"</em> &middot; <em>"wake me up at 7 every weekday"</em> &middot; <em>"call me Sunday afternoon to catch up."</em> Ask what calls you have set, pause one, or cancel one — all in chat.</li>
-  <li><strong>Pick your ringtone.</strong> The app's Settings has an <strong>Agent call ringtone</strong> section — five sounds, and tapping one plays it out loud so you choose by ear. A character can also set a different tone for one specific call ("use the harp for my wake-up").</li>
+  <li><strong>Pick your ringtone.</strong> In the app: Settings &rarr; Calls &rarr; <strong>Agent call ringtone</strong> &mdash; 72 of Kade's homemade tones plus the classics, grouped by feel, and tapping one plays the whole preview out loud so you choose by ear (Stop preview hushes it). A character can also set a different tone for one specific call by name ("use Morning Raga for my wake-up").</li>
   <li><strong>Quiet hours are respected.</strong> Scheduled calls don't ring between 9pm and 8am Central unless you specifically told that call to — a wake-up call can, because you asked it to. If quiet hours hold a call back, you get an honest morning note about it instead.</li>
   <li><strong>Miss it? No drama.</strong> If you don't answer, the ringing stops on its own and the character leaves a note on your lock screen — "tried to call you at 8, call me back when you're free."</li>
   <li><strong>It's free.</strong> These ring through the app, not the phone line — no per-minute anything. A sensible daily cap keeps it from ever turning into spam.</li>
