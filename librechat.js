@@ -467,6 +467,33 @@ async function agentPatchHandler(req, res) {
 router.patch("/librechat/agent", auth, agentPatchHandler);
 router.post("/librechat/agent-edit", auth, agentPatchHandler);
 
+// Part 85.5 (Aug 22 2026) — two READ lanes so nobody needs a raw site login:
+// GET /librechat/feedback?status=open|all -> the family bug/feedback pile
+//   (admin surface; same data as /feedback-dashboard).
+// GET /librechat/convos?limit=N -> Kade's own conversation list (the proxy's
+//   session IS her seat, so this can only ever see her own conversations —
+//   the privacy wall is LibreChat's own scoping, not a promise).
+// GET /librechat/messages?convoId=... -> messages of one of her conversations.
+router.get("/librechat/feedback", auth, async (req, res) => {
+  try {
+    const status = req.query.status === "all" ? "all" : "open";
+    res.json(await lc("GET", `/api/kade/feedback?status=${encodeURIComponent(status)}`));
+  } catch (e) { fail(res, e); }
+});
+router.get("/librechat/convos", auth, async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
+    res.json(await lc("GET", `/api/convos?pageNumber=${page}&isArchived=false`));
+  } catch (e) { fail(res, e); }
+});
+router.get("/librechat/messages", auth, async (req, res) => {
+  const convoId = req.query.convoId;
+  if (!convoId) return res.status(400).json({ error: "convoId is required" });
+  try {
+    res.json(await lc("GET", `/api/messages/${encodeURIComponent(convoId)}`));
+  } catch (e) { fail(res, e); }
+});
+
 // POST /librechat/publish -> show/hide an agent on the public marketplace.
 // body = { id: "agent_xxx", public: true|false }. Resolves the Mongo _id itself
 // (the permissions route needs _id, not the agent_xxx id).
