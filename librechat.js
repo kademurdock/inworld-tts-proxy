@@ -397,19 +397,75 @@ router.post("/librechat/agent", auth, async (req, res) => {
 });
 
 // PATCH /librechat/agent -> update an existing agent. body = { id, ...onlyFieldsToChange }
-router.patch("/librechat/agent", auth, async (req, res) => {
+//
+// Part 85.5 (Aug 22 2026) — THE NIGHT FORGE BROKE KIANA. His tool call tried
+// to carry her full ~48K-char persona as `instructions`; the argument stream
+// truncated mid-flight and the PATCH landed as a stump. Kade hand-restored
+// her. Two cures, both server-side so no tool call ever carries a persona:
+//
+// (a) THE SHRINK GUARD — an `instructions` write that would shrink a big
+//     persona (>20K chars live) by more than half is refused without
+//     force:true. A truncated tool call can never silently land again.
+// (b) SURGICAL EDITS — the body may carry `find`/`replace` (exact string,
+//     expected once; pass expect_count for more) and/or `append` instead of
+//     `instructions`. The proxy fetches the live text, does the splice HERE,
+//     verifies the match count, and writes the result. A wrong or ambiguous
+//     `find` is a 409 and NOTHING is written. `dry:true` previews counts.
+//     POST /librechat/agent-edit is the same handler under a clean name.
+async function agentPatchHandler(req, res) {
   const body = req.body || {};
   const id = body.id;
   if (!id) return res.status(400).json({ error: "id (agent_xxx) is required in the body" });
   const patch = { ...body };
-  delete patch.id;
-  if (Object.keys(patch).length === 0) return res.status(400).json({ error: "no fields to update" });
+  for (const k of ["id", "force", "find", "replace", "append", "expect_count", "dry"]) delete patch[k];
+  const hasSplice = (typeof body.find === "string" && body.find.length > 0)
+    || (typeof body.append === "string" && body.append.length > 0);
   try {
+    let live = null;
+    if (hasSplice || typeof patch.instructions === "string") {
+      live = await lc("GET", `/api/agents/${encodeURIComponent(id)}`);
+    }
+    if (hasSplice) {
+      if (typeof patch.instructions === "string") {
+        return res.status(400).json({ error: "send either instructions OR find/replace/append, not both" });
+      }
+      const cur = String((live && live.instructions) || "");
+      let next = cur;
+      let occurrences = 0;
+      if (typeof body.find === "string" && body.find.length > 0) {
+        occurrences = cur.split(body.find).length - 1;
+        const expected = Number.isInteger(body.expect_count) ? body.expect_count : 1;
+        if (occurrences !== expected) {
+          return res.status(409).json({
+            error: `find matched ${occurrences} time(s), expected ${expected} — nothing written`,
+            hint: "make find longer and exact (copy it from getAgent), or pass expect_count",
+          });
+        }
+        next = cur.split(body.find).join(typeof body.replace === "string" ? body.replace : "");
+      }
+      if (typeof body.append === "string" && body.append.length > 0) {
+        next = next.replace(/\s*$/, "") + "\n\n" + body.append;
+      }
+      if (body.dry === true) {
+        return res.json({ dry: true, occurrences, before_chars: cur.length, after_chars: next.length });
+      }
+      patch.instructions = next;
+    } else if (typeof patch.instructions === "string" && live) {
+      const cur = String(live.instructions || "");
+      if (cur.length > 20000 && patch.instructions.length < cur.length * 0.5 && body.force !== true) {
+        return res.status(409).json({
+          error: `REFUSED: this would shrink a ${cur.length}-char persona to ${patch.instructions.length} chars. Full-text personas do not survive tool-call transport (this exact move broke Kiana, Aug 22 2026). Use find/replace/append on this route — the splice happens server-side — or pass force:true only if the shrink is truly intended.`,
+        });
+      }
+    }
+    if (Object.keys(patch).length === 0) return res.status(400).json({ error: "no fields to update" });
     res.json(await lc("PATCH", `/api/agents/${encodeURIComponent(id)}`, patch));
   } catch (e) {
     fail(res, e);
   }
-});
+}
+router.patch("/librechat/agent", auth, agentPatchHandler);
+router.post("/librechat/agent-edit", auth, agentPatchHandler);
 
 // POST /librechat/publish -> show/hide an agent on the public marketplace.
 // body = { id: "agent_xxx", public: true|false }. Resolves the Mongo _id itself
