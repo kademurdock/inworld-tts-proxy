@@ -638,6 +638,19 @@ router.patch("/librechat/memory", auth, async (req, res) => {
   }
 });
 
+// POST /librechat/memory-admin-set -> Part 85.5: seed/repair ONE card in ANY
+// seat's bucket (admin twin of the fork's /api/memories/admin-set).
+// body = { userId, key, value, agentId? }
+router.post("/librechat/memory-admin-set", auth, async (req, res) => {
+  const { userId, key, value, agentId } = req.body || {};
+  if (!userId || !key || !value) return res.status(400).json({ error: "userId, key, value are required" });
+  try {
+    res.json(await lc("POST", "/api/memories/admin-set", { userId, key, value, agentId }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // POST /librechat/memory/delete -> delete a memory (its ENTIRE history, not just
 // the current value). body = { key, agentId? }. agentId must match the bucket
 // the entry is in (omit for shared).
