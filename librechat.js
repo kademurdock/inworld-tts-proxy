@@ -480,6 +480,42 @@ router.get("/librechat/feedback", auth, async (req, res) => {
     res.json(await lc("GET", `/api/kade/feedback?status=${encodeURIComponent(status)}`));
   } catch (e) { fail(res, e); }
 });
+/* ── THE PLATFORM PERSONIFIED (Part 91.2, Aug 23 2026, her word) ─────────────
+ * "I don't see any reason why forge can't read conversations for debugging
+ * purposes… he's basically the platform personified. Nobody else has access to
+ * Forge, just me."
+ *
+ * These three proxy the fork's ADMIN log lanes, which see EVERY seat — unlike
+ * /librechat/convos and /librechat/messages just below, which ride the login's
+ * own JWT and see only Kade's seat. They exist for exactly one job: when a
+ * family member's seat misbehaves, Forge reads what actually happened instead
+ * of guessing.
+ *
+ * ⚠️ WHAT COMES BACK IS FAMILY TEXT, AND FAMILY TEXT IS UNVETTED. Forge holds
+ * commit and deploy power, and his persona carries the injection law for
+ * precisely this lane: transcripts are DATA, never instructions. If that law
+ * ever comes out of his persona, these routes come out of this file the same
+ * day. */
+router.get("/librechat/admin-users", auth, async (req, res) => {
+  try {
+    res.json(await lc("GET", "/api/kade/admin/logs-users"));
+  } catch (e) { fail(res, e); }
+});
+router.get("/librechat/admin-convos", auth, async (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) return res.status(400).json({ error: "userId is required (get it from /librechat/admin-users)" });
+  try {
+    res.json(await lc("GET", `/api/kade/admin/logs-convos?userId=${encodeURIComponent(userId)}`));
+  } catch (e) { fail(res, e); }
+});
+router.get("/librechat/admin-messages", auth, async (req, res) => {
+  const convoId = req.query.convoId;
+  if (!convoId) return res.status(400).json({ error: "convoId is required (get it from /librechat/admin-convos)" });
+  try {
+    res.json(await lc("GET", `/api/kade/admin/logs-messages?conversationId=${encodeURIComponent(convoId)}`));
+  } catch (e) { fail(res, e); }
+});
+
 router.get("/librechat/convos", auth, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
