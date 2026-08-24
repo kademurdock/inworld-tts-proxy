@@ -714,6 +714,18 @@ function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
 // words-free chunks are dropped before synthesis, on every lane (single,
 // fish, scenes). If NOTHING survives, the caller returns clean silence
 // instead of a 500.
+/* Aug 24 2026 (Part 92.14) — split a shaped chunk into the words Inworld should
+ * SAY and the direction it should say them IN. With the lift on, a chunk that
+ * was nothing but a direction becomes empty text plus an instruction, and the
+ * words-free filter above then drops it — no request is made at all, so the
+ * 400 that became her error tones cannot happen. With the lift off (env
+ * KADE_TTS_INSTRUCTION_FIELD=0) the chunk is returned exactly as it arrived and
+ * every lane behaves precisely as it did before. */
+function splitChunkForInworld(chunk) {
+  if (!TTS_INSTRUCTION_FIELD) return { text: chunk, instruction: null };
+  return liftInstruction(chunk);
+}
+
 function chunkHasSpeakableWords(chunk) {
   return /[a-zA-Z0-9]/.test(String(chunk || "").replace(/\[[^\]]*\]/g, " "));
 }
@@ -974,7 +986,7 @@ function sleep(ms) {
 // capacity until the whole proxy starves. Timeouts are retryable below.
 const INWORLD_TIMEOUT_MS = 20000;
 
-async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate) {
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
   let response;
@@ -999,6 +1011,16 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate) {
       // proxy ever actually requests -- see MODEL_MAP). CREATIVE = "optimizes
       // for increased emotional range and variation" per Inworld's docs.
       deliveryMode: TTS_DELIVERY_MODE,
+      /* Aug 24 2026 — the steering direction rides its OWN FIELD now instead of
+       * being pasted into the text as a [bracket]. Same endpoint, documented
+       * on inworld-tts-2, verified live. Two things this buys:
+       *   1. A chunk can no longer consist of ONLY a direction, because the
+       *      direction is not in the text. That is the 400 that became her
+       *      error tones on build 241, retired by construction.
+       *   2. It is not billed. Inworld bills processed characters and an inline
+       *      tag is processed characters — 161 vs 97 on the same test sentence,
+       *      and 30% of her real reply's 5,400 characters were tags. */
+      ...(instruction ? { instruction } : {}),
     }),
   });
 
@@ -1029,13 +1051,13 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate) {
   return Buffer.from(data.audioContent, "base64");
 }
 
-async function synthesizeChunk(text, voiceId, modelId, speakingRate) {
+async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction) {
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await synthesizeChunkOnce(text, voiceId, modelId, speakingRate);
+        return await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction);
       } catch (err) {
         lastErr = err;
         const retryable = err.isRateLimit || err.isTimeout;
@@ -1459,7 +1481,15 @@ const STEERING_CLOSE = "%%%";
 // repeatedly, inline -- unlike a leading direction they are NOT subject to
 // the "one instruction at the start of an utterance" rule, so they need no
 // carry-forward treatment in applySteeringTags below.
-const NONVERBAL_TAGS = new Set(["laugh", "breathe", "clear throat", "sigh", "cough", "yawn"]);
+/* Aug 24 2026 (Part 92.14) — the sound list moved to sounds.js and grew from
+ * SIX to Inworld's real ~50. Everything outside the old six was being treated
+ * as a DIRECTION and CARRIED FORWARD onto every following paragraph, so a
+ * `%%%gasp%%%` was pinned to the front of the whole rest of the reply instead
+ * of gasping once. See sounds.js for the receipts. */
+const { isDirectionTag: soundsIsDirectionTag, liftInstruction } = require("./sounds");
+/* Kill switch for the instruction-field lift. "0" restores the old behaviour
+ * exactly: directions ride inside the text as [brackets]. */
+const TTS_INSTRUCTION_FIELD = process.env.KADE_TTS_INSTRUCTION_FIELD !== "0";
 
 // Convert sentinel-wrapped tags to real [bracket] steering for TTS-2, AND
 // carry a leading "direction" (anything that isn't a fixed non-verbal, e.g.
@@ -1828,7 +1858,7 @@ function applySteeringTags(text) {
 const LEADING_TAG_RE = /^\s*\[([^\]]+)\]\s*/;
 
 function isDirectionTag(inner) {
-  return !NONVERBAL_TAGS.has(String(inner).trim().toLowerCase());
+  return soundsIsDirectionTag(inner);
 }
 
 // Fish's documented audio-effect vocabulary uses -ing forms where Inworld's
@@ -2262,7 +2292,10 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
     chunks.map((c) =>
       segIsFish
         ? fishSynthesizeChunk(c, seg.voiceId.slice(FISH_VOICE_PREFIX.length), speakingRate)
-        : synthesizeChunk(c, seg.voiceId, inworldModel, speakingRate)
+        : (() => {
+            const { text: sayText, instruction } = splitChunkForInworld(c);
+            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction);
+          })()
     )
   );
   const parsed = wavs.map(parseWav);
@@ -2480,7 +2513,10 @@ app.post("/v1/audio/speech", async (req, res) => {
       chunks.map((chunk) =>
         isFishVoice
           ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate)
-          : synthesizeChunk(chunk, inworldVoice, inworldModel, speakingRate)
+          : (() => {
+              const { text: sayText, instruction } = splitChunkForInworld(chunk);
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction);
+            })()
       )
     );
     console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
