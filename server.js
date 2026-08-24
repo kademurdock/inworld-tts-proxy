@@ -1710,7 +1710,7 @@ function emphasisFromMarkdown(text) {
  * every direction is made doc-conformant at this ONE chokepoint, whoever
  * wrote it, however old. Lowercase, commas become "and" joins, terminal
  * punctuation dropped. Apostrophes are KEPT (contractions are normal inside
- * a direction). NONVERBAL_TAGS are single lowercase words — untouched by
+ * a direction). Non-verbal SOUNDS (sounds.js) are untouched by
  * construction, so fish's dialect mapping still matches. Kill switch:
  * KADE_TTS_TAG_SANITIZE=0. */
 const TAG_SANITIZE_ON = process.env.KADE_TTS_TAG_SANITIZE !== "0";
@@ -1775,7 +1775,7 @@ function applySteeringTags(text) {
     if (i % 2 === 1 || !parts[i].trim()) continue; // separator or blank -- leave untouched
     const opens = parts[i].match(bracketAtStart);
     if (opens) {
-      if (!NONVERBAL_TAGS.has(opens[1].trim().toLowerCase())) {
+      if (soundsIsDirectionTag(opens[1])) {
         active = opens[1].trim();
         carried = 0;
         /* ⚠️ AUG 18 2026 — THE DOUBLE-TAG WART, KILLED AT THE SOURCE.
