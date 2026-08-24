@@ -723,7 +723,18 @@ function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
  * every lane behaves precisely as it did before. */
 function splitChunkForInworld(chunk) {
   if (!TTS_INSTRUCTION_FIELD) return { text: chunk, instruction: null };
-  return liftInstruction(chunk);
+  const out = liftInstruction(chunk);
+  /* The existing "[TTS] input len=" line is printed BEFORE chunking, so it
+   * still shows the tag inside the text and cannot show whether the lift
+   * happened. Without this line the change is invisible in production, which
+   * is the same disease as a monitor that never tests what people use. It also
+   * carries the number that matters: Inworld bills processed characters, and
+   * those are characters no longer being billed. */
+  if (out.instruction) {
+    const saved = chunk.length - out.text.length;
+    console.log(`[TTS] steering -> instruction field (${saved} chars off the billed text): ${JSON.stringify(out.instruction.slice(0, 80))}`);
+  }
+  return out;
 }
 
 function chunkHasSpeakableWords(chunk) {
