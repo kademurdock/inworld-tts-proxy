@@ -721,6 +721,26 @@ function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
  * 400 that became her error tones cannot happen. With the lift off (env
  * KADE_TTS_INSTRUCTION_FIELD=0) the chunk is returned exactly as it arrived and
  * every lane behaves precisely as it did before. */
+/* The words already spoken before chunk `i`, newest last, for
+ * synthesisContext.previousRequests. Steering brackets are stripped: this is
+ * context for INTONATION, and a stage direction is not something that was said.
+ * Kill switch: KADE_TTS_CONTEXT=0. */
+const TTS_CONTEXT_MAX = Number(process.env.KADE_TTS_CONTEXT_MAX || 3);
+const TTS_CONTEXT_ON = process.env.KADE_TTS_CONTEXT !== "0";
+function contextFor(chunks, i) {
+  if (!TTS_CONTEXT_ON || !i) return null;
+  const out = chunks
+    .slice(Math.max(0, i - TTS_CONTEXT_MAX), i)
+    .map((c) => String(c).replace(/\[[^\]]*\]/g, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  if (!out.length) return null;
+  /* Same reason the lift logs: without a line at the point it happens, nobody
+   * can tell from production whether this is on. Prints how many prior
+   * sentences this chunk was told about. */
+  console.log(`[TTS] context -> chunk ${i} carries ${out.length} prior piece(s)`);
+  return out;
+}
+
 function splitChunkForInworld(chunk) {
   if (!TTS_INSTRUCTION_FIELD) return { text: chunk, instruction: null };
   const out = liftInstruction(chunk);
@@ -997,7 +1017,7 @@ function sleep(ms) {
 // capacity until the whole proxy starves. Timeouts are retryable below.
 const INWORLD_TIMEOUT_MS = 20000;
 
-async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction) {
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
   let response;
@@ -1032,6 +1052,23 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
        *      tag is processed characters — 161 vs 97 on the same test sentence,
        *      and 30% of her real reply's 5,400 characters were tags. */
       ...(instruction ? { instruction } : {}),
+      /* Aug 24 2026 (Part 92.15) — TELL EACH CHUNK WHAT CAME BEFORE IT.
+       * Kade, on hearing the class-retirement work: "that context thing… where
+       * the previous clip sounds like it has no context to the next one?" That
+       * is exactly the artifact, and Inworld names it in their own guide:
+       * "Speech doesn't happen in a vacuum: how 'Yeah.' should sound depends
+       * entirely on what came before it… especially for short or ambiguous
+       * input where the text alone doesn't determine the right intonation."
+       * A long reply is split into several requests here, and every one of them
+       * was being synthesised blind — so pitch, energy and cadence reset at
+       * every boundary and the pieces sounded stapled together.
+       * FREE IN LATENCY: this is TEXT WE ALREADY HAVE before any request is
+       * made, so the chunks still fire in parallel. Nothing waits on anything.
+       * Capped because context is billed as characters and the marginal value
+       * of a fifth sentence back is not worth paying for. */
+      ...(previousTexts && previousTexts.length
+        ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
+        : {}),
     }),
   });
 
@@ -1062,13 +1099,13 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
   return Buffer.from(data.audioContent, "base64");
 }
 
-async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction) {
+async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts) {
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction);
+        return await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts);
       } catch (err) {
         lastErr = err;
         const retryable = err.isRateLimit || err.isTimeout;
@@ -2300,12 +2337,12 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
     return { pcm: Buffer.alloc(0), fmt };
   }
   const wavs = await Promise.all(
-    chunks.map((c) =>
+    chunks.map((c, cj) =>
       segIsFish
         ? fishSynthesizeChunk(c, seg.voiceId.slice(FISH_VOICE_PREFIX.length), speakingRate)
         : (() => {
             const { text: sayText, instruction } = splitChunkForInworld(c);
-            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction);
+            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction, contextFor(chunks, cj));
           })()
     )
   );
@@ -2521,12 +2558,12 @@ app.post("/v1/audio/speech", async (req, res) => {
     // giant request -- this is the actual latency fix.
     const tSynth = Date.now();
     const wavBuffers = await Promise.all(
-      chunks.map((chunk) =>
+      chunks.map((chunk, ci) =>
         isFishVoice
           ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate)
           : (() => {
               const { text: sayText, instruction } = splitChunkForInworld(chunk);
-              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction);
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci));
             })()
       )
     );
