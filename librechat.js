@@ -501,11 +501,29 @@ router.get("/librechat/admin-users", auth, async (req, res) => {
     res.json(await lc("GET", "/api/kade/admin/logs-users"));
   } catch (e) { fail(res, e); }
 });
+/* Aug 24 2026 (Part 92.7) — FORWARD ?temp=1, BECAUSE WITHOUT IT FORGE CANNOT SEE
+ * THE LANE THE FAMILY ACTUALLY TALKS ON.
+ *
+ * The fork's /admin/logs-convos filters `isTemporary: {$ne: true}` by default and
+ * honours ?temp=1 to show the scratch layer. This handler forwarded ONLY userId,
+ * so the flag was unreachable from out here — and the phone lane and the app lane
+ * are ENTIRELY temporary conversations (Part 72 addendum 24 root-caused a separate
+ * bug on exactly that fact). So "read any seat's conversations", shipped in 97ca839,
+ * has been reading only the web-UI half the whole time and reporting the other half
+ * as simply absent. Same family as the canary that only ever tested the Canary
+ * agent: the capability existed, the thing people actually use was outside its view.
+ *
+ * Whitelisted rather than spread: this builds an upstream URL, so an unknown query
+ * key does not get to ride along into it. Only the exact string "1" turns it on —
+ * "0" / "false" / "no" must never round toward yes. */
 router.get("/librechat/admin-convos", auth, async (req, res) => {
   const userId = req.query.userId;
   if (!userId) return res.status(400).json({ error: "userId is required (get it from /librechat/admin-users)" });
+  const includeTemp = String(req.query.temp || "") === "1";
   try {
-    res.json(await lc("GET", `/api/kade/admin/logs-convos?userId=${encodeURIComponent(userId)}`));
+    let path = `/api/kade/admin/logs-convos?userId=${encodeURIComponent(userId)}`;
+    if (includeTemp) { path += "&temp=1"; }
+    res.json(await lc("GET", path));
   } catch (e) { fail(res, e); }
 });
 router.get("/librechat/admin-messages", auth, async (req, res) => {
