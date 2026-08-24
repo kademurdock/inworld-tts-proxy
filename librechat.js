@@ -526,6 +526,84 @@ router.get("/librechat/admin-convos", auth, async (req, res) => {
     res.json(await lc("GET", path));
   } catch (e) { fail(res, e); }
 });
+/* ── ACTION SCHEMA LANE (Part 92.8, Aug 24 2026) ─────────────────────────────
+ * Why this exists: the proxy learned to forward ?temp=1 to admin-convos, and it
+ * changed nothing for Forge — because an action's OpenAPI spec lives on the
+ * AGENT RECORD, not in this repo. A parameter the schema does not declare is a
+ * parameter the model cannot send, however well the route behind it works. Two
+ * layers, and fixing one looks exactly like fixing both.
+ *
+ * READ is safe and general. WRITE carries both documented scars, so the notes
+ * live here where the caller will read them:
+ *
+ *   ⚠️ THE STRIP SCAR (five occurrences: 63→56, 64→56, …). The POST REPLACES
+ *   that action's function list, and the agent's `tools` array loses the entries
+ *   for it. The repair is routine and known: snapshot `tools` BEFORE the POST,
+ *   then PATCH the agent with the before-list (plus genuinely-new ops). Never
+ *   assume the POST left tools alone — re-read and diff, every time.
+ *
+ *   ⚠️ THE DOMAIN-SUFFIX SCAR (earned twice). The POST APPENDS the encoded
+ *   domain to whatever function name you send. Send BARE operationIds. Send
+ *   `listUserConversations`, never `listUserConversations_action_aW53b3JsZC`,
+ *   or you get doubled tools.
+ *
+ * ⚠️ AND THE ONE THING THIS LANE IS DELIBERATELY NOT: it is NOT wired to Forge
+ * as a tool op. He holds commit-and-deploy power and reads unvetted family text;
+ * an agent that can rewrite its own action schemas can grant itself routes. That
+ * is Kade's call to make, not a convenience to hand out. Bearer-only, for a
+ * human-driven session. */
+router.get("/librechat/actions", auth, async (req, res) => {
+  try {
+    const all = await lc("GET", "/api/agents/actions");
+    const list = Array.isArray(all) ? all : (all && all.data) || [];
+    const agentId = req.query.agentId;
+    const actionId = req.query.actionId;
+    let out = list;
+    if (agentId) out = out.filter((a) => a && a.agent_id === agentId);
+    if (actionId) out = out.filter((a) => a && String(a.action_id || "").includes(actionId));
+    res.json({ count: out.length, actions: out });
+  } catch (e) { fail(res, e); }
+});
+
+/* POST /librechat/actions -> write an action's spec back.
+ * body = { agentId, action_id, functions:[…bare names…], metadata:{ domain, raw_spec, … } }
+ * Returns the agent as the server left it AND a tools diff against what the
+ * caller says it saw before, so the strip is visible in the response instead of
+ * being discovered later. */
+router.post("/librechat/actions", auth, async (req, res) => {
+  const b = req.body || {};
+  if (!b.agentId || !Array.isArray(b.functions) || !b.functions.length || !b.metadata) {
+    return res.status(400).json({ error: "agentId, functions[] and metadata are required" });
+  }
+  const doubled = b.functions.filter(
+    (f) => f && f.function && /_action_/.test(String(f.function.name || "")),
+  );
+  if (doubled.length) {
+    return res.status(400).json({
+      error: "send BARE operationIds — the server appends the domain suffix itself",
+      offending: doubled.map((f) => f.function.name),
+    });
+  }
+  try {
+    const before = Array.isArray(b.toolsBefore) ? b.toolsBefore : null;
+    const result = await lc("POST", `/api/agents/actions/${encodeURIComponent(b.agentId)}`, {
+      functions: b.functions,
+      action_id: b.action_id,
+      metadata: b.metadata,
+    });
+    const after = await lc("GET", `/api/agents/${encodeURIComponent(b.agentId)}`);
+    const toolsAfter = (after && after.tools) || [];
+    res.json({
+      ok: true,
+      toolsAfter: toolsAfter.length,
+      toolsBefore: before ? before.length : null,
+      lost: before ? before.filter((t) => !toolsAfter.includes(t)) : null,
+      doubled: toolsAfter.filter((t) => (t.match(/_action_/g) || []).length > 1),
+      result,
+    });
+  } catch (e) { fail(res, e); }
+});
+
 router.get("/librechat/admin-messages", auth, async (req, res) => {
   const convoId = req.query.convoId;
   if (!convoId) return res.status(400).json({ error: "convoId is required (get it from /librechat/admin-convos)" });
