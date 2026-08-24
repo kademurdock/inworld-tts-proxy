@@ -725,14 +725,60 @@ function chunkText(text, maxChunkLen = MAX_CHUNK_LEN) {
  * synthesisContext.previousRequests. Steering brackets are stripped: this is
  * context for INTONATION, and a stage direction is not something that was said.
  * Kill switch: KADE_TTS_CONTEXT=0. */
+/* ── CROSS-CALL SPEECH CONTEXT (Part 92.16, Aug 24 2026) ────────────────────
+ * She listened to the A/B and picked the one with context: "B sounds good."
+ *
+ * 92.15 gave context to chunks WITHIN one request, which covers the web lane,
+ * the phone lane and scenes. It did NOT cover the one she actually hears: the
+ * native app's streaming speech sends ONE SENTENCE PER HTTP CALL, so every call
+ * arrived with no idea what the call before it had said — which is exactly her
+ * "the previous clip sounds like it has no context to the next one."
+ *
+ * The fork now sends `x-kade-tts-session` (the user id) on the manual TTS lane,
+ * so this holds a small expiring ring of what that seat just spoke.
+ *
+ * DELIBERATE LIMITS, because this is a cache of people's speech:
+ *   · TEXT ONLY, in memory, never written down, never logged beyond a count.
+ *   · TTL 90s. Sentences of one reply arrive seconds apart; a gap longer than
+ *     this is a different moment and stale context is worse than none.
+ *   · Keyed per seat, so two people can never pool into one context.
+ *   · Bounded: TTS_CONTEXT_MAX entries per seat, and the whole map is swept on
+ *     write so an idle seat cannot hold text in memory indefinitely.
+ *   · No key, no ring. An absent header is not a shared bucket. */
+const TTS_SESSION_TTL_MS = Number(process.env.KADE_TTS_CONTEXT_TTL_MS || 90000);
+const ttsSessions = new Map();
+function sessionContext(key) {
+  if (!TTS_CONTEXT_ON || !key) return null;
+  const row = ttsSessions.get(key);
+  if (!row) return null;
+  if (Date.now() - row.at > TTS_SESSION_TTL_MS) { ttsSessions.delete(key); return null; }
+  return row.texts.length ? row.texts.slice() : null;
+}
+function rememberSpoken(key, text) {
+  if (!TTS_CONTEXT_ON || !key) return;
+  const clean = String(text || "").replace(/\[[^\]]*\]/g, " ").replace(/\s+/g, " ").trim();
+  if (!clean) return;
+  const now = Date.now();
+  for (const [k, v] of ttsSessions) if (now - v.at > TTS_SESSION_TTL_MS) ttsSessions.delete(k);
+  const row = ttsSessions.get(key) || { texts: [], at: now };
+  row.texts.push(clean);
+  if (row.texts.length > TTS_CONTEXT_MAX) row.texts = row.texts.slice(-TTS_CONTEXT_MAX);
+  row.at = now;
+  ttsSessions.set(key, row);
+}
+
 const TTS_CONTEXT_MAX = Number(process.env.KADE_TTS_CONTEXT_MAX || 3);
 const TTS_CONTEXT_ON = process.env.KADE_TTS_CONTEXT !== "0";
-function contextFor(chunks, i) {
-  if (!TTS_CONTEXT_ON || !i) return null;
-  const out = chunks
+function contextFor(chunks, i, sessionKey) {
+  if (!TTS_CONTEXT_ON) return null;
+  const prior = sessionContext(sessionKey) || [];
+  const within = chunks
     .slice(Math.max(0, i - TTS_CONTEXT_MAX), i)
     .map((c) => String(c).replace(/\[[^\]]*\]/g, " ").replace(/\s+/g, " ").trim())
     .filter(Boolean);
+  /* Oldest first, and this request's own earlier chunks are nearer in time than
+   * anything from the previous call, so they go last. */
+  const out = prior.concat(within).slice(-TTS_CONTEXT_MAX);
   if (!out.length) return null;
   /* Same reason the lift logs: without a line at the point it happens, nobody
    * can tell from production whether this is on. Prints how many prior
@@ -2531,6 +2577,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     if (handled) return;
   }
 
+  const ttsSessionKey = String(req.get("x-kade-tts-session") || "").slice(0, 64) || null;
   const speakText = applySteeringTags(preppedText.replace(SCENE_TAG_G, " ").replace(/[ \t]{2,}/g, " "));
   console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
@@ -2563,11 +2610,17 @@ app.post("/v1/audio/speech", async (req, res) => {
           ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate)
           : (() => {
               const { text: sayText, instruction } = splitChunkForInworld(chunk);
-              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci));
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, ttsSessionKey));
             })()
       )
     );
     console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
+    /* Remember what this seat just said, so the NEXT call — which on the app
+     * lane is the next sentence of the same reply — has something to go on.
+     * Only after a successful synthesis: a failed call was never heard, and
+     * feeding it forward would give the next sentence context for audio that
+     * does not exist. */
+    rememberSpoken(ttsSessionKey, speakText);
 
     const parsed = wavBuffers.map(parseWav);
     const format = {
