@@ -68,7 +68,18 @@ const FISH_VOICE_PREFIX = "fish:";
 // pure pacing, [0.5, 1.5], 1.0 = the voice's own native speed.
 // Both env-overridable so they can be re-tuned without a code change.
 const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "CREATIVE";
-const TTS_SPEAKING_RATE = parseFloat(process.env.TTS_SPEAKING_RATE || "1.1");
+/* ⭐ AUG 26 2026 — 1.1 -> 1.0, Kade's call ("you can fix the speed on tts thing").
+ * 1.1 was never chosen here; it is Inworld's own global default, inherited when
+ * this file was written and never questioned. Its neighbour FISH_TTS_SPEED was
+ * DELIBERATELY walked back to 1.0 with the note "Inworld's global 1.1 speed-up
+ * default; 1.0 keeps Kade's clones sounding like the people they were cloned
+ * from" — the same reasoning was simply never applied on this side of the file,
+ * so every Inworld voice on the platform has been running 10% fast for months.
+ * That is a standing tax on top of any pace word a character writes into a
+ * steering tag, which is the bug she reported on Aug 25.
+ * 1.0 = the voice's own native speed. Per-request `speed` still wins, and
+ * TTS_SPEAKING_RATE on Railway still overrides this — keep them in sync. */
+const TTS_SPEAKING_RATE = parseFloat(process.env.TTS_SPEAKING_RATE || "1.0");
 
 const OPENAI_ALIAS_MAP = {
   alloy: "Sarah",
