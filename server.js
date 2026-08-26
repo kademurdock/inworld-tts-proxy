@@ -1580,7 +1580,7 @@ const STEERING_CLOSE = "%%%";
  * as a DIRECTION and CARRIED FORWARD onto every following paragraph, so a
  * `%%%gasp%%%` was pinned to the front of the whole rest of the reply instead
  * of gasping once. See sounds.js for the receipts. */
-const { isDirectionTag: soundsIsDirectionTag, liftInstruction } = require("./sounds");
+const { isDirectionTag: soundsIsDirectionTag, isResetTag: soundsIsResetTag, liftInstruction } = require("./sounds");
 /* Kill switch for the instruction-field lift. "0" restores the old behaviour
  * exactly: directions ride inside the text as [brackets]. */
 const TTS_INSTRUCTION_FIELD = process.env.KADE_TTS_INSTRUCTION_FIELD !== "0";
@@ -1869,6 +1869,23 @@ function applySteeringTags(text) {
     if (i % 2 === 1 || !parts[i].trim()) continue; // separator or blank -- leave untouched
     const opens = parts[i].match(bracketAtStart);
     if (opens) {
+      /* ⭐ AUG 25 2026 — [reset] ENDS THE CARRY, WHICH IS ITS ENTIRE JOB.
+       * Kade: "it read the whole voice clip in a really fast, rushed tone and
+       * pace... it seemed to make it follow through the whole message." The
+       * receipt was a real reply of Kiana's opening
+       * `%%%quick and animated still a little spooked by it%%%` — one authored
+       * tag, six paragraphs, and the carry-forward paid "quick" onto the next
+       * two. Without a way to say STOP, the only tool an author had was writing
+       * another direction, so a passage that should simply return to her own
+       * register could not.
+       * Falling through to the branch below would set active = "reset" and then
+       * STAMP `[reset]` onto the following paragraphs — the precise opposite of
+       * what the author asked for. */
+      if (soundsIsResetTag(opens[1])) {
+        active = null;
+        carried = 0;
+        continue;
+      }
       if (soundsIsDirectionTag(opens[1])) {
         active = opens[1].trim();
         carried = 0;

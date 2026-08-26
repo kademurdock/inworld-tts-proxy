@@ -72,6 +72,32 @@ const CANONICAL_SOUNDS = [
  * of the reply. */
 const NOT_SOUNDS = new Set(['shout', 'scream', 'sing', 'hum', 'mumble']);
 
+/* ⭐ [reset] — Aug 25 2026, Kade's "it read the whole voice clip in a really
+ * fast, rushed tone and pace... it seemed to make it follow through the whole
+ * message." Inworld's own tag for ENDING a styled passage, and the one piece of
+ * the steering vocabulary this platform has never used:
+ *
+ *   "[reset] removes the active instruction for the rest of the text... It
+ *    removes the instruction, not the voice... which is exactly why it is not
+ *    called [neutral]."   — docs.inworld.ai/tts/capabilities/steering
+ *
+ * It is NOT a sound and it must NOT be treated as an ordinary direction, and
+ * the difference is load-bearing. An ordinary leading direction is LIFTED out
+ * of the text into the request-level `instruction` field by liftInstruction
+ * below. Lifting [reset] would send the literal string "reset" as a delivery
+ * instruction — a nonsense direction handed to the synthesizer at the exact
+ * moment the author asked for the direction to STOP. The docs are explicit
+ * that clearing the field is an INLINE act: "[reset] — Normal — clears an
+ * instruction set by the instruction request field."
+ *
+ * So reset stays in the text. Always. */
+const RESET_TAG = 'reset';
+
+/** True when this bracket is Inworld's [reset] — end the active instruction. */
+function isResetTag(inner) {
+  return normalizeTag(inner) === RESET_TAG;
+}
+
 /** Docs: "Matching ignores case, spacing, and punctuation, and accepts common
  *  inflections, so [Clear Throat], [clear_throat], [clears throat] and
  *  [throat clearing] all resolve to the same sound." Variants are enumerated
@@ -139,6 +165,10 @@ function liftInstruction(chunk) {
   if (!m) return { text: s, instruction: null };
   const inner = m[1].trim();
   if (!isDirectionTag(inner)) return { text: s, instruction: null };
+  /* [reset] is a direction by the docs' fence, but it is the one direction that
+   * must never leave the text — see RESET_TAG above. Lifting it would set the
+   * instruction to "reset" instead of clearing it. */
+  if (isResetTag(inner)) return { text: s, instruction: null };
   const rest = s.slice(m[0].length);
   // Never hand back text with nothing in it while claiming success — the caller
   // decides what to do with a wordless chunk, and it already has a rule for it.
@@ -146,6 +176,6 @@ function liftInstruction(chunk) {
 }
 
 module.exports = {
-  CANONICAL_SOUNDS, NOT_SOUNDS, SOUND_SET,
-  normalizeTag, isNonVerbalSound, isDirectionTag, liftInstruction, LEADING_TAG,
+  CANONICAL_SOUNDS, NOT_SOUNDS, SOUND_SET, RESET_TAG,
+  normalizeTag, isNonVerbalSound, isDirectionTag, isResetTag, liftInstruction, LEADING_TAG,
 };
