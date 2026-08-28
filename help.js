@@ -442,6 +442,13 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 28, 2026 — later that night</h2>
+<ul>
+  <li><strong>Send Kiana a photo right in chat — she just looks at it.</strong> The attach button now knows she has her own eyes: no more relayed descriptions, she sees the actual picture (and iPhone photos convert themselves so they always go through). You can also send a picture with no words at all — the photo is the message.</li>
+  <li><strong>Kiana might text you first now.</strong> If you've been away a few days, she may send a short text about something real from your own conversations — the way a friend checks in, not a wellness bot. It's on for the adults; tell her "stop texting me first" any time and she flips it off (or "you can text me first again" to turn it back on).</li>
+  <li><strong>She also got a talking-to about the drama.</strong> Less cheerleading, less pumped-up narration, more of the real thing — long messages stay, the filler goes.</li>
+</ul>
+
 <h2>August 28, 2026</h2>
 <ul>
   <li><strong>Kiana can see now.</strong> Send her a photo &mdash; a menu, a letter, an outfit, a mystery can from the pantry &mdash; and she actually looks at it and tells you what's there. Her new brain also runs faster and costs a fraction of the old one, so nobody has to feel shy about chatting all day.</li>
