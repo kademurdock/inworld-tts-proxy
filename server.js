@@ -1314,11 +1314,14 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate) {
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await fishSynthesizeChunkOnce(text, fishModelId, speakingRate);
+        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate);
+        noteChunk('ok');
+        if (attempt > 1) noteChunk('retried');
+        return buf;
       } catch (err) {
         lastErr = err;
         const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
-        if (!retryable || attempt === maxAttempts) throw err;
+        if (!retryable || attempt === maxAttempts) { noteChunk('failed'); throw err; }
         console.warn(`[TTS] fish chunk attempt ${attempt}/${maxAttempts} failed (${err.message}) -- retrying`);
         await sleep(300 * attempt + Math.random() * 200);
       }
@@ -2038,12 +2041,22 @@ function applySteeringTags(text) {
 //    exactly her "flat for stretches." Fix: re-seed the paragraph's direction
 //    at the start of every sentence (fish's own "emotion transitions" pattern;
 //    markers are free per their docs, byte cost is noise).
-//  • Inworld TTS-2 (docs.inworld.ai → Steering): "Use one set of instructions
-//    per input... Placing them midway through the text or using multiple
-//    instructions throughout will likely produce inconsistent results."
-//    Per-sentence seeding would HURT here, so Inworld instead gets the
-//    doc-exact cleanup: applySteeringTags' paragraph carry-forward can leave
-//    the SAME direction 2+ times inside one multi-paragraph chunk — keep the
+//  • Inworld TTS-2 (docs.inworld.ai → Steering): ⚠️ THE DOCS CHANGED, AND THE
+//    QUOTE THAT USED TO SIT HERE IS NOW WRONG. As of the Aug 28 2026 re-read,
+//    mid-text tags are the DOCUMENTED pattern: "A [tag] applies from where
+//    you write it until you change it… Add a tag mid-text when the
+//    performance genuinely shifts." Multiple inline tags per request are
+//    fully supported ("[shouting] Go! [whisper] Quietly now."), [reset] ends
+//    a passage, and CAPITALIZED words are the documented emphasis mechanism.
+//    (The Aug-26 stale-comment lesson: a doc quote is a snapshot, and this
+//    one cost nothing only because somebody re-read the source.)
+//    shapeInworldSteering's request-splitting below therefore fixes a
+//    problem the CURRENT docs say no longer exists; it still produces
+//    correct audio and stays until a measured pass says the single-request
+//    form sounds as good (TTS_INWORLD_SPLIT=0 would be that experiment's
+//    switch if built). Per-sentence seeding would still hurt here, and the
+//    dedupe below is still right: the paragraph carry-forward can leave the
+//    SAME direction 2+ times inside one multi-paragraph chunk — keep the
 //    first, drop identical repeats, and if a genuinely NEW direction opens a
 //    later paragraph, SPLIT the chunk there so each request opens with
 //    exactly one instruction. (The audition line's mid-paragraph beats are
