@@ -17,6 +17,7 @@
 //    re-login — on 429/403 it backs off and surfaces the error.
 
 const express = require("express");
+const { createHash } = require("crypto");
 const router = express.Router();
 
 const BASE = process.env.LIBRECHAT_BASE || "https://kademurdock.com";
@@ -435,10 +436,24 @@ async function agentPatchHandler(req, res) {
       if (typeof body.find === "string" && body.find.length > 0) {
         occurrences = cur.split(body.find).length - 1;
         const expected = Number.isInteger(body.expect_count) ? body.expect_count : 1;
+        /* STALE-READ DEFENSE (Aug 28 2026) — a single GET can be hours and
+         * versions stale (Part 92.23: one read lied by 18 hours; Forge lost
+         * an evening to three spurious 409s on Aug 25). Before refusing,
+         * re-read up to twice (paced) and keep the highest version seen.
+         * Only a mismatch that SURVIVES three reads is called real. */
+        const versionsSeen = [live && live.version];
+        for (let extra = 0; extra < 2 && occurrences !== expected; extra++) {
+          const again = await lc("GET", `/api/agents/${encodeURIComponent(id)}`);
+          versionsSeen.push(again && again.version);
+          if ((again && again.version || 0) >= (live && live.version || 0)) live = again;
+          cur = String((live && live.instructions) || "");
+          occurrences = cur.split(body.find).length - 1;
+        }
         if (occurrences !== expected) {
           return res.status(409).json({
             error: `find matched ${occurrences} time(s), expected ${expected} — nothing written`,
             hint: "make find longer and exact (copy it from getAgent), or pass expect_count",
+            versions_read: versionsSeen,
           });
         }
         next = cur.split(body.find).join(typeof body.replace === "string" ? body.replace : "");
@@ -459,7 +474,28 @@ async function agentPatchHandler(req, res) {
       }
     }
     if (Object.keys(patch).length === 0) return res.status(400).json({ error: "no fields to update" });
-    res.json(await lc("PATCH", `/api/agents/${encodeURIComponent(id)}`, patch));
+    const updated = await lc("PATCH", `/api/agents/${encodeURIComponent(id)}`, patch);
+    /* POST-WRITE VERIFICATION (Aug 28 2026) — "one read is not a verification."
+     * For instruction writes, read back until the text we intended comes back
+     * byte-identical (sha256), up to 3 paced reads. The write result is still
+     * the response body either way; _kade_verify says what a re-read saw, so a
+     * landed write can never again be reported as a failure — and an unlanded
+     * one can never again be reported as done. */
+    if (hasSplice && typeof patch.instructions === "string") {
+      const wantSha = createHash("sha256").update(patch.instructions).digest("hex");
+      const v = { verified: false, reads: 0, want_sha12: wantSha.slice(0, 12) };
+      for (let i = 0; i < 3 && !v.verified; i++) {
+        try {
+          const back = await lc("GET", `/api/agents/${encodeURIComponent(id)}`);
+          v.reads++;
+          v.version_seen = back && back.version;
+          const gotSha = createHash("sha256").update(String((back && back.instructions) || "")).digest("hex");
+          if (gotSha === wantSha) v.verified = true;
+        } catch (_) { break; }
+      }
+      if (updated && typeof updated === "object") updated._kade_verify = v;
+    }
+    res.json(updated);
   } catch (e) {
     fail(res, e);
   }
