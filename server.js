@@ -1145,6 +1145,18 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
     const err = new Error(`Inworld API error ${response.status}: ${errorText}`);
     err.status = response.status;
     err.isRateLimit = response.status === 429;
+    /* ⭐ AUG 28 2026 — A 5xx WAS THE ONE TRANSIENT SHAPE THIS LANE REFUSED
+     * TO RETRY, AND ITS OWN SIBLING TWENTY LINES DOWN ALWAYS HAS.
+     * fishSynthesizeChunkOnce sets isServerErr and fishSynthesizeChunk
+     * retries on it; this function set only isRateLimit, so an Inworld 502
+     * or 503 threw straight past a four-attempt backoff ladder that was
+     * sitting right there. Same upstream class, same ladder, opposite
+     * manners — the same shape as the Aug-26 announcement-priority bug,
+     * where two handlers eight lines apart disagreed with each other.
+     * Her Aug-28 report ("one of the sections of voiceclip gave an error
+     * sound") is a chunk that died and did not come back; this is the half
+     * of that fix which lives on the server. */
+    err.isServerErr = response.status >= 500;
     throw err;
   }
 
@@ -1156,17 +1168,57 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
   return Buffer.from(data.audioContent, "base64");
 }
 
+/* ⭐ AUG 28 2026 — COUNT THE CHUNKS THAT DIE.
+ *
+ * Her Aug-28 morning report could not be convicted from logs, because the
+ * proxy redeployed at 07:00Z and took the log window with it. A failure
+ * nobody can count is a failure that gets argued about instead of fixed.
+ *
+ * Deliberately IN MEMORY and deliberately small: a redeploy resets it, and
+ * that is fine — this is a tripwire for "is the voice lane bleeding TODAY",
+ * not an accounting ledger. The durable version is the deploywatch probe,
+ * which lives on a volume for exactly the reason this does not need to.
+ * Keys are Central days so the number lines up with the day she describes.
+ * Values are counts. No text, no voice ids, nothing about who was talking. */
+const chunkStats = new Map(); // 'YYYY-MM-DD' -> { ok, failed, retried }
+function centralDay(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(d);
+}
+function noteChunk(kind) {
+  const day = centralDay();
+  let row = chunkStats.get(day);
+  if (!row) {
+    row = { ok: 0, failed: 0, retried: 0 };
+    chunkStats.set(day, row);
+  }
+  row[kind] = (row[kind] || 0) + 1;
+  /* Keep three days and no more; this is a tripwire, not a warehouse.
+   * ⚠️ The trim runs on EVERY note, not only when a new day is created.
+   * The first version trimmed inside the `if (!row)` above — correct in the
+   * only scenario it was imagined in (midnight rolls, a new row appears,
+   * the oldest falls off) and unbounded in every other one. Its own test
+   * caught it holding five days. Trimming a Map of at most four keys costs
+   * nothing; a bound that only holds on the happy path is not a bound. */
+  for (const k of [...chunkStats.keys()].sort().slice(0, -3)) chunkStats.delete(k);
+}
+function chunkStatsToday() {
+  return chunkStats.get(centralDay()) || { ok: 0, failed: 0, retried: 0 };
+}
+
 async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts) {
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts);
+        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts);
+        noteChunk('ok');
+        if (attempt > 1) noteChunk('retried');
+        return buf;
       } catch (err) {
         lastErr = err;
-        const retryable = err.isRateLimit || err.isTimeout;
-        if (!retryable || attempt === maxAttempts) throw err;
+        const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
+        if (!retryable || attempt === maxAttempts) { noteChunk('failed'); throw err; }
         console.warn(`[TTS] chunk attempt ${attempt}/${maxAttempts} failed (${err.message}) -- retrying`);
         // Backoff with a little jitter so retries from a batch of chunks
         // don't all collide on the same retry tick.
@@ -1276,7 +1328,26 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate) {
 }
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "inworld-tts-proxy" });
+  /* The voice numbers ride /health because /health is the thing that already
+   * gets read — by deploywatch every few minutes and by the platform snapshot
+   * every sync. A counter nobody reads is the memory-health `warnings[]`
+   * lesson all over again: the endpoint published the truth for three days
+   * while nobody consumed it. */
+  const today = chunkStatsToday();
+  const total = today.ok + today.failed;
+  res.json({
+    status: "ok",
+    service: "inworld-tts-proxy",
+    chunksToday: {
+      ...today,
+      day: centralDay(),
+      failRatePct: total ? Math.round((today.failed / total) * 1000) / 10 : 0,
+      spoken: total === 0
+        ? "No voice chunks synthesised yet today."
+        : `${today.ok} voice chunks synthesised today, ${today.failed} failed outright` +
+          `${today.retried ? `, ${today.retried} needed a retry first` : ""}.`,
+    },
+  });
 });
 
 // Remove web-search citation markers so TTS never voices them. Catches the
