@@ -442,6 +442,15 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 28, 2026</h2>
+<ul>
+  <li><strong>Kiana can see now.</strong> Send her a photo &mdash; a menu, a letter, an outfit, a mystery can from the pantry &mdash; and she actually looks at it and tells you what's there. Her new brain also runs faster and costs a fraction of the old one, so nobody has to feel shy about chatting all day.</li>
+  <li><strong>Moving in from ChatGPT? Bring your memories with you.</strong> There's a new page at <a href="https://kademurdock.com/import">kademurdock.com/import</a>: paste the memory list ChatGPT kept about you and it becomes real memory cards here &mdash; your companions know you from day one. Upload your ChatGPT export file and (if you tick the box) your old conversations get read into your logbook too, dated to the days they actually happened. Nobody reads any of it but the memory keeper itself.</li>
+  <li><strong>The Android app is a real app now.</strong> Not a wrapped-up website anymore &mdash; a true native app, same as the iPhone one: native chat, the real character voices, dictation, your memories. It follows your phone's own text-size settings, and nothing overlaps when you magnify &mdash; that one's for you-know-who. Same download spot (<a href="https://kademurdock.com/help/android">the Android page</a>), and it installs right over the old one. It's also a quarter the size.</li>
+  <li><strong>Dictation adds on instead of starting over.</strong> Talk, stop, think, talk again &mdash; the second recording joins the first in your message box instead of wiping it. Already true on the website and the new Android app; on the iPhone it arrives with the next TestFlight update.</li>
+  <li><strong>A phone call can't go dead-quiet on you anymore.</strong> Very rarely, a companion's turn came back with no words in it &mdash; on a call that meant silence, which feels exactly like a dropped line. Now the platform catches that in the moment and asks again behind the scenes, so you hear the answer instead of the nothing.</li>
+</ul>
+
 <h2>August 22, 2026</h2>
 <ul>
   <li><strong>The ringtones are in &mdash; all 72 of Kade's homemade tones.</strong> The picker groups them by feel (Dreamy &amp; gentle, Calm &amp; lo-fi, Soul &amp; groove, Bright &amp; playful, Driving &amp; bold, World &amp; cinematic) so a screen reader jumps by heading instead of flicking seventy rows, every tone plays its <em>full minute</em> when you tap it, and there's finally a <strong>Stop preview</strong> button. Pick by ear in the app's Settings &mdash; and every tone has a real name (Warm Coffee, Boom Bap, Screen Door...), so you can tell a character <em>"use Morning Raga for my wake-up call."</em></li>
@@ -1115,6 +1124,9 @@ PAGES.memory = {
 
 <div class="term"><strong>Memory cards</strong> — each thing it remembers is its own small card, one topic per card: "has a dog named Biscuit," "hates cilantro," "going to the Shinedown show in July." Like a friend remembering the gist of you, not a recording of everything you've ever said. Each card can be looked at, fixed, or thrown out on its own.</div>
 
+<h2>Coming over from ChatGPT? Bring your memories along</h2>
+<p>If ChatGPT already knows you, you don't have to start from scratch here. Go to <a href="https://kademurdock.com/import">kademurdock.com/import</a> and either <strong>paste the memory list</strong> ChatGPT kept about you (ask it: "list everything you remember about me"), or <strong>upload your ChatGPT export zip</strong>. Your facts become normal memory cards — yours to hear, fix, or delete like any other — and if you tick the box, your old conversations get read into your logbook too, dated to the days they really happened. The only thing that reads any of it is the same memory keeper that listens here every day.</p>
+
 <h2>What it tends to remember</h2>
 <ul>
   <li>Preferences you mention ("I like things explained simply").</li>
@@ -1611,11 +1623,13 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
-<p class="lead">If you carry an Android phone, you can have Kade-AI as a real app: its own icon, opens full screen, microphone permission that sticks. It's the same Kade-AI you already know — the app is just a comfortable native wrapper around it.</p>
+<p class="lead">If you carry an Android phone, you can have Kade-AI as a real app &mdash; and as of August 28, 2026 it's a <strong>truly native app</strong>, the same breed as the iPhone one. Native chat with every companion, replies spoken in their real voices, dictation that adds to your draft instead of wiping it, your memory cards, and the whole toolbox. It follows your phone's own text size and display size settings, and the layout reflows instead of overlapping when you magnify &mdash; built low-vision-first.</p>
+
+<p>Already have the old app? Just download and install again &mdash; the new one goes right over the top, nothing to uninstall, and you stay signed in to the same account.</p>
 
 <p>iPhone person instead? The iPhone app comes through Apple's TestFlight and works by invitation — <strong>contact Kade</strong> and she'll add you.</p>
 
-<p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI for Android (about 4&nbsp;MB)</a></p>
+<p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI for Android (about 11&nbsp;MB)</a></p>
 
 <h2>Installing it, step by step</h2>
 <p>Because this app comes from Kade personally instead of the Google Play Store, Android will be a little suspicious the first time. That's normal, it's just Android being protective. Here's the whole dance:</p>
