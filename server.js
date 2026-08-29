@@ -2112,6 +2112,16 @@ function collapseAdjacentTags(text) {
 
 function seedFishSteering(chunk) {
   if (!chunk) return chunk;
+  /* KADE Aug 29 2026 — [reset] IS INWORLD'S WORD, AND FISH WAS BEING MADE TO
+   * SAY IT ON REPEAT. isDirectionTag('reset') is true (reset is deliberately
+   * not a canonical sound), so the per-sentence seeder below treated a
+   * closing [reset] as a direction and stamped it onto EVERY sentence of the
+   * paragraph — "[reset] Anyway. [reset] Text me…" — a cue fish has no
+   * concept of, repeated. On this lane reset's ENTIRE meaning is "no seed":
+   * strip the tag and the paragraph rides the clone's own baseline, which is
+   * exactly what the author asked for. (Inworld's lane keeps [reset] inline —
+   * there it is documented and load-bearing.) */
+  chunk = chunk.replace(/\[([^\]]+)\]\s*/g, (m, inner) => (soundsIsResetTag(inner) ? "" : m));
   chunk = collapseAdjacentTags(chunk);
   // CAPS->[emphasis] runs even when no [cues] exist — stressed words deserve
   // stress regardless of whether the reply carried steering tags.
