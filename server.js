@@ -32,6 +32,14 @@ const PORT = process.env.PORT || 3000;
 // Multi-speaker scenes (Aug 6 2026, ideas 16+52) — pure script/text helpers.
 // Audio glue lives beside the /v1/audio/speech handler below.
 const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = require("./scene-engine");
+/* Part 98 (Aug 29 2026) — the streaming playback lane's pure half lives in
+ * its own module so it can be tested without a network. See stream-lane.js
+ * for the design call (remembered-gain normalization) and the measured
+ * numbers (1.9s whole-clip vs 438ms first streamed audio). */
+const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
+// Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
+// ignore the stream flag entirely and every caller gets today's buffered WAV.
+const TTS_STREAM_ENABLED = process.env.KADE_TTS_STREAM !== "0";
 const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 
 // ── Fish Audio: second TTS provider beside Inworld (July 22 2026, Kade's pick) ──
@@ -1229,6 +1237,172 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
   });
 }
 
+/* ── Part 98 (Aug 29 2026) — THE STREAMED SINGLE-CHUNK LANE ──────────────────
+ *
+ * The app lane sends ONE SENTENCE PER HTTP CALL (see the 92.16 note in the
+ * fork's TTSService), and that sentence's whole synthesis was the ding→voice
+ * floor. This function synthesizes that one chunk via Inworld's voice:stream
+ * endpoint and flushes audio to the caller AS IT ARRIVES: measured tonight,
+ * first bytes at ~438ms vs ~1.9s for the whole clip.
+ *
+ * CONTRACT: returns true when it HANDLED the response (bytes flushed, or a
+ * clean end after flushing), false when it sent NOTHING and the caller must
+ * fall through to the buffered path. Once a byte is flushed there is no
+ * fallback — a mid-stream death ends the response and the app hears a short
+ * clip (its pump already treats a short piece as a piece, and the probe's
+ * duration baseline catches systematic truncation).
+ *
+ * What this lane deliberately does NOT do, and why that is safe on a single
+ * chunk: no seam silence and no inner-edge trims (both are multi-chunk
+ * concepts — the buffered path applies neither to a single chunk), no tail
+ * fade (the end is unknowable mid-stream; Inworld ends clips in 460-605ms of
+ * trailing silence, so a tail click has nothing to click against), and no
+ * same-pass EMA update (normalizeLoudness runs in measureOnly mode on the
+ * accumulated raw PCM after the stream ends — memory stays one clip behind,
+ * inside normal clip-to-clip wobble).
+ *
+ * Retry manners: the buffered path's 4-attempt ladder lives in
+ * synthesizeChunk, and a handshake failure here (connect error, non-200, or
+ * an upstream error line before any audio) returns false so THAT ladder still
+ * runs. The stream lane never retries on its own — retrying after flushed
+ * bytes would double-speak the opening of a sentence.
+ */
+async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel }) {
+  const { text: sayText, instruction } = splitChunkForInworld(chunk);
+  if (!sayText || !sayText.trim()) return false;
+  return inworldLimiter(async () => {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
+    const t0 = Date.now();
+    let response;
+    try {
+      response = await fetch("https://api.inworld.ai/tts/v1/voice:stream", {
+        signal: ac.signal,
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${INWORLD_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: sayText,
+          voiceId: inworldVoice,
+          modelId: inworldModel,
+          audioConfig: {
+            audioEncoding: "WAV",
+            sampleRateHertz: 24000,
+            speakingRate: speakingRate != null ? speakingRate : TTS_SPEAKING_RATE,
+          },
+          deliveryMode: TTS_DELIVERY_MODE,
+          ...(instruction ? { instruction } : {}),
+          ...(previousTexts && previousTexts.length
+            ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
+            : {}),
+        }),
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      console.warn(`[TTS] stream: handshake failed (${err.message}) -- falling back to buffered`);
+      return false;
+    }
+    if (!response.ok || !response.body) {
+      clearTimeout(timer);
+      const errText = await response.text().catch(() => "");
+      console.warn(`[TTS] stream: HTTP ${response.status} -- falling back to buffered (${errText.slice(0, 160)})`);
+      return false;
+    }
+
+    const parser = createNdjsonAudioParser();
+    let processor = null;
+    let headerBuf = null; // accumulates until the WAV header is sniffable
+    let rawPcm = []; // pre-gain PCM, for the measure-only EMA update after
+    let flushedBytes = 0;
+    let firstAudioMs = null;
+    let sentHeaders = false;
+
+    const beginResponse = (fmt) => {
+      res.set("Content-Type", "audio/wav");
+      res.set("x-kade-tts-streamed", "1");
+      res.write(buildStreamingWavHeader(fmt));
+      sentHeaders = true;
+    };
+
+    try {
+      for await (const piece of response.body) {
+        const audioBufs = parser.feed(Buffer.from(piece));
+        for (const audio of audioBufs) {
+          if (firstAudioMs == null) firstAudioMs = Date.now() - t0;
+          let pcm;
+          if (!processor) {
+            headerBuf = headerBuf ? Buffer.concat([headerBuf, audio]) : audio;
+            const sniffed = sniffWavFormat(headerBuf);
+            if (!sniffed) continue; // torn header: accumulate and retry
+            const { fmt, pcmStart } = sniffed;
+            const remembered = TTS_NORM_ENABLED ? voiceGainMemory.get(inworldVoice) : 1.0;
+            processor = createStreamProcessor({
+              gain: remembered,
+              knee: TTS_NORM_KNEE,
+              kneeRange: TTS_NORM_KNEE_RANGE,
+              fadeInSamples: Math.max(48, Math.round(fmt.sampleRate * 0.005)),
+            });
+            processor.fmt = fmt;
+            beginResponse(fmt);
+            pcm = headerBuf.slice(pcmStart);
+            headerBuf = null;
+          } else {
+            pcm = audio;
+          }
+          if (!pcm.length) continue;
+          rawPcm.push(Buffer.from(pcm));
+          const out = processor.process(pcm);
+          if (out.length) {
+            res.write(out);
+            flushedBytes += out.length;
+          }
+        }
+      }
+      for (const audio of parser.flush()) {
+        if (processor) {
+          rawPcm.push(Buffer.from(audio));
+          const out = processor.process(audio);
+          if (out.length) {
+            res.write(out);
+            flushedBytes += out.length;
+          }
+        }
+      }
+    } catch (err) {
+      clearTimeout(timer);
+      if (!sentHeaders) {
+        console.warn(`[TTS] stream: died before first audio (${err.message}) -- falling back to buffered`);
+        return false;
+      }
+      noteChunk("failed");
+      console.error(`[TTS] stream: died mid-clip after ${flushedBytes} bytes (${err.message}) -- ending short`);
+      res.end();
+      return true;
+    }
+    clearTimeout(timer);
+
+    if (!sentHeaders) {
+      // Stream ended without ever yielding a sniffable header — treat as a
+      // failed handshake and let the buffered ladder have it.
+      console.warn(`[TTS] stream: ended with no audio -- falling back to buffered`);
+      return false;
+    }
+
+    res.end();
+    noteChunk("ok");
+    const raw = Buffer.concat(rawPcm);
+    if (processor.fmt) {
+      normalizeLoudness(raw, processor.fmt.sampleRate, inworldVoice, { measureOnly: true });
+    }
+    console.log(
+      `[TTS] stream out: label="${voiceLabel}" resolved="${inworldVoice}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)}`
+    );
+    return true;
+  });
+}
+
 // ── Fish Audio synthesis (sibling of synthesizeChunk above) ──────────────────
 // POST api.fish.audio/v1/tts returns RAW AUDIO BYTES (not base64). We request
 // `pcm` (s16le mono) at 24kHz — deliberately NOT `wav`: fish streams its WAV
@@ -2304,7 +2478,7 @@ function measureSpeechRmsDb(pcmBuf, sampleRate) {
   return 20 * Math.log10(Math.sqrt(acc / n));
 }
 
-function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
+function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
   if (!TTS_NORM_ENABLED || !pcmBuf || pcmBuf.length < 4) return pcmBuf;
   try {
     const rmsDb = measureSpeechRmsDb(pcmBuf, sampleRate);
@@ -2374,6 +2548,20 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey) {
 
     const prevGain = voiceGainMemory.get(voiceKey);
     voiceGainMemory.set(voiceKey, gain);
+
+    /* Part 98 — MEASURE-ONLY MODE, for the streamed lane. The stream already
+     * flushed its bytes with the voice's REMEMBERED gain (it cannot re-read
+     * them), so this call runs the exact same measurement + gain math on the
+     * accumulated raw PCM purely to UPDATE the per-voice memory for the NEXT
+     * clip, and touches no samples. The gain recorded above is the gain this
+     * clip WOULD have gotten — one EMA step ahead of what actually played,
+     * which is exactly the number the next clip should start from. */
+    if (opts.measureOnly) {
+      console.log(
+        `[TTS] normalize (measure-only, streamed): voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), next-clip gain ${(20 * Math.log10(gain)).toFixed(1)} dB`
+      );
+      return pcmBuf;
+    }
     const rampSamples =
       prevGain != null && Math.abs(prevGain - gain) > 0.02
         ? Math.min(total, Math.max(32, Math.round((sampleRate * TTS_NORM_RAMP_MS) / 1000)))
@@ -2721,6 +2909,35 @@ app.post("/v1/audio/speech", async (req, res) => {
       console.log('[TTS] every chunk was words-free after shaping — returning silence, not a 500');
       res.set({ 'Content-Type': 'audio/wav', 'Content-Length': '0' });
       return res.status(200).end();
+    }
+
+    /* Part 98 — the streamed lane. Opt-in per request (the native app's new
+     * player sends the flag; web and telephony never do), Inworld only for
+     * now (fish voices fall through to buffered — zero fish voices in live
+     * rotation to even hear it), and single-chunk only: seams, gaps and
+     * inner trims are whole-set operations that need every chunk in hand,
+     * and the app lane's one-sentence-per-call requests are single-chunk in
+     * practice. A false return means NOTHING was flushed and the buffered
+     * path below runs exactly as it always has. */
+    const wantsStream =
+      TTS_STREAM_ENABLED &&
+      !isFishVoice &&
+      req.query.telephony !== "1" &&
+      chunks.length === 1 &&
+      (req.get("x-kade-tts-stream") === "1" || req.body.stream === "1" || req.body.stream === true);
+    if (wantsStream) {
+      const handled = await tryStreamSingleChunk(res, {
+        chunk: chunks[0],
+        inworldVoice,
+        inworldModel,
+        speakingRate,
+        previousTexts: contextFor(chunks, 0, ttsSessionKey),
+        voiceLabel: voice,
+      });
+      if (handled) {
+        rememberSpoken(ttsSessionKey, speakText);
+        return;
+      }
     }
 
     // Fire every chunk at Inworld in parallel instead of waiting on one
