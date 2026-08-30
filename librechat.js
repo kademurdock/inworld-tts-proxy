@@ -819,6 +819,30 @@ router.post("/librechat/memory-admin-set", auth, async (req, res) => {
   }
 });
 
+/* GET /librechat/memory-admin-list -> Part 99.3: READ any seat's cards. The
+ * twin that was missing while admin-set and admin-retire could both WRITE to
+ * a family member's private memory with nothing able to look at the result.
+ * Query: userId (required, from /librechat/admin-users), includeSuperseded=1
+ * for the history.
+ *
+ * PRIVACY SURFACE, STATED RATHER THAN BURIED: this returns agent-scoped cards,
+ * which by the writer's SENSITIVE rule include medical, money and private
+ * struggles that the user told ONE character. Anything holding
+ * LIBRECHAT_PROXY_SECRET can now read them. That bearer could already WRITE
+ * into those same buckets, so this widens what it can see, not what it can
+ * reach -- but it is a real widening and it belongs in the record, not in a
+ * comment nobody reads. */
+router.get("/librechat/memory-admin-list", auth, async (req, res) => {
+  const userId = typeof req.query.userId === "string" ? req.query.userId.trim() : "";
+  if (!userId) return res.status(400).json({ error: "userId is required (get it from /librechat/admin-users)" });
+  const sup = String(req.query.includeSuperseded || "") === "1" ? "&includeSuperseded=1" : "";
+  try {
+    res.json(await lc("GET", `/api/memories/admin-list?userId=${encodeURIComponent(userId)}${sup}`));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // POST /librechat/memory-admin-retire -> Part 85.5: supersede one key in one
 // bucket of any seat (no new row). body = { userId, key, agentId? } — omit
 // agentId to target the SHARED bucket.
