@@ -4037,7 +4037,15 @@ const VOICE_ADDITIONS_2026_08_30 = {
 // deliberate; the integrity check scans the MAP, which stays contiguous.
 // Undo = delete this block.
 {
-  const RETIRED_AMBER_FISH = ["Voice 385", "Voice 391", "Voice 393", "Voice 463"];
+  /* Voice 616 (Shanannah, fish) joins them the same evening it shipped — her
+   * word, and she found it by ear before she found its number: "remove the
+   * voice you just added, I believe 516, nanny or nana or whatever." 516 is
+   * Zanique, a July fish voice she never meant; the name was the real clue,
+   * because "Sha-NANNA-h" is the only nana in the batch of twenty. Retiring
+   * off a guessed NUMBER is exactly the July-18 scar (a pre-renumber label
+   * retired an innocent stock voice and left the real christa live) — so this
+   * was confirmed by name, not by the digits. */
+  const RETIRED_AMBER_FISH = ["Voice 385", "Voice 391", "Voice 393", "Voice 463", "Voice 616"];
   for (const label of RETIRED_AMBER_FISH) {
     const i = VOICE_LIST.indexOf(label);
     if (i === -1) throw new Error(`amber fish retirement: ${label} not in VOICE_LIST`);
