@@ -516,6 +516,28 @@ router.get("/librechat/feedback", auth, async (req, res) => {
     res.json(await lc("GET", `/api/kade/feedback?status=${encodeURIComponent(status)}`));
   } catch (e) { fail(res, e); }
 });
+/* Part 100 (Aug 30 2026) — her ask, verbatim: "make it mark resolved when it
+ * is resolved so I don't have to do that shit." The fork already had the
+ * status route (with the resolved-relay nudge back to the reporter); what was
+ * missing was a door a session or Forge could reach without a raw site login.
+ * The RULE that makes this honest: a caller flips a row to resolved ONLY with
+ * a receipt — the note must name the commit/build that shipped the fix. It
+ * must never close on a guess. Body: { id, status: open|acknowledged|resolved|
+ * wontfix, note? } — note is appended to the report detail so the receipt
+ * travels with the row. */
+router.post("/librechat/feedback-status", auth, async (req, res) => {
+  try {
+    const { id, status, note } = req.body || {};
+    if (!id || !/^[a-f0-9]{24}$/i.test(String(id))) return res.status(400).json({ error: "id (24-hex) required" });
+    const ok = ["open", "acknowledged", "resolved", "wontfix"];
+    if (!ok.includes(status)) return res.status(400).json({ error: `status must be one of ${ok.join("|")}` });
+    if (status === "resolved" && !String(note || "").trim()) {
+      return res.status(400).json({ error: "resolving needs a receipt — pass note naming the commit/build that shipped the fix" });
+    }
+    const body = note ? { status, note: String(note).slice(0, 2000) } : { status };
+    res.json(await lc("POST", `/api/kade/feedback/${encodeURIComponent(id)}/status`, body));
+  } catch (e) { fail(res, e); }
+});
 /* ── THE PLATFORM PERSONIFIED (Part 91.2, Aug 23 2026, her word) ─────────────
  * "I don't see any reason why forge can't read conversations for debugging
  * purposes… he's basically the platform personified. Nobody else has access to
