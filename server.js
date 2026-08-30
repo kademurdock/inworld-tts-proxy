@@ -37,6 +37,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
+const { fitContextBudget } = require("./tts-context");
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
 const TTS_STREAM_ENABLED = process.env.KADE_TTS_STREAM !== "0";
@@ -787,6 +788,13 @@ function rememberSpoken(key, text) {
 }
 
 const TTS_CONTEXT_MAX = Number(process.env.KADE_TTS_CONTEXT_MAX || 3);
+/* Aug 30 2026 (Part 99) — THE COUNT CAP ABOVE WAS NEVER THE ONLY CAP. Inworld
+ * rejects a request whose context.previous_requests exceeds 2,000 characters
+ * TOTAL, with a 400 that kills the whole synthesis: three long pieces clear
+ * that easily, so the failure landed on exactly the long replies this feature
+ * exists to improve. Receipt: four such 400s at 23:23Z Aug 29 and 12 failed
+ * chunks that day (4.5%) against a normal of zero. See tts-context.js. */
+const TTS_CONTEXT_MAX_CHARS = Number(process.env.KADE_TTS_CONTEXT_MAX_CHARS || 1900);
 const TTS_CONTEXT_ON = process.env.KADE_TTS_CONTEXT !== "0";
 function contextFor(chunks, i, sessionKey) {
   if (!TTS_CONTEXT_ON) return null;
@@ -797,8 +805,16 @@ function contextFor(chunks, i, sessionKey) {
     .filter(Boolean);
   /* Oldest first, and this request's own earlier chunks are nearer in time than
    * anything from the previous call, so they go last. */
-  const out = prior.concat(within).slice(-TTS_CONTEXT_MAX);
+  const picked = prior.concat(within).slice(-TTS_CONTEXT_MAX);
+  const out = fitContextBudget(picked, TTS_CONTEXT_MAX_CHARS);
   if (!out.length) return null;
+  /* Say so when the budget actually bit. Without a line at the point it
+   * happens nobody can tell from production whether this is trimming or
+   * idle -- the same reason the lift and the context count log at all. */
+  if (out.length !== picked.length || out.join("").length !== picked.join("").length) {
+    console.log(`[TTS] context trimmed: ${picked.length} piece(s)/${picked.join("").length} chars -> ` +
+                `${out.length}/${out.join("").length} (cap ${TTS_CONTEXT_MAX_CHARS})`);
+  }
   /* Same reason the lift logs: without a line at the point it happens, nobody
    * can tell from production whether this is on. Prints how many prior
    * sentences this chunk was told about. */
