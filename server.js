@@ -3955,6 +3955,97 @@ const VOICE_ADDITIONS_2026_08_19 = {
   });
 }
 
+// ── 2026-08-30 ADDITIONS, INWORLD + FISH (Kade: "Other than the voices I said
+// to leave out, add the latest inworld and fish voices to the platform.")
+//
+// INWORLD, pulled live from api.inworld.ai/tts/v1/voices: 273 workspace
+// customs, 27 unregistered, of which SEVENTEEN are her standing personal-clone
+// HOLD-OUTS and stay out — every Kade*/Amber*, Sky, Dale, Podcast Keighty
+// fast, the sneaky pro_amber_reading, and kade_professional (NOT the
+// individually invited keighty_pro = Voice 541). ⭐ THE CONFIDENCE CHECK HELD
+// A THIRD TIME: seventeen parked, the same count and the same names the Aug-6
+// and Aug-19 vets landed on. Ten new non-personal voices as Voice 603-612.
+//
+// ⚠️ AND THE FIRST DIFF OF THIS SESSION WAS WRONG, CAUGHT BY THE BOOT RAILS,
+// WHICH IS THE WHOLE REASON THEY EXIST. It scraped registered slugs with
+// [A-Za-z0-9_], and a slug can contain a HYPHEN — every `design-voice-xxxxxxxx`
+// truncated to "design" and read as unregistered, along with
+// patunya_black_middle-age_female. The draft block re-added FIFTEEN voices
+// that were already live under lower numbers; boot printed fifteen DUPLICATE
+// BACKING ID lines and the block was rewritten. A character class is a claim
+// about the data, and this one had never been checked against it.
+//
+// FISH, pulled live from api.fish.audio (274 self models, 56 unregistered):
+// her call was "just the designed ones," so these ten are the voices DESIGNED
+// rather than cloned from a person. The other 46 are person-named (Nana,
+// Grandma, Kathryn, Carol, Chris, Ryan, Juley, Jojo, Crystal, Kacey, Dessy,
+// Lacey, Rosie, Morrison...) or junk ("Blood pressure cuff") and stay out
+// pending her word on each. Voice 613-622.
+//
+// Numbered-only picker per her rule; names live here and as hidden aliases.
+// APPEND-ONLY; same boot-crash rails as every prior block.
+const VOICE_ADDITIONS_2026_08_30 = {
+  "Voice 603": { target: "default-e-m11vgtr9l-m7afw4kmnw__bellvi", name: "Bellvi" },
+  "Voice 604": { target: "default-e-m11vgtr9l-m7afw4kmnw__cici", name: "Cici" },
+  "Voice 605": { target: "default-e-m11vgtr9l-m7afw4kmnw__dollina", name: "Dollina" },
+  "Voice 606": { target: "default-e-m11vgtr9l-m7afw4kmnw__littya", name: "Littya" },
+  "Voice 607": { target: "default-e-m11vgtr9l-m7afw4kmnw__mizzia", name: "Mizzia" },
+  "Voice 608": { target: "default-e-m11vgtr9l-m7afw4kmnw__nazia", name: "Nazia" },
+  "Voice 609": { target: "default-e-m11vgtr9l-m7afw4kmnw__sarley", name: "Sarley" },
+  "Voice 610": { target: "default-e-m11vgtr9l-m7afw4kmnw__solaina", name: "Solaina" },
+  "Voice 611": { target: "default-e-m11vgtr9l-m7afw4kmnw__sorine", name: "Sorine" },
+  "Voice 612": { target: "default-e-m11vgtr9l-m7afw4kmnw__tozy", name: "Tozy" },
+  "Voice 613": { target: "fish:feb1c46da7da4ad98b62f8e92ffbb5a1", name: "Sannai" },
+  "Voice 614": { target: "fish:4c21c88b468143d49a66a886cd2a229d", name: "Pebsi" },
+  "Voice 615": { target: "fish:5018af74265443a8b84b6abdfe89896f", name: "Energetic Young Voice" },
+  "Voice 616": { target: "fish:fffe128cb3bd480f8d441076c930d283", name: "Shanannah" },
+  "Voice 617": { target: "fish:d6c538755aa34163b7fb6345d727c20b", name: "Fucia" },
+  "Voice 618": { target: "fish:bf366a6979664285a528336fc1bbd9b7", name: "Zadia" },
+  "Voice 619": { target: "fish:bf5b014676db49368fcb6e61e07c32b0", name: "Kiana the commedian" },
+  "Voice 620": { target: "fish:b653fb7702c8468d9d846fdf94a44e52", name: "Energetic Female Announcer" },
+  "Voice 621": { target: "fish:5489b3d435c7407eb414a237c3ee034a", name: "Biker station voice synthetic" },
+  "Voice 622": { target: "fish:802a07b51c8945338721442c6f33cce1", name: "Scary king" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_08_30);
+  if (entries.length !== 20) throw new Error(`additions 08-30: expected 20, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${603 + idx}`) throw new Error(`additions 08-30: non-contiguous at ${label}`);
+    const okShape = info.target.startsWith("default-e-") || info.target.startsWith(FISH_VOICE_PREFIX);
+    if (!okShape) throw new Error(`additions 08-30: ${label} target shape (${info.target})`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`additions 08-30: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
+// ── 2026-08-30 PICKER RETIREMENTS — THE FISH LANE'S FOUR AMBER CLONES.
+// Her call ("retire all four") once the diff showed the hold-out vet had never
+// run on fish: it has only ever been an INWORLD ritual, and July-22's bulk
+// registration of 218 fish models applied nothing. Four Amber clones went live
+// in the public picker as a result — including "Pro amber reading", the exact
+// voice the Inworld comments name as the one the prefix check nearly missed.
+// These leave every picker and audition surface; their numbered map entries
+// and name aliases STAY RESOLVABLE, exactly as the July-17 retirement does, so
+// any agent default or saved personal pick that points at one keeps speaking
+// instead of failing — they simply cannot be newly chosen. Display gaps are
+// deliberate; the integrity check scans the MAP, which stays contiguous.
+// Undo = delete this block.
+{
+  const RETIRED_AMBER_FISH = ["Voice 385", "Voice 391", "Voice 393", "Voice 463"];
+  for (const label of RETIRED_AMBER_FISH) {
+    const i = VOICE_LIST.indexOf(label);
+    if (i === -1) throw new Error(`amber fish retirement: ${label} not in VOICE_LIST`);
+    VOICE_LIST.splice(i, 1);
+    CUSTOM_VOICE_NUMBERS.delete(label);
+  }
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
