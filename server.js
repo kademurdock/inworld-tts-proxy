@@ -2094,6 +2094,97 @@ function sanitizeDirectionText(t) {
 
 const STEER_CARRY_MAX = parseInt(process.env.TTS_STEER_CARRY || "2", 10);
 
+/* ⭐ PART 109 — A CARRIED DIRECTION KEEPS THE MOOD AND GIVES UP THE METRONOME.
+ *
+ * Her report, Aug 31 2026: "Kiana will talk really fast sometimes, and really
+ * slow other times... she'll go from talking really fast, to slow and drawn
+ * out... I like the laughs and animation of the voice and stuff like that for
+ * sure, but it's a huge bug how she goes from fast and hyper to slow and
+ * empathetic in a split second. Or she'll hold the fast for a long time and
+ * only hit the slow at the end."
+ *
+ * MEASURED THROUGH THIS ENDPOINT, one 92-character sentence, Voice 595, the
+ * identical words every time, n=2 per arm (within-arm spread under 0.3s):
+ *
+ *     no tag                                    6.20s     —
+ *     [warm and kind]                           6.27s   +1.1%
+ *     [bright and delighted]                    6.37s   +2.7%
+ *     [unhurried]                               8.81s  +42.1%
+ *     [quick]                                   4.53s  -26.9%
+ *     [settling in, warm and unhurried]         7.57s  +22.1%
+ *     [picking up speed, bright and energetic]  6.03s   -2.7%
+ *
+ * THE EMOTION IS FREE AND THE TEMPO WORD IS THE WHOLE BILL. A pure feeling
+ * direction moves the clock by one to three percent — inside the noise. ONE
+ * tempo word swings it sixty-nine points end to end. So the animation she
+ * likes and the lurch she hates are not the same mechanism, and they can be
+ * separated.
+ *
+ * WHY THE CARRY IS WHERE TO CUT IT, AND NOT THE AUTHOR'S OWN TAG. The Aug-18
+ * cap (STEER_CARRY_MAX, the block right below this) fixed a direction
+ * HAUNTING a whole reply, and its own note already knew the shape of this:
+ * "Inworld pays a mood direction off in PACING." What it left behind is a
+ * CLIFF — paragraphs one through three run at the carried tempo, paragraph
+ * four snaps back to native. That step IS her "split second," and "hold the
+ * fast for a long time and only hit the slow at the end" is the same cliff
+ * with a long carry in front of it. Nobody re-measured the cap after it
+ * shipped, so the fix bought a new symptom with the old one.
+ *
+ * A tempo word the author WROTE lands where they wrote it and is left exactly
+ * alone — that is intent, and a character who wants a breathless paragraph
+ * still gets one. What gets dropped is the tempo half of the COPY that the
+ * carry-forward stamps onto paragraphs the author never marked. The carry
+ * exists so a steered reply does not go emotionally flat after sentence one
+ * (that is the bug it was built for), and stripping tempo leaves that job
+ * fully intact: [settling in, warm and unhurried] carries as
+ * [settling in, warm], which measures ~+1% instead of ~+22%.
+ *
+ * Kill switch: TTS_CARRY_TEMPO=1 restores the old behaviour (carry the
+ * direction verbatim, cliff and all). */
+const CARRY_TEMPO_STRIP = process.env.TTS_CARRY_TEMPO !== "1";
+/* Deliberately narrow: words whose ONLY job is to set a clock. Feeling words
+ * that merely correlate with pace (urgent, frantic, gentle, sleepy, tender)
+ * are NOT here — they carry real emotional information and the measurement
+ * above says feeling is not what is costing her. A false positive here is
+ * cheap (a carried copy loses one word it did not need); a false positive on
+ * an emotion word would flatten the thing she likes. */
+const TEMPO_WORDS = new RegExp(
+  "\\b(?:" + [
+    "slow(?:ly|er|ing)?", "unhurried", "unrushed", "leisurely", "languid(?:ly)?",
+    "drawn[- ]out", "dragging", "lingering", "ponderous", "halting", "measured",
+    "deliberate(?:ly)?", "sluggish", "crawling", "glacial",
+    "fast(?:er)?", "quick(?:ly|er)?", "rapid(?:ly)?", "rapid[- ]fire", "brisk(?:ly)?",
+    "hurried(?:ly)?", "rushed", "rushing", "racing", "breathless(?:ly)?", "hasty",
+    "hastily", "clipped", "snappy", "speedy", "swift(?:ly)?", "double[- ]time",
+    "picking up speed", "speeding up", "slowing down", "taking (?:her|his|their|its) time",
+    "no rush", "at a crawl", "tempo", "pace(?:d)?", "cadence", "speed",
+  ].join("|") + ")\\b", "gi");
+
+/** The carried COPY of a direction, with its tempo instructions removed.
+ *  Returns "" when nothing meaningful survives, in which case the paragraph
+ *  is stamped with no tag at all rather than an empty bracket. */
+function stripTempoForCarry(direction) {
+  if (!CARRY_TEMPO_STRIP) return direction;
+  const cleaned = String(direction)
+    .replace(TEMPO_WORDS, " ")
+    // tidy what removal leaves behind: doubled separators, dangling joins,
+    // and the stray leading/trailing punctuation a removed head word leaves.
+    .replace(/\s{2,}/g, " ")
+    .replace(/(?:\s*,\s*){2,}/g, ", ")
+    .replace(/^[\s,;:.\-]+|[\s,;:.\-]+$/g, "")
+    // A removed head or tail word can leave a naked connective at either end
+    // ("quick and animated" -> "and animated"). Strip those, then re-trim.
+    .replace(/^(?:and|but|then|still|with)\s+/i, "")
+    .replace(/\s+(?:and|but|then|with|a|an|the)$/i, "")
+    .replace(/^[\s,;:.\-]+|[\s,;:.\-]+$/g, "")
+    .trim();
+  // A survivor has to actually say something: at least one letter and not
+  // just a connective left standing on its own.
+  if (!/[a-zA-Z]/.test(cleaned)) return "";
+  if (/^(?:and|but|then|still|with|a|an|the|very|really|more|less)$/i.test(cleaned)) return "";
+  return cleaned;
+}
+
 function applySteeringTags(text) {
   if (!text || text.indexOf("%%") === -1) return text;
   // Tag-typo tolerance (July 2 2026, seen live from Kiana): models sometimes
@@ -2210,7 +2301,11 @@ function applySteeringTags(text) {
     // 0 disables carry-forward entirely (chunks past the first read flat --
     // that is the bug this mechanism was built to fix, so don't).
     if (active && carried >= STEER_CARRY_MAX) active = null;
-    if (active) { parts[i] = `[${active}] ${parts[i]}`; carried++; }
+    if (active) {
+      const stamped = stripTempoForCarry(active);
+      if (stamped) { parts[i] = `[${stamped}] ${parts[i]}`; }
+      carried++;
+    }
   }
   // July 27 2026: same residual sweep as the early return -- any %%-run that
   // survived conversion is a broken tag (asymmetric closer, 6+ percents),
