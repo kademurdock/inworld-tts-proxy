@@ -4292,7 +4292,50 @@ const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a lit
 // `split('{voice}').join(...)` substitution is a harmless no-op. Kept to
 // roughly half the old SAMPLE_TEXT so scroll-synth stays quick (the July 1
 // lesson: the full monologue lagged when swiping).
-const AUDITION_TEXT = "%%%calm, warm, unhurried, like the end of a long day%%% I can keep things soft and easy when that's what you need. %%%bright, delighted, grinning ear to ear%%% Or turn it all the way up — good news deserves loud! %%%low, slow, completely serious%%% And when it matters, I don't play around. %%%warm, playful, a little flirty%%% So... am I the one?";
+/* ⭐ PART 110 (Aug 31 2026) — THE BEATS ARE PARAGRAPHS NOW, AND THAT IS THE
+ * WHOLE FIX. Her question: "Do the audition lines respect the fast slow bug
+ * thing?" They did not, and this is the receipt.
+ *
+ * The script was ONE paragraph with four inline tags. Everything that ends a
+ * steering direction on this platform keys on PARAGRAPH boundaries —
+ * applySteeringTags' carry/cap/[reset] loop splits on /\n\s*\n+/, and
+ * shapeInworldSteering's request-splitter "only looks at paragraph-leading
+ * tags" (its own comment, a few hundred lines up, which even names this line
+ * as untouched). So the audition rode through all of it in a single request
+ * and the opening direction bled into the beats after it.
+ *
+ * MEASURED, not reasoned. The test: swap ONLY beat one's tag for a fast one and
+ * see how much the WHOLE clip moves. If each inline tag truly took over, the
+ * clip should move by exactly what beat one is worth — measured separately at
+ * ~3.28s. n=3 per arm, two voices:
+ *
+ *                          Voice 595      Voice 601
+ *   one paragraph          5.60s moved    5.90s moved   <- ~2.4s of LEAK
+ *   paragraphed            3.57s moved    2.87s moved   <- beat one, and nothing else
+ *
+ * So roughly half of what looked like "beat one is slow" was beat one dragging
+ * beats two, three and four along with it. On the picker that means the
+ * "turn it all the way up — good news deserves loud!" beat has never actually
+ * been loud and quick, on any voice in the catalog, since this script shipped
+ * July 22 — the exact fast/slow complaint she has been chasing through the
+ * messaging and phone lanes, hiding in the one place every user meets a voice
+ * for the first time.
+ *
+ * ⭐ AND IT GOT FASTER, WHICH IS THE OPPOSITE OF WHAT I EXPECTED AND THE REASON
+ * THIS WAS MEASURED INSTEAD OF ARGUED. Four paragraphs become four smaller
+ * split requests, and synth latency FELL from ~5.7s to ~2.0s on both voices.
+ * The July 1 lesson ("the full monologue lagged when swiping") was the reason to
+ * fear paragraphing; it turns out to be the reason to do it.
+ *
+ * ⚠️ Keep the blank lines. Collapsing this back to one paragraph — a tidy-up, a
+ * prettier template literal, a join(" ") — silently restores the leak and
+ * triples the latency, and nothing will fail to tell you. */
+const AUDITION_TEXT = [
+  "%%%calm, warm, unhurried, like the end of a long day%%% I can keep things soft and easy when that's what you need.",
+  "%%%bright, delighted, grinning ear to ear%%% Or turn it all the way up — good news deserves loud!",
+  "%%%low, slow, completely serious%%% And when it matters, I don't play around.",
+  "%%%warm, playful, a little flirty%%% So... am I the one?",
+].join("\n\n");
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
