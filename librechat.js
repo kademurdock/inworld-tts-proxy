@@ -988,6 +988,71 @@ router.post("/librechat/memory/diary-voice-repair", auth, async (req, res) => {
 });
 
 // ============================================================================
+// THE LOGBOOK (diary) READ LANE — Part 111, Aug 31 2026.
+//
+// Why this exists: the fork has served /api/diary since Aug 7 and
+// /api/admin/diary since the same evening, and this proxy had a passthrough
+// for NEITHER. So no session could read the logbook it kept writing laws
+// about: five sessions argued about `wrote24h` purely as a COUNT, and Part
+// 110's probe cleanup could clean the CARDS and could not check the diary at
+// all. Reading is the whole point — nothing here writes.
+//
+// ⚠️ SCOPE, STATED ON THE ROUTE BECAUSE THIS IS THE EXACT TRAP OF LAW 25:
+// `lc()` authenticates as LIBRECHAT_USER = kademurdock@gmail.com. So
+// /librechat/diary reads HER logbook and nobody else's, no matter what you
+// pass it. A parameter named for a user is not a seat. To read another seat,
+// use /librechat/diary-admin-list, which takes a real ?userId= and goes
+// through the fork's owner-gated admin lane.
+// ============================================================================
+
+// GET /librechat/diary?limit=400 -> HER OWN logbook, newest first. Embeddings
+// never ride the wire (the fork strips them). See the scope warning above.
+router.get("/librechat/diary", auth, async (req, res) => {
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 400, 1), 1000);
+  try {
+    res.json(await lc("GET", `/api/diary?limit=${limit}`));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// GET /librechat/diary-admin-list?userId=<id>[&agentId=<id>][&limit=200] -> ANY
+// seat's logbook, newest first, through the fork's admin lane (ACCESS_ADMIN +
+// READ_USERS, which LIBRECHAT_USER holds). Same privacy surface already stated
+// on memory-admin-list: diary lines are what somebody told a companion, so
+// anything holding LIBRECHAT_PROXY_SECRET can now read them. Read-only.
+router.get("/librechat/diary-admin-list", auth, async (req, res) => {
+  const userId = typeof req.query.userId === "string" ? req.query.userId.trim() : "";
+  if (!userId) return res.status(400).json({ error: "userId is required (get it from /librechat/admin-users)" });
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 200, 1), 1000);
+  let path = `/api/admin/diary?userId=${encodeURIComponent(userId)}&limit=${limit}`;
+  if (typeof req.query.agentId === "string" && req.query.agentId.trim()) {
+    path += `&agentId=${encodeURIComponent(req.query.agentId.trim())}`;
+  }
+  try {
+    res.json(await lc("GET", path));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// POST /librechat/diary-admin-delete {userId, id} -> forget ONE logbook entry.
+// The deleted entry rides back in the response (delete-with-receipt, the same
+// manner as every other delete lane here) so the caller can archive it before
+// it is gone. This exists because a write path without a delete path is how
+// the hallucinated-cards problem happened, and because a probe that writes
+// into somebody's logbook has to be able to clean up after itself.
+router.post("/librechat/diary-admin-delete", auth, async (req, res) => {
+  const { userId, id } = req.body || {};
+  if (!userId || !id) return res.status(400).json({ error: "userId and id are required" });
+  try {
+    res.json(await lc("DELETE", `/api/admin/diary/${encodeURIComponent(String(id))}?userId=${encodeURIComponent(String(userId))}`));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// ============================================================================
 // TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
 // and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
 // queue and use their own creds. Read/registration only; NO outbound calls, NO
