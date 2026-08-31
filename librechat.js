@@ -662,11 +662,21 @@ router.post("/librechat/actions", auth, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+/* ⚠️ Part 111 (Aug 31 2026) — `?raw=1` NOW GETS THROUGH, and it is the same
+ * shape of gap as `temp=1` was in Part 92.8: the fork has served a raw lane
+ * since July 30 ("pull raw immediately", session 19's watch item) and this
+ * passthrough dropped it, so from out here every message was four fields —
+ * sender, isUser, text, createdAt. Debugging tonight's double-answer meant
+ * asking whether the turn had an error, a finish reason, a model, an
+ * unfinished flag or two content blocks, and NONE of that was reachable.
+ * A projection that hides the fields a bug lives in is not a smaller answer,
+ * it is a different one. Only the exact string "1" turns it on. */
 router.get("/librechat/admin-messages", auth, async (req, res) => {
   const convoId = req.query.convoId;
   if (!convoId) return res.status(400).json({ error: "convoId is required (get it from /librechat/admin-convos)" });
+  const raw = String(req.query.raw || "") === "1" ? "&raw=1" : "";
   try {
-    res.json(await lc("GET", `/api/kade/admin/logs-messages?conversationId=${encodeURIComponent(convoId)}`));
+    res.json(await lc("GET", `/api/kade/admin/logs-messages?conversationId=${encodeURIComponent(convoId)}${raw}`));
   } catch (e) { fail(res, e); }
 });
 
