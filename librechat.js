@@ -1062,6 +1062,24 @@ router.post("/librechat/diary-admin-delete", auth, async (req, res) => {
   }
 });
 
+// GET /librechat/ledger-admin?userId=&limit=&sinceDays= -> the CONSOLIDATION
+// ledger for ANY seat. Part 112: /librechat/memory/ledger rides lc()'s login,
+// which is KADE — so every "the ledger is empty" reading this platform has ever
+// made was about her seat alone. This is the cross-seat read. (readLedger caps
+// at 40 rows internally whatever you ask for.)
+router.get("/librechat/ledger-admin", auth, async (req, res) => {
+  const userId = typeof req.query.userId === "string" ? req.query.userId.trim() : "";
+  if (!userId) return res.status(400).json({ error: "userId is required (get it from /librechat/admin-users)" });
+  const q = ["userId=" + encodeURIComponent(userId)];
+  if (req.query.limit) q.push("limit=" + encodeURIComponent(req.query.limit));
+  if (req.query.sinceDays) q.push("sinceDays=" + encodeURIComponent(req.query.sinceDays));
+  try {
+    res.json(await lc("GET", "/api/admin/diary/ledger?" + q.join("&")));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // POST /librechat/diary-admin-edit {userId, id, text?, salience?} -> rewrite ONE
 // logbook entry in place (the fork's PATCH /api/admin/diary/:id — id, date,
 // scope and source survive; a text change re-embeds). Part 112: added for the
