@@ -442,6 +442,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 31, 2026 — late</h2>
+<ul>
+  <li><strong>Announcements finally have a home.</strong> Every "What's new" note sent to the family now lands on a page you can actually read after the notification is gone &mdash; including any you missed. On the website it's on your <a href="https://kademurdock.com/notifications">Notifications page</a> under "What's New announcements"; in the iPhone app there's a new <strong>Announcements</strong> row on the home screen (app version 258 and up), and tapping a What's New notification takes you straight there instead of dropping you into a new conversation.</li>
+  <li><strong>Back out of a chat lands on Your Conversations now (iPhone app 258+).</strong> Opening the app still drops you straight into a fresh chat with your main companion, same as always &mdash; but when you back out of any conversation, you land on your conversations list, where you can pick another one, start fresh, or tidy up. No more bouncing back to the front door.</li>
+</ul>
+
 <h2>August 31, 2026</h2>
 <ul>
   <li><strong>Kiana listens while she talks now.</strong> On a call in the app, just start talking over her and she stops &mdash; the same way the phone line always did. She tries to ignore the TV and your screen reader, so it takes a real word to cut her off, not a noise. She also doesn't say hello when a call connects any more: the screen tells you she's listening, so you're not talking over a greeting to get a word in.</li>
