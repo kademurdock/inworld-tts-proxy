@@ -1581,6 +1581,7 @@ PAGES.privacy = {
 </ul>
 
 <h2>What gets stored</h2>
+<p><strong>How any of it gets here.</strong> Everything below arrives one of two ways, and there is no third: you typed it, spoke it, or chose to share it &mdash; or the platform generated it while doing something you asked for, like a reply, a description, or a running cost tally. Nothing is gathered in the background, nothing is bought from anyone else, and there are no advertising or analytics trackers anywhere in the app or the site.</p>
 <p><strong>Your account.</strong> Your email address, a scrambled (hashed) version of your password, your display name, and whether you're an adult or child account.</p>
 <p><strong>Your conversations.</strong> Messages you send and the replies you get, so your history is there when you come back. Private chats are the exception &mdash; see <a href="/help/temporary">Starting Over &amp; Private Chats</a>.</p>
 <p><strong>What it remembers about you.</strong> Memory cards and logbook entries the characters save as you talk. You can read, edit, and delete every one of these yourself &mdash; see <a href="/help/memory">What It Remembers</a>.</p>
@@ -1594,7 +1595,10 @@ PAGES.privacy = {
 <h2>Who else touches it</h2>
 <p>The platform doesn't build its own AI models or voices &mdash; it rents them. That means parts of what you write or say pass through other companies to get the work done. Under their business terms these are service providers processing data on Kade-AI's behalf; they are not given your data to sell.</p>
 <ul>
-  <li><strong>OpenRouter and Moonshot AI</strong> &mdash; the language models that write the replies. They receive your message and the conversation context.</li>
+  <li><strong>Z.AI</strong> &mdash; the language models that write most of the replies, and the first place a message goes. It receives your message and the conversation context.</li>
+  <li><strong>OpenRouter</strong> &mdash; the service the platform reaches several model companies through, and the stand-in whenever Z.AI is busy. It receives your message and the conversation context.</li>
+  <li><strong>Moonshot AI</strong> &mdash; the models behind deep research and some longer thinking. They receive your message and the conversation context.</li>
+  <li><strong>DeepSeek</strong> &mdash; names your conversations and helps read images. It receives the conversation being named, or the image.</li>
   <li><strong>Inworld AI and Fish Audio</strong> &mdash; text-to-speech. They receive the text being read aloud.</li>
   <li><strong>Deepgram</strong> &mdash; speech-to-text. It receives your voice audio when you talk instead of type.</li>
   <li><strong>Twilio</strong> &mdash; the phone line. It carries and records phone calls.</li>
@@ -1603,7 +1607,9 @@ PAGES.privacy = {
   <li><strong>Tavily</strong> &mdash; web search, when a character looks something up. It receives the search wording.</li>
   <li><strong>Railway</strong> &mdash; the servers everything runs on. <strong>Backblaze</strong> &mdash; where files and nightly backups are stored. <strong>Apple</strong> &mdash; delivers push notifications to iPhones.</li>
 </ul>
-<p>These companies keep their own records under their own policies. If a feature matters to you and you'd rather it not run, don't use that feature &mdash; or say so to Kade and she'll turn it off for your account.</p>
+<p><strong>How it reaches them.</strong> Nothing on your phone or in your browser talks to these companies directly. What you type, say, or share goes to Kade-AI's own servers first, and the server passes on only the piece each company needs for the job you asked for &mdash; the voice company gets text to read and never your photos, the picture company gets your prompt and never your call recordings. It is still your words arriving at their computers, which is why they are named here rather than described in the vague.</p>
+<p><strong>What they are allowed to do with it.</strong> Every one of these companies is used under business terms that require them to protect your information at least as well as this policy promises: to process it only to deliver the feature you asked for, not to sell it, and not to use it to advertise to you. Kade-AI does not grant any of them permission to train on your conversations or to keep your data for their own purposes. If any of them ever changes those terms in a way that breaks that promise, the honest move is to drop them, and that is the intent.</p>
+<p>These companies keep their own operational records under their own policies. If a feature matters to you and you'd rather it not run, don't use that feature &mdash; or say so to Kade and she'll turn it off for your account.</p>
 
 <h2>Children's accounts</h2>
 <p>Accounts for kids are set up by a parent or family administrator, never by the child. They're limited to age-appropriate content platform-wide, can't reach the open rooms, and can't place calls to numbers outside the family. A parent can read, export, or delete everything on that account by asking Kade.</p>
