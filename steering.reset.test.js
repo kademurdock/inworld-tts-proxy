@@ -95,7 +95,46 @@ test('the cap still stops the carry at two paragraphs', () => {
   const out = applySteeringTags(reply);
   const stamped = (out.match(/\[animated still a little spooked by it\]/g) || []).length;
   assert.strictEqual(stamped, 2, 'the direction-only paragraph is dropped and the next two carry it');
-  assert.ok(!/\[.*\]\s*P three\./.test(out), 'the cap stops it at two');
+  assert.ok(!/\[animated[^\]]*\]\s*P three\./.test(out), 'the cap stops the direction at two');
+});
+
+/* ⭐ PART 109, AND THIS ONE IS A CORRECTION TO MY OWN EARLIER FIX TONIGHT.
+ *
+ * Stripping tempo words off the carried copy passed its unit tests and barely
+ * moved the live number, because Inworld's rule is that "a [tag] applies from
+ * where you write it UNTIL YOU CHANGE IT" and chunkText puts these paragraphs
+ * in ONE request. Not stamping a later paragraph does not un-tag it.
+ *
+ * Measured on the live endpoint with real brackets, two paragraphs, n=3:
+ *   bare 11.88s · [unhurried] + untouched 16.42s (+38.2%) ·
+ *   [unhurried] + [reset] 14.11s (+18.8%) · [unhurried] + another tag 16.57s.
+ * Only the literal reset token ends it, and it ends it completely (+18.8%
+ * against a predicted +21.9% for "para one slow, para two native").
+ *
+ * So the Aug-18 cap was a no-op on the Inworld wire for thirteen days. */
+test('THE REAL FIX: the cap emits [reset] so Inworld actually stops', () => {
+  // Shape, spelled out because the off-by-one is easy to get wrong: the
+  // AUTHORED paragraph keeps its own tag and does not spend the carry, then
+  // STEER_CARRY_MAX=2 paragraphs carry a tempo-stripped copy, and the third
+  // one after the author is where the carry expires and the reset lands.
+  const reply = ['%%%unhurried and warm%%% One.', 'Two.', 'Three.', 'Four.'].join('\n\n');
+  const out = applySteeringTags(reply);
+  assert.strictEqual(out,
+    '[unhurried and warm] One.\n\n[warm] Two.\n\n[warm] Three.\n\n[reset] Four.',
+    'author verbatim, two tempo-stripped carries, then an explicit stop');
+  assert.strictEqual((out.match(/\[reset\]/g) || []).length, 1, 'exactly one, at the boundary');
+});
+
+test('no active direction means no stray [reset]', () => {
+  const out = applySteeringTags('Plain one.\n\nPlain two.\n\nPlain three.\n\nPlain four.');
+  assert.ok(!/\[reset\]/.test(out), 'a reset with nothing to reset is noise in the audio');
+});
+
+test('a paragraph that opens with its OWN direction is never given a [reset]', () => {
+  const reply = ['%%%unhurried%%% One.', 'Two.', '%%%dry as hell%%% Three.', 'Four.'].join('\n\n');
+  const out = applySteeringTags(reply);
+  assert.ok(/\[dry as hell\] Three\./.test(out), 'the new authored direction stands on its own');
+  assert.ok(!/\[reset\]\s*\[dry as hell\]/.test(out), 'and is not double-tagged with a reset');
 });
 
 test('THE PART-109 FIX: the carried copy keeps the mood and drops the tempo word', () => {

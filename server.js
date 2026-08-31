@@ -2300,8 +2300,55 @@ function applySteeringTags(text) {
     // rest of the reply. TTS_STEER_CARRY=99 restores the old behavior;
     // 0 disables carry-forward entirely (chunks past the first read flat --
     // that is the bug this mechanism was built to fix, so don't).
-    if (active && carried >= STEER_CARRY_MAX) active = null;
+    /* ⭐ PART 109 — THE CAP HAS TO SAY STOP OUT LOUD, OR IT NEVER STOPPED.
+     *
+     * This is the correction to my own first attempt tonight, and it is worth
+     * the space because the first attempt PASSED ITS UNIT TESTS and barely
+     * moved the real number (HOW_TO_VERIFY law 18).
+     *
+     * The Aug-18 cap ends a carry by setting `active = null` — it simply stops
+     * STAMPING the direction on later paragraphs. That is a complete fix for
+     * the fish lane, which re-seeds per sentence and only performs what it is
+     * handed. On INWORLD it does almost nothing, because Inworld's own
+     * documented rule — quoted a hundred lines below this since Aug 28 — is
+     * that "a [tag] applies from where you write it UNTIL YOU CHANGE IT."
+     * chunkText groups whole paragraphs into one request, so paragraph four
+     * rides in the same request as the [unhurried] paragraph one and inherits
+     * its tempo whether or not anybody stamped it.
+     *
+     * MEASURED ON THE LIVE ENDPOINT, real brackets, bypassing this function
+     * entirely so only Inworld's behaviour is in the frame. Two paragraphs,
+     * Voice 595, n=3 per arm:
+     *
+     *     bare (no tags)                       11.88s      —
+     *     [unhurried] para1, para2 untouched   16.42s  +38.2%   <- the "cap"
+     *     [unhurried] para1, [reset] para2     14.11s  +18.8%   <- a real stop
+     *     [unhurried] para1, [other tag] para2 16.57s  +39.5%   <- only reset works
+     *
+     * +18.8% is almost exactly "paragraph one unhurried, paragraph two at its
+     * native pace" (predicted +21.9% from the single-paragraph numbers), so
+     * [reset] does not merely reduce the carry — it ENDS it. And a different
+     * ordinary direction does not: the literal reset token is the mechanism,
+     * exactly as the provider documents.
+     *
+     * So the cap has been a no-op on the Inworld wire since Aug 18, and her
+     * "she'll hold the fast for a long time and only hit the slow at the end"
+     * is what a cap that never fired sounds like. Now it fires. */
+    if (active && carried >= STEER_CARRY_MAX) {
+      active = null;
+      // Say it where the carry would have ended — but never over a paragraph
+      // that opens with its own direction (handled above, which `continue`s),
+      // and never twice in a row.
+      if (!/^\s*\[/.test(parts[i])) { parts[i] = `[reset] ${parts[i]}`; }
+    }
     if (active) {
+      /* The carried COPY drops its tempo half. On Inworld this is close to
+       * cosmetic (the leading tag already governs the request), but on the
+       * FISH lane it is load-bearing: seedFishSteering re-states the carried
+       * direction at the head of EVERY sentence, so a carried "unhurried"
+       * there is a fresh slow-down instruction per sentence. Measured cost of
+       * the tempo half on one 92-char sentence: [unhurried] 8.81s and [quick]
+       * 4.53s against 6.20s bare, while [warm and kind] costs 1.1%. */
       const stamped = stripTempoForCarry(active);
       if (stamped) { parts[i] = `[${stamped}] ${parts[i]}`; }
       carried++;
