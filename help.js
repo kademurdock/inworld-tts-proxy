@@ -442,6 +442,16 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>August 31, 2026</h2>
+<ul>
+  <li><strong>Kiana listens while she talks now.</strong> On a call in the app, just start talking over her and she stops &mdash; the same way the phone line always did. She tries to ignore the TV and your screen reader, so it takes a real word to cut her off, not a noise. She also doesn't say hello when a call connects any more: the screen tells you she's listening, so you're not talking over a greeting to get a word in.</li>
+  <li><strong>Her voice has a lot more life in it.</strong> She speeds up, slows down and shifts tone with what she's actually saying, instead of reading everything at one pace.</li>
+  <li><strong>There's a Deep Think button on the call screen.</strong> Tap it when you want her to take her time on one hard question. The next answer comes back quick like usual &mdash; it's for one question, not for the whole call.</li>
+  <li><strong>The phone line has shorter gaps between her sentences</strong>, so she sounds less like she's buffering mid-thought.</li>
+  <li><strong>The voice previews in the picker are fixed.</strong> They start faster, and each line now actually changes speed the way it's supposed to &mdash; the excited one is finally excited. Every voice in the catalog had been auditioning wrong since July, on every device, which is a strange thing to only now find out.</li>
+  <li><strong>Your chats get real names again.</strong> If your conversation list has been filling up with rows that just say "New Chat", that was a naming job quietly running out of time and giving up. It's fixed. Old chats keep the names they have; new ones should title themselves within a few seconds of the first reply.</li>
+</ul>
+
 <h2>August 28, 2026 — later that night</h2>
 <ul>
   <li><strong>Send Kiana a photo right in chat — she just looks at it.</strong> The attach button now knows she has her own eyes: no more relayed descriptions, she sees the actual picture (and iPhone photos convert themselves so they always go through). You can also send a picture with no words at all — the photo is the message.</li>
