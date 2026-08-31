@@ -1062,6 +1062,21 @@ router.post("/librechat/diary-admin-delete", auth, async (req, res) => {
   }
 });
 
+// POST /librechat/diary-admin-edit {userId, id, text?, salience?} -> rewrite ONE
+// logbook entry in place (the fork's PATCH /api/admin/diary/:id — id, date,
+// scope and source survive; a text change re-embeds). Part 112: added for the
+// episode merge she approved — the list/delete pair existed, the edit half of
+// the fork's own admin surface was simply never exposed out here.
+router.post("/librechat/diary-admin-edit", auth, async (req, res) => {
+  const { userId, id, text, salience } = req.body || {};
+  if (!userId || !id) return res.status(400).json({ error: "userId and id are required" });
+  try {
+    res.json(await lc("PATCH", `/api/admin/diary/${encodeURIComponent(String(id))}?userId=${encodeURIComponent(String(userId))}`, { ...(text !== undefined ? { text } : {}), ...(salience !== undefined ? { salience } : {}) }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // ============================================================================
 // TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
 // and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
