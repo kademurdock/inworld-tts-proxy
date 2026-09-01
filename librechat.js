@@ -71,6 +71,58 @@ async function login() {
   return _token;
 }
 
+// ---- Part 116 (Sep 1 2026): PROBES RIDE THE TEST SEAT, NEVER HERS ----
+// HOW_TO_VERIFY law 25: `userEmail` on /librechat/ask is NOT a seat -- it
+// becomes kadeOnBehalfOf, admin-only, four tools, and re-scopes nothing. Every
+// probe through here ran as kademurdock@gmail.com and the memory keeper filed
+// a card into HER memory that Kiana then asked her about on a call. So: an
+// explicit `seat:"vischeck"` logs in as the regular-user test seat
+// (LIBRECHAT_SEAT_VISCHECK_USER / _PASS on this service) with its own token
+// cache. Default stays the admin seat so Forge's existing calls do not move.
+// A seat that is asked for and not configured is a hard 500, never a silent
+// fall-through to her account -- that fall-through is exactly the bug.
+const SEATS = {
+  admin: { user: () => USER, pass: () => PASS, token: null },
+  vischeck: {
+    user: () => process.env.LIBRECHAT_SEAT_VISCHECK_USER,
+    pass: () => process.env.LIBRECHAT_SEAT_VISCHECK_PASS,
+    token: null,
+  },
+};
+function seatByName(name) {
+  const key = String(name || "admin").toLowerCase();
+  const seat = SEATS[key];
+  if (!seat) {
+    const e = new Error(`unknown seat "${name}" (admin|vischeck)`);
+    e.status = 400; throw e;
+  }
+  if (!seat.user() || !seat.pass()) {
+    const e = new Error(`seat "${key}" is not configured on the proxy (LIBRECHAT_SEAT_${key.toUpperCase()}_USER/_PASS)`);
+    e.status = 500; throw e;
+  }
+  return seat;
+}
+async function seatLogin(seat) {
+  if (seat === SEATS.admin) return login();
+  const r = await fetch(`${BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": UA },
+    body: JSON.stringify({ email: seat.user(), password: seat.pass() }),
+  });
+  if (r.status === 429 || r.status === 403) throw new Error(`anti-abuse block on seat login (${r.status})`);
+  if (!r.ok) throw new Error(`seat login failed ${r.status}`);
+  const j = await r.json();
+  if (!j || !j.token) throw new Error("seat login returned no token");
+  seat.token = j.token;
+  return seat.token;
+}
+function seatToken(seat) {
+  return seat === SEATS.admin ? _token : seat.token;
+}
+function seatClear(seat) {
+  if (seat === SEATS.admin) _token = null; else seat.token = null;
+}
+
 function buildOpts(method, body, token) {
   const opts = { method, headers: { Authorization: `Bearer ${token}`, "User-Agent": UA } };
   if (body !== undefined) {
@@ -1503,8 +1555,10 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     isTemporary: true,
   };
 
+  const seat = seatByName(opts.seat);
+  if (seat !== SEATS.admin) console.log(`[lcAsk] riding seat "${opts.seat}" (${seat.user()})`);
   return paced(async () => {
-    if (!_token) await login();
+    if (!seatToken(seat)) await seatLogin(seat);
 
     const authHeaders = (tok) => ({
       Authorization: `Bearer ${tok}`,
@@ -1520,8 +1574,8 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
         body: JSON.stringify(body),
       });
 
-    let r = await doStart(_token);
-    if (r.status === 401) { _token = null; await login(); r = await doStart(_token); }
+    let r = await doStart(seatToken(seat));
+    if (r.status === 401) { seatClear(seat); await seatLogin(seat); r = await doStart(seatToken(seat)); }
     if (r.status === 429 || r.status === 403) {
       const t = await r.text();
       const e = new Error(`anti-abuse/forbidden ${r.status}: ${String(t).slice(0, 120)}`);
@@ -1546,7 +1600,7 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     await new Promise((res) => setTimeout(res, 300));
 
     const streamR = await fetch(`${BASE}/api/agents/chat/stream/${streamId}`, {
-      headers: { Authorization: `Bearer ${_token}`, "User-Agent": UA, Accept: "text/event-stream" },
+      headers: { Authorization: `Bearer ${seatToken(seat)}`, "User-Agent": UA, Accept: "text/event-stream" },
     });
     if (!streamR.ok) {
       const t = await streamR.text();
@@ -1595,15 +1649,21 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     if (opts.deleteAfter && bornConversationId) {
       // Fire-and-forget through the same paced lane; a failed delete is
       // only cosmetic (the convo is still isTemporary), never a failed ask.
-      lc("DELETE", "/api/convos/", { arg: { conversationId: bornConversationId } })
-        .then(() => console.log(`[lcAsk] probe convo deleted (${bornConversationId.slice(0, 8)}…)`))
+      // The convo belongs to whichever seat asked, so the delete rides that
+      // seat's token too (a vischeck probe deleted with the admin token 404s).
+      (seat === SEATS.admin
+        ? lc("DELETE", "/api/convos/", { arg: { conversationId: bornConversationId } })
+        : paced(() => fetch(`${BASE}/api/convos/`, buildOpts("DELETE", { arg: { conversationId: bornConversationId } }, seatToken(seat)))
+            .then((rr) => { if (!rr.ok) throw new Error(`HTTP ${rr.status}`); })))
+        .then(() => console.log(`[lcAsk] probe convo deleted (${bornConversationId.slice(0, 8)}…) as ${seat === SEATS.admin ? "admin" : "vischeck"}`))
         .catch((e) => console.warn("[lcAsk] probe delete failed (harmless):", e.message));
     }
     return stripCitationAnchors(reply);
   });
 }
 
-// POST /librechat/ask  { agentId, messages[] } -> { text }
+// POST /librechat/ask  { agentId, messages[], seat?: "admin"|"vischeck", deleteAfter? } -> { text, seat }
+// Part 116: seat:"vischeck" runs the probe on the regular-user TEST seat -- its convo, its memory, never hers.
 router.post("/librechat/ask", auth, async (req, res) => {
   const { agentId, messages } = req.body;
   console.log("[lcAsk] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array");
@@ -1611,11 +1671,13 @@ router.post("/librechat/ask", auth, async (req, res) => {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
   try {
+    const seatName = (req.body || {}).seat || "admin";
     const text = await lcAsk(agentId, messages, (req.body || {}).userEmail, {
       deleteAfter: (req.body || {}).deleteAfter === true,
+      seat: seatName,
     });
-    console.log("[lcAsk] success, reply length=", text.length);
-    res.json({ text });
+    console.log("[lcAsk] success, reply length=", text.length, "seat=", seatName);
+    res.json({ text, seat: seatName });
   } catch (err) {
     console.error("[lcAsk] error:", err.message);
     const status = typeof err.status === "number" ? err.status : 500;
