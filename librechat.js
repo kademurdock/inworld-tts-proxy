@@ -574,6 +574,18 @@ router.get("/librechat/admin-users", auth, async (req, res) => {
  * Whitelisted rather than spread: this builds an upstream URL, so an unknown query
  * key does not get to ride along into it. Only the exact string "1" turns it on —
  * "0" / "false" / "no" must never round toward yes. */
+// GET /librechat/admin-agents[?author=<userId>] -> every agent on the platform
+// with its owner (id, _id, name, author, version, isPublic). Part 115: the
+// ordinary /librechat/agents list is the ADMIN SEAT'S VIEW and drops author,
+// so another person's private agent could not even be found to publish it.
+// Projection only — no instructions ever ride this route.
+router.get("/librechat/admin-agents", auth, async (req, res) => {
+  try {
+    const qs = req.query.author ? `?author=${encodeURIComponent(String(req.query.author))}` : "";
+    res.json(await lc("GET", `/api/kade/admin/agents${qs}`));
+  } catch (e) { fail(res, e); }
+});
+
 router.get("/librechat/admin-convos", auth, async (req, res) => {
   const userId = req.query.userId;
   if (!userId) return res.status(400).json({ error: "userId is required (get it from /librechat/admin-users)" });
