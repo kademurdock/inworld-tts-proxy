@@ -833,6 +833,26 @@ const MEM_RESERVED = "preferences";
 // GET /librechat/memories -> list memory entries (+ usage). Query: ?agentId=
 // to show just one agent's own bucket; omit to show everything (shared + every
 // agent's), same as before two-tier memory existed.
+// Part 116 (Sep 1 2026): admin reads/retires of ANOTHER seat's memory cards.
+// Born for the nightly persona battery, which probes on the vischeck seat and
+// must sweep the cards its invented probes leave behind so tonight's Kiana
+// does not "remember" last night's fake cousin. Fork routes are admin-only
+// (`requireAdminAccess`); this is a passthrough, projection unchanged.
+router.get("/librechat/admin-memories", auth, async (req, res) => {
+  const userId = typeof req.query.userId === "string" ? req.query.userId.trim() : "";
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  try {
+    res.json(await lc("GET", `/api/memories/admin-list?userId=${encodeURIComponent(userId)}`));
+  } catch (e) { fail(res, e); }
+});
+router.post("/librechat/admin-memory-retire", auth, async (req, res) => {
+  const { userId, key, agentId } = req.body || {};
+  if (!userId || !key) return res.status(400).json({ error: "userId and key required" });
+  try {
+    res.json(await lc("POST", "/api/memories/admin-retire", { userId, key, agentId: agentId || undefined }));
+  } catch (e) { fail(res, e); }
+});
+
 router.get("/librechat/memories", auth, async (req, res) => {
   try {
     const d = await lc("GET", "/api/memories");
