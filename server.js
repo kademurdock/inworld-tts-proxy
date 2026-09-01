@@ -2993,8 +2993,27 @@ app.post("/v1/audio/speech", async (req, res) => {
   const NATIVE_PREVIEW_SENTINEL = "Hi there. This is how I sound.";
   let effectiveInput = input;
   if (typeof input === "string" && input.trim() === NATIVE_PREVIEW_SENTINEL) {
-    effectiveInput = AUDITION_TEXT.split("{voice}").join(String(voice));
-    console.log(`[TTS] native preview sentinel swapped for audition line, label="${voice}"`);
+    effectiveInput = pickAudition(AUDITION_SCRIPTS).split("{voice}").join(String(voice));
+    console.log(`[TTS] native preview sentinel swapped for audition script, label="${voice}"`);
+  }
+  /* PART 115 (Sep 1 2026) — THE PICKER STOPS SAYING THE SAME THING 700 TIMES.
+   * Her words: "It's already annoying that they all share the same sample and
+   * you have to hear the same thing 700 times if you wanna go through the
+   * voices." She wants VARIANCE, not a cache (the point of a preview is that
+   * the voice performs it fresh), so this is the cheapest fix that gives it:
+   * the two fixed preview strings the clients send — native's quick line and
+   * the canonical four-beat script the web picker fetches once and reuses for
+   * every voice — are recognised here by exact match and swapped for a random
+   * pick from a pool. Same cost per preview as before, no new state, no volume.
+   * Native quick → one of AUDITION_QUICK_LINES. Web/native long → one of
+   * AUDITION_SCRIPTS (each keeps the four-PARAGRAPH shape Part 110 measured;
+   * collapsing any of them to one paragraph restores the leak). */
+  if (typeof input === "string" && input.trim() === NATIVE_QUICK_PREVIEW_LINE) {
+    effectiveInput = pickAudition(AUDITION_QUICK_LINES);
+    console.log(`[TTS] native quick preview swapped for a pooled line, label="${voice}"`);
+  } else if (typeof input === "string" && input.trim() === AUDITION_TEXT.trim()) {
+    effectiveInput = pickAudition(AUDITION_SCRIPTS).split("{voice}").join(String(voice));
+    console.log(`[TTS] web audition script swapped for a pooled script, label="${voice}"`);
   }
 
   const inworldVoice = VOICE_MAP[voice] || voice;
@@ -4336,6 +4355,81 @@ const AUDITION_TEXT = [
   "%%%low, slow, completely serious%%% And when it matters, I don't play around.",
   "%%%warm, playful, a little flirty%%% So... am I the one?",
 ].join("\n\n");
+/* PART 115 — the audition pool. AUDITION_TEXT stays the canonical script the
+ * picker is SERVED (so clients keep working unchanged and the exact-match swap
+ * above can recognise it); the synth funnel then performs a random member of
+ * AUDITION_SCRIPTS instead. Every script is four paragraphs, one tag each, no
+ * commas inside tags. Add scripts freely; never merge paragraphs. */
+const NATIVE_QUICK_PREVIEW_LINE = "Hey \u2014 quick hello from this voice, right here with you.";
+const AUDITION_SCRIPTS = [
+  AUDITION_TEXT,
+  [
+    "%%%easy and warm like you have all evening%%% Hey. Pull up a chair. I can keep it soft when the day has been long.",
+    "%%%lit up and quick barely holding it in%%% Or I can get LOUD when the news is good, because good news deserves it!",
+    "%%%low and slow with every word weighed%%% And when it counts, I slow down and mean it.",
+    "%%%dry with a smile you can hear%%% So. You gonna pick me, or keep scrolling?",
+  ].join("\n\n"),
+  [
+    "%%%calm and steady like a porch at dusk%%% Evening. This is what I sound like when nothing is on fire.",
+    "%%%bright and bouncing%%% This is me when you got the job, the apartment, or the last slice!",
+    "%%%quiet and serious taking your time%%% And this is me when you need somebody to just tell you the truth.",
+    "%%%playful and a little smug%%% Three voices, one me. Not bad, right?",
+  ].join("\n\n"),
+  [
+    "%%%unhurried and kind%%% Hi. If you are up late and can't sleep, this is the voice that stays on the line.",
+    "%%%grinning and fast%%% If you just won something, THIS is the voice that hollers about it!",
+    "%%%grounded and low%%% If it is bad news, I get quiet and I get plain, and I do not leave.",
+    "%%%warm with a laugh under it%%% That's the whole range. Well, most of it. Pick me and find out.",
+  ].join("\n\n"),
+  [
+    "%%%soft and slow like a story before bed%%% Once upon a time somebody scrolled through seven hundred voices looking for the right one.",
+    "%%%delighted and quick%%% And then one of them made her laugh out loud in the kitchen!",
+    "%%%low and even and sure of itself%%% And when things got heavy, that voice did not flinch.",
+    "%%%light and teasing%%% I'm not saying it was me. I'm just saying you're still listening.",
+  ].join("\n\n"),
+  [
+    "%%%relaxed and conversational%%% Okay, real quick. This is me reading you the news over coffee.",
+    "%%%amped and joyful%%% This is me when your team pulls it off in the last thirty seconds!",
+    "%%%hushed and careful%%% This is me at two in the morning when it is just us.",
+    "%%%dry as toast%%% And this is me judging your playlist. Lovingly.",
+  ].join("\n\n"),
+];
+const AUDITION_QUICK_LINES = [
+  "%%%warm and easy%%% Hey. Quick hello from this voice, right here with you.",
+  "%%%bright and quick%%% Hi! This is me. Well, this is me when I'm in a good mood.",
+  "%%%low and unhurried%%% Hey there. Just checking if this is the one.",
+  "%%%dry with a smile%%% Yep. This is the voice. Keep scrolling or stop here, your call.",
+  "%%%soft and kind%%% Hi. If you need it quiet, I can do quiet.",
+  "%%%playful and a little smug%%% Oh, you found me. Good ear.",
+  "%%%calm and steady%%% Hello. I sound like this most of the time.",
+  "%%%cheerful and quick%%% Hey hey! Short and sweet, that's me.",
+  "%%%grounded and plain%%% Here I am. No frills, just the voice.",
+  "%%%warm with a laugh under it%%% Hi. Seven hundred voices and you landed on me. Bold.",
+  "%%%easy and conversational%%% Hey. Imagine me reading your messages back to you. Like that.",
+  "%%%quiet and sure%%% Hello. I'm the one that stays on the line.",
+  "%%%light and teasing%%% Hi there. Don't scroll past too fast, I'm sensitive.",
+  "%%%relaxed like a Sunday%%% Hey. Nothing urgent. Just saying hello.",
+  "%%%bright and welcoming%%% Well hi! Come on in, the voice is warm.",
+  "%%%low and a little mysterious%%% Hello. You were looking for me, weren't you.",
+  "%%%upbeat and friendly%%% Hey! Quick one. This is how I say your name.",
+  "%%%gentle and slow%%% Hi. Take your time. I'm not going anywhere.",
+  "%%%confident and clear%%% Hello. Clear, steady, and ready when you are.",
+  "%%%amused and easy%%% Hey. I heard you were picking a voice. Pick a good one.",
+  "%%%soft and a little sleepy%%% Hi. This is what I sound like late at night.",
+  "%%%crisp and quick%%% Hello! Short version of me. The long version talks more.",
+  "%%%warm and steady%%% Hey. I'll be the one reading to you. Nice to meet you.",
+  "%%%playful and bouncy%%% Hiya! Blink and you'll miss me. Oh, you didn't. Good.",
+];
+let lastAuditionPick = new Map();
+function pickAudition(pool) {
+  if (!Array.isArray(pool) || pool.length === 0) return AUDITION_TEXT;
+  if (pool.length === 1) return pool[0];
+  const last = lastAuditionPick.get(pool);
+  let i = Math.floor(Math.random() * pool.length);
+  if (i === last) i = (i + 1) % pool.length;
+  lastAuditionPick.set(pool, i);
+  return pool[i];
+}
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
