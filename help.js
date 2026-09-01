@@ -253,7 +253,7 @@ PAGES.home = {
   <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="whats new what's new changelog updates latest features recently added new stuff toys"><a href="/help/whats-new"><span class="ico" aria-hidden="true">✨</span><span class="ttl">What's New</span><span class="desc">The latest toys, in plain language — updated every time something ships.</span></a></li>
-  <li data-terms="create a character builder quiz make my own agent custom companion portrait picture avatar model engine"><a href="/help/create-a-character"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Create a Character</span><span class="desc">Eight easy questions, a painted portrait, and a friend of your own making — no tech knowledge needed.</span></a></li>
+  <li data-terms="create a character builder quiz make my own agent custom companion portrait picture avatar model engine describe description write my personality system prompt help me write this generate persona detailed prompt improve"><a href="/help/create-a-character"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Create a Character</span><span class="desc">Describe who you want and have their whole personality written for you, or answer eight easy questions. Portrait included.</span></a></li>
   <li data-terms="android app apk install download sideload phone samsung google pixel motorola galaxy get the app"><a href="/help/android"><span class="ico" aria-hidden="true">🤖</span><span class="ttl">The Android App</span><span class="desc">Got an Android phone? Install Kade-AI as a real app, straight from here.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report call me calls you ringtone wake-up wake me up alarm agent call answer rings"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
@@ -421,17 +421,27 @@ ${nextprev("quickstart", "voice")}
 PAGES.createacharacter = {
   title: "Create a Character",
   h1: "Create a Character",
-  tagline: "Eight easy questions. No wrong answers. A friend of your own making at the end — portrait and all.",
+  tagline: "Describe who you want, or answer eight easy questions. Either way, a friend of your own making at the end — portrait and all.",
   main: `
-<p class="lead">You don't need to know anything about AI to make somebody worth talking to. Go to <strong>kademurdock.com/create-a-character</strong> and answer eight quick questions. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink.</p>
-<h2>How it works</h2>
-<p>Every question is answered by picking from choices — typing is always optional, never required. When the questions are done, the page writes a full first draft of your character: their name (pick from five offers or type your own), a one-line description, and a whole personality written out in plain words. You can change any of it, or none of it.</p>
+<p class="lead">You don't need to know anything about AI to make somebody worth talking to, and now you don't have to find the right words either. Go to <strong>kademurdock.com/create-a-character</strong> and pick one of two ways in.</p>
+<h2>Way one: just describe them</h2>
+<p>There's a box. Say who you want, however it comes out — "a therapist who works the way acceptance and commitment therapy does, but borrows from other approaches when it fits," or "my grandma's kitchen in a person," or one sentence, or five. Press the button and a <strong>full, detailed personality gets written for you</strong>: who they are, where they come from, how they talk, what they will and won't do, and a page of lines in their own voice so they actually sound like somebody.</p>
+<p>Then comes the part that matters. It asks you <strong>two or three questions</strong> — the ones whose answers would make them better. Things like "what does she sound like when she disagrees with you?" Answer one, or all of them, or none, and press deepen. It rewrites, keeping everything it already had. You can go around as many times as you like, and every word stays yours to edit.</p>
+<p>That costs <strong>about a penny</strong> of credit each time, from the same allowance everything else uses, and the button says so. In practice it usually comes in well under that.</p>
+<p><strong>This works on a character you already have, too.</strong> Open any of your characters in the builder, find the personality box, and there's a <em>"Help me write this"</em> button. It takes what's already there and writes it out properly instead of starting over — which is the useful door if you know exactly who they should be and just can't get it onto the page. Same on the phone app.</p>
+<h2>Way two: eight quick questions</h2>
+<p>Free, and every question is answered by picking. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink.</p>
+<p>When the questions are done, the page writes a first draft of your character: their name (pick from five offers or type your own), a one-line description, and a personality written out in plain words. You can change any of it, or none of it — and there's a button right there to have it <em>written out properly</em> if the short draft isn't enough, which turns it into the full detailed version and asks you the deepening questions.</p>
 <h2>The engine, in plain language</h2>
 <p>Every character runs on a thinking engine, and picking one used to mean reading robot code names. Now they're plain choices: <strong>The all-rounder</strong> (quick, warm, good memory — what nearly every character here runs), <strong>The deep thinker</strong> (slower, writes long and thorough), <strong>The chatterbox</strong> (snappy and playful), <strong>The speedster</strong> (fastest answers, lighter on nuance). If you're the technical sort, one toggle shows the real model names underneath. Nothing is hidden; it's just not required reading.</p>
 <h2>The portrait</h2>
 <p>One button paints their portrait in the same warm storybook style as every face on the marketplace. It costs <strong>three cents</strong> of picture credit from the same allowance everything else on your account uses, it says so right on the button, and you can repaint up to eight times a day or skip the picture entirely. When you bring them to life, the portrait hangs itself on their page.</p>
 <h2>For the pros</h2>
-<p>The regular builder — every field, every tool, every knob — is exactly where it always was. The quiz is a front porch, not a replacement. Anything the quiz builds can be fine-tuned in the full builder afterward, including on the phone app.</p>
+<p>The regular builder — every field, every tool, every knob — is exactly where it always was. Both of these are front porches, not replacements, and anything they build can be fine-tuned in the full builder afterward, including on the phone app.</p>
+<h2>How long can a personality be?</h2>
+<p>Longer than you think. There's no limit, and the main character on this platform runs about forty thousand characters. If you're wondering whether yours can be as detailed as Kiana's — it can.</p>
+<h2>One thing you don't have to write</h2>
+<p>You never have to tell your character to avoid sounding like a robot, skip corporate buzzwords, or vary how it ends its sentences. Every character here already gets told that on every single turn, automatically, whoever made them. Writing it again in the personality only fights the copy that's already there. Spend the words on <em>who they are</em> instead — that's the part nobody else can supply.</p>
 `,
 };
 
@@ -441,6 +451,12 @@ PAGES.whatsnew = {
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
+
+<h2>September 1, 2026</h2>
+<ul>
+  <li><strong>Describe the character you want, and their whole personality gets written for you.</strong> On <a href="/help/create-a-character">Create a Character</a> there's now a box: say who you want in your own words — a sentence is plenty — and out comes a full, detailed personality, the kind that runs pages rather than paragraphs. Then it asks you two or three questions ("what does she sound like when she disagrees with you?"), and answering any of them makes the next draft deeper. Go around as many times as you like. It costs about a penny each time and usually less, and every word stays yours to edit before anybody comes to life. <strong>It works on characters you already have, too</strong> — open one in the builder and there's a "Help me write this" button that improves what's there instead of starting over. Website and iPhone app both (app version 259 and up).</li>
+  <li><strong>The character who was paused comes back now (iPhone app 259+).</strong> If you paused a read-aloud clip and then played a different one, the first clip could get stranded — no way back to it, and the app got confused about which one you meant. Fixed.</li>
+</ul>
 
 <h2>August 31, 2026 — late</h2>
 <ul>
