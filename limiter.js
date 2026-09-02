@@ -56,7 +56,7 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
   let dqHead = 0, dqTail = 0;
   let count = 0;          // samples pushed so far
   let env = 1;            // current gain envelope
-  let limitedSamples = 0; // how many output samples were attenuated (env < 0.999)
+  let limitedSamples = 0; // output samples attenuated by 1 dB or more (env < 0.89) -- the log number
   let minEnv = 1;
 
   function push(v) {
@@ -75,7 +75,7 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
 
     const out = count >= L ? delay[slot] * env : null;
     if (out !== null) {
-      if (env < 0.999) limitedSamples++;
+      if (env < 0.89) limitedSamples++;
       if (env < minEnv) minEnv = env;
     }
     delay[slot] = v; need[slot] = r;
@@ -89,7 +89,7 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
       env += (target - env) * releaseCoef;
       const slot = (count - L + i) % L;
       outs.push(delay[slot] * env);
-      if (env < 0.999) limitedSamples++;
+      if (env < 0.89) limitedSamples++;
     }
     return outs;
   }

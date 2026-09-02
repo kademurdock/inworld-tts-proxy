@@ -92,6 +92,7 @@ function shelfCorrection(measuredDb, targetDb, { deadbandDb, maxCutDb, maxBoostD
   const excess = measuredDb - targetDb;
   if (Math.abs(excess) <= deadbandDb) return 0;
   const beyond = Math.abs(excess) - deadbandDb;
+  if (beyond < 0.05) return 0;
   return excess > 0 ? -Math.min(maxCutDb, beyond) : Math.min(maxBoostDb, beyond);
 }
 

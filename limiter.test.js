@@ -30,7 +30,7 @@ test('a burst three times over the ceiling comes out under it, and the waveform 
   for (let i = 10100; i < 10200; i++) if (Math.abs(x[i]) > 30000) ratios.push(out[i] / x[i]);
   const spread = Math.max(...ratios) - Math.min(...ratios);
   assert.ok(spread < 0.02, 'gain is flat across the peak: ' + spread);
-  assert.ok(lim.limitedSamples > 200 && lim.limitedSamples < SR, 'limited a burst plus its release tail: ' + lim.limitedSamples);
+  assert.ok(lim.limitedSamples > 200 && lim.limitedSamples < SR / 4, 'limited the burst plus the deep part of its release: ' + lim.limitedSamples);
 });
 
 test('limitPcmInPlace keeps buffer length, honours a per-sample gain ramp, and clamps as a last resort', () => {
