@@ -1359,6 +1359,10 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
               knee: TTS_NORM_KNEE,
               kneeRange: TTS_NORM_KNEE_RANGE,
               fadeInSamples: Math.max(48, Math.round(fmt.sampleRate * 0.005)),
+              // Part 116.1: the same peak ceiling the buffered limiter uses,
+              // applied chunk by chunk (see stream-lane.js). TTS_STREAM_CEILING=0 disables.
+              peakCeiling: process.env.TTS_STREAM_CEILING === "0" ? undefined : 32000 * TTS_NORM_LIMIT_HEADROOM,
+              rampSamples: Math.max(48, Math.round(fmt.sampleRate * 0.005)),
             });
             processor.fmt = fmt;
             beginResponse(fmt);
@@ -1413,7 +1417,7 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
       normalizeLoudness(raw, processor.fmt.sampleRate, inworldVoice, { measureOnly: true });
     }
     console.log(
-      `[TTS] stream out: label="${voiceLabel}" resolved="${inworldVoice}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)}`
+      `[TTS] stream out: label="${voiceLabel}" resolved="${inworldVoice}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}`
     );
     return true;
   });
@@ -2542,6 +2546,9 @@ const TTS_NORM_MAX_CUT_DB = parseFloat(process.env.TTS_NORM_MAX_CUT_DB || "14");
 // style/session), so trust the clip and restart smoothing from it. Normal
 // clip-to-clip wobble within one voice+style is ~±3 dB; 6 is comfortably past.
 const TTS_NORM_SNAP_DB = parseFloat(process.env.TTS_NORM_SNAP_DB || "6");
+// Part 116.1 (Sep 2 2026): max upward step of the per-voice gain memory per clip.
+const TTS_NORM_MEMORY_STEP_UP_DB = parseFloat(process.env.TTS_NORM_MEMORY_STEP_UP_DB || "3");
+const TTS_NORM_MEMORY_STEP_UP = Math.pow(10, TTS_NORM_MEMORY_STEP_UP_DB / 20);
 // Soft-knee output limiter (replaces the bare per-sample hard clamp): fully
 // transparent below KNEE, saturates smoothly toward -- never past -- full
 // scale above it (tanh < 1, so clipping is mathematically impossible). Knee
@@ -2705,6 +2712,16 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     }
 
     const prevGain = voiceGainMemory.get(voiceKey);
+    /* Part 116.1: the memory may step UP by at most TTS_NORM_MEMORY_STEP_UP_DB
+     * per clip (default 3 dB). Down is free. Birta's quiet clips snapped the
+     * estimate 13 dB in one move and the NEXT clip -- the one nobody had
+     * measured yet -- paid for it at +17 dB. A voice that is genuinely quiet
+     * still gets there, three decibels a clip; a voice that merely whispered
+     * one line does not get shouted the next. Applies to both paths; the
+     * buffered path's own limiter already made it moot there. */
+    if (prevGain != null && gain > prevGain * TTS_NORM_MEMORY_STEP_UP) {
+      gain = prevGain * TTS_NORM_MEMORY_STEP_UP;
+    }
     voiceGainMemory.set(voiceKey, gain);
 
     /* Part 98 — MEASURE-ONLY MODE, for the streamed lane. The stream already

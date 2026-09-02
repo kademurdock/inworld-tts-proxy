@@ -145,12 +145,40 @@ function buildStreamingWavHeader({ numChannels, sampleRate, bitsPerSample }) {
  * and the knee still guards it). The knee makes clipping mathematically
  * impossible no matter what gain the memory holds.
  */
-function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples }) {
+/* PART 116.1 (Sep 2 2026) -- THE STREAM LANE GETS A CEILING OF ITS OWN.
+ *
+ * Her report on Della (Voice 69, Birta): "clipping really really bad, like
+ * she's deepthroating the microphone." The log said why in one screen:
+ * consecutive Birta clips measured -17.6 then -29.9 then -21.0 then -30.6
+ * dBFS -- a 13 dB swing clip to clip -- and every quiet one SNAPPED the
+ * per-voice memory, so "next-clip gain" read 16.4, 17.1, 17.0 dB, and the
+ * next clip, a normal one, went out at gain 6.58 / 7.19 with no limiter
+ * looking at it. The knee kept it from HARD clipping, exactly as the comment
+ * above promises, and turned it into wall-to-wall tanh saturation instead.
+ * The buffered path never does this: it caps gain against the clip's own
+ * peak and trims to the knee budget before a sample moves. The stream could
+ * not read ahead, so it got neither.
+ *
+ * Now it gets the half it CAN have. Each NDJSON chunk is a few hundred
+ * milliseconds and arrives whole, so the chunk's own peak is a real
+ * look-ahead: the effective gain is the remembered gain capped at
+ * `peakCeiling / (loudest raw sample seen so far in this clip)`, ramped over
+ * the first few ms of a chunk so a step down cannot zipper. A spike still
+ * saturates for the chunk it arrives in and no longer than that. Opt-in via
+ * `peakCeiling` so the pure-knee behaviour (and its tests) stay exact when
+ * the option is absent. `appliedGain` keeps reporting the remembered gain;
+ * `effectiveGain` is what the last chunk actually got. */
+function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples, peakCeiling, rampSamples }) {
   let carry = null; // a lone odd byte from the previous chunk
   let sampleIndex = 0;
   const g = typeof gain === "number" && isFinite(gain) && gain > 0 ? gain : 1.0;
-  return {
+  const ceiling = typeof peakCeiling === "number" && isFinite(peakCeiling) && peakCeiling > 0 ? peakCeiling : null;
+  const ramp = Math.max(1, rampSamples || 120);
+  let runningPeak = 0;
+  let curGain = g;
+  const self = {
     appliedGain: g,
+    effectiveGain: g,
     process(bytes) {
       let buf = carry ? Buffer.concat([carry, bytes]) : Buffer.from(bytes);
       carry = null;
@@ -159,9 +187,23 @@ function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples }) {
         buf = buf.slice(0, buf.length - 1);
       }
       const total = buf.length >> 1;
+      let toGain = g;
+      if (ceiling) {
+        for (let i = 0; i < total; i++) {
+          const a = Math.abs(buf.readInt16LE(i * 2));
+          if (a > runningPeak) runningPeak = a;
+        }
+        if (runningPeak > 0) toGain = Math.min(g, ceiling / runningPeak);
+        // never below unity because of the ceiling alone: a hot voice plays
+        // at provider level, same as the buffered path's floor
+        if (toGain < 1 && g >= 1) toGain = 1;
+      }
+      // the first chunk has nothing to ramp FROM -- it starts at its own gain
+      const fromGain = sampleIndex === 0 ? toGain : curGain;
       for (let i = 0; i < total; i++) {
         const fade = sampleIndex < fadeInSamples ? sampleIndex / fadeInSamples : 1;
-        let v = buf.readInt16LE(i * 2) * g * fade;
+        const gi = ceiling && i < ramp ? fromGain + (toGain - fromGain) * (i / ramp) : toGain;
+        let v = buf.readInt16LE(i * 2) * gi * fade;
         const a = Math.abs(v);
         if (a > knee) {
           v = Math.sign(v) * (knee + kneeRange * Math.tanh((a - knee) / kneeRange));
@@ -169,9 +211,12 @@ function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples }) {
         buf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, v))), i * 2);
         sampleIndex++;
       }
+      curGain = toGain;
+      self.effectiveGain = toGain;
       return buf;
     },
   };
+  return self;
 }
 
 module.exports = { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor };

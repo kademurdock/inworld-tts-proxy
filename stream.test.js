@@ -138,3 +138,36 @@ test('a sample torn across chunks is carried, never mangled', () => {
   assert.strictEqual(joined.readInt16LE(0), 12345);
   assert.strictEqual(joined.readInt16LE(2), -12345);
 });
+
+// ── Part 116.1: the stream's own peak ceiling ───────────────────────────────
+test('peakCeiling caps a hot remembered gain against the chunk\'s own peak (no wall-to-wall saturation)', () => {
+  // remembered gain 7 (the Birta case), a normal clip peaking at 20000
+  const p = createStreamProcessor({ gain: 7, knee: 26000, kneeRange: 6767, fadeInSamples: 0, peakCeiling: 32000, rampSamples: 1 });
+  const out = p.process(pcmOf([20000, 4000, -20000, 4000]));
+  // effective gain = 32000/20000 = 1.6, not 7
+  assert.ok(Math.abs(p.effectiveGain - 1.6) < 1e-9, `effective ${p.effectiveGain}`);
+  assert.strictEqual(p.appliedGain, 7, 'reports the remembered gain unchanged');
+  assert.strictEqual(out.readInt16LE(2), 6400, '4000 * 1.6, clean, not saturated');
+  // 20000 * 1.6 = 32000 sits in the knee, so it lands soft-limited just under full scale
+  assert.ok(out.readInt16LE(0) <= 32000 && out.readInt16LE(0) > 26000, `peak lands at the ceiling, soft: ${out.readInt16LE(0)}`);
+});
+
+test('peakCeiling never pulls a gain below unity, and is off when absent', () => {
+  const p = createStreamProcessor({ gain: 1.2, knee: 26000, kneeRange: 6767, fadeInSamples: 0, peakCeiling: 32000, rampSamples: 1 });
+  p.process(pcmOf([32000]));
+  assert.strictEqual(p.effectiveGain, 1, 'hot voice plays at provider level');
+  const q = createStreamProcessor({ gain: 10, knee: 26000, kneeRange: 6767, fadeInSamples: 0 });
+  const out = q.process(pcmOf([4000]));
+  assert.ok(out.readInt16LE(0) > 26000, 'without the option the old pure-knee behaviour is untouched');
+});
+
+test('peakCeiling ramps a step down over rampSamples instead of jumping', () => {
+  const p = createStreamProcessor({ gain: 4, knee: 26000, kneeRange: 6767, fadeInSamples: 0, peakCeiling: 32000, rampSamples: 4 });
+  p.process(pcmOf([1000, 1000])); // quiet: gain stays 4
+  assert.strictEqual(p.effectiveGain, 4);
+  const out = p.process(pcmOf([16000, 1000, 1000, 1000, 1000])); // peak 16000 -> ceiling gain 2
+  assert.strictEqual(p.effectiveGain, 2);
+  // sample 0 at gain 4 (start of ramp), sample 4 fully at gain 2
+  assert.strictEqual(out.readInt16LE(8), 2000);
+  assert.ok(out.readInt16LE(2) > 2000 && out.readInt16LE(2) < 4000, `mid-ramp: ${out.readInt16LE(2)}`);
+});
