@@ -12,6 +12,7 @@ app.use(express.json({ limit: "10mb" })); /* Aug 14 2026: was 2mb — the agent-
 
 // Mount the accessible help system (/help and friends). See help.js.
 app.use(require("./help"));
+require("./lab")(app); // Part 118: GET /lab/limiter, the A/B/C/D listening page for the output stage
 
 // KADE Aug 8 2026: unlisted plain-text mirrors of her MOO design docs at
 // /design/:doc so any character can kade_read_page the FULL canon while
@@ -2750,7 +2751,7 @@ const TONE_CFG = {
   lowShelfHz: parseFloat(process.env.TTS_EQ_LOW_SHELF_HZ || "300"),
   highShelfHz: parseFloat(process.env.TTS_EQ_HIGH_SHELF_HZ || "3000"),
 };
-const { toneMatch } = require("./tone");
+const { toneMatch, applyHighPass } = require("./tone");
 /* Part 117.4 — LOUDER, NOW THAT THE LIMITER CAN TAKE IT. Her ear on 117.3:
  * "it is a little quiet." The peak caps (2 dB over the smoothed peak, 4 dB
  * over the raw peak, 1.5% of samples over the 26k knee) were sized for the
@@ -2763,8 +2764,35 @@ const { toneMatch } = require("./tone");
  * now the fraction of samples that would cross the CEILING before limiting
  * (0.3%), not the old knee count. Ceiling itself -1 → -0.5 dBTP. */
 const TTS_NORM_LIMIT_HEADROOM_DB_LA = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB_LA || "5");
-const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "4"); // 117.5: 6 -> 4, the raw peak lands at most 4 dB over the CEILING (see below), bounding the dip on any syllable
+/* Part 118 (Sep 2 2026), her ear on 117.5: "still buzzing a little bit every
+ * now and then. Not like they're too loud, but like the EQ needs adjusted."
+ * Measured on four raw clips with the live limiter: at 4 dB of overdrive the
+ * peakiest Inworld stock voice (Brian, raw peak -0.03 dBFS) spent 36% of its
+ * voiced samples under more than 1 dB of gain reduction and 6% under more
+ * than 3 dB; at 3 dB, no sample dips past 3 dB and the fast gain wiggle
+ * (the part of the envelope above 30 Hz, which is the part you hear as
+ * texture) falls by about 30%. Cost: 0.5-1.0 dB on the peakiest voices only;
+ * fish clones and most Inworld voices are governed by the RMS target, not
+ * this cap, and do not move. 117.5's own plan named this as the next knob. */
+const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "3"); // 117.5: 6 -> 4; 118: 4 -> 3
 const TTS_NORM_LIMIT_BUDGET = parseFloat(process.env.TTS_NORM_LIMIT_BUDGET || "0.003");
+
+/* Part 118 — LAB PRESETS. `/v1/audio/speech?lab=<name>` renders the same text
+ * on the same voice through a named variant of the output stage, so she can
+ * A/B on her own phone instead of a session guessing at "buzz" from numbers.
+ * Each preset keeps its OWN per-voice memory (voiceKey suffix) so the clips
+ * do not train each other. Served by GET /lab/limiter. Only the output stage
+ * varies; synthesis, chunking, steering and seams are untouched. */
+const TTS_LAB_PRESETS = {
+  // A — the way it sounded this morning (117.5)
+  morning: { overdriveDb: 4, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: null },
+  // B — what ships in Part 118
+  shipped: { overdriveDb: 3, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: null },
+  // C — cut-only tone (never boosts bass or treble) + 80 Hz rumble filter
+  lean:    { overdriveDb: 3, lowBoostDb: 0, highBoostDb: 0, hpfHz: 80, targetDb: null },
+  // D — B, one decibel louder at the target
+  loud:    { overdriveDb: 3, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: -12.5 },
+};
 const voiceGainMemory = new Map(); // resolved voice id -> last applied linear gain
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
@@ -2801,6 +2829,23 @@ function measureSpeechRmsDb(pcmBuf, sampleRate) {
 function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
   if (!TTS_NORM_ENABLED || !pcmBuf || pcmBuf.length < 4) return pcmBuf;
   try {
+    const lab = opts.lab && TTS_LAB_PRESETS[opts.lab] ? TTS_LAB_PRESETS[opts.lab] : null;
+    if (lab) voiceKey = `${voiceKey}::lab:${opts.lab}`;
+    const overdriveDbLa = lab ? lab.overdriveDb : TTS_NORM_MAX_OVERDRIVE_DB_LA;
+    const targetDb = lab && lab.targetDb != null ? lab.targetDb : TTS_NORM_TARGET_DB;
+    const toneCfg = lab ? { ...TONE_CFG, maxLowBoostDb: lab.lowBoostDb, maxHighBoostDb: lab.highBoostDb } : TONE_CFG;
+    /* Part 118: the tone shelves now run FIRST, before the level is measured,
+     * so the gain math and the peak caps see the clip the limiter will
+     * actually receive. 117.4 ran them after the gain was chosen, so a +2 dB
+     * low shelf on a bassy clone raised peaks the caps had already budgeted
+     * for and the limiter paid the difference (measured: 13.1% -> 9.7% of
+     * voiced samples under >1 dB reduction on one clone, same loudness).
+     * The measure-only (streamed) call touches no samples and skips this. */
+    let toneNote = "";
+    if (!opts.measureOnly && TTS_NORM_LIMITER === "lookahead") {
+      if (lab && lab.hpfHz > 0) { applyHighPass(pcmBuf, sampleRate, lab.hpfHz); toneNote += `, hpf ${lab.hpfHz} Hz`; }
+      if (TTS_EQ_MATCH) toneNote += toneMatch(pcmBuf, sampleRate, toneCfg);
+    }
     const rmsDb = measureSpeechRmsDb(pcmBuf, sampleRate);
     if (rmsDb == null) return pcmBuf;
 
@@ -2821,7 +2866,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     const level = prior == null || snapped ? rmsDb : prior + (rmsDb - prior) * alpha;
     voiceLevelEma.set(voiceKey, level);
 
-    let gainDb = TTS_NORM_TARGET_DB - level;
+    let gainDb = targetDb - level;
     gainDb = Math.min(TTS_NORM_MAX_BOOST_DB, Math.max(-TTS_NORM_MAX_CUT_DB, gainDb));
     let gain = Math.pow(10, gainDb / 20);
 
@@ -2849,7 +2894,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
       voicePeakEma.set(voiceKey, peakLevel);
       const la = TTS_NORM_LIMITER === "lookahead";
       const headroom = la ? Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB_LA / 20) : TTS_NORM_LIMIT_HEADROOM;
-      const overdrive = la ? Math.pow(10, TTS_NORM_MAX_OVERDRIVE_DB_LA / 20) : TTS_NORM_MAX_OVERDRIVE;
+      const overdrive = la ? Math.pow(10, overdriveDbLa / 20) : TTS_NORM_MAX_OVERDRIVE;
       gain = Math.min(gain, (32000 / peakLevel) * headroom);
       // Absolute ceiling against THIS clip's raw true peak (see const above).
       // 117.5: in lookahead mode this measures against the CEILING, so the
@@ -2918,14 +2963,13 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     // loud and low quality" web call). tanh knee: transparent below KNEE,
     // saturates smoothly toward full scale above it, can never clip.
     let kneed = 0;
-    let limitNote = "";
+    let limitNote = toneNote;
     // Ramp: glide from the voice's previous clip gain to this clip's over
     // the opening TTS_NORM_RAMP_MS — level changes become inaudible slopes.
     const gainAt = (i) => (i < rampSamples ? prevGain + ((gain - prevGain) * i) / rampSamples : gain);
     if (TTS_NORM_LIMITER === "lookahead") {
       // Part 117.3: level-domain lookahead limiter at the true-peak ceiling.
-      // Tone match runs first so the limiter sees the final peaks.
-      if (TTS_EQ_MATCH) limitNote += toneMatch(pcmBuf, sampleRate, TONE_CFG);
+      // (Part 118: the tone match already ran, above, before the level was measured.)
       const r = limitPcmInPlace(pcmBuf, sampleRate, gainAt, TTS_NORM_CEILING);
       kneed = r.limited;
       if (kneed) limitNote += `, limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%, min gain ${(20 * Math.log10(r.minGain)).toFixed(1)} dB) at ${TTS_NORM_CEILING_DBTP} dBTP`;
@@ -2943,7 +2987,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
       if (kneed) limitNote = `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)`;
     }
     console.log(
-      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${limitNote}`
+      `[TTS] normalize: voice="${voiceKey}"${lab ? ` LAB ${opts.lab}` : ""} measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${limitNote}`
     );
   } catch (e) {
     console.warn("[TTS] normalize skipped:", e.message);
@@ -3295,6 +3339,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     const wantsStream =
       TTS_STREAM_ENABLED &&
       !isFishVoice &&
+      !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]) &&
       req.query.telephony !== "1" &&
       chunks.length === 1 &&
       (req.get("x-kade-tts-stream") === "1" || req.body.stream === "1" || req.body.stream === true);
@@ -3369,7 +3414,8 @@ app.post("/v1/audio/speech", async (req, res) => {
     }
 
     const combinedData = Buffer.concat(pieces);
-    normalizeLoudness(combinedData, format.sampleRate, inworldVoice);
+    const labPreset = typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab] ? req.query.lab : undefined;
+    normalizeLoudness(combinedData, format.sampleRate, inworldVoice, labPreset ? { lab: labPreset } : {});
     const header = buildWavHeader(combinedData.length, format);
     const finalAudio = Buffer.concat([header, combinedData]);
 

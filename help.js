@@ -456,6 +456,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>September 2, 2026 — evening</h2>
+<ul>
+  <li><strong>The voices are a touch cleaner on the loudest syllables.</strong> The last stage every voice passes through now lets a peak land at most three decibels over the ceiling instead of four, so no syllable ever gets pulled down more than three, and the tone shaping runs before the volume is measured instead of after, so the volume stage sees the sound you actually hear. The peakiest voices are about half a decibel quieter; most are unchanged. There is also a <a href="/lab/limiter">listening lab</a>: the same words on the same voice through four versions of that stage, so you can tell Kade which one sounds right on your own speaker.</li>
+  <li><strong>Characters stop handing out medals.</strong> "That's the most honest thing you've said all week," "you know that better than anybody," "nobody has figured that out the way you have," "you said it out loud and the house didn't catch fire": every character on the platform is now told to use what you said instead of grading it, and a filter catches it on the way out when a character forgets. Thank Amber A for putting it in words.</li>
+</ul>
+
 <h2>September 2, 2026</h2>
 <ul>
   <li><strong>The website has a Home page now, and it is the iPhone app's map.</strong> <a href="https://kademurdock.com/home">kademurdock.com/home</a> lists everything in the same sections and the same order as the app's home screen &mdash; Talk, the twelve tools, Settings and help &mdash; with the same names and the same one-line hints. Two pages the website never had: <a href="https://kademurdock.com/conversations">Your conversations</a> as a plain list, and <a href="https://kademurdock.com/announcements">Announcements</a>. A "Web only" shelf at the bottom shows what the app does not have yet, so nothing is hidden. On a phone browser Home is the first tab at the bottom; on a computer it is the first link at the top of the chat screen.</li>
