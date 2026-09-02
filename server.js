@@ -2519,6 +2519,45 @@ function seedFishSteering(chunk) {
   return parts.join("");
 }
 
+/* ⭐ PART 117.1 (Sep 2 2026) — ONE PARAGRAPH PER FISH REQUEST. Her report:
+ * "the fish audio voices are hallucinating gibberish and scary sounding weird
+ * stuff. I'm wondering if there's a temperature on them." Read the logs, then
+ * reproduced through the proxy on the clones she had just scrolled: Voice 475
+ * said "Ma. Ma." and "Ma. Ma. Ma. Ma." BETWEEN the paragraphs of a clean
+ * script (Deepgram transcript), Voice 487 stuttered. Then measured DIRECTLY
+ * against api.fish.audio, same three-paragraph script, transcript-matched:
+ *
+ *   clone 044d4c66 (Voice 475)                  bad clips   durations
+ *     one request, 3 tags, (long-break)s, t=0.9   1 / 6     15.8–19.2 s
+ *     one request, no tags,               t=0.9   0 / 6     14.6–17.6 s
+ *     one request, 3 tags,                t=0.7   1 / 6     15.5–18.8 s  (one at 0.46 match)
+ *     one request, 3 tags,                t=0.5   1 / 4     15.8–21.0 s
+ *     ONE REQUEST PER PARAGRAPH,          t=0.9   0 / 6     14.1–16.0 s
+ *   clone 2b69712d (Voice 487)
+ *     one request, 3 tags, (long-break)s, t=0.9   2 / 6     20.5–44.5 s  <- a 44 s clip for 20 s of words
+ *     ONE REQUEST PER PARAGRAPH,          t=0.9   0 / 6     19.4–21.4 s
+ *
+ * TEMPERATURE IS NOT THE LEVER — the bad take showed up at 0.9, 0.7 and 0.5
+ * alike. REQUEST LENGTH IS: three paragraphs, three tags and two (long-break)
+ * tokens in one request is where S2.1 wanders off, and the wander lands at
+ * the breaks. Part 116.11 built exactly that shape (it joined a chunk's
+ * paragraphs with " (long-break) " to get one tag per paragraph), which
+ * fixed the "no pauses" complaint and bought this one.
+ *
+ * So: each paragraph rides as its OWN fish request (one tag, no break token
+ * inside), and the funnel's GAP_MS (340 ms) of real silence is the pause
+ * between them — the same shape shapeInworldSteering already gives Inworld.
+ * FISH_ONE_REQUEST=1 restores the joined form. */
+const FISH_ONE_REQUEST = process.env.FISH_ONE_REQUEST === "1";
+function splitFishParagraphs(chunk) {
+  if (FISH_ONE_REQUEST || !chunk) return [chunk];
+  const parts = chunk
+    .split(/\s*\(long-break\)\s*|\n\s*\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.length ? parts : [chunk];
+}
+
 function shapeInworldSteering(chunk) {
   if (!chunk || chunk.indexOf("[") === -1) return [chunk];
   const parts = chunk.split(/(\n\s*\n+)/);
@@ -2894,7 +2933,7 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
   const steered = applySteeringTags(seg.text);
   const chunks = (segIsFish
-    ? chunkText(steered).map(seedFishSteering)
+    ? chunkText(steered).map(seedFishSteering).flatMap(splitFishParagraphs)
     : chunkText(steered).flatMap(shapeInworldSteering)
   ).filter(chunkHasSpeakableWords);
   if (!chunks.length) {
@@ -3131,7 +3170,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // re-seeds the active direction per sentence; Inworld gets one direction
     // per request (identical repeats dropped, real changes split the chunk).
     const chunks = (isFishVoice
-      ? chunkText(speakText).map(seedFishSteering)
+      ? chunkText(speakText).map(seedFishSteering).flatMap(splitFishParagraphs)
       : chunkText(speakText).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {
