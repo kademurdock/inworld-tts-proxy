@@ -467,7 +467,6 @@ PAGES.whatsnew = {
 <ul>
   <li><strong>Share your character from your phone (iPhone app 260+).</strong> Open one of your own characters in the Agent Builder and there's a <strong>Share on the marketplace</strong> switch. It says plainly what it does, asks you to confirm, and then everyone on Kade-AI can find and talk to them. Turn it off any time to make them private again. (The earlier note that said the character's card had a publish button was ahead of the app &mdash; it's in the builder now, for real.)</li>
   <li><strong>New characters show up right away (iPhone app 260+).</strong> Build or edit a character and the picker knows immediately &mdash; no more force-quitting the app to see them. New ones also start in the Companions category instead of falling to the bottom of the list.</li>
-  <li><strong>Voice previews in the builder speak as your character.</strong> On the web and in the app, auditioning a voice for a character now reads one of <em>their</em> lines &mdash; something in quotes from their personality, or a sentence of their description &mdash; a different one each time, instead of the generic script.</li>
 </ul>
 
 <h2>September 1, 2026</h2>
@@ -1159,7 +1158,7 @@ PAGES.build = {
 <h2>Give it a face, a voice, and a speed</h2>
 <ul>
   <li><strong>A profile picture, made for you:</strong> in the builder, activate the avatar and choose <strong>Generate with AI</strong>. It writes a portrait description from your character's name and personality — edit it if you like, tap Generate, and a face appears (costs about 3 cents from the picture jar).</li>
-  <li><strong>Its own voice:</strong> pick a default voice (and how fast it talks) right in the builder, with a preview button — everyone who chats with your character hears it that way. <strong>The previews read your character's own lines</strong> (anything in quotes in their personality, or their description), a different one each time, so you hear the voice as <em>them</em> and not as a demo script.</li>
+  <li><strong>Its own voice:</strong> pick a default voice (and how fast it talks) right in the builder, with a preview button — everyone who chats with your character hears it that way.</li>
   <li><strong>Share on the marketplace, or keep them private:</strong> on the web, use the share button on your character; in the iPhone app (260+), open them in the Agent Builder and flip <strong>Share on the marketplace</strong>. It asks you to confirm, then everyone on Kade-AI can find and talk to them. Flip it off and they're yours alone again.</li>
   <li><strong>Answer speed:</strong> choose Instant, Quick, or Deep depending on whether your character should fire back fast or think harder first.</li>
 </ul>
