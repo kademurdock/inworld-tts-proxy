@@ -66,8 +66,16 @@ const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|bal
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
 // like the people they were cloned from. Per-request `speed` still wins.
 const FISH_TTS_SPEED = parseFloat(process.env.FISH_TTS_SPEED || "1.0");
-const FISH_TEMPERATURE = parseFloat(process.env.FISH_TEMPERATURE || "0.9");
-const FISH_TOP_P = parseFloat(process.env.FISH_TOP_P || "0.7");
+/* Part 117.7 (Sep 2 2026), her ask once the hallucinations stopped: "is there a
+ * way to turn the temp up now? They could be more expressive sometimes. It's
+ * like some phrases are great and others are flat." Fish's range is 0–1
+ * (default 0.7). Tested at the top of the range on the two clones that used
+ * to hallucinate, one paragraph per request (the 117.1 shape), Deepgram
+ * transcript-matched: t=1.0/top_p=0.85 → 6/6 clean, t=1.0/top_p=1.0 → 6/6
+ * clean. The hallucination lever was request length, not temperature
+ * (117.1's table), so the temperature can sit at the ceiling. */
+const FISH_TEMPERATURE = parseFloat(process.env.FISH_TEMPERATURE || "1.0");
+const FISH_TOP_P = parseFloat(process.env.FISH_TOP_P || "0.85");
 const FISH_VOICE_PREFIX = "fish:";
 
 // Voice performance tuning for inworld-tts-2. Note: this model IGNORES the

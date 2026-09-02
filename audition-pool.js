@@ -51,7 +51,10 @@
  *     names, no "I'm a voice, pick me" (that got old, Part 116.9 said so).
  *   • No shouting in caps. Capitals are Inworld's emphasis control and a
  *     shouted word re-times the sentence around it.
- *   • Paragraphs are 2–3 sentences. The proxy splits on the blank line and
+ *   • A script is ONE to THREE paragraphs (117.7, her word: "they don't all
+ *     have to be super long… some can be way shorter as long as it's more
+ *     than 2 short sentences"), at least three sentences in all. Paragraphs
+ *     are 2–3 sentences. The proxy splits on the blank line and
  *     performs each paragraph as its own steered chunk with the previous
  *     paragraphs as synthesis context, which is how the feeling gets to
  *     change without the pace changing.
@@ -988,6 +991,226 @@ const LONG = [
     "%%%gentle%%% There. Sit. Hold it with both hands. That's half of what tea is for.",
     "%%%fond%%% Okay. Now tell me. Start wherever.",
   ],
+  // ── batch four (Part 117.7). Her word: "they don't all have to be super
+  //    long… some can be way shorter as long as it's more than 2 short
+  //    sentences." So this batch mixes one-, two- and three-paragraph scripts. ─
+  // ── short ones ───────────────────────────────────────────────────────────
+  [
+    "%%%warm and easy%%% You made it. Get in here, it's freezing. I saved you the chair by the heater and nobody's allowed in it but you.",
+  ],
+  [
+    "%%%amused%%% The cat knocked a full glass of water off the counter. Looked me dead in the eye. Walked away. I've never felt so judged in my own kitchen.",
+  ],
+  [
+    "%%%pleased%%% Guess who fixed the lamp. The one that's been flickering since spring. It was the plug. It was always the plug.",
+  ],
+  [
+    "%%%sympathetic%%% Oh no. Oh, that's rough. Okay, well, first thing, have you eaten anything today? Because that's step one and you skipped it.",
+  ],
+  [
+    "%%%delighted%%% They had the good bread. The one with the seeds on top. I bought two and I'm not sharing the second one.",
+  ],
+  [
+    "%%%curious%%% Wait, go back. What did she say when you told her? No, the exact words. I need the exact words.",
+  ],
+  [
+    "%%%fond%%% He fell asleep in the car with the ice cream still in his hand. Didn't drop it. Didn't spill a drop. That's talent.",
+  ],
+  [
+    "%%%dry%%% The meeting could have been a text. It was forty minutes. The text would have been nine words.",
+  ],
+  [
+    "%%%relieved%%% Found the remote. It was in the fridge. I'm not going to explain that because I can't.",
+  ],
+  [
+    "%%%hopeful%%% I think the rain's letting up. I can see a little strip of blue over the barn. Give it ten minutes and we'll go.",
+  ],
+  [
+    "%%%teasing%%% You wore that shirt on purpose, didn't you. You knew I'd say something. Well. I'm saying something. It looks good.",
+  ],
+  [
+    "%%%content%%% Sunday morning. Coffee's hot, the paper's on the step, and nobody needs me for anything until noon. This is the whole reason for the week.",
+  ],
+  // ── two-paragraph ones ───────────────────────────────────────────────────
+  [
+    "%%%sheepish%%% So I might have signed us up for the chili cookoff. Both of us. As a team.",
+    "%%%hopeful and playful%%% It's in three weeks. You make the chili, I'll make the sign. That's a fair split, right? I'm very good at signs.",
+  ],
+  [
+    "%%%worried%%% The check engine light came on again. Same as last month. I thought we fixed that.",
+    "%%%resigned and amused%%% I put a piece of tape over it. I know. I know. But it's quieter in here now, emotionally.",
+  ],
+  [
+    "%%%excited%%% The seeds came up. All of them, in one night, like they'd been waiting for a signal.",
+    "%%%fond%%% I went out this morning and there was this whole line of little green things standing up in the dirt. I said good morning to them. Out loud.",
+  ],
+  [
+    "%%%tired%%% Long day. Long, long day. The kind where you get home and just stand in the kitchen for a minute with your keys still in your hand.",
+    "%%%warm%%% But you're here, and there's soup, and the day is over whether it likes it or not. Sit.",
+  ],
+  [
+    "%%%proud%%% She read the whole book by herself. The whole thing. Cover to cover, and then she came and told me the ending like I hadn't already read it forty times.",
+    "%%%delighted%%% Now she wants the next one. Tonight. I'm going to the library on my lunch break like a person on a mission.",
+  ],
+  [
+    "%%%mock serious%%% We need to talk about the thermostat. Somebody keeps moving it to sixty-four. I'm not naming names. I'm looking right at the person.",
+    "%%%amused%%% Sixty-eight. That's the deal we made. I have it in writing. I have it on the fridge.",
+  ],
+  [
+    "%%%wistful%%% The old diner closed. The one with the pie case by the register and the booths that were always a little sticky.",
+    "%%%fond%%% I had my first cup of coffee in that place. Terrible coffee. I'd give anything for one more cup of it.",
+  ],
+  [
+    "%%%pleased%%% I finally beat him at chess. Twenty years of losing and tonight I got him. He saw it coming three moves out and couldn't do a thing.",
+    "%%%grinning%%% He wants a rematch. He'll get one. Next year. I'm going to enjoy this for a while.",
+  ],
+  [
+    "%%%gentle%%% Hey. I know you didn't want to talk about it, so I'm not going to make you. I'm just going to sit here.",
+    "%%%warm%%% And if at some point you want to say something, I'll be right here when you do. I'm not in a hurry.",
+  ],
+  [
+    "%%%amazed%%% The hummingbirds are back. Three of them, fighting over the one feeder like it's the last one on earth.",
+    "%%%content%%% I put out a second feeder. They're fighting over that one now too. It's fine. It's how they say hello.",
+  ],
+  [
+    "%%%determined%%% I'm going to learn to make bread. Real bread. The kind you have to wait for.",
+    "%%%amused and honest%%% The first loaf is going to be terrible. I know that going in. The second one might be okay. Come by for the third.",
+  ],
+  [
+    "%%%delighted%%% The lightning bugs are out. First ones of the year, down by the fence line, blinking like they've got somewhere to be.",
+    "%%%warm%%% Come out on the porch. Bring the kids. This only lasts a few weeks and then it's gone till next June.",
+  ],
+  // ── three-paragraph ones ─────────────────────────────────────────────────
+  [
+    "%%%cheerful%%% So the plumber came, finally, and he looked at the pipe under the sink for about four seconds and said, well, there's your problem.",
+    "%%%amused%%% It was a sock. A sock, in the pipe. I don't know whose. I don't know how. He didn't ask and I didn't offer.",
+    "%%%relieved%%% Anyway, the sink drains now, and I've decided not to think about the sock ever again.",
+  ],
+  [
+    "%%%curious%%% Okay, tell me about the new place. Is it the one with the porch or the one with the weird kitchen?",
+    "%%%pleased%%% The porch. Good. The porch is the one I'd have picked. You can put a swing on a porch. You can't put a swing on a weird kitchen.",
+    "%%%warm%%% I'll help you move. I'm not carrying the couch, but I'll carry everything else and I'll bring the good tape.",
+  ],
+  [
+    "%%%worried and trying not to be%%% He's late. He's never late. He said six and it's six forty and he's not answering.",
+    "%%%relieved and a little shaky%%% Oh, there he is. His phone died and he stopped for gas. He's fine. He's completely fine.",
+    "%%%exasperated and warm%%% I'm going to hug him and then I'm going to yell at him and then I'm going to hug him again. In that order.",
+  ],
+  [
+    "%%%happy%%% We finally got the garden fenced. Took all weekend, and I've got blisters in places I didn't know could blister.",
+    "%%%amused%%% The rabbits watched the whole time. Sat right there at the edge of the yard like foremen. Very unimpressed.",
+    "%%%content%%% But it's up. The lettuce has a fighting chance now. Come see it before the rabbits figure out the gate.",
+  ],
+  [
+    "%%%matter of fact%%% The tree guy came out about the oak. He says it's got maybe five good years left, and after that it's coming down whether we like it or not.",
+    "%%%wistful%%% That tree's been there longer than the house. There's a swing scar on the big branch from before we moved in.",
+    "%%%warm and practical%%% So we've got five years. That's five more summers under it. I'm going to use every one.",
+  ],
+  [
+    "%%%pleased and surprised%%% The kid across the street shoveled our walk. Didn't ask, didn't knock, just did it before we were even up.",
+    "%%%fond%%% I caught him on the way back and tried to give him something and he wouldn't take it. Said his mom would kill him.",
+    "%%%warm%%% So I'm making a pie and leaving it on their step. His mom can't kill him for a pie.",
+  ],
+  [
+    "%%%amused and a little tired%%% Three loads of laundry, a sink full of dishes, and somehow there's still a mystery sticky spot on the floor I can't find.",
+    "%%%determined%%% I'm going to find it. I'm going to get down on my hands and knees and I'm going to find it.",
+    "%%%relieved and grossed out%%% It was honey. Under the chair. Don't ask how. Nobody in this house has an answer.",
+  ],
+  [
+    "%%%excited%%% Okay so I finally tried the new place on the corner, and the line was out the door, and it was worth every minute of it.",
+    "%%%delighted%%% I got the thing with the eggs on it. I don't know what it was called. It had eggs, it had some kind of green sauce, it had my whole heart.",
+    "%%%warm%%% We're going Saturday. Early. I'm not standing in that line twice.",
+  ],
+  [
+    "%%%sincere%%% Hey. I heard about your dad. I'm sorry. I know you two had a complicated thing and I know that doesn't make it easier.",
+    "%%%gentle%%% You don't have to feel any particular way about it. Whatever you're feeling is the right amount.",
+    "%%%warm%%% I'm around all week. Call, don't call, show up at midnight. Any of it's fine.",
+  ],
+  [
+    "%%%grinning%%% I taught the dog to bring me the newspaper. Took a month. A whole month of standing in the yard saying paper, paper, paper like a lunatic.",
+    "%%%amused%%% This morning she brought me the neighbor's paper. So we're close. We're very close.",
+    "%%%fond%%% I gave her the treat anyway. She got the concept. The addressing is a detail.",
+  ],
+  [
+    "%%%happy%%% The rain finally came. Two weeks of nothing and then last night the sky just opened up, and I stood on the porch and watched it come down.",
+    "%%%content%%% The garden's a different color this morning. Everything's standing up straight again. Even the corn looks smug.",
+    "%%%warm%%% Come by. The creek's running. The kids will want to throw sticks in it, and so do I.",
+  ],
+  [
+    "%%%sheepish%%% Remember that plant you gave me? The one you said was impossible to kill?",
+    "%%%amused and guilty%%% I found a way. I don't know how. I watered it, I gave it the window, I talked to it. It looked at me one day and gave up.",
+    "%%%hopeful%%% I'd like to try again. With a different plant. Maybe one that's used to disappointment.",
+  ],
+  [
+    "%%%proud%%% I ran the whole way today. Didn't stop once. Three miles, and the last hill, the one that always gets me, I just went up it like it wasn't there.",
+    "%%%amazed%%% I don't know what happened. Nothing was different. My legs just decided today was the day.",
+    "%%%happy%%% I'm going to be insufferable about this for at least a week. Fair warning.",
+  ],
+  [
+    "%%%mock exasperated%%% Somebody ate the last piece of cake and put the empty plate back in the fridge. The empty plate. Back in the fridge.",
+    "%%%amused%%% I opened the door with such hope. I saw the plate. I felt the plate's emptiness in my soul.",
+    "%%%teasing%%% I'm not mad. I'm just going to bring it up at every meal for the rest of the month.",
+  ],
+  [
+    "%%%warm%%% The kids made breakfast. On their own. Nobody asked them to. I woke up to the smell of something that was mostly toast.",
+    "%%%fond and amused%%% The eggs were interesting. The orange juice had pulp in it and we don't buy pulp, so I have questions. But I ate all of it.",
+    "%%%tender%%% They were so proud. I'm going to remember that breakfast longer than any fancy one I've ever had.",
+  ],
+  [
+    "%%%cheerful%%% Okay, road trip snacks. I've got the pretzels, the good cheese crackers, the grapes for when we feel guilty, and one bag of the candy nobody admits to liking.",
+    "%%%conspiratorial%%% The candy's for me. I've hidden it in the glove box. If you find it, you didn't.",
+    "%%%happy%%% Get in. We've got six hours and a playlist that's mostly nineties. Let's go.",
+  ],
+  [
+    "%%%relieved%%% Test results came back. All clear. Every single one. The doctor said keep doing what I'm doing, which is the nicest thing a doctor's ever said to me.",
+    "%%%grateful%%% I know I've been quiet the last couple of weeks. That's why. I didn't want to say anything until I knew.",
+    "%%%warm%%% So. I'm okay. Let's go get a milkshake. A large one. Doctor's orders, basically.",
+  ],
+  [
+    "%%%amused%%% The new neighbor introduced himself by asking if we'd seen his tortoise. His tortoise. A tortoise named Gary who apparently has wanderlust.",
+    "%%%delighted%%% We found Gary. He was under our hydrangea, going at a pace I'd describe as thoughtful.",
+    "%%%warm%%% So we've met the neighbors. Via tortoise. It's a good start.",
+  ],
+  [
+    "%%%nostalgic%%% They're tearing down the old high school. I drove past today and half the gym's already gone.",
+    "%%%fond%%% I had my first slow dance in that gym. Terrible song. Sweaty hands. I'd go back in a second.",
+    "%%%content%%% I took a brick. From the pile. I don't know what I'm going to do with a brick, but it's mine now.",
+  ],
+  [
+    "%%%excited%%% The package came. The one I've been checking the tracking on nine times a day like a person with a problem.",
+    "%%%delighted%%% It's the record. The one I've been hunting for two years. The one that never turns up. It turned up.",
+    "%%%content%%% I'm putting it on right now and I'm not answering the phone until it's over. Both sides.",
+  ],
+  [
+    "%%%calm and reassuring%%% Okay. Breathe. The stove's off, I checked it twice. The door's locked, I watched you lock it. The cat has food.",
+    "%%%gentle and amused%%% You've done this trip a hundred times and the house has never once burned down while you were gone.",
+    "%%%warm%%% Go. Have a good time. Text me a picture of the ocean so I can be jealous.",
+  ],
+  [
+    "%%%grinning%%% My uncle fell asleep at the table again. Mid-sentence. He was telling the story about the mule and just stopped.",
+    "%%%fond%%% We all sat there for a second and then kept eating like nothing happened. That's how it goes. The story will resume next Thanksgiving.",
+    "%%%amused%%% He'll wake up in twenty minutes and finish the sentence. He always does. Same word he left off on.",
+  ],
+  [
+    "%%%determined%%% I'm cleaning out the garage this weekend. All of it. Every box that says miscellaneous is getting opened and dealt with.",
+    "%%%amused and honest%%% I said this last spring. And the spring before. But this time I've got a dumpster coming, and a dumpster is a commitment.",
+    "%%%hopeful%%% By Sunday night I want to be able to park a car in there. An actual car. Wish me luck.",
+  ],
+  [
+    "%%%happy%%% We got the old truck running. It sat under that tarp for three years and today it turned over on the second try, like it had just been waiting.",
+    "%%%fond%%% It still smells like his cigars in there. I rolled the windows down and then I rolled them back up.",
+    "%%%warm%%% I'm taking it to the feed store tomorrow. Just because. He'd have liked that.",
+  ],
+  [
+    "%%%curious%%% What's the name of that song? The one from the wedding. The one everybody got up for, even your grandmother.",
+    "%%%delighted%%% That's it. That's the one. I've had it stuck in my head for a week and couldn't place it.",
+    "%%%amused%%% I'm going to play it in the car now and sing every word wrong. You're welcome to join.",
+  ],
+  [
+    "%%%warm%%% I made your mother's soup. From the card. The one with the coffee ring on it.",
+    "%%%honest%%% It's not quite hers. Something's off, and I can't figure out what. Maybe it's the pot. Maybe it's that she's not standing next to me telling me I'm doing it wrong.",
+    "%%%tender%%% But it's close. Close enough that the kitchen smelled like her house for a minute. Come have a bowl.",
+  ],
 ].map((paras) => paras.join("\n\n"));
 
 const QUICK = [
@@ -1147,6 +1370,57 @@ const QUICK = [
   "%%%pleased and surprised%%% A real letter came. Same loops on the y's as when we were eleven.",
   "%%%cheerful%%% Fishing license renewed. That's the official start of the season.",
   "%%%warm and unbothered%%% Kettle's on. You're having tea before you say a word about it.",
+  // ── batch four (Part 117.7) ──────────────────────────────────────────────
+  "%%%warm and easy%%% You made it. I saved you the chair by the heater.",
+  "%%%amused%%% The cat knocked a full glass off the counter and looked me dead in the eye.",
+  "%%%pleased%%% Fixed the lamp. It was the plug. It was always the plug.",
+  "%%%sympathetic%%% Okay, first thing. Have you eaten today? That's step one.",
+  "%%%delighted%%% They had the good bread with the seeds. I bought two.",
+  "%%%curious%%% Wait, go back. What did she say? The exact words.",
+  "%%%fond%%% He fell asleep in the car holding the ice cream. Didn't spill a drop.",
+  "%%%dry%%% That meeting was forty minutes. The text would have been nine words.",
+  "%%%relieved%%% Found the remote. It was in the fridge. I can't explain that.",
+  "%%%hopeful%%% Rain's letting up. There's a strip of blue over the barn.",
+  "%%%teasing%%% You wore that shirt on purpose. Fine. It looks good.",
+  "%%%content%%% Sunday morning. Coffee, the paper, and nobody needs me till noon.",
+  "%%%sheepish%%% I signed us up for the chili cookoff. As a team. You cook, I'll make the sign.",
+  "%%%resigned and amused%%% Check engine light's back. I put tape over it. It's quieter in here now, emotionally.",
+  "%%%excited%%% The seeds came up. All of them, overnight. I said good morning to them.",
+  "%%%tired%%% Long day. The kind where you stand in the kitchen with your keys still in your hand.",
+  "%%%proud%%% She read the whole book by herself, then told me the ending like I hadn't read it forty times.",
+  "%%%mock serious%%% Somebody keeps moving the thermostat to sixty-four. I'm looking right at the person.",
+  "%%%wistful%%% The old diner closed. Terrible coffee. I'd give anything for one more cup.",
+  "%%%grinning%%% Twenty years of losing at chess and tonight I got him. Rematch next year.",
+  "%%%gentle%%% You don't have to talk about it. I'm just going to sit here.",
+  "%%%amazed%%% The hummingbirds are back. Three of them, fighting over one feeder.",
+  "%%%determined%%% I'm learning to make real bread. The first loaf will be terrible. Come by for the third.",
+  "%%%delighted%%% Lightning bugs are out. First ones of the year, down by the fence.",
+  "%%%amused%%% There was a sock in the pipe. The plumber didn't ask and I didn't offer.",
+  "%%%pleased%%% You picked the place with the porch. Good. You can't put a swing on a weird kitchen.",
+  "%%%relieved and a little shaky%%% There he is. Phone died, stopped for gas. He's fine.",
+  "%%%happy%%% Garden's fenced. The rabbits watched the whole time like foremen.",
+  "%%%wistful%%% The oak's got maybe five good years. That's five more summers under it.",
+  "%%%fond%%% The kid across the street shoveled our walk before we were even up. Wouldn't take a dollar.",
+  "%%%relieved and grossed out%%% Found the sticky spot. It was honey. Under the chair.",
+  "%%%delighted%%% The new place on the corner. The thing with the eggs and the green sauce. It has my whole heart.",
+  "%%%sincere%%% I heard about your dad. Whatever you're feeling is the right amount.",
+  "%%%amused%%% The dog brought me the neighbor's paper this morning. We're very close.",
+  "%%%happy%%% The rain finally came. Even the corn looks smug this morning.",
+  "%%%amused and guilty%%% The plant you said was impossible to kill. I found a way.",
+  "%%%proud%%% Ran the whole way today. The last hill just wasn't there.",
+  "%%%mock exasperated%%% Somebody ate the last piece of cake and put the empty plate back in the fridge.",
+  "%%%tender%%% The kids made breakfast. The eggs were interesting. I ate all of it.",
+  "%%%conspiratorial%%% The candy's in the glove box. If you find it, you didn't.",
+  "%%%relieved%%% Test results are all clear. Let's go get a milkshake. A large one.",
+  "%%%delighted%%% We met the neighbors via their tortoise. He was under the hydrangea.",
+  "%%%nostalgic%%% They're tearing down the old high school. I took a brick.",
+  "%%%excited%%% The record came. Two years of hunting. Both sides, no phone.",
+  "%%%calm and reassuring%%% Stove's off, door's locked, cat has food. Go. Send me the ocean.",
+  "%%%fond%%% My uncle fell asleep mid-sentence again. He'll finish it next Thanksgiving.",
+  "%%%determined%%% Garage this weekend. Every box that says miscellaneous gets opened. There's a dumpster coming.",
+  "%%%warm%%% The old truck turned over on the second try. Still smells like his cigars.",
+  "%%%curious%%% What's that song from the wedding? The one even your grandmother got up for.",
+  "%%%tender%%% I made your mother's soup from the card. It's close. The kitchen smelled like her house for a minute.",
 ];
 
 /** Pick from a pool, never the same one twice in a row. */

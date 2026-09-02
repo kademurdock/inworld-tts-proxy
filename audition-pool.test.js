@@ -57,14 +57,17 @@ test('the pool is a bucket: at least 50 long scripts and 50 quick lines', () => 
   assert.ok(QUICK.length >= 50, `QUICK ${QUICK.length}`);
 });
 
-test('every long script is 3 tagged paragraphs of 1-5 sentences', () => {
+test('every long script is 1-3 tagged paragraphs of 1-5 sentences, at least 3 sentences in all (117.7: shorter ones allowed)', () => {
   for (const s of LONG) {
     const paras = tagsOf(s);
-    assert.equal(paras.length, 3, s.slice(0, 50));
+    assert.ok(paras.length >= 1 && paras.length <= 3, s.slice(0, 50));
+    let totalSentences = 0;
     for (const { words } of paras) {
       const n = (words.match(/[.!?]+/g) || []).length;
       assert.ok(n >= 1 && n <= 5, `1-5 sentences: ${n} in ${words.slice(0, 50)}`);
+      totalSentences += n;
     }
+    assert.ok(totalSentences >= 3, `more than two short sentences: ${totalSentences} in ${s.slice(0, 50)}`);
   }
 });
 
