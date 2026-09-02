@@ -4413,14 +4413,19 @@ const AUDITION_TEXT = [
  * AUDITION_SCRIPTS instead. Every script is four paragraphs, one tag each, no
  * commas inside tags. Add scripts freely; never merge paragraphs. */
 const NATIVE_QUICK_PREVIEW_LINE = "Hey \u2014 quick hello from this voice, right here with you.";
-/* Part 116.9 (Sep 2 2026): the pools live in audition-pool.js -- a BUCKET of
- * different kinds of talking (voicemail, weather, bedtime, sports call,
- * gossip, recipe, pep talk, late-night radio, grandma on the phone...), not
- * six coats of one template. Her words: "just things anybody would say, with
- * the acting tags and everything… any bucket of whatever." AUDITION_TEXT (the
- * canonical library-page script) stays in the pool as entry 0's cousin. */
+/* Part 116.9 (Sep 2 2026): the pools live in audition-pool.js -- a BUCKET,
+ * not six coats of one template.
+ * Part 117 (Sep 2 2026): the bucket was rewritten after her ear on 116.9 --
+ * "it wants to read some sentences slow, others fast, that makes it sound
+ * choppy… they shouldn't be character specific… just a paragraph of
+ * something anybody would say." Every tag in the pool is now a FEELING with
+ * no pace word, no vocal-style word and no job in it (the test enforces the
+ * list; the header of audition-pool.js carries the measurement). AUDITION_TEXT
+ * is NO LONGER PERFORMED: its tags say "unhurried", "slow" and shout "loud",
+ * which is the exact lurch. It stays defined because the web picker still
+ * SENDS it (that is how the swap below recognises an audition request). */
 const AUDITION_POOL = require("./audition-pool");
-const AUDITION_SCRIPTS = [AUDITION_TEXT, ...AUDITION_POOL.LONG];
+const AUDITION_SCRIPTS = [...AUDITION_POOL.LONG];
 const AUDITION_QUICK_LINES = AUDITION_POOL.QUICK;
 function pickAudition(pool) {
   if (!Array.isArray(pool) || pool.length === 0) return AUDITION_TEXT;
