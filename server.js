@@ -1464,6 +1464,9 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate) {
         // margin off the hallucination edge; both knobs env-tunable.
         temperature: FISH_TEMPERATURE,
         top_p: FISH_TOP_P,
+        // Part 116.11: off so (break)/(breath) paralanguage is honoured; the
+        // proxy normalizes text itself before it gets here.
+        normalize: FISH_NORMALIZE,
         prosody: {
           // Fish accepts 0.5–2.0; the endpoint's shared clamp (0.5–1.5, chosen
           // for Inworld parity) arrives here already sane.
@@ -2408,7 +2411,31 @@ function isDirectionTag(inner) {
 // the documented spelling is the sure thing; only the three that differ are
 // mapped ([clear throat] matches fish verbatim, [breathe]/[cough] have no
 // documented fish twin and ride the open vocabulary).
-const FISH_NONVERBAL_DIALECT = { laugh: "laughing", sigh: "sighing", yawn: "yawning", breathe: "break" };
+/* Part 116.11 (Sep 2 2026) -- REFRESHED AGAINST FISH'S CURRENT S2.1 DOCS, at
+ * her ask ("fish audio voices are performing weird with no pauses and weird
+ * emotion... look up refreshers"). Three things the docs say now that the
+ * Aug-3 lane was built against the opposite of:
+ *   1. "The model reads the tag, adjusts its delivery accordingly, then speaks
+ *      everything that follows UNTIL IT HITS THE NEXT TAG." A bracket tag is
+ *      NOT sentence-scoped. Our per-sentence re-seeding ("[warm] One. [warm]
+ *      Two. [warm] Three.") was therefore three delivery RESETS per paragraph
+ *      -- "each tag resets the delivery... the transition happens at the
+ *      boundary" -- which is exactly "no pauses and weird emotion": the voice
+ *      re-attacks every sentence instead of flowing through one. One tag per
+ *      paragraph now; FISH_SEED_PER_SENTENCE=1 restores the old stamping.
+ *   2. Timing is PARALANGUAGE in parentheses, not brackets: (break),
+ *      (long-break), (breath), (laugh), (sigh). Paragraph boundaries inside a
+ *      fish chunk become (long-break); [breathe] becomes (breath).
+ *   3. Paralanguage "requires normalize set to false" or the model may strip or
+ *      misread the tokens. The proxy already normalizes text itself
+ *      (normalizeForSpeech: dates, phones, money, URLs), so fish's own pass is
+ *      redundant here and is now off (FISH_NORMALIZE=1 turns it back on).
+ * Core tags the docs call most reliable: [laugh] [sigh] [gasp] [pause]
+ * [whisper] [emphasis] [excited] [sad] [angry] [surprised]. The dialect below
+ * maps our house non-verbals onto those instead of free-form -ing forms. */
+const FISH_NONVERBAL_DIALECT = { laugh: "laugh", sigh: "sigh", yawn: "yawning", breathe: "(breath)" };
+const FISH_SEED_PER_SENTENCE = process.env.FISH_SEED_PER_SENTENCE === "1";
+const FISH_NORMALIZE = process.env.FISH_NORMALIZE === "1";
 // Aug 6 2026 (her fish-docs pointer: "they say emphasis on some words in the
 // fish api sample material"): fish's canonical stress = "[emphasis]" placed
 // RIGHT BEFORE the word — our house idiom is CAPITALIZING the word (native to
@@ -2463,8 +2490,16 @@ function seedFishSteering(chunk) {
   // stress regardless of whether the reply carried steering tags.
   chunk = fishEmphasisFromCaps(chunk);
   if (chunk.indexOf("[") === -1) return chunk;
-  let text = chunk.replace(/\[(laugh|sigh|yawn|breathe)\]/gi, (_, w) => `[${FISH_NONVERBAL_DIALECT[w.toLowerCase()]}]`);
+  let text = chunk.replace(/\[(laugh|sigh|yawn|breathe)\]/gi, (_, w) => {
+    const d = FISH_NONVERBAL_DIALECT[w.toLowerCase()];
+    return d.startsWith("(") ? d : `[${d}]`; // paralanguage stays in parentheses
+  });
   const parts = text.split(/(\n\s*\n+)/);
+  if (!FISH_SEED_PER_SENTENCE) {
+    // Part 116.11: one tag per paragraph is the documented contract; a
+    // paragraph break is a (long-break) so the pause is explicit.
+    return parts.map((seg, i) => (i % 2 === 1 ? " (long-break) " : seg)).join("");
+  }
   for (let i = 0; i < parts.length; i += 2) {
     const para = parts[i];
     if (!para || !para.trim()) continue;

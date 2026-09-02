@@ -27,6 +27,8 @@ eval([
   grab('const SENTENCE_ABBREVIATIONS', '];'),
   grab('function splitSentences', '\n}'),
   grab('const FISH_NONVERBAL_DIALECT', ';'),
+  grab('const FISH_SEED_PER_SENTENCE', ';'),
+  grab('const FISH_NORMALIZE', ';'),
   grab('const FISH_EMPHASIS_STOPLIST', ';'),
   grab('function fishEmphasisFromCaps', '\n}'),
   grab('const FISH_SEED_MIN_SENTENCE_LEN', ';'),
@@ -45,14 +47,24 @@ test('fish lane strips [reset] instead of seeding it', () => {
 
 test('the paragraph after a reset carries NO seeded direction', () => {
   const out = seedFishSteering(reply);
-  const closing = out.split(/\n\s*\n/)[1];
+  // Part 116.11: paragraph breaks are a (long-break) on the fish lane
+  const closing = out.split(/\(long-break\)|\n\s*\n/)[1];
   assert.ok(!closing.trim().startsWith('['), 'closing paragraph must open bare: ' + closing);
 });
 
-test('real directions still seed per sentence around a reset', () => {
+test('Part 116.11: ONE direction per paragraph (no per-sentence re-stamping), paragraph break is a (long-break)', () => {
   const out = seedFishSteering('[warm] One sentence long enough to matter here. Another sentence long enough to matter here too.\n\n[reset] Done now, plain and simple, nothing more to perform tonight.');
   assert.ok(out.startsWith('[warm]'), 'leading direction kept');
-  assert.ok((out.match(/\[warm\]/g) || []).length >= 2, 'per-sentence seeding still fires');
+  assert.strictEqual((out.match(/\[warm\]/g) || []).length, 1, 'a tag applies until the next tag -- no re-seeding');
+  assert.ok(out.includes('(long-break)'), 'explicit pause at the paragraph boundary: ' + out);
+  assert.ok(!/\n\s*\n/.test(out), 'no bare paragraph break left');
+});
+
+test('Part 116.11: house non-verbals map to fish core tags / paralanguage', () => {
+  const out = seedFishSteering('[warm] Long enough to be a sentence here. [laugh] Long enough again here. [breathe] And one more here.');
+  assert.ok(out.includes('[laugh]'), out);
+  assert.ok(out.includes('(breath)'), out);
+  assert.ok(!out.includes('[laughing]') && !out.includes('[break]'), out);
 });
 
 test('reset inflections strip too ([Reset], [ reset ])', () => {
