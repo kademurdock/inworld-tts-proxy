@@ -30,7 +30,7 @@ test('a burst three times over the ceiling comes out under it, and the waveform 
   for (let i = 10100; i < 10200; i++) if (Math.abs(x[i]) > 30000) ratios.push(out[i] / x[i]);
   const spread = Math.max(...ratios) - Math.min(...ratios);
   assert.ok(spread < 0.02, 'gain is flat across the peak: ' + spread);
-  assert.ok(lim.limitedSamples > 200 && lim.limitedSamples < SR / 4, 'limited the burst plus the deep part of its release: ' + lim.limitedSamples);
+  assert.ok(lim.limitedSamples > 200 && lim.limitedSamples < SR / 2, 'limited the burst plus hold and the deep part of its release: ' + lim.limitedSamples);
 });
 
 test('limitPcmInPlace keeps buffer length, honours a per-sample gain ramp, and clamps as a last resort', () => {
@@ -52,11 +52,26 @@ test('stream processor in lookahead mode: output lags by the lookahead, flush re
   const out = la.process(Buffer.from(pcm));
   const tail = la.flush();
   assert.equal(out.length + tail.length, n * 2, 'nothing lost across process+flush');
-  assert.equal(tail.length, 72 * 2, '3 ms at 24 kHz');
+  assert.equal(tail.length, 120 * 2, '5 ms at 24 kHz');
   let peak = 0; for (let i = 0; i < out.length / 2; i++) peak = Math.max(peak, Math.abs(out.readInt16LE(i * 2)));
   assert.ok(peak <= 28000 * 1.03, 'limited at the ceiling: ' + peak);
   const th = createStreamProcessor({ gain: 1.2, knee: 26000, kneeRange: 6767, fadeInSamples: 1, rampSamples: 1, limiter: 'tanh' });
   const o2 = th.process(Buffer.from(pcm));
   assert.equal(o2.length, n * 2);
   assert.equal(th.flush().length, 0);
+});
+
+test('hold: after a single over-peak the gain stays down for the hold window before releasing', () => {
+  const x = sine(SR / 2, 20000).map((v, i) => (i === 6000 ? 60000 : v));
+  const lim = createLookaheadLimiter({ ceiling: 31500, sampleRate: SR, holdMs: 20, releaseMs: 250 });
+  const env = [];
+  const out = []; for (const v of x) { const o = lim.push(v); if (o !== null) out.push(o); }
+  // gain at the peak sample and 15 ms after it (inside the hold) must be the same reduced gain
+  const gAt = (i) => out[i] / x[i];
+  const gPeak = Math.abs(out[6000]) / 60000;
+  assert.ok(gPeak < 0.55, 'peak pulled to the ceiling: ' + gPeak);
+  const g15 = Math.abs(gAt(6000 + 360));
+  assert.ok(Math.abs(g15 - gPeak) < 0.02, `held 15 ms later: ${g15} vs ${gPeak}`);
+  const g100 = Math.abs(gAt(6000 + 2400));
+  assert.ok(g100 > gPeak + 0.1, 'releasing by 100 ms: ' + g100);
 });

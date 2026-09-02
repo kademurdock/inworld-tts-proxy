@@ -2755,7 +2755,7 @@ const { toneMatch } = require("./tone");
  * now the fraction of samples that would cross the CEILING before limiting
  * (0.3%), not the old knee count. Ceiling itself -1 → -0.5 dBTP. */
 const TTS_NORM_LIMIT_HEADROOM_DB_LA = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB_LA || "5");
-const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "6");
+const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "4"); // 117.5: 6 -> 4, the raw peak lands at most 4 dB over the CEILING (see below), bounding the dip on any syllable
 const TTS_NORM_LIMIT_BUDGET = parseFloat(process.env.TTS_NORM_LIMIT_BUDGET || "0.003");
 const voiceGainMemory = new Map(); // resolved voice id -> last applied linear gain
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
@@ -2844,7 +2844,9 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
       const overdrive = la ? Math.pow(10, TTS_NORM_MAX_OVERDRIVE_DB_LA / 20) : TTS_NORM_MAX_OVERDRIVE;
       gain = Math.min(gain, (32000 / peakLevel) * headroom);
       // Absolute ceiling against THIS clip's raw true peak (see const above).
-      gain = Math.min(gain, (32000 * overdrive) / peak);
+      // 117.5: in lookahead mode this measures against the CEILING, so the
+      // limiter never has to pull a syllable more than the overdrive figure.
+      gain = Math.min(gain, ((la ? TTS_NORM_CEILING : 32000) * overdrive) / peak);
     }
 
     // KNEE BUDGET (Aug 6): trim gain until saturator engagement fits the

@@ -26,22 +26,36 @@
  * No added harmonics, so no buzz, and the loudness target is unchanged
  * because speech peaks are short: the gain dips cost well under 0.1 dB of
  * RMS on the clips measured. The same object serves the buffered lane and the
- * streamed lane (it is a 72-sample delay line, 3 ms at 24 kHz — the streamed
- * lane's first-audio time moves by 3 ms).
+ * streamed lane (it is a 120-sample delay line, 5 ms at 24 kHz — the streamed
+ * lane's first-audio time moves by 5 ms).
  *
  * TTS_NORM_LIMITER=tanh restores the waveshaper in both lanes.
  */
 
-const DEFAULT_LOOKAHEAD_MS = 3;
-const DEFAULT_RELEASE_MS = 80;
+/* Part 117.5 (Sep 2 2026), her ear on 117.4: "still clipping on some
+ * syllables… without clipping/buzzing like the mic is hot." Measured the gain
+ * ENVELOPE on raw clones at the live drive: with a 3 ms attack and an 80 ms
+ * release, the envelope rippled at PITCH rate (60–400 Hz) — a limiter that
+ * re-opens between glottal pulses is a waveshaper with extra steps, and that
+ * ripple is the buzz. A 5 ms lookahead, a 20 ms HOLD (the gain may not rise
+ * for 20 ms after the last over-peak) and a 250 ms release cut the pitch-rate
+ * ripple by ~40% at the same loudness; capping the gain so the raw peak lands
+ * at most 4 dB over the ceiling (server.js) cut it a further 25–45% and
+ * bounds the dip on any syllable to 4 dB. Cost: 0–1.3 dB of RMS on the
+ * peakiest clones, none on the rest. */
+const DEFAULT_LOOKAHEAD_MS = 5;
+const DEFAULT_HOLD_MS = 20;
+const DEFAULT_RELEASE_MS = 250;
 
 /**
  * Stateful lookahead limiter over float samples (int16 scale, i.e. ±32768).
  * push(v) returns the limited sample from `lookahead` samples ago, or null
  * while the delay line is priming. flush() drains the line.
  */
-function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookaheadMs = DEFAULT_LOOKAHEAD_MS, releaseMs = DEFAULT_RELEASE_MS } = {}) {
+function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookaheadMs = DEFAULT_LOOKAHEAD_MS, holdMs = DEFAULT_HOLD_MS, releaseMs = DEFAULT_RELEASE_MS } = {}) {
   const L = Math.max(4, Math.round((sampleRate * lookaheadMs) / 1000));
+  const H = Math.max(0, Math.round((sampleRate * holdMs) / 1000));
+  const W = L + H; // window of `need` values the envelope may not rise above: L ahead of the output sample, H behind it
   // gain must be fully down by the time the peak reaches the output, so the
   // attack settles in ~L/4 samples (four time constants inside the lookahead)
   const attackCoef = 1 - Math.exp(-4 / L);
@@ -50,7 +64,7 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
   const delay = new Float64Array(L);   // ring buffer of samples
   const need = new Float64Array(L);    // ring buffer of per-sample required gain
   // monotonic deque (indices into a growing counter) for the sliding-window min of `need`
-  const R = L + 2; // ring size: the window holds at most L+1 entries
+  const R = W + 2; // ring size: the window holds at most W+1 entries
   const dqIdx = new Int32Array(R);
   const dqVal = new Float64Array(R);
   let dqHead = 0, dqTail = 0;
@@ -64,10 +78,10 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
     const r = a > ceiling ? ceiling / a : 1;
     const slot = count % L;
     // sliding-window minimum over the L most recent `need` values
-    // window = the sample leaving the delay line (count - L) through this one
+    // window = H samples before the one leaving the delay line (count - L) through this one
     while (dqTail > dqHead && dqVal[(dqTail - 1) % R] >= r) dqTail--;
     dqIdx[dqTail % R] = count; dqVal[dqTail % R] = r; dqTail++;
-    while (dqIdx[dqHead % R] < count - L) dqHead++;
+    while (dqIdx[dqHead % R] < count - W) dqHead++;
     const target = dqVal[dqHead % R];
     // attack toward a lower target fast, release toward 1 slowly
     env += (target - env) * (target < env ? attackCoef : releaseCoef);
@@ -85,8 +99,10 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
   function flush() {
     const outs = [];
     for (let i = 0; i < L && count >= L; i++) {
-      const target = 1; // nothing new ahead
-      env += (target - env) * releaseCoef;
+      // nothing new ahead; the hold still applies for H samples past the last over-peak
+      while (dqIdx[dqHead % R] < count + i + 1 - W && dqHead < dqTail) dqHead++;
+      const target = dqHead < dqTail ? dqVal[dqHead % R] : 1;
+      env += (target - env) * (target < env ? attackCoef : releaseCoef);
       const slot = (count - L + i) % L;
       outs.push(delay[slot] * env);
       if (env < 0.89) limitedSamples++;
@@ -124,4 +140,4 @@ function limitPcmInPlace(pcmBuf, sampleRate, gainAt, ceiling = 31500) {
   return { limited: lim.limitedSamples, minGain: lim.minGain };
 }
 
-module.exports = { createLookaheadLimiter, limitPcmInPlace, DEFAULT_LOOKAHEAD_MS, DEFAULT_RELEASE_MS };
+module.exports = { createLookaheadLimiter, limitPcmInPlace, DEFAULT_LOOKAHEAD_MS, DEFAULT_HOLD_MS, DEFAULT_RELEASE_MS };
