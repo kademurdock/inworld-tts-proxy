@@ -86,6 +86,19 @@ const FISH_VOICE_PREFIX = "fish:";
 // pure pacing, [0.5, 1.5], 1.0 = the voice's own native speed.
 // Both env-overridable so they can be re-tuned without a code change.
 const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "CREATIVE";
+/* Part 119.3 (Sep 2 2026), her ask: "a toggle for the voice you picked, basically
+ * controlling the temp, or delivery as inworld calls it." Per-request `delivery`
+ * on /v1/audio/speech: STABLE | BALANCED | CREATIVE (Inworld's own enum, tts-2
+ * only). Absent = the global above. For fish voices the same word maps onto
+ * fish's temperature (0-1): STABLE 0.5 · BALANCED 0.75 · CREATIVE 1.0 (the
+ * 117.7 ceiling), so one control means the same thing on both engines. */
+const DELIVERY_MODES = new Set(["STABLE", "BALANCED", "CREATIVE"]);
+const FISH_TEMPERATURE_BY_DELIVERY = { STABLE: 0.5, BALANCED: 0.75, CREATIVE: 1.0 };
+function parseDelivery(raw) {
+  if (typeof raw !== "string") return undefined;
+  const d = raw.trim().toUpperCase();
+  return DELIVERY_MODES.has(d) ? d : undefined;
+}
 /* ⭐ AUG 26 2026 — 1.1 -> 1.0, Kade's call ("you can fix the speed on tts thing").
  * 1.1 was never chosen here; it is Inworld's own global default, inherited when
  * this file was written and never questioned. Its neighbour FISH_TTS_SPEED was
@@ -1107,7 +1120,7 @@ function sleep(ms) {
 // capacity until the whole proxy starves. Timeouts are retryable below.
 const INWORLD_TIMEOUT_MS = 20000;
 
-async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts) {
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
   let response;
@@ -1131,7 +1144,8 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
       // Only takes effect on inworld-tts-2 (which is the only model this
       // proxy ever actually requests -- see MODEL_MAP). CREATIVE = "optimizes
       // for increased emotional range and variation" per Inworld's docs.
-      deliveryMode: TTS_DELIVERY_MODE,
+      // Part 119.3: a per-request delivery (her picker's control) wins.
+      deliveryMode: delivery || TTS_DELIVERY_MODE,
       /* Aug 24 2026 — the steering direction rides its OWN FIELD now instead of
        * being pasted into the text as a [bracket]. Same endpoint, documented
        * on inworld-tts-2, verified live. Two things this buys:
@@ -1238,13 +1252,13 @@ function chunkStatsToday() {
   return chunkStats.get(centralDay()) || { ok: 0, failed: 0, retried: 0 };
 }
 
-async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts) {
+async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery) {
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts);
+        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
@@ -1292,7 +1306,7 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * runs. The stream lane never retries on its own — retrying after flushed
  * bytes would double-speak the opening of a sentence.
  */
-async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel }) {
+async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery }) {
   const { text: sayText, instruction } = splitChunkForInworld(chunk);
   if (!sayText || !sayText.trim()) return false;
   return inworldLimiter(async () => {
@@ -1317,7 +1331,7 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
             sampleRateHertz: 24000,
             speakingRate: speakingRate != null ? speakingRate : TTS_SPEAKING_RATE,
           },
-          deliveryMode: TTS_DELIVERY_MODE,
+          deliveryMode: delivery || TTS_DELIVERY_MODE,
           ...(instruction ? { instruction } : {}),
           ...(previousTexts && previousTexts.length
             ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
@@ -1457,7 +1471,7 @@ const MAX_CONCURRENT_FISH_CALLS = parseInt(process.env.FISH_MAX_CONCURRENT || "6
 const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
 const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
 
-async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate) {
+async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
   let response;
@@ -1481,7 +1495,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate) {
         // "controls expressiveness, higher is more varied" (0-1, default 0.7).
         // We never sent it = stock 0.7 the whole time. 0.9 = expressive with a
         // margin off the hallucination edge; both knobs env-tunable.
-        temperature: FISH_TEMPERATURE,
+        temperature: (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE, // Part 119.3
         top_p: FISH_TOP_P,
         // Part 116.11: off so (break)/(breath) paralanguage is honoured; the
         // proxy normalizes text itself before it gets here.
@@ -1524,13 +1538,13 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate) {
   return Buffer.concat([buildWavHeader(pcm.length, fmt), pcm]);
 }
 
-async function fishSynthesizeChunk(text, fishModelId, speakingRate) {
+async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
   return fishLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate);
+        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
@@ -3217,6 +3231,9 @@ app.post("/v1/audio/speech", async (req, res) => {
     typeof speed === "number" && isFinite(speed)
       ? Math.min(1.5, Math.max(0.5, speed))
       : undefined;
+  // Part 119.3: per-request delivery (STABLE | BALANCED | CREATIVE); the fork
+  // forwards the native picker's choice in the body. Absent = global default.
+  const delivery = parseDelivery(req.body.delivery);
 
   if (!input) {
     return res.status(400).json({ error: "Missing required field: input" });
@@ -3355,6 +3372,7 @@ app.post("/v1/audio/speech", async (req, res) => {
         speakingRate,
         previousTexts: contextFor(chunks, 0, ttsSessionKey),
         voiceLabel: voice,
+        delivery,
       });
       if (handled) {
         rememberSpoken(ttsSessionKey, speakText);
@@ -3368,10 +3386,10 @@ app.post("/v1/audio/speech", async (req, res) => {
     const wavBuffers = await Promise.all(
       chunks.map((chunk, ci) =>
         isFishVoice
-          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate)
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery)
           : (() => {
               const { text: sayText, instruction } = splitChunkForInworld(chunk);
-              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, ttsSessionKey));
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, ttsSessionKey), delivery);
             })()
       )
     );
