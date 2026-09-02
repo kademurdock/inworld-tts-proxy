@@ -4378,74 +4378,18 @@ const AUDITION_TEXT = [
  * AUDITION_SCRIPTS instead. Every script is four paragraphs, one tag each, no
  * commas inside tags. Add scripts freely; never merge paragraphs. */
 const NATIVE_QUICK_PREVIEW_LINE = "Hey \u2014 quick hello from this voice, right here with you.";
-const AUDITION_SCRIPTS = [
-  AUDITION_TEXT,
-  [
-    "%%%easy and warm like you have all evening%%% Hey. Pull up a chair. I can keep it soft when the day has been long.",
-    "%%%lit up and quick barely holding it in%%% Or I can get LOUD when the news is good, because good news deserves it!",
-    "%%%low and slow with every word weighed%%% And when it counts, I slow down and mean it.",
-    "%%%dry with a smile you can hear%%% So. You gonna pick me, or keep scrolling?",
-  ].join("\n\n"),
-  [
-    "%%%calm and steady like a porch at dusk%%% Evening. This is what I sound like when nothing is on fire.",
-    "%%%bright and bouncing%%% This is me when you got the job, the apartment, or the last slice!",
-    "%%%quiet and serious taking your time%%% And this is me when you need somebody to just tell you the truth.",
-    "%%%playful and a little smug%%% Three voices, one me. Not bad, right?",
-  ].join("\n\n"),
-  [
-    "%%%unhurried and kind%%% Hi. If you are up late and can't sleep, this is the voice that stays on the line.",
-    "%%%grinning and fast%%% If you just won something, THIS is the voice that hollers about it!",
-    "%%%grounded and low%%% If it is bad news, I get quiet and I get plain, and I do not leave.",
-    "%%%warm with a laugh under it%%% That's the whole range. Well, most of it. Pick me and find out.",
-  ].join("\n\n"),
-  [
-    "%%%soft and slow like a story before bed%%% Once upon a time somebody scrolled through seven hundred voices looking for the right one.",
-    "%%%delighted and quick%%% And then one of them made her laugh out loud in the kitchen!",
-    "%%%low and even and sure of itself%%% And when things got heavy, that voice did not flinch.",
-    "%%%light and teasing%%% I'm not saying it was me. I'm just saying you're still listening.",
-  ].join("\n\n"),
-  [
-    "%%%relaxed and conversational%%% Okay, real quick. This is me reading you the news over coffee.",
-    "%%%amped and joyful%%% This is me when your team pulls it off in the last thirty seconds!",
-    "%%%hushed and careful%%% This is me at two in the morning when it is just us.",
-    "%%%dry as toast%%% And this is me judging your playlist. Lovingly.",
-  ].join("\n\n"),
-];
-const AUDITION_QUICK_LINES = [
-  "%%%warm and easy%%% Hey. Quick hello from this voice, right here with you.",
-  "%%%bright and quick%%% Hi! This is me. Well, this is me when I'm in a good mood.",
-  "%%%low and unhurried%%% Hey there. Just checking if this is the one.",
-  "%%%dry with a smile%%% Yep. This is the voice. Keep scrolling or stop here, your call.",
-  "%%%soft and kind%%% Hi. If you need it quiet, I can do quiet.",
-  "%%%playful and a little smug%%% Oh, you found me. Good ear.",
-  "%%%calm and steady%%% Hello. I sound like this most of the time.",
-  "%%%cheerful and quick%%% Hey hey! Short and sweet, that's me.",
-  "%%%grounded and plain%%% Here I am. No frills, just the voice.",
-  "%%%warm with a laugh under it%%% Hi. Seven hundred voices and you landed on me. Bold.",
-  "%%%easy and conversational%%% Hey. Imagine me reading your messages back to you. Like that.",
-  "%%%quiet and sure%%% Hello. I'm the one that stays on the line.",
-  "%%%light and teasing%%% Hi there. Don't scroll past too fast, I'm sensitive.",
-  "%%%relaxed like a Sunday%%% Hey. Nothing urgent. Just saying hello.",
-  "%%%bright and welcoming%%% Well hi! Come on in, the voice is warm.",
-  "%%%low and a little mysterious%%% Hello. You were looking for me, weren't you.",
-  "%%%upbeat and friendly%%% Hey! Quick one. This is how I say your name.",
-  "%%%gentle and slow%%% Hi. Take your time. I'm not going anywhere.",
-  "%%%confident and clear%%% Hello. Clear, steady, and ready when you are.",
-  "%%%amused and easy%%% Hey. I heard you were picking a voice. Pick a good one.",
-  "%%%soft and a little sleepy%%% Hi. This is what I sound like late at night.",
-  "%%%crisp and quick%%% Hello! Short version of me. The long version talks more.",
-  "%%%warm and steady%%% Hey. I'll be the one reading to you. Nice to meet you.",
-  "%%%playful and bouncy%%% Hiya! Blink and you'll miss me. Oh, you didn't. Good.",
-];
-let lastAuditionPick = new Map();
+/* Part 116.9 (Sep 2 2026): the pools live in audition-pool.js -- a BUCKET of
+ * different kinds of talking (voicemail, weather, bedtime, sports call,
+ * gossip, recipe, pep talk, late-night radio, grandma on the phone...), not
+ * six coats of one template. Her words: "just things anybody would say, with
+ * the acting tags and everything… any bucket of whatever." AUDITION_TEXT (the
+ * canonical library-page script) stays in the pool as entry 0's cousin. */
+const AUDITION_POOL = require("./audition-pool");
+const AUDITION_SCRIPTS = [AUDITION_TEXT, ...AUDITION_POOL.LONG];
+const AUDITION_QUICK_LINES = AUDITION_POOL.QUICK;
 function pickAudition(pool) {
   if (!Array.isArray(pool) || pool.length === 0) return AUDITION_TEXT;
-  if (pool.length === 1) return pool[0];
-  const last = lastAuditionPick.get(pool);
-  let i = Math.floor(Math.random() * pool.length);
-  if (i === last) i = (i + 1) % pool.length;
-  lastAuditionPick.set(pool, i);
-  return pool[i];
+  return AUDITION_POOL.pickAudition(pool, pool === AUDITION_QUICK_LINES ? "quick" : "long");
 }
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">
