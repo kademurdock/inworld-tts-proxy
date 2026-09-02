@@ -62,7 +62,8 @@
  *     not be okay", no "let's dive in", no em dashes, no "honestly" openers.
  *
  * Part 117.2: batch two added at her word ("add even more of them").
- * Part 117.6: batch three. Her target is a THOUSAND OR MORE, hand-written
+ * Part 117.6: batch three. Part 118: batch five. Part 119: batch six.
+ * Her target is a THOUSAND OR MORE, hand-written
  * only (her pick over model drafting) — "at least a probability of 2 or more
  * per voice." Every session adds a batch; the test is the gate.
  *
@@ -1495,6 +1496,295 @@ const LONG = [
     "%%%mildly annoyed%%% There are four phone chargers in this house and none of them are where I left them.",
     "%%%amused%%% I found one in the car, one in the bathroom, and one in the dog's bed. The dog is not talking.",
   ],
+  // ── batch six (Part 119, Sep 2 2026) — fifty more, hand-written ───────
+  // ── the screen door spring ────────────────────────────────────────────
+  [
+    "%%%satisfied%%% Fixed the screen door. It's been slamming since May and all it needed was a two dollar spring and somebody to stop talking about it.",
+    "%%%amused%%% Now it closes with this little sigh instead of a gunshot. The dog doesn't know what to do with himself.",
+    "%%%warm%%% Come test it. Open it, let it go, and tell me that's not the nicest sound on the block.",
+  ],
+  // ── the jar that won't open ───────────────────────────────────────────
+  [
+    "%%%determined%%% I have been fighting this pickle jar for five minutes. Hot water, the towel, banging the lid on the counter. Nothing.",
+    "%%%defeated and laughing%%% And then the kid walks in, opens it one handed, and walks out with a pickle. Didn't even look at me.",
+    "%%%wry%%% I loosened it. That's my story. I did all the work and he got the glory.",
+  ],
+  // ── the neighbor's rooster ────────────────────────────────────────────
+  [
+    "%%%tired and amused%%% Somebody two streets over got a rooster. I know this because he starts at four fifteen and does not believe in weekends.",
+    "%%%resigned%%% I've made peace with it, mostly. I lie there and think, well, he's doing his job. Somebody should.",
+    "%%%hopeful%%% Although if he ends up in a pot one Sunday I'm not going to ask any questions.",
+  ],
+  // ── the kitchen radio ─────────────────────────────────────────────────
+  [
+    "%%%fond%%% That old radio on top of the fridge still gets the oldies station if you tilt the antenna at the window. Nothing else, just that one.",
+    "%%%content%%% I leave it on while I do dishes. Half the songs I know every word to and the other half my mother did.",
+    "%%%amused%%% It hums a little between songs. I've decided that's part of the charm and not a fire hazard.",
+  ],
+  // ── the new baby ──────────────────────────────────────────────────────
+  [
+    "%%%tender and excited%%% They let me hold her for a whole hour. She's got the longest fingers and she frowns exactly like her grandfather.",
+    "%%%amused%%% Everybody keeps asking who she looks like and the answer is a very small angry potato. A beautiful one.",
+    "%%%warm%%% I'm going back Thursday with a casserole and no plans to leave.",
+  ],
+  // ── the flat bike tire ────────────────────────────────────────────────
+  [
+    "%%%rueful%%% Got about two miles out on the bike and heard that sad little hiss. Walked it home in the good shoes.",
+    "%%%matter of fact%%% There's a patch kit in the garage somewhere. I know there is because I bought it the last time this happened.",
+    "%%%hopeful%%% If I find it before dark I might still get a ride in. If I don't, the porch has a chair.",
+  ],
+  // ── the church bells ──────────────────────────────────────────────────
+  [
+    "%%%calm%%% You can hear the church bells from the back step if the wind is right. Noon and six, every day.",
+    "%%%nostalgic%%% When I was little that six o'clock bell meant come home, and I still feel it in my legs a little when it rings.",
+  ],
+  // ── the borrowed ladder ───────────────────────────────────────────────
+  [
+    "%%%sheepish%%% So I've had the neighbor's ladder since Easter. It's leaning on my garage like it lives here now.",
+    "%%%amused%%% He hasn't asked for it, and at this point I think we're both pretending it's mine.",
+    "%%%resolved%%% I'm walking it back over tonight with a pie. That's the going rate for a ladder in April.",
+  ],
+  // ── the sweet corn ────────────────────────────────────────────────────
+  [
+    "%%%delighted%%% The corn truck's back on the corner. Dozen for five dollars and the man still throws in a thirteenth if you talk to him.",
+    "%%%content%%% Shucked it on the porch, boiled it four minutes, butter and salt. Nobody spoke for ten minutes. That's how you know.",
+  ],
+  // ── the wrong bus ─────────────────────────────────────────────────────
+  [
+    "%%%embarrassed and amused%%% Got on the wrong bus this morning. Same number, other direction. Didn't notice till the river showed up on the wrong side.",
+    "%%%easygoing%%% Rode it to the end, rode it back. Saw a part of town I'd never seen and got to work forty minutes late with a story.",
+    "%%%wry%%% My boss said that's the most interesting thing I've told him all year. I'm choosing to take that well.",
+  ],
+  // ── the bread machine ─────────────────────────────────────────────────
+  [
+    "%%%pleased%%% Dug the bread machine out from under the stairs. It still works. It made a loaf shaped like a shoebox and the whole house smelled right.",
+    "%%%amused%%% The kids have never seen it. They stood there watching the little window like it was television.",
+    "%%%warm%%% First slice with butter goes to whoever finds the kneading paddle. It's in the loaf somewhere.",
+  ],
+  // ── the raccoon ───────────────────────────────────────────────────────
+  [
+    "%%%exasperated%%% The raccoon got the trash again. Bungee cord and everything. He just undid it like he had thumbs, which he does.",
+    "%%%grudgingly impressed%%% I watched him from the window. He looked right at me while he did it. There was eye contact.",
+    "%%%determined%%% Tomorrow the cans go in the garage. He can figure out a door handle next, I guess.",
+  ],
+  // ── the ceiling fan ───────────────────────────────────────────────────
+  [
+    "%%%mildly annoyed%%% The bedroom fan has one setting now, which is wobble. I lie there watching it and wondering which night it comes down.",
+    "%%%amused%%% There's a little tape trick you can do with a coin on one blade. I did it. Now it wobbles with a coin on it.",
+  ],
+  // ── the old dog's walk ────────────────────────────────────────────────
+  [
+    "%%%tender%%% The old boy still wants his walk, he just wants it to be about half a block now. That's fine. We go half a block.",
+    "%%%fond%%% He stops at every mailbox and reads them like the paper. I stand there. I've got nowhere better to be.",
+    "%%%calm%%% Then we sit on the curb for a minute before we head back. Him and me, watching the street do nothing.",
+  ],
+  // ── the cousin's wedding dress ────────────────────────────────────────
+  [
+    "%%%excited%%% She tried on her grandmother's dress and it fit. Not close, not with pins. It fit.",
+    "%%%tender%%% Nobody said anything for a second. Then her mom went and got the pictures from nineteen sixty-two and we all lost it.",
+    "%%%happy%%% So that's the dress. Done. Cheapest and best decision of this whole wedding.",
+  ],
+  // ── the lost earring ──────────────────────────────────────────────────
+  [
+    "%%%relieved%%% Found the earring. It was in the cuff of the jeans I wore Tuesday, which means it rode through the wash and the dryer and came out shining.",
+    "%%%amused%%% I'd already made peace with it being gone. I'd already looked at new ones. Now I feel a little guilty, like I gave up on it.",
+  ],
+  // ── the fish fry ──────────────────────────────────────────────────────
+  [
+    "%%%pleased%%% Friday fish fry at the fire hall, five dollars, and they still let you go back for seconds if you're polite about it.",
+    "%%%content%%% Same three old men at the fryer every year. Same coleslaw. Same lady at the door who calls everybody hon.",
+    "%%%warm%%% We're going at five so we get a table by the window. Bring cash and an appetite and don't dress up.",
+  ],
+  // ── the road salt ─────────────────────────────────────────────────────
+  [
+    "%%%grumpy%%% The car is white with road salt to the door handles. I look like I drove here from the moon.",
+    "%%%resigned%%% No point washing it till March. It'll be back to this by Tuesday. I've accepted that I own a gray car now.",
+  ],
+  // ── the recipe card in her handwriting ────────────────────────────────
+  [
+    "%%%tender%%% Found the biscuit recipe in her handwriting in the back of the drawer. The card's got a grease spot right over the part about the butter.",
+    "%%%thoughtful%%% She never measured anything, so the card just says enough flour. Enough. I've been trying to figure out enough for ten years.",
+    "%%%warm%%% They came out close this morning. Not hers. But close enough that the kitchen smelled like Sunday for a minute.",
+  ],
+  // ── the parking ticket ────────────────────────────────────────────────
+  [
+    "%%%indignant%%% Twenty-five dollar ticket. The meter said I had eight minutes. I was gone eleven and the man was standing there with the pad out.",
+    "%%%deflated%%% I said something about it and he said the meter doesn't lie, ma'am. Which, fair. It's a meter.",
+    "%%%wry%%% So that was the most expensive coffee I've ever had. It was fine. Not twenty-five dollar coffee.",
+  ],
+  // ── the new hearing aids ──────────────────────────────────────────────
+  [
+    "%%%amazed%%% Dad got the new hearing aids and the first thing he said was, has the refrigerator always done that?",
+    "%%%amused%%% He walked around the house for an hour listening to things. The clock. The floor. He's mad at the floor now.",
+    "%%%tender%%% Then he called Mom just to hear her voice through them. She cried. He said she was too loud. That's them.",
+  ],
+  // ── the kid's science project ─────────────────────────────────────────
+  [
+    "%%%frazzled and fond%%% The science project is due tomorrow and we found out about it tonight. There's a volcano on my kitchen table.",
+    "%%%amused%%% It's supposed to erupt. It sort of leaked. We're calling it a slow geological event and writing that on the poster.",
+    "%%%resolved%%% Nobody's going to bed till it's dry. There's baking soda on the cat.",
+  ],
+  // ── the garden hose knot ──────────────────────────────────────────────
+  [
+    "%%%exasperated%%% The hose has tied itself into a knot again. I did not do this. I coiled it. It undoes my coiling in the night.",
+    "%%%amused%%% Spent twenty minutes on my knees in the wet grass talking to it. The neighbor waved. I waved back with a hose.",
+  ],
+  // ── the anniversary dinner ────────────────────────────────────────────
+  [
+    "%%%warm%%% Thirty-one years. We went to the same place we went the first year, and the booth's still there, and the pie's still good.",
+    "%%%amused%%% He ordered the same thing he ordered then. I asked how he remembered and he said he's ordered it every time since. Fair.",
+    "%%%tender%%% We split the pie. We always split the pie. That's most of what a marriage is, I think.",
+  ],
+  // ── the skunk ─────────────────────────────────────────────────────────
+  [
+    "%%%dismayed and laughing%%% The dog met a skunk. The dog lost. The dog then came inside to tell everybody about it.",
+    "%%%matter of fact%%% Tomato juice doesn't work, by the way. It's peroxide and baking soda and dish soap, and you'll need all of it.",
+    "%%%resigned%%% He's on the porch. He's confused about why. The house will smell like this until roughly Thanksgiving.",
+  ],
+  // ── the lawn mower that won't start ───────────────────────────────────
+  [
+    "%%%frustrated%%% Forty pulls on the mower and nothing. I've checked the gas. I've checked the plug. I've said things to it I'm not proud of.",
+    "%%%sheepish%%% The kid walked over, flipped a little lever I've never once noticed, and it started on the first pull.",
+    "%%%wry%%% Apparently there's a choke. I've owned this mower six years.",
+  ],
+  // ── the neighborhood watch meeting ────────────────────────────────────
+  [
+    "%%%amused%%% The neighborhood meeting was supposed to be about the speed bump and turned into forty-five minutes about somebody's wind chimes.",
+    "%%%diplomatic%%% I said nothing. I have wind chimes. I know exactly whose side I'm on and I kept my mouth shut.",
+    "%%%content%%% There were brownies, though. Whoever's mad about the chimes makes a good brownie.",
+  ],
+  // ── the sunday drive ──────────────────────────────────────────────────
+  [
+    "%%%easygoing%%% We just drove. No place in mind. Took the river road till it ran out and then took whatever was next.",
+    "%%%pleased%%% Found a little stand selling honey and a church with the doors open and singing coming out of it. Stopped for both.",
+    "%%%warm%%% Home by dark with a jar of honey and no idea what county we were in. Best Sunday in a while.",
+  ],
+  // ── the lost library book ─────────────────────────────────────────────
+  [
+    "%%%embarrassed%%% The library called. I have a book that's eight months overdue. I have no memory of this book.",
+    "%%%amused%%% Found it under the passenger seat. It's a book about organizing your life. I'm not going to say anything else about that.",
+    "%%%relieved%%% Fine's four dollars. The lady at the desk didn't laugh, out loud, which I appreciated.",
+  ],
+  // ── the storm cellar ──────────────────────────────────────────────────
+  [
+    "%%%calm%%% Sirens went off around nine so we all went down to the cellar. Kids, dog, the radio, the good flashlight.",
+    "%%%fond%%% The kids think it's an adventure. They brought pillows. The dog thinks it's punishment and sat facing the wall.",
+    "%%%relieved%%% Passed us by. Came back up to find the power on and the ice cream still frozen, so no complaints.",
+  ],
+  // ── the choir robe ────────────────────────────────────────────────────
+  [
+    "%%%amused%%% They gave me a choir robe that was clearly made for somebody a foot taller. I look like a kid in his dad's coat.",
+    "%%%good natured%%% The lady next to me said just don't walk up any stairs. So I'm going to sing from where I stand and hope for the best.",
+  ],
+  // ── the old phone number ──────────────────────────────────────────────
+  [
+    "%%%nostalgic%%% I still know my grandmother's phone number. Haven't dialed it in twenty years and it's right there like the alphabet.",
+    "%%%thoughtful%%% I looked it up once. Belongs to a dentist now. I didn't call. Didn't want to hear somebody else pick up.",
+    "%%%tender%%% But I say it sometimes. Just the numbers. It's like a little song she left me.",
+  ],
+  // ── the potholes ──────────────────────────────────────────────────────
+  [
+    "%%%irritated%%% Main Street has a pothole you could lose a small dog in. I know because I've hit it every day this week.",
+    "%%%amused%%% Somebody put a little flag in it. Then somebody added a sign that says wishing well. There's change in it now.",
+    "%%%hopeful%%% The county says next month. The county has said next month since before the flag.",
+  ],
+  // ── the sleep talk ────────────────────────────────────────────────────
+  [
+    "%%%amused%%% You talked in your sleep last night. Full sentences. Something about the horses being late and whose fault that was.",
+    "%%%teasing%%% I wrote it down. I'm going to read it at your birthday. Everybody should know about the horses.",
+  ],
+  // ── the neighbor's tomatoes ───────────────────────────────────────────
+  [
+    "%%%grateful%%% Came home to a grocery bag of tomatoes on the porch. No note. That's Mrs. Alvarez, she does that when hers come in all at once.",
+    "%%%content%%% So tonight's tomato sandwiches. White bread, mayonnaise, salt, and a paper towel. That's the whole recipe.",
+    "%%%warm%%% I'll take her some of the peaches when they come in. That's how it works on this street. Nobody says anything, it just shows up.",
+  ],
+  // ── the tax paperwork ─────────────────────────────────────────────────
+  [
+    "%%%weary%%% Been at the kitchen table with receipts for three hours. There's a shoebox. There's always a shoebox.",
+    "%%%amused%%% Found a receipt from a gas station in a state I've never been to. Somebody in this house has a secret or a bad memory.",
+    "%%%resolved%%% One more hour and I'm done, and then I'm going to buy a folder like an adult. Or another shoebox. Probably a shoebox.",
+  ],
+  // ── the porch light moths ─────────────────────────────────────────────
+  [
+    "%%%calm%%% The porch light's got about forty moths on it tonight. Big ones. They just sit there like they're waiting for a bus.",
+    "%%%amused%%% One came in when I opened the door and now he's on the lampshade acting like he paid rent.",
+    "%%%easygoing%%% I'll get him out in the morning. Or I won't. He's not hurting anybody.",
+  ],
+  // ── the kid learning to whistle ───────────────────────────────────────
+  [
+    "%%%delighted%%% She figured out whistling. Yesterday it was just air, and today it's a real note, and she has not stopped since breakfast.",
+    "%%%fond and tired%%% It's the same note. Just the one. All day. In the car, at the store, in the bathtub.",
+    "%%%warm%%% I told her she's a natural. I'm going to regret that around Thursday but I meant it.",
+  ],
+  // ── the clock change ──────────────────────────────────────────────────
+  [
+    "%%%baffled%%% The clocks changed and I've been an hour wrong all day. Got to church as they were letting out. Thought the sermon was short.",
+    "%%%amused%%% The microwave's right, the stove's wrong, the car's wrong, and the one on the wall stopped in June so it's right twice a day.",
+  ],
+  // ── the sunflowers ────────────────────────────────────────────────────
+  [
+    "%%%proud%%% The sunflowers along the fence are taller than the fence now. Taller than me. Taller than the garage light.",
+    "%%%amused%%% The birds have found them. Every morning there's a whole committee up there eating and arguing.",
+    "%%%content%%% I planted them for the kids and now I sit out there with my coffee and look at them like they're mine. They're mine.",
+  ],
+  // ── the house that sold ───────────────────────────────────────────────
+  [
+    "%%%wistful%%% The house I grew up in sold last week. Somebody young. They're going to paint it gray, I heard.",
+    "%%%thoughtful%%% I drove by. The tree's still there, the one with the swing. The swing isn't. That's fine. That's how it goes.",
+    "%%%warm%%% I hope they're happy in it. It was a good house. The stairs creak on the third one, they'll figure that out.",
+  ],
+  // ── the birthday cake collapse ────────────────────────────────────────
+  [
+    "%%%dismayed and laughing%%% The cake fell. Not fell in the oven, fell off the counter, onto the floor, frosting side down, five minutes before people got here.",
+    "%%%resourceful%%% So I scooped the top half into bowls, put ice cream on it, and called it a trifle. Nobody questioned it.",
+    "%%%pleased%%% Two people asked for the recipe. I told them it's a family secret. The secret is the floor.",
+  ],
+  // ── the old coat pocket ───────────────────────────────────────────────
+  [
+    "%%%surprised and pleased%%% Twenty dollars in the winter coat pocket. From me, last March, to me, right now. Thanks, past me.",
+    "%%%amused%%% Also a mint, a receipt for something called a large, and a glove I've been looking for since a different coat.",
+  ],
+  // ── the neighbor kid's lemonade ───────────────────────────────────────
+  [
+    "%%%fond%%% The kid on the corner's got a lemonade stand. Fifty cents. The sign's spelled wrong and the lemonade's mostly sugar.",
+    "%%%amused%%% I bought two. He gave me change from a shoebox and counted it twice like a banker.",
+    "%%%warm%%% He's going to make more today than I did at his age. Good for him. Go get it, kid.",
+  ],
+  // ── the fog ───────────────────────────────────────────────────────────
+  [
+    "%%%calm%%% Fog so thick this morning the end of the driveway was a rumor. The whole street just gone.",
+    "%%%thoughtful%%% Everything sounds different in it. The cars, the dog down the block, the train. All of it closer and farther at once.",
+    "%%%content%%% Stood out there with my coffee till it burned off. Best part of the day and it was over by eight.",
+  ],
+  // ── the dropped call ──────────────────────────────────────────────────
+  [
+    "%%%apologetic%%% Sorry, we got cut off. I think I drove through that dead spot by the water tower. What were you saying about your sister?",
+    "%%%interested%%% No, go back. The part about the boat. She bought a boat? On purpose?",
+  ],
+  // ── the grandkid's drawing ────────────────────────────────────────────
+  [
+    "%%%tender%%% She drew me. I have four arms in it and a purple face and a hat I don't own, and it's the best picture anybody's ever made of me.",
+    "%%%amused%%% She said the extra arms are for hugging. I'm not going to argue with that.",
+    "%%%warm%%% It's on the fridge, front and center. The electric bill got moved to make room.",
+  ],
+  // ── the icy steps ─────────────────────────────────────────────────────
+  [
+    "%%%rueful%%% Went down the back steps this morning like a cartoon. Feet up, coffee up, everything up, and then everything down.",
+    "%%%amused%%% Nothing broke except my pride and the mug. The mug was ugly. I'm choosing to see this as a favor.",
+    "%%%resolved%%% Salt's on the steps now. Should've been there yesterday. That's the thing about salt, it's always yesterday's job.",
+  ],
+  // ── the paper route memory ────────────────────────────────────────────
+  [
+    "%%%nostalgic%%% I had a paper route at eleven. Sixty houses, a bike with a basket, and a bag that hit my knee every single pedal.",
+    "%%%fond%%% Mrs. Kowalski left me a cookie in the mailbox every Friday. Every Friday, for three years. I never once saw her do it.",
+    "%%%thoughtful%%% I think about that more than I think about most things. Somebody just being kind on a schedule.",
+  ],
+  // ── the cat on the keyboard ───────────────────────────────────────────
+  [
+    "%%%amused%%% The cat sent an email. Walked across the keyboard, hit something, and now my boss has a message that says jjjjjjjjjjjjj.",
+    "%%%sheepish%%% I wrote back and explained. She said the cat makes more sense than most of what she gets on a Monday.",
+  ],
 ].map((paras) => paras.join("\n\n"));
 
 const QUICK = [
@@ -1756,6 +2046,57 @@ const QUICK = [
   "%%%apologetic%%% The card's late. I bought it three weeks ago. It says the true thing, though.",
   "%%%mock outraged%%% The squirrel hangs upside down on the feeder and eats like he owns the place.",
   "%%%mildly annoyed%%% Four phone chargers in this house and one of them was in the dog's bed.",
+  // ── batch six (Part 119) ───────────────────────────────
+  "%%%satisfied%%% Fixed the screen door. Two dollar spring. It sighs now instead of slamming.",
+  "%%%defeated and laughing%%% Five minutes on the pickle jar. The kid opened it one handed and left with a pickle.",
+  "%%%tired and amused%%% Somebody got a rooster two streets over. He starts at four fifteen and doesn't do weekends.",
+  "%%%fond%%% The fridge radio still gets the oldies if you tilt the antenna at the window. Just that one station.",
+  "%%%tender and excited%%% Held the baby a whole hour. Long fingers. Frowns exactly like her grandfather.",
+  "%%%rueful%%% Two miles out on the bike and that sad little hiss. Walked it home in the good shoes.",
+  "%%%calm%%% You can hear the church bells from the back step if the wind is right. Noon and six.",
+  "%%%sheepish%%% I've had the neighbor's ladder since Easter. Walking it back tonight with a pie.",
+  "%%%delighted%%% The corn truck's back. Dozen for five dollars and a thirteenth if you talk to him.",
+  "%%%embarrassed and amused%%% Wrong bus this morning. Same number, other direction. Noticed when the river was on the wrong side.",
+  "%%%pleased%%% The bread machine still works. The kids watched the little window like it was television.",
+  "%%%grudgingly impressed%%% The raccoon undid the bungee cord and looked right at me while he did it.",
+  "%%%mildly annoyed%%% The bedroom fan has one setting now. Wobble. I lie there wondering which night.",
+  "%%%tender%%% The old boy only wants half a block now. So we go half a block and read the mailboxes.",
+  "%%%excited%%% She tried on her grandmother's dress and it fit. No pins. That's the dress.",
+  "%%%relieved%%% Found the earring in the cuff of Tuesday's jeans. Went through the wash and came out shining.",
+  "%%%content%%% Fish fry at the fire hall Friday. Same three old men at the fryer. Same coleslaw.",
+  "%%%grumpy%%% The car's white with road salt to the door handles. No point washing it till March.",
+  "%%%thoughtful%%% Her biscuit card just says enough flour. I've been figuring out enough for ten years.",
+  "%%%indignant%%% Twenty-five dollar ticket for eleven minutes. Most expensive coffee I've ever had.",
+  "%%%amazed%%% Dad got hearing aids and asked if the refrigerator has always done that. He's mad at the floor now.",
+  "%%%frazzled and fond%%% Science project due tomorrow, found out tonight. There's baking soda on the cat.",
+  "%%%exasperated%%% The hose tied itself in a knot again. I coiled it. It undoes my coiling in the night.",
+  "%%%warm%%% Thirty-one years. Same booth, same pie, and we still split it.",
+  "%%%dismayed and laughing%%% The dog met a skunk. The dog lost. He came inside to tell everybody.",
+  "%%%wry%%% Forty pulls on the mower. The kid flipped a lever called the choke. I've owned it six years.",
+  "%%%amused%%% The meeting was about the speed bump and became forty-five minutes about wind chimes.",
+  "%%%easygoing%%% We just drove. River road till it ran out. Came home with honey and no idea what county.",
+  "%%%embarrassed%%% Library called. Eight months overdue. It's a book about organizing your life.",
+  "%%%relieved%%% Sirens at nine, everybody in the cellar. Passed us by. Ice cream still frozen.",
+  "%%%good natured%%% The choir robe's a foot too long. I'll sing from where I stand and skip the stairs.",
+  "%%%nostalgic%%% I still know my grandmother's phone number. Belongs to a dentist now. I say it anyway.",
+  "%%%hopeful%%% Somebody put a wishing well sign on the Main Street pothole. There's change in it now.",
+  "%%%teasing%%% You talked in your sleep. Something about the horses being late. I wrote it down.",
+  "%%%grateful%%% Bag of tomatoes on the porch, no note. That's Mrs. Alvarez. Tomato sandwiches tonight.",
+  "%%%weary%%% Three hours with the receipts. There's a shoebox. There's always a shoebox.",
+  "%%%easygoing%%% A moth came in with me and he's on the lampshade like he paid rent. He can stay.",
+  "%%%fond and tired%%% She learned to whistle. One note. All day. I told her she's a natural.",
+  "%%%baffled%%% Clocks changed and I got to church as they were letting out. Thought the sermon was short.",
+  "%%%proud%%% The sunflowers are taller than the garage light. The birds hold meetings up there every morning.",
+  "%%%wistful%%% The house I grew up in sold. The tree's still there. The swing isn't. That's how it goes.",
+  "%%%resourceful%%% The cake hit the floor frosting side down. Scooped it into bowls and called it a trifle.",
+  "%%%surprised and pleased%%% Twenty dollars in the winter coat pocket. From me last March, to me right now.",
+  "%%%warm%%% The kid on the corner's selling lemonade for fifty cents. He counted my change twice like a banker.",
+  "%%%calm%%% Fog so thick the end of the driveway was a rumor. Stood out there till it burned off.",
+  "%%%apologetic%%% Sorry, dead spot by the water tower. Go back. Your sister bought a boat? On purpose?",
+  "%%%tender%%% She drew me with four arms and a purple face. The extra arms are for hugging. It's on the fridge.",
+  "%%%rueful%%% Went down the back steps like a cartoon. Broke the ugly mug and nothing else. Salt's out now.",
+  "%%%thoughtful%%% Mrs. Kowalski left a cookie in the mailbox every Friday for three years. Never saw her do it.",
+  "%%%sheepish%%% The cat sent my boss an email. It says jjjjjjjjjjjjj. She said it made more sense than most Mondays.",
 ];
 
 /** Pick from a pool, never the same one twice in a row. */

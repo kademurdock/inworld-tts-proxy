@@ -126,7 +126,11 @@ test('no two scripts in a pool share an opening line (quick lines may echo a lon
 test('pickAudition never repeats immediately and covers the pool', () => {
   const seen = new Set();
   let last = null;
-  for (let i = 0; i < 1500; i++) {
+  // Part 119: the draw count scales with the pool. At 1,500 draws a pool of
+  // 303 leaves about two scripts unseen by chance (303 * e^(-1500/303)), and
+  // the test went red on batch six with nothing wrong. Twelve draws per
+  // script leaves 0.002 expected misses at any pool size.
+  for (let i = 0; i < LONG.length * 12; i++) {
     const x = pickAudition(LONG, 'test');
     assert.notEqual(x, last);
     last = x;
