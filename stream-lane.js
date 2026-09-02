@@ -31,6 +31,7 @@
  */
 
 "use strict";
+const { createLookaheadLimiter } = require("./limiter");
 
 /** Incremental parser for Inworld's streaming TTS response: feed() raw HTTP
  * bytes as they arrive, get back an array of decoded audio Buffers (possibly
@@ -168,7 +169,14 @@ function buildStreamingWavHeader({ numChannels, sampleRate, bitsPerSample }) {
  * `peakCeiling` so the pure-knee behaviour (and its tests) stay exact when
  * the option is absent. `appliedGain` keeps reporting the remembered gain;
  * `effectiveGain` is what the last chunk actually got. */
-function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples, peakCeiling, rampSamples }) {
+/* Part 117.3 (Sep 2 2026): `limiter: "lookahead"` (default) routes every
+ * sample through the same 3 ms lookahead limiter the buffered lane uses
+ * (limiter.js) at `ceiling`, instead of the per-sample tanh knee; the output
+ * is delayed by the limiter's lookahead, and flush() drains it at the end.
+ * `limiter: "tanh"` keeps the old waveshaper exactly. */
+function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples, peakCeiling, rampSamples, limiter = "tanh", ceiling: tpCeiling, sampleRate = 24000 }) {
+  const useLookahead = limiter === "lookahead";
+  const lim = useLookahead ? createLookaheadLimiter({ ceiling: tpCeiling || 28000, sampleRate }) : null;
   let carry = null; // a lone odd byte from the previous chunk
   let sampleIndex = 0;
   const g = typeof gain === "number" && isFinite(gain) && gain > 0 ? gain : 1.0;
@@ -200,21 +208,37 @@ function createStreamProcessor({ gain, knee, kneeRange, fadeInSamples, peakCeili
       }
       // the first chunk has nothing to ramp FROM -- it starts at its own gain
       const fromGain = sampleIndex === 0 ? toGain : curGain;
+      let w = 0; // output write index (lookahead mode lags input by lim.lookahead samples)
       for (let i = 0; i < total; i++) {
         const fade = sampleIndex < fadeInSamples ? sampleIndex / fadeInSamples : 1;
         const gi = ceiling && i < ramp ? fromGain + (toGain - fromGain) * (i / ramp) : toGain;
         let v = buf.readInt16LE(i * 2) * gi * fade;
-        const a = Math.abs(v);
-        if (a > knee) {
-          v = Math.sign(v) * (knee + kneeRange * Math.tanh((a - knee) / kneeRange));
+        if (lim) {
+          const out = lim.push(v);
+          if (out !== null) { buf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, out))), w * 2); w++; }
+        } else {
+          const a = Math.abs(v);
+          if (a > knee) {
+            v = Math.sign(v) * (knee + kneeRange * Math.tanh((a - knee) / kneeRange));
+          }
+          buf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, v))), i * 2);
+          w++;
         }
-        buf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, v))), i * 2);
         sampleIndex++;
       }
       curGain = toGain;
       self.effectiveGain = toGain;
-      return buf;
+      return lim ? buf.slice(0, w * 2) : buf;
     },
+    /** Drain the limiter's delay line at end of stream (lookahead mode only). */
+    flush() {
+      if (!lim) return Buffer.alloc(0);
+      const tail = lim.flush();
+      const out = Buffer.alloc(tail.length * 2);
+      tail.forEach((v, i) => out.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, v))), i * 2));
+      return out;
+    },
+    get limitedSamples() { return lim ? lim.limitedSamples : 0; },
   };
   return self;
 }

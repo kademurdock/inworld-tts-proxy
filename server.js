@@ -1355,6 +1355,9 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
             const { fmt, pcmStart } = sniffed;
             const remembered = TTS_NORM_ENABLED ? voiceGainMemory.get(inworldVoice) : 1.0;
             processor = createStreamProcessor({
+              limiter: TTS_NORM_LIMITER,
+              ceiling: TTS_NORM_CEILING,
+              sampleRate: fmt.sampleRate,
               gain: remembered,
               knee: TTS_NORM_KNEE,
               kneeRange: TTS_NORM_KNEE_RANGE,
@@ -1388,6 +1391,13 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
             res.write(out);
             flushedBytes += out.length;
           }
+        }
+      }
+      if (processor && processor.flush) {
+        const tail = processor.flush(); // Part 117.3: the limiter's 3 ms delay line
+        if (tail && tail.length) {
+          res.write(tail);
+          flushedBytes += tail.length;
         }
       }
     } catch (err) {
@@ -2684,6 +2694,82 @@ const TTS_NORM_MAX_OVERDRIVE = Math.pow(10, TTS_NORM_MAX_OVERDRIVE_DB / 20);
 // 2 dB so peaky voices stop getting ducked below the room-carrying target.
 const TTS_NORM_RAMP_MS = parseFloat(process.env.TTS_NORM_RAMP_MS || "90");
 const TTS_NORM_KNEE_BUDGET = parseFloat(process.env.TTS_NORM_KNEE_BUDGET || "0.015");
+/* ⭐ PART 117.3 (Sep 2 2026) — THE OUTPUT STAGE IS A LOOKAHEAD LIMITER, NOT A
+ * WAVESHAPER, AND THE CEILING IS A TRUE-PEAK CEILING. Her words: "I like
+ * having them consistent and loud, so they can carry on a speaker in a crowd
+ * but also sound full and warm on headphones… it seems like the voices are
+ * clipping. Like that little, sometimes buzz or crackle… I don't know if it's
+ * the volume as much as the EQ maybe?"
+ *
+ * Measured on the Sep 2 sweep clips (fish clones + Inworld, through this
+ * proxy), 4x-oversampled true peak: sample peaks sat at 32,400–32,750 on most
+ * clips and TRUE peaks crossed 0 dBFS on 7 of 12 fish auditions (up to
+ * +0.28 dBTP, 28 over-samples on one). That is the edge a Bluetooth codec, a
+ * phone speaker's own protection limiter, or any DAC reconstruction filter
+ * clips on — a crackle that is not in our file but is caused by it. The tanh
+ * knee was engaging 0.1–0.6% of samples on fish clones (mild) — but it is a
+ * static waveshaper, so every one of those samples is harmonic distortion on
+ * the loudest syllables. Broadcast practice is a -1 dBTP ceiling; that is
+ * what this does, with a limiter that turns the LEVEL down for a few
+ * milliseconds around a peak instead of bending the peak's shape (limiter.js
+ * has the design and the receipts). The RMS target is unchanged — speech
+ * peaks are short, so the gain dips cost ~0.1–0.3 dB of loudness on the
+ * measured clips and 0 dB of waveform shape.
+ *
+ * Not touched, because the measurement did not point at it: EQ. Her fish
+ * clones vary from -12 to -26 dB HF/LF tilt (Inworld sits near -25), so the
+ * bright ones read as "trebly" loud. An adaptive high-shelf tamer is built
+ * below behind TTS_EQ_DEHARSH=1 (default OFF) for her to A/B by ear.
+ *
+ * TTS_NORM_LIMITER=tanh restores the waveshaper in both lanes. */
+const TTS_NORM_LIMITER = process.env.TTS_NORM_LIMITER === "tanh" ? "tanh" : "lookahead";
+const TTS_NORM_CEILING_DBTP = parseFloat(process.env.TTS_NORM_CEILING_DBTP || "-1");
+// a sample-domain ceiling that keeps the reconstructed (inter-sample) peak
+// under the dBTP target: the sweep showed up to +0.35 dB of inter-sample rise
+const TTS_NORM_CEILING = Math.round(32767 * Math.pow(10, (TTS_NORM_CEILING_DBTP - 0.35) / 20));
+const { limitPcmInPlace, createLookaheadLimiter } = require("./limiter");
+const TTS_EQ_DEHARSH = process.env.TTS_EQ_DEHARSH === "1";
+const TTS_EQ_DEHARSH_TILT_DB = parseFloat(process.env.TTS_EQ_DEHARSH_TILT_DB || "-16"); // HF/LF above this gets shelved
+const TTS_EQ_DEHARSH_MAX_DB = parseFloat(process.env.TTS_EQ_DEHARSH_MAX_DB || "4");
+const TTS_EQ_DEHARSH_HZ = parseFloat(process.env.TTS_EQ_DEHARSH_HZ || "4500");
+/** HF(4–8 kHz) over LF(300–2000 Hz) energy, dB, on a decimated Goertzel-free
+ *  estimate: two one-pole filters are enough to rank brightness. */
+function measureTiltDb(pcmBuf, sampleRate) {
+  const total = pcmBuf.length >> 1;
+  if (total < sampleRate / 4) return null;
+  // crude band split: high-pass at ~3.5 kHz vs band 300–2000 via two one-poles
+  const kHp = Math.exp((-2 * Math.PI * 3500) / sampleRate);
+  const kLo = Math.exp((-2 * Math.PI * 2000) / sampleRate);
+  const kLo2 = Math.exp((-2 * Math.PI * 300) / sampleRate);
+  let hpPrevIn = 0, hpPrevOut = 0, lo = 0, lo2 = 0, eHf = 0, eLf = 0;
+  for (let i = 0; i < total; i++) {
+    const x = pcmBuf.readInt16LE(i * 2) / 32768;
+    const hp = kHp * (hpPrevOut + x - hpPrevIn); hpPrevIn = x; hpPrevOut = hp;
+    lo = lo * kLo + x * (1 - kLo);      // < 2 kHz
+    lo2 = lo2 * kLo2 + x * (1 - kLo2);  // < 300 Hz
+    const band = lo - lo2;              // 300–2000
+    eHf += hp * hp; eLf += band * band;
+  }
+  if (eLf <= 0) return null;
+  return 10 * Math.log10(eHf / eLf + 1e-12);
+}
+/** RBJ high-shelf biquad, in place. gainDb negative = cut above fc. */
+function applyHighShelf(pcmBuf, sampleRate, fc, gainDb) {
+  const total = pcmBuf.length >> 1;
+  const A = Math.pow(10, gainDb / 40);
+  const w0 = (2 * Math.PI * fc) / sampleRate, cos = Math.cos(w0), sin = Math.sin(w0);
+  const alpha = (sin / 2) * Math.sqrt(2); // Q = 1/sqrt(2)
+  const sq = 2 * Math.sqrt(A) * alpha;
+  const b0 = A * ((A + 1) + (A - 1) * cos + sq), b1 = -2 * A * ((A - 1) + (A + 1) * cos), b2 = A * ((A + 1) + (A - 1) * cos - sq);
+  const a0 = (A + 1) - (A - 1) * cos + sq, a1 = 2 * ((A - 1) - (A + 1) * cos), a2 = (A + 1) - (A - 1) * cos - sq;
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < total; i++) {
+    const x = pcmBuf.readInt16LE(i * 2);
+    const y = (b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0;
+    x2 = x1; x1 = x; y2 = y1; y1 = y;
+    pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, y))), i * 2);
+  }
+}
 const voiceGainMemory = new Map(); // resolved voice id -> last applied linear gain
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
@@ -2816,7 +2902,10 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
         ? Math.min(total, Math.max(32, Math.round((sampleRate * TTS_NORM_RAMP_MS) / 1000)))
         : 0;
 
-    if (Math.abs(gain - 1) < 0.03 && rampSamples === 0) return pcmBuf; // ~0.25 dB, not worth touching
+    // ~0.25 dB is not worth touching -- unless the raw peaks already sit over
+    // the true-peak ceiling (fish clones arrive at 30–31k), in which case the
+    // limiter still has a job (Part 117.3).
+    if (Math.abs(gain - 1) < 0.03 && rampSamples === 0 && !(TTS_NORM_LIMITER === "lookahead" && peak > TTS_NORM_CEILING)) return pcmBuf;
     // Soft-knee limiter (July 16 2026, replaces the bare hard clamp). The
     // smoothed peak cap above deliberately tolerates this clip's true peak
     // exceeding the estimate -- that is exactly what stops one transient from
@@ -2825,20 +2914,39 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     // loud and low quality" web call). tanh knee: transparent below KNEE,
     // saturates smoothly toward full scale above it, can never clip.
     let kneed = 0;
-    for (let i = 0; i < total; i++) {
-      // Ramp: glide from the voice's previous clip gain to this clip's over
-      // the opening TTS_NORM_RAMP_MS — level changes become inaudible slopes.
-      const g = i < rampSamples ? prevGain + ((gain - prevGain) * i) / rampSamples : gain;
-      let v = pcmBuf.readInt16LE(i * 2) * g;
-      const a = Math.abs(v);
-      if (a > TTS_NORM_KNEE) {
-        v = Math.sign(v) * (TTS_NORM_KNEE + TTS_NORM_KNEE_RANGE * Math.tanh((a - TTS_NORM_KNEE) / TTS_NORM_KNEE_RANGE));
-        kneed++;
+    let limitNote = "";
+    // Ramp: glide from the voice's previous clip gain to this clip's over
+    // the opening TTS_NORM_RAMP_MS — level changes become inaudible slopes.
+    const gainAt = (i) => (i < rampSamples ? prevGain + ((gain - prevGain) * i) / rampSamples : gain);
+    if (TTS_NORM_LIMITER === "lookahead") {
+      // Part 117.3: level-domain lookahead limiter at the true-peak ceiling.
+      // Optional de-harsh EQ runs first so the limiter sees the final peaks.
+      if (TTS_EQ_DEHARSH) {
+        const tilt = measureTiltDb(pcmBuf, sampleRate);
+        if (tilt != null && tilt > TTS_EQ_DEHARSH_TILT_DB) {
+          const cut = -Math.min(TTS_EQ_DEHARSH_MAX_DB, tilt - TTS_EQ_DEHARSH_TILT_DB);
+          applyHighShelf(pcmBuf, sampleRate, TTS_EQ_DEHARSH_HZ, cut);
+          limitNote += `, de-harsh ${cut.toFixed(1)} dB above ${TTS_EQ_DEHARSH_HZ} Hz (tilt ${tilt.toFixed(1)} dB)`;
+        }
       }
-      pcmBuf.writeInt16LE(Math.round(v), i * 2);
+      const r = limitPcmInPlace(pcmBuf, sampleRate, gainAt, TTS_NORM_CEILING);
+      kneed = r.limited;
+      if (kneed) limitNote += `, limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%, min gain ${(20 * Math.log10(r.minGain)).toFixed(1)} dB) at ${TTS_NORM_CEILING_DBTP} dBTP`;
+    } else {
+      for (let i = 0; i < total; i++) {
+        const g = gainAt(i);
+        let v = pcmBuf.readInt16LE(i * 2) * g;
+        const a = Math.abs(v);
+        if (a > TTS_NORM_KNEE) {
+          v = Math.sign(v) * (TTS_NORM_KNEE + TTS_NORM_KNEE_RANGE * Math.tanh((a - TTS_NORM_KNEE) / TTS_NORM_KNEE_RANGE));
+          kneed++;
+        }
+        pcmBuf.writeInt16LE(Math.round(v), i * 2);
+      }
+      if (kneed) limitNote = `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)`;
     }
     console.log(
-      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${kneed ? `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)` : ""}`
+      `[TTS] normalize: voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${limitNote}`
     );
   } catch (e) {
     console.warn("[TTS] normalize skipped:", e.message);
