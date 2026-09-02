@@ -362,6 +362,9 @@ PAGES.quickstart = {
 <h2>6. Want a clean slate?</h2>
 <p>To start a brand-new conversation, look for the <strong>New chat</strong> button (usually top of the screen or in the side menu). Your old chats are saved in the list on the side, so you can always go back to one.</p>
 
+<h2>6½. Lost? Go Home.</h2>
+<p>On the website, <a href="https://kademurdock.com/home"><strong>kademurdock.com/home</strong></a> is the map. It is laid out exactly like the iPhone app's home screen &mdash; Talk, then the twelve tools in the same order, then Settings and help &mdash; so if you know where something is on the phone, it is in the same place here. Every tool has its own address now too: <strong>/agent-builder</strong>, <strong>/bookmarks</strong>, <strong>/settings</strong>, <strong>/conversations</strong>, <strong>/announcements</strong>, and the rest. On a phone browser, Home is the first tab at the bottom; on a computer it is the first link at the top of the chat screen.</p>
+
 <h2>7. Meet the rest of the cast</h2>
 <p>Kiana's not the only one here. There's a whole <strong>marketplace</strong> of characters — a mechanic, a chef, a bedtime-story reader, you name it. See <a href="/help/characters">Characters &amp; the Marketplace</a> to go exploring.</p>
 
@@ -451,6 +454,13 @@ PAGES.whatsnew = {
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
+
+<h2>September 2, 2026</h2>
+<ul>
+  <li><strong>The website has a Home page now, and it is the iPhone app's map.</strong> <a href="https://kademurdock.com/home">kademurdock.com/home</a> lists everything in the same sections and the same order as the app's home screen &mdash; Talk, the twelve tools, Settings and help &mdash; with the same names and the same one-line hints. Two pages the website never had: <a href="https://kademurdock.com/conversations">Your conversations</a> as a plain list, and <a href="https://kademurdock.com/announcements">Announcements</a>. A "Web only" shelf at the bottom shows what the app does not have yet, so nothing is hidden. On a phone browser Home is the first tab at the bottom; on a computer it is the first link at the top of the chat screen.</li>
+  <li><strong>Things that used to hide in the side panel have real addresses.</strong> <a href="https://kademurdock.com/agent-builder">/agent-builder</a>, <a href="https://kademurdock.com/bookmarks">/bookmarks</a>, <a href="https://kademurdock.com/memories">/memories</a>, <a href="https://kademurdock.com/files">/files</a> and <a href="https://kademurdock.com/settings">/settings</a> each open the chat with that panel already showing. No more guessing which way the sidebar was flipped.</li>
+  <li><strong>Della talks at a normal volume again, and answers.</strong> A custom voice's whispered lines were making the volume memory overcorrect, so the next normal line came out distorted; the streamed voice path now watches each chunk. And a "Use Responses API" switch that this platform never supported has been removed from the builder's model settings &mdash; it was silently turning a character's every reply into an error.</li>
+</ul>
 
 <h2>September 1, 2026 — late</h2>
 <ul>
