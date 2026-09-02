@@ -206,7 +206,8 @@ ${main}
   </div>
   <footer class="site">
     <p>This is the help center for Kade-AI, a private little AI chat that Kade built and runs herself. Stuck on something not covered here? Just <strong>contact Kade</strong>.</p>
-    <p><a href="${CHAT_URL}">← Back to the chat</a> &nbsp;·&nbsp; <a href="/help">Help Home</a></p>
+    <p><a href="https://kademurdock.com/home">← Kade Home</a> &nbsp;·&nbsp; <a href="${CHAT_URL}">Back to the chat</a></p>
+    <p><small>&copy; 2026 Kade Murdock &middot; Kade-AI is built, paid for, and run by one blind woman in the Ozarks, for her people.</small></p>
   </footer>
 </div>
 </body>
