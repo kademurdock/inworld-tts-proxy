@@ -4461,6 +4461,35 @@ const VOICE_ADDITIONS_2026_08_30 = {
   }
 }
 
+// ── 2026-09-02 INWORLD ADDITIONS (Part 118; Kade: "there are at least 4 new
+// voices on my inworld account I want to add to the platform. More old
+// women."). Workspace diff: 277 customs on the account, 21 unregistered, 17
+// of them her standing hold-outs (Kade*, Amber*, Sky, Dale, Podcast Keighty)
+// — the four that are new and not held out are Della, Della2, Della3, Della4.
+// Numbered-only picker per her rule; names live here and in the catalog.
+const VOICE_ADDITIONS_2026_09_02 = {
+  "Voice 623": { target: "default-e-m11vgtr9l-m7afw4kmnw__della", name: "Della" },
+  "Voice 624": { target: "default-e-m11vgtr9l-m7afw4kmnw__della2", name: "Della2" },
+  "Voice 625": { target: "default-e-m11vgtr9l-m7afw4kmnw__della3", name: "Della3" },
+  "Voice 626": { target: "default-e-m11vgtr9l-m7afw4kmnw__della4", name: "Della4" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_09_02);
+  if (entries.length !== 4) throw new Error(`additions 09-02: expected 4, got ${entries.length}`);
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${623 + idx}`) throw new Error(`additions 09-02: non-contiguous at ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`additions 09-02: ${label} target shape (${info.target})`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`additions 09-02: ${label} collides`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
