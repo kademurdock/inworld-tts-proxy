@@ -2716,60 +2716,47 @@ const TTS_NORM_KNEE_BUDGET = parseFloat(process.env.TTS_NORM_KNEE_BUDGET || "0.0
  * peaks are short, so the gain dips cost ~0.1–0.3 dB of loudness on the
  * measured clips and 0 dB of waveform shape.
  *
- * Not touched, because the measurement did not point at it: EQ. Her fish
- * clones vary from -12 to -26 dB HF/LF tilt (Inworld sits near -25), so the
- * bright ones read as "trebly" loud. An adaptive high-shelf tamer is built
- * below behind TTS_EQ_DEHARSH=1 (default OFF) for her to A/B by ear.
+ * EQ: 117.3 parked a de-harsh high shelf (OFF); 117.4 replaced it with the
+ * two-shelf tone match in tone.js, ON by default, at her word.
  *
  * TTS_NORM_LIMITER=tanh restores the waveshaper in both lanes. */
 const TTS_NORM_LIMITER = process.env.TTS_NORM_LIMITER === "tanh" ? "tanh" : "lookahead";
-const TTS_NORM_CEILING_DBTP = parseFloat(process.env.TTS_NORM_CEILING_DBTP || "-1");
+const TTS_NORM_CEILING_DBTP = parseFloat(process.env.TTS_NORM_CEILING_DBTP || "-0.5"); // 117.3 shipped -1; 117.4 -0.5 at her ear ("a little quiet")
 // a sample-domain ceiling that keeps the reconstructed (inter-sample) peak
 // under the dBTP target: the sweep showed up to +0.35 dB of inter-sample rise
 const TTS_NORM_CEILING = Math.round(32767 * Math.pow(10, (TTS_NORM_CEILING_DBTP - 0.35) / 20));
 const { limitPcmInPlace, createLookaheadLimiter } = require("./limiter");
-const TTS_EQ_DEHARSH = process.env.TTS_EQ_DEHARSH === "1";
-const TTS_EQ_DEHARSH_TILT_DB = parseFloat(process.env.TTS_EQ_DEHARSH_TILT_DB || "-16"); // HF/LF above this gets shelved
-const TTS_EQ_DEHARSH_MAX_DB = parseFloat(process.env.TTS_EQ_DEHARSH_MAX_DB || "4");
-const TTS_EQ_DEHARSH_HZ = parseFloat(process.env.TTS_EQ_DEHARSH_HZ || "4500");
-/** HF(4–8 kHz) over LF(300–2000 Hz) energy, dB, on a decimated Goertzel-free
- *  estimate: two one-pole filters are enough to rank brightness. */
-function measureTiltDb(pcmBuf, sampleRate) {
-  const total = pcmBuf.length >> 1;
-  if (total < sampleRate / 4) return null;
-  // crude band split: high-pass at ~3.5 kHz vs band 300–2000 via two one-poles
-  const kHp = Math.exp((-2 * Math.PI * 3500) / sampleRate);
-  const kLo = Math.exp((-2 * Math.PI * 2000) / sampleRate);
-  const kLo2 = Math.exp((-2 * Math.PI * 300) / sampleRate);
-  let hpPrevIn = 0, hpPrevOut = 0, lo = 0, lo2 = 0, eHf = 0, eLf = 0;
-  for (let i = 0; i < total; i++) {
-    const x = pcmBuf.readInt16LE(i * 2) / 32768;
-    const hp = kHp * (hpPrevOut + x - hpPrevIn); hpPrevIn = x; hpPrevOut = hp;
-    lo = lo * kLo + x * (1 - kLo);      // < 2 kHz
-    lo2 = lo2 * kLo2 + x * (1 - kLo2);  // < 300 Hz
-    const band = lo - lo2;              // 300–2000
-    eHf += hp * hp; eLf += band * band;
-  }
-  if (eLf <= 0) return null;
-  return 10 * Math.log10(eHf / eLf + 1e-12);
-}
-/** RBJ high-shelf biquad, in place. gainDb negative = cut above fc. */
-function applyHighShelf(pcmBuf, sampleRate, fc, gainDb) {
-  const total = pcmBuf.length >> 1;
-  const A = Math.pow(10, gainDb / 40);
-  const w0 = (2 * Math.PI * fc) / sampleRate, cos = Math.cos(w0), sin = Math.sin(w0);
-  const alpha = (sin / 2) * Math.sqrt(2); // Q = 1/sqrt(2)
-  const sq = 2 * Math.sqrt(A) * alpha;
-  const b0 = A * ((A + 1) + (A - 1) * cos + sq), b1 = -2 * A * ((A - 1) + (A + 1) * cos), b2 = A * ((A + 1) + (A - 1) * cos - sq);
-  const a0 = (A + 1) - (A - 1) * cos + sq, a1 = 2 * ((A - 1) - (A + 1) * cos), a2 = (A + 1) - (A - 1) * cos - sq;
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-  for (let i = 0; i < total; i++) {
-    const x = pcmBuf.readInt16LE(i * 2);
-    const y = (b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0;
-    x2 = x1; x1 = x; y2 = y1; y1 = y;
-    pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, y))), i * 2);
-  }
-}
+/* ⭐ PART 117.4 (Sep 2 2026) — TONE MATCH, ON BY DEFAULT. Her words after the
+ * de-harsh shelf was built and parked: "I like the idea of the shelf, but it
+ * seems like a couple of the voices are too bassy as well, so it probably
+ * needs to be something covering more." So: two shelves, both directions,
+ * toward the Inworld reference she has lived with (tone.js has the design,
+ * the reference measurement and the rules). TTS_EQ_MATCH=0 turns it off. */
+const TTS_EQ_MATCH = process.env.TTS_EQ_MATCH !== "0";
+const TONE_CFG = {
+  lowTargetDb: parseFloat(process.env.TTS_EQ_LOW_TARGET_DB || "-2"),
+  highTargetDb: parseFloat(process.env.TTS_EQ_HIGH_TARGET_DB || "-13.5"),
+  deadbandDb: parseFloat(process.env.TTS_EQ_DEADBAND_DB || "3"),
+  maxCutDb: parseFloat(process.env.TTS_EQ_MAX_CUT_DB || "4"),
+  maxBoostDb: parseFloat(process.env.TTS_EQ_MAX_BOOST_DB || "3"),
+  lowShelfHz: parseFloat(process.env.TTS_EQ_LOW_SHELF_HZ || "300"),
+  highShelfHz: parseFloat(process.env.TTS_EQ_HIGH_SHELF_HZ || "3000"),
+};
+const { toneMatch } = require("./tone");
+/* Part 117.4 — LOUDER, NOW THAT THE LIMITER CAN TAKE IT. Her ear on 117.3:
+ * "it is a little quiet." The peak caps (2 dB over the smoothed peak, 4 dB
+ * over the raw peak, 1.5% of samples over the 26k knee) were sized for the
+ * waveshaper, and they are why fish clones landed 2–5 dB under the -13.5
+ * target: a clone arriving at a 31k peak could only ever get +2.3 dB.
+ * Simulated on two raw clones at the -0.5 dBTP ceiling: +4 dB of gain costs
+ * a 4.5 dB maximum dip on the loudest syllable and lands ~1 dB louder; +6 dB
+ * costs 6.5 dB on those syllables for ~2.3 dB. This takes the middle: up to
+ * 5 dB over the smoothed peak, 6 dB over the raw peak, and the governor is
+ * now the fraction of samples that would cross the CEILING before limiting
+ * (0.3%), not the old knee count. Ceiling itself -1 → -0.5 dBTP. */
+const TTS_NORM_LIMIT_HEADROOM_DB_LA = parseFloat(process.env.TTS_NORM_LIMIT_HEADROOM_DB_LA || "5");
+const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "6");
+const TTS_NORM_LIMIT_BUDGET = parseFloat(process.env.TTS_NORM_LIMIT_BUDGET || "0.003");
 const voiceGainMemory = new Map(); // resolved voice id -> last applied linear gain
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
@@ -2852,20 +2839,27 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
       const priorPeak = voicePeakEma.get(voiceKey);
       const peakLevel = priorPeak == null || snapped ? peak : priorPeak + (peak - priorPeak) * alpha;
       voicePeakEma.set(voiceKey, peakLevel);
-      gain = Math.min(gain, (32000 / peakLevel) * TTS_NORM_LIMIT_HEADROOM);
+      const la = TTS_NORM_LIMITER === "lookahead";
+      const headroom = la ? Math.pow(10, TTS_NORM_LIMIT_HEADROOM_DB_LA / 20) : TTS_NORM_LIMIT_HEADROOM;
+      const overdrive = la ? Math.pow(10, TTS_NORM_MAX_OVERDRIVE_DB_LA / 20) : TTS_NORM_MAX_OVERDRIVE;
+      gain = Math.min(gain, (32000 / peakLevel) * headroom);
       // Absolute ceiling against THIS clip's raw true peak (see const above).
-      gain = Math.min(gain, (32000 * TTS_NORM_MAX_OVERDRIVE) / peak);
+      gain = Math.min(gain, (32000 * overdrive) / peak);
     }
 
     // KNEE BUDGET (Aug 6): trim gain until saturator engagement fits the
     // budget — loudness up to the point of audible texture change, never past.
     if (gain > 1) {
+      // Part 117.4: in lookahead mode the governor is samples that would
+      // cross the true-peak ceiling (the limiter's work), not the old knee.
+      const govLine = TTS_NORM_LIMITER === "lookahead" ? TTS_NORM_CEILING : TTS_NORM_KNEE;
+      const govBudget = TTS_NORM_LIMITER === "lookahead" ? TTS_NORM_LIMIT_BUDGET : TTS_NORM_KNEE_BUDGET;
       for (let guard = 0; guard < 12; guard++) {
         let over = 0;
         for (let i = 0; i < total; i += 4) { // stride-4 scan: plenty of samples, quarter cost
-          if (Math.abs(pcmBuf.readInt16LE(i * 2)) * gain > TTS_NORM_KNEE) over++;
+          if (Math.abs(pcmBuf.readInt16LE(i * 2)) * gain > govLine) over++;
         }
-        if (over / Math.ceil(total / 4) <= TTS_NORM_KNEE_BUDGET) break;
+        if (over / Math.ceil(total / 4) <= govBudget) break;
         gain *= 0.92;
         if (gain <= 1) { gain = Math.max(gain, 1); break; }
       }
@@ -2920,15 +2914,8 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     const gainAt = (i) => (i < rampSamples ? prevGain + ((gain - prevGain) * i) / rampSamples : gain);
     if (TTS_NORM_LIMITER === "lookahead") {
       // Part 117.3: level-domain lookahead limiter at the true-peak ceiling.
-      // Optional de-harsh EQ runs first so the limiter sees the final peaks.
-      if (TTS_EQ_DEHARSH) {
-        const tilt = measureTiltDb(pcmBuf, sampleRate);
-        if (tilt != null && tilt > TTS_EQ_DEHARSH_TILT_DB) {
-          const cut = -Math.min(TTS_EQ_DEHARSH_MAX_DB, tilt - TTS_EQ_DEHARSH_TILT_DB);
-          applyHighShelf(pcmBuf, sampleRate, TTS_EQ_DEHARSH_HZ, cut);
-          limitNote += `, de-harsh ${cut.toFixed(1)} dB above ${TTS_EQ_DEHARSH_HZ} Hz (tilt ${tilt.toFixed(1)} dB)`;
-        }
-      }
+      // Tone match runs first so the limiter sees the final peaks.
+      if (TTS_EQ_MATCH) limitNote += toneMatch(pcmBuf, sampleRate, TONE_CFG);
       const r = limitPcmInPlace(pcmBuf, sampleRate, gainAt, TTS_NORM_CEILING);
       kneed = r.limited;
       if (kneed) limitNote += `, limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%, min gain ${(20 * Math.log10(r.minGain)).toFixed(1)} dB) at ${TTS_NORM_CEILING_DBTP} dBTP`;
