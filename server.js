@@ -4529,7 +4529,90 @@ const VOICE_CATEGORIES = {
 // the sectioned era ([{ name, voices }]) so the web and native pickers need
 // zero changes. To revive categories: rebuild the section list from the
 // dormant VOICE_CATEGORIES table above (and re-audit its genders first).
-const VOICE_PICKER_CATEGORIES = [{ name: "All Voices", voices: [...VOICE_LIST] }];
+let VOICE_PICKER_CATEGORIES = [{ name: "All Voices", voices: [...VOICE_LIST] }];
+
+/* ── VOICE CATALOG V2 — DESCRIBED, NOT NUMBERED (Part 118, Sep 2 2026) ──
+ * Her ask: "now that the voices are saying actual audition paragraphs, ears
+ * on the platform will better be able to tell the voices apart and describe
+ * them... I want to get rid of the old numbering system, but I don't want to
+ * have to think of names for any of them, and I don't want them to use their
+ * given names either. So I thought categories maybe."
+ *
+ * voice-catalog-v2.json is the ear pass: every one of the 621 picker voices
+ * synthesized on ONE neutral script (no steering tag — the first pass used
+ * [warm]/[serious] and the ear reported the performance: 227 "slow", 46
+ * "whispery"; a neutral read is the instrument) and described by Gemini as
+ * an instrument: gender, age, pitch, weight, brightness, texture, energy,
+ * accent, kind. Fish clones cross-checked against her own fish titles: zero
+ * gender mismatches (the Aug-3 retirement was Voice 431 "Female Rev" filed
+ * with the men).
+ *
+ * The picker label is the description plus ONE neutral tag word (trees,
+ * rivers, gems, weather, tools — never a person's name, chosen by the
+ * session, her pick of the four options offered): "husky low woman ·
+ * guppy". About 260 voices describe identically by ear, so the tag is what
+ * makes a label unique and memorable; it is FROZEN in the JSON per voice —
+ * a re-audit may change the description, never the tag.
+ *
+ * Contract: the new labels become the picker list (`voices`) and the
+ * category sections; every "Voice N" and old display spelling moves to
+ * `hidden` (still resolves at synth forever — Amber A's Della is "Voice 69"
+ * on her agent and keeps speaking), `renames` maps every old spelling to its
+ * new label so the fork migrates a stored pick instead of snapping it to
+ * voices[0], and `describe` carries the one-sentence description for the
+ * picker to read and for agent casting. VOICE_PICKER_V2=0 restores the
+ * numbered picker with no deploy. */
+const VOICE_PICKER_V2 = process.env.VOICE_PICKER_V2 !== "0";
+const VOICE_RENAMES = {};   // old label (bare number, named display, beta spelling) -> new descriptive label
+const VOICE_DESCRIBE = {};  // new label -> one-sentence description
+const VOICE_TAGS = {};      // new label -> tag word
+let VOICE_CATALOG_V2 = null;
+try {
+  VOICE_CATALOG_V2 = require("./voice-catalog-v2.json");
+} catch (e) {
+  console.warn(`[voice-catalog] v2 catalog not loadable (${e.message}) — numbered picker stays`);
+}
+if (VOICE_PICKER_V2 && VOICE_CATALOG_V2 && VOICE_CATALOG_V2.voices) {
+  const numberedInPicker = new Set(VOICE_LIST);
+  const byNumber = VOICE_CATALOG_V2.voices;
+  const newList = [];
+  const sections = [];
+  let missing = 0;
+  for (const c of VOICE_CATALOG_V2.categories) {
+    const vs = [];
+    for (const label of c.voices) {
+      const entry = Object.entries(byNumber).find(([, info]) => info.label === label);
+      if (!entry) continue;
+      const [num, info] = entry;
+      const target = NUMBERED_VOICE_ALIASES[num];
+      if (!target || !numberedInPicker.has(num)) continue; // retired or unknown: never resurrect
+      VOICE_MAP[label] = target;
+      VOICE_RENAMES[num] = label;
+      VOICE_DESCRIBE[label] = info.description || "";
+      VOICE_TAGS[label] = info.tag;
+      vs.push(label);
+      newList.push(label);
+    }
+    if (vs.length) sections.push({ name: c.name, voices: vs });
+  }
+  // Voices in the picker that the ear has not met yet (a future addition)
+  // keep their number and land in a trailing section, never vanish.
+  const leftover = VOICE_LIST.filter((v) => !VOICE_RENAMES[v]);
+  if (leftover.length) { sections.push({ name: "Not yet described", voices: leftover }); missing = leftover.length; }
+  // every old spelling (bare number, named display, beta spelling, the
+  // named alias like "Birta" or "alloy") -> the new label, by shared target
+  const newByTarget = new Map();
+  for (const [num, label] of Object.entries(VOICE_RENAMES)) newByTarget.set(VOICE_MAP[num], label);
+  for (const [oldLabel, target] of Object.entries(VOICE_MAP)) {
+    if (VOICE_RENAMES[oldLabel] || VOICE_DESCRIBE[oldLabel] !== undefined) continue;
+    const label = newByTarget.get(target);
+    if (label) VOICE_RENAMES[oldLabel] = label;
+  }
+  for (const v of VOICE_LIST) if (VOICE_RENAMES[v] && !HIDDEN_VOICE_ALIASES.includes(v)) HIDDEN_VOICE_ALIASES.push(v);
+  VOICE_LIST.splice(0, VOICE_LIST.length, ...newList, ...leftover);
+  VOICE_PICKER_CATEGORIES = sections;
+  console.log(`[voice-catalog] v2 picker: ${newList.length} described voices in ${sections.length} sections, ${missing} not yet described, ${Object.keys(VOICE_RENAMES).length} old spellings mapped`);
+}
 
 // ── BOOT-TIME CATALOG INTEGRITY CHECK (July 17 2026, overnight proposal C) ──
 // Scans the numbered map for (a) two numbers backed by the same real Inworld
@@ -4845,7 +4928,8 @@ app.get("/voices.json", (_req, res) => {
   // still resolve at synth but must never show in a picker — fork validators
   // union these with `voices` so stored old picks keep working forever.
   // `categories` (July 23 2026): ordered picker sections, presentation only.
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT });
+  // `renames` / `describe` / `tags` (Part 118): see the VOICE CATALOG V2 block.
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS });
 });
 
 // RETIRED July 3 2026 (Kade's call): the standalone Voice Library page is
