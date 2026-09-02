@@ -2771,10 +2771,14 @@ const TTS_NORM_LIMIT_HEADROOM_DB_LA = parseFloat(process.env.TTS_NORM_LIMIT_HEAD
  * voiced samples under more than 1 dB of gain reduction and 6% under more
  * than 3 dB; at 3 dB, no sample dips past 3 dB and the fast gain wiggle
  * (the part of the envelope above 30 Hz, which is the part you hear as
- * texture) falls by about 30%. Cost: 0.5-1.0 dB on the peakiest voices only;
- * fish clones and most Inworld voices are governed by the RMS target, not
- * this cap, and do not move. 117.5's own plan named this as the next knob. */
-const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "3"); // 117.5: 6 -> 4; 118: 4 -> 3
+ * texture) falls by about 30%. Cost: exactly 1 dB on every peak-capped
+ * voice, which is most Inworld stock voices (a live A/B on Voice 12 landed
+ * -14.9 vs -17.1 dB RMS, but two different takes; the raw peak swings 1 dB
+ * take to take). DEFAULT LEFT AT 4: "consistent and loud" is her standing
+ * ask and "a little buzz now and then" is the new one, and only her ear can
+ * price that trade -- so the 3 dB version is preset B on /lab/limiter and
+ * this env var flips it platform-wide in seconds, no deploy. */
+const TTS_NORM_MAX_OVERDRIVE_DB_LA = parseFloat(process.env.TTS_NORM_MAX_OVERDRIVE_DB_LA || "4"); // 117.5: 6 -> 4
 const TTS_NORM_LIMIT_BUDGET = parseFloat(process.env.TTS_NORM_LIMIT_BUDGET || "0.003");
 
 /* Part 118 — LAB PRESETS. `/v1/audio/speech?lab=<name>` renders the same text
@@ -2784,14 +2788,14 @@ const TTS_NORM_LIMIT_BUDGET = parseFloat(process.env.TTS_NORM_LIMIT_BUDGET || "0
  * do not train each other. Served by GET /lab/limiter. Only the output stage
  * varies; synthesis, chunking, steering and seams are untouched. */
 const TTS_LAB_PRESETS = {
-  // A — the way it sounded this morning (117.5)
-  morning: { overdriveDb: 4, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: null },
-  // B — what ships in Part 118
-  shipped: { overdriveDb: 3, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: null },
-  // C — cut-only tone (never boosts bass or treble) + 80 Hz rumble filter
-  lean:    { overdriveDb: 3, lowBoostDb: 0, highBoostDb: 0, hpfHz: 80, targetDb: null },
-  // D — B, one decibel louder at the target
-  loud:    { overdriveDb: 3, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: -12.5 },
+  // A — the live defaults (117.5 numbers, with 118's tone-first order)
+  live:    { overdriveDb: 4, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: null },
+  // B — A with the limiter asked to do less: peaks land 3 dB over the ceiling, not 4 (about 1 dB quieter on peaky voices)
+  gentler: { overdriveDb: 3, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: null },
+  // C — A with cut-only tone (never boosts bass or treble) + an 80 Hz rumble filter
+  lean:    { overdriveDb: 4, lowBoostDb: 0, highBoostDb: 0, hpfHz: 80, targetDb: null },
+  // D — A, one decibel hotter at the target (the limiter works harder for it)
+  loud:    { overdriveDb: 4, lowBoostDb: 3, highBoostDb: 3, hpfHz: 0, targetDb: -12.5 },
 };
 const voiceGainMemory = new Map(); // resolved voice id -> last applied linear gain
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)

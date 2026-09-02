@@ -16,10 +16,10 @@
 // checkout without node_modules. server.js hands us the app.
 
 const PRESETS = [
-  { key: "morning", letter: "A", label: "This morning", blurb: "How the voices sounded before this session: peaks allowed four decibels over the ceiling, bass and treble both boosted toward the reference when a voice sits far from it." },
-  { key: "shipped", letter: "B", label: "What ships now", blurb: "Peaks allowed three decibels over the ceiling, so no syllable is ever pulled down more than three. Everything else the same as A. About half a decibel quieter on the peakiest voices only." },
-  { key: "lean", letter: "C", label: "Lean", blurb: "B, plus: the tone match only ever cuts, never boosts bass or treble, and anything under eighty hertz is filtered out before the loudness stage. Built for phone speakers, which turn deep bass into buzz." },
-  { key: "loud", letter: "D", label: "Louder", blurb: "B with the loudness target one decibel hotter. The limiter works harder for it." },
+  { key: "live", letter: "A", label: "As it is now", blurb: "The live setting. Peaks may land four decibels over the ceiling before the limiter pulls them down, and the tone match may boost or cut bass and treble toward the reference when a voice sits far from it." },
+  { key: "gentler", letter: "B", label: "Gentler limiter", blurb: "Same as A, except peaks may land only three decibels over the ceiling, so no syllable is ever pulled down more than three. About one decibel quieter on the peakiest voices, unchanged on the rest." },
+  { key: "lean", letter: "C", label: "Lean tone", blurb: "Same as A, except the tone match only ever cuts, never boosts bass or treble, and anything under eighty hertz is filtered out before the loudness stage. Built for phone speakers, which turn deep bass into buzz." },
+  { key: "loud", letter: "D", label: "Louder", blurb: "Same as A with the loudness target one decibel hotter. The limiter works harder for it, so if there is a buzz in A, D should make it worse; if D sounds fine, the buzz is not the limiter." },
 ];
 
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -66,7 +66,7 @@ function mountLab(app) {
   <div id="status" role="status" aria-live="polite">Ready. Pick a version below and press its Play button.</div>
 ${buttons}
   <h2>What the letters change</h2>
-  <p>The limiter is the last thing every clip passes through. It looks a few milliseconds ahead and turns the whole clip down briefly whenever a peak would cross the ceiling. The overdrive number is how far over the ceiling the raw peaks are allowed to land before that happens, which is also the most any one syllable can be pulled down. The tone match measures every clip in three bands and nudges the bass and treble shelves toward the sound of the Inworld voices you already know. C turns the boosting half of that off and adds a rumble filter, which is the version to try if the buzz lives on your phone speaker and not in your headphones.</p>
+  <p>B, C and D each change exactly one thing from A, so whichever one sounds different tells Kade where the buzz lives. The limiter is the last thing every clip passes through. It looks a few milliseconds ahead and turns the whole clip down briefly whenever a peak would cross the ceiling. The overdrive number is how far over the ceiling the raw peaks are allowed to land before that happens, which is also the most any one syllable can be pulled down. The tone match measures every clip in three bands and nudges the bass and treble shelves toward the sound of the Inworld voices you already know. C turns the boosting half of that off and adds a rumble filter, which is the version to try if the buzz lives on your phone speaker and not in your headphones.</p>
   <p><a href="/help/voice">Back to Talking and Listening</a></p>
 </main>
 <script>
