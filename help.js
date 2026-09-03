@@ -1301,14 +1301,21 @@ PAGES.audio = {
 
 <h2>The catch: it costs a little (not much)</h2>
 <div class="callout warn">
-  <p>Making audio pulls from the same small pot of credits as pictures and video. It's cheap — about <strong>7 or 8 cents a minute</strong>, so a full two-minute scene runs around 15 cents — but the pot isn't bottomless. Make all the audio you like; just don't fire off a thousand at once. The spend shows up on your <a href="/help/donate">Usage &amp; Balance</a> page. If audio ever stops working, the pot may need a top-up — <strong>contact Kade</strong>.</p>
+  <p>Making audio pulls from the same small pot of credits as pictures and video. It's cheap — about <strong>19 cents a minute</strong>, so a full two-minute scene runs under 40 cents — but the pot isn't bottomless. Make all the audio you like; just don't fire off a thousand at once. The spend shows up on your <a href="/help/donate">Usage &amp; Balance</a> page. If audio ever stops working, the pot may need a top-up — <strong>contact Kade</strong>.</p>
 </div>
 
 <h2>Good to know</h2>
 <ul>
-  <li>Each clip is up to about <strong>2 minutes</strong> long. Want something longer? Ask for it in parts and Cadence can stitch them together.</li>
-  <li>It speaks <strong>English and Chinese</strong> right now.</li>
-  <li>Only copy a voice you have <strong>permission</strong> to use — your own, or one you're allowed to use.</li>
+  <li>Each Seed Audio clip is up to about <strong>2 minutes</strong> long. Want something longer? Ask for it in parts and Cadence can stitch them together &mdash; or ask for a <em>narration</em> (below), which has no length limit.</li>
+  <li>Seed Audio speaks <strong>twenty languages</strong>; ask Cadence to name them if you need one in particular.</li>
+</ul>
+
+<h2>Narration: one voice, really acting (new September 3, 2026)</h2>
+<p>Kade-AI now runs a second audio engine, <strong>Scenema Audio</strong>, on Kade's own rented graphics card. Where Seed Audio makes a whole scene, Scenema makes a <em>performance</em>: one voice reading your words with stage directions between the lines &mdash; the feeling can shift mid-sentence, it breathes, it pauses, it can crack on a word. Describe the actor in words ("a woman in her sixties, low and warm, a little tired, Southern") or hand it a ten-second clip of a voice to copy. It is built for bedtime stories, monologues, letters read aloud, and whole audiobook chapters: there is <strong>no length limit</strong>.</p>
+<ul>
+  <li>Ask Cadence, or any character with the studio tool, for a <strong>narration</strong>. It is a queued job, not instant: your phone buzzes when it is ready and the clip lands in <strong>My Creations</strong>. A minute of audio takes about a minute to make, plus a minute or two if the machine was asleep.</li>
+  <li>It costs about <strong>2 cents a minute</strong> of finished audio. There is a small daily and monthly budget for it; the character will say so if it is used up.</li>
+  <li>One voice per narration and no music. For two people talking, or a scene with a score, that is still Seed Audio.</li>
 </ul>
 
 <h2>For folks using a screen reader</h2>
