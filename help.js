@@ -961,7 +961,12 @@ PAGES.describe = {
 <h2>The easiest way: right from the app</h2>
 <p>Open the account menu (top right) and choose <strong>Describe a Photo or Document</strong> — or go straight to <strong>kademurdock.com/describe</strong>. Press <strong>Choose a photo or document</strong>, pick from your camera roll or files, done.</p>
 
-<h2>iPhone: put it in your share sheet (one-time setup)</h2>
+<h2>iPhone app: send a photo or file straight to your companion (new September 3, 2026)</h2>
+<p>This is different from Describe, and it's the one most people want: from <em>any</em> app on your phone — Photos, Files, Mail, a webpage — press <strong>Share</strong> and choose <strong>Send to Kade-AI</strong>. Add a note if you like, press Post, then open Kade-AI: it opens a chat with your main companion with the file already attaching and your note typed in, and you press Send.</p>
+<p>You press Send yourself on purpose. A share sheet should never be able to post into a conversation without a person deciding to — and for the same reason, the share sheet itself holds no login of its own. It hands the file to the app, and the app, already signed in as you, does the sending.</p>
+<p>Describe (below) is the other one: that's for "what <em>is</em> this?" — it reads a photo or document back to you and keeps nothing.</p>
+
+<h2>iPhone website: put Describe in your share sheet (one-time setup)</h2>
 <p>Apple doesn't let websites appear in the iPhone share menu on their own, so there's a one-time trick using the Shortcuts app — about two minutes, and the <a href="/describe">Describe page</a> walks you through it step by step with your own personal link. After that: any photo or PDF → <strong>Share</strong> → <strong>Describe with Kade-AI</strong> → the page opens and starts reading.</p>
 <div class="callout">
   <p>Your personal link on that page works like a password for descriptions on your account — don't post it anywhere public. If it ever leaks, tell Kade and she can rotate it.</p>
@@ -1318,8 +1323,21 @@ PAGES.audio = {
   <li>One voice per narration and no music. For two people talking, or a scene with a score, that is still Seed Audio.</li>
 </ul>
 
+<h2>The Sound Booth: make it yourself, no character needed (new September 3, 2026)</h2>
+<p>Everything above happens by <em>asking a character</em>. The <strong>Sound Booth</strong> is the same two engines with your hands on them directly — it's on the home screen in the app, under Tools, and on the web at <a href="/sound-booth">/sound-booth</a>.</p>
+<ul>
+  <li>Pick the engine: <strong>Scenema</strong> for one actor performing, or <strong>Seed Audio</strong> for a whole scene with several voices and music.</li>
+  <li>Type what you want said in the big box. Then either <strong>"Turn my words into a script"</strong> — which keeps every word you wrote and only adds the stage directions around them — or <strong>"Write me one"</strong>, where you describe a piece and it writes it for you.</li>
+  <li>Pick a voice from the same wheel the rest of the app uses, or describe one in words, or <strong>import a clip</strong> of somebody talking to copy. Ten to twenty seconds is plenty. A clip beats a description every time when you want a <em>particular</em> person — describing a voice gets the age wrong more often than it gets it right.</li>
+  <li>Choose a <strong>mood</strong>: tender, wry, urgent, sleepy bedtime, matter of fact. It becomes a note to the actor between your sentences.</li>
+  <li><strong>Easy</strong> mode is the above. <strong>Advanced</strong> opens every setting the engine has — the scene, how close the listener is, pace, a seed for repeating a take exactly, scene sound, studio quality — and lets you edit the raw script yourself.</li>
+  <li>Before it spends anything it <strong>says the price out loud</strong> and asks once more. Nothing runs on one tap.</li>
+  <li>Everything you make is saved in the Booth's <strong>library</strong> with its script, so you can open it back up, swap the voice, and render it again. Each take can be played, and <strong>saved or shared</strong> — on a phone that opens the share sheet, so "Save to Files" keeps a copy or you can send it straight to someone.</li>
+</ul>
+
 <h2>For folks using a screen reader</h2>
 <p>Every clip comes with a short written note of <strong>what you'll hear</strong> — who's speaking, the mood, the key sounds — right next to the player, and it's saved with the clip on your My Creations page. The player itself is a normal audio player you can reach and control with the keyboard or your screen reader.</p>
+<p>In the Sound Booth, the price, the progress and any problem are all spoken through <em>one</em> status line, so they never talk over each other, and the read-back tells you what a listener will hear before you spend a cent.</p>
 ${nextprev("images", "temporary")}
 `,
 };
