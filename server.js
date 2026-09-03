@@ -4508,6 +4508,38 @@ const VOICE_ADDITIONS_2026_09_02 = {
   });
 }
 
+// ── 2026-09-03 FISH ADDITIONS (Part 119.5; Kade: "I made a few, like 4 more
+// fish voices today that can be included. They're all women."). Pulled live
+// from api.fish.audio: 278 self models, 50 unregistered, and exactly four are
+// hers from today (22:32–22:38Z Sep 2), all designed, all public — the other
+// 46 are the standing person-named hold-outs (Amber*, Kade*, Nana, Morrison…)
+// and stay out. Numbered-only picker per her rule; names live here and as
+// hidden aliases. APPEND-ONLY; same boot-crash rails as every prior block.
+const FISH_ADDITIONS_2026_09_03 = {
+  "Voice 627": { target: "fish:a3d88d66865046d9b5f65027a9b7afa1", name: "Confident Storyteller" },
+  "Voice 628": { target: "fish:58bd5d6b6ce14e18aae75d464f062ced", name: "Mature Confident Speaker" },
+  "Voice 629": { target: "fish:0261cbc2d26f40db9b77abb5d2172c09", name: "Warm Storyteller Female" },
+  "Voice 630": { target: "fish:b5bba735853741479557f059fb4fb86e", name: "Warm Older Storyteller" },
+};
+{
+  const entries = Object.entries(FISH_ADDITIONS_2026_09_03);
+  if (entries.length !== 4) throw new Error(`additions 09-03: expected 4, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(VOICE_MAP));
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${627 + idx}`) throw new Error(`additions 09-03: non-contiguous at ${label}`);
+    if (!info.target.startsWith(FISH_VOICE_PREFIX)) throw new Error(`additions 09-03: ${label} target shape (${info.target})`);
+    if (NUMBERED_VOICE_ALIASES[label]) throw new Error(`additions 09-03: ${label} collides`);
+    if (seenTargets.has(info.target)) throw new Error(`additions 09-03: ${label} DUPLICATE BACKING ID ${info.target}`);
+    const display = `${label} ${info.name}`;
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[display] = info.target;            // named form = hidden alias only
+    VOICE_LIST.push(label);                      // numbered-only picker (her rule)
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(display);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
