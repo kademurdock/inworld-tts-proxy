@@ -1179,6 +1179,38 @@ router.post("/librechat/diary-admin-edit", auth, async (req, res) => {
   }
 });
 
+// POST /librechat/diary-admin-create {userId, text, agentId?, scope?, entryDate?,
+// source?, salience?} -> WRITE one logbook entry onto any seat (the fork's
+// POST /api/admin/diary backfill lane, which embeds like any other write).
+// Part 122.3: admin had list/edit/delete for the logbook and NO create, while
+// memory has list/set/retire — so a logbook could be read and deleted but never
+// filled, and an agent-scoped logbook could not follow its person when they
+// moved a subject to another companion. Her word: "admin needs access to the
+// logs the same way they do the memory. They work together, one provides facts
+// and the other context."
+//
+// ⚠️ PROVENANCE. Retrieval renders "a few dated entries from YOUR private
+// logbook about this person" with no source line, so an entry copied in raw
+// makes the receiving agent remember a scene it was never in. When copying
+// between agents, say so in the text.
+router.post("/librechat/diary-admin-create", auth, async (req, res) => {
+  const { userId, text, agentId, scope, entryDate, source, salience } = req.body || {};
+  if (!userId || !text) return res.status(400).json({ error: "userId and text are required" });
+  try {
+    res.json(await lc("POST", "/api/admin/diary", {
+      userId,
+      text,
+      ...(agentId !== undefined ? { agentId } : {}),
+      ...(scope !== undefined ? { scope } : {}),
+      ...(entryDate !== undefined ? { entryDate } : {}),
+      ...(source !== undefined ? { source } : {}),
+      ...(salience !== undefined ? { salience } : {}),
+    }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // ============================================================================
 // TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
 // and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
