@@ -86,6 +86,12 @@ const FISH_VOICE_PREFIX = "fish:";
 // pure pacing, [0.5, 1.5], 1.0 = the voice's own native speed.
 // Both env-overridable so they can be re-tuned without a code change.
 const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "CREATIVE";
+// Part 129 (Sep 4 2026, the TTS-2 GA mail): `enhanceGeneration` is Inworld's
+// new denoise pass on the synthesized audio. Measured the day it shipped, two
+// voices, same line: no latency cost (2.2-2.5 s either way), same billed
+// characters, noise floor already at -78 dB without it -- so OFF by default
+// and one env flip away. TTS_ENHANCE=1 turns it on for every Inworld request.
+const TTS_ENHANCE = process.env.TTS_ENHANCE === "1";
 /* Part 119.3 (Sep 2 2026), her ask: "a toggle for the voice you picked, basically
  * controlling the temp, or delivery as inworld calls it." Per-request `delivery`
  * on /v1/audio/speech: STABLE | BALANCED | CREATIVE (Inworld's own enum, tts-2
@@ -1156,6 +1162,7 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
        *      tag is processed characters — 161 vs 97 on the same test sentence,
        *      and 30% of her real reply's 5,400 characters were tags. */
       ...(instruction ? { instruction } : {}),
+      ...(TTS_ENHANCE ? { enhanceGeneration: true } : {}),
       /* Aug 24 2026 (Part 92.15) — TELL EACH CHUNK WHAT CAME BEFORE IT.
        * Kade, on hearing the class-retirement work: "that context thing… where
        * the previous clip sounds like it has no context to the next one?" That
@@ -1333,6 +1340,7 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
           },
           deliveryMode: delivery || TTS_DELIVERY_MODE,
           ...(instruction ? { instruction } : {}),
+          ...(TTS_ENHANCE ? { enhanceGeneration: true } : {}),
           ...(previousTexts && previousTexts.length
             ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
             : {}),
