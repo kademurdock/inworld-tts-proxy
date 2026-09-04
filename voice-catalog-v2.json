@@ -5,21 +5,15 @@
   {
    "name": "Women, bright and high, young",
    "voices": [
-    "clear high young woman · chanterelle",
-    "clear high young woman · cleat",
-    "clear high young woman · hickory",
     "clear high young woman · muffin",
-    "clear high young woman · spline",
     "clear high young woman · summit",
     "clear high young woman · weevil",
     "clear high young woman, Black American · beechnut",
     "clear high-ish young woman · accordion",
     "clear high-ish young woman · almond",
     "clear high-ish young woman · anchor",
-    "clear high-ish young woman · apricot",
     "clear high-ish young woman · arcturus",
     "clear high-ish young woman · assam",
-    "clear high-ish young woman · aster",
     "clear high-ish young woman · auger",
     "clear high-ish young woman · bassoon",
     "clear high-ish young woman · batten",
@@ -51,7 +45,6 @@
     "clear high-ish young woman · harness",
     "clear high-ish young woman · haze",
     "clear high-ish young woman · kayak",
-    "clear high-ish young woman · lanyard",
     "clear high-ish young woman · level",
     "clear high-ish young woman · lighthouse",
     "clear high-ish young woman · limpet",
@@ -61,7 +54,6 @@
     "clear high-ish young woman · luna",
     "clear high-ish young woman · magnolia",
     "clear high-ish young woman · mallet",
-    "clear high-ish young woman · minnow",
     "clear high-ish young woman · mist",
     "clear high-ish young woman · mocha",
     "clear high-ish young woman · monsoon",
@@ -74,9 +66,7 @@
     "clear high-ish young woman · pawpaw",
     "clear high-ish young woman · pelican",
     "clear high-ish young woman · peppercorn",
-    "clear high-ish young woman · porcini",
     "clear high-ish young woman · primrose",
-    "clear high-ish young woman · puffball",
     "clear high-ish young woman · pulley",
     "clear high-ish young woman · pumpernickel",
     "clear high-ish young woman · quilt",
@@ -96,7 +86,6 @@
     "clear high-ish young woman · tidepool",
     "clear high-ish young woman · tinder",
     "clear high-ish young woman · tourmaline",
-    "clear high-ish young woman · trillium",
     "clear high-ish young woman · tupelo",
     "clear high-ish young woman · velvet",
     "clear high-ish young woman · vermilion",
@@ -128,8 +117,6 @@
     "clear young woman · cirrus",
     "clear young woman · clamp",
     "clear young woman · cobble",
-    "clear young woman · dovetail",
-    "clear young woman · dowel",
     "clear young woman · genmaicha",
     "clear young woman · oak",
     "clear young woman · pike",
@@ -142,7 +129,6 @@
     "clear young woman · wick",
     "smooth young woman · bedspread",
     "smooth young woman · headwater",
-    "smooth young woman · persimmon",
     "smooth young woman · polaris"
    ]
   },
@@ -181,7 +167,6 @@
     "smooth young woman · focaccia",
     "smooth young woman · hazelnut",
     "smooth young woman · hornet",
-    "smooth young woman · lightning",
     "smooth young woman · pancake",
     "smooth young woman · pistachio",
     "smooth young woman · plane",
@@ -195,7 +180,6 @@
     "smooth young woman · tarragon",
     "smooth young woman · tweed",
     "smooth young woman · viaduct",
-    "smooth young woman · zephyr",
     "smooth young woman · zinc",
     "smooth young woman, Black American · horsetail",
     "smooth young woman, Black American · latte"
@@ -278,14 +262,14 @@
     "warm low-ish woman, Black American · ricotta",
     "warm low-ish woman, Black American · tug",
     "warm woman · arbor",
-    "warm low-ish woman, Black American · bramble"
+    "warm low-ish woman, Black American · bramble",
+    "smooth low-ish woman · lichen"
    ]
   },
   {
    "name": "Women, soft and breathy",
    "voices": [
     "breathy high-ish young woman · beryl",
-    "breathy high-ish young woman · bluebell",
     "breathy high-ish young woman · burlap",
     "breathy high-ish young woman · cortado",
     "breathy high-ish young woman · hollow",
@@ -304,10 +288,8 @@
     "breathy low-ish young woman · havarti",
     "breathy low-ish young woman · macadamia",
     "breathy low-ish young woman · matcha",
-    "breathy low-ish young woman · pine",
     "breathy woman · cormorant",
     "breathy young woman · bagel",
-    "breathy young woman · bluegill",
     "breathy young woman · cardinal",
     "breathy young woman · daybed",
     "breathy young woman · gold",
@@ -319,9 +301,7 @@
     "breathy young woman · timpani",
     "breathy young woman · trowel",
     "thin high young woman · honeysuckle",
-    "thin high young woman · kinglet",
-    "thin high young woman · monarch",
-    "thin high-ish young woman · camshaft"
+    "thin high young woman · monarch"
    ]
   },
   {
@@ -417,14 +397,14 @@
     "husky low-ish middle-aged woman, Scottish · orpiment",
     "smooth low-ish middle-aged woman, Spanish-inflected English · oboe",
     "smooth low-ish woman, British regional · capella",
-    "warm low-ish middle-aged woman, British · winch"
+    "warm low-ish middle-aged woman, British · winch",
+    "smooth low-ish woman, Australian · gully"
    ]
   },
   {
    "name": "Men, bright and clear, young",
    "voices": [
     "clear young man · boysenberry",
-    "clear young man · halyard",
     "clear young man · kiln",
     "clear young man · scallop",
     "clear young man · square",
@@ -451,7 +431,6 @@
     "smooth low-ish young man · deneb",
     "smooth low-ish young man · flannel",
     "smooth low-ish young man · grommet",
-    "smooth low-ish young man · gully",
     "smooth low-ish young man · harbor",
     "smooth low-ish young man · harmonica",
     "smooth low-ish young man · ibis",
@@ -461,7 +440,6 @@
     "smooth low-ish young man · mauve",
     "smooth low-ish young man · merganser",
     "smooth low-ish young man · mohair",
-    "smooth low-ish young man · mortise",
     "smooth low-ish young man · muslin",
     "smooth low-ish young man · nimbus",
     "smooth low-ish young man · plover",
@@ -489,9 +467,7 @@
     "smooth young man · junebug",
     "smooth young man · leather",
     "smooth young man · mandolin",
-    "smooth young man · rivet",
-    "warm low-ish young man · barnacle",
-    "warm low-ish young man · tenon"
+    "warm low-ish young man · barnacle"
    ]
   },
   {
@@ -518,7 +494,6 @@
     "smooth low-ish man · gorge",
     "smooth low-ish man · kelp",
     "smooth low-ish man · kindling",
-    "smooth low-ish man · lichen",
     "smooth low-ish man · marjoram",
     "smooth low-ish man · mesa",
     "smooth low-ish man · mustard",
@@ -710,49 +685,74 @@
   {
    "name": "Kids and teens",
    "voices": [
-    "breathy high-ish kid · tadpole",
-    "clear high girl · bowfin",
-    "clear high-ish girl · gar",
-    "thin high girl · darter",
-    "thin high kid · drizzle",
-    "thin high kid · muskie",
+    "breathy low-ish girl · pine",
+    "clear high girl · hickory",
+    "smooth girl · persimmon",
+    "clear high-ish girl · aster",
+    "clear high-ish girl · trillium",
+    "thin high-ish girl · camshaft",
+    "clear high-ish girl · minnow",
+    "breathy girl · bluegill",
+    "clear high girl · chanterelle",
+    "clear high-ish girl · puffball",
+    "clear high girl · spline",
+    "thin high girl, cartoon · locust",
+    "thin high girl, cartoon · sprocket",
     "thin high-ish girl · cheddar",
-    "thin high-ish girl · hackberry"
+    "thin high-ish girl · hackberry",
+    "thin high girl · darter",
+    "clear high-ish girl · gar",
+    "clear high girl · bowfin",
+    "smooth boy · zephyr",
+    "thin high boy, cartoon · hammer",
+    "thin high kid, cartoon · hemlock",
+    "nasal high kid, cartoon · bittersweet",
+    "thin high kid, cartoon · gazebo",
+    "thin high kid, cartoon · sunfish",
+    "clear high kid, robotic · sturgeon",
+    "thin high kid, cartoon · paddlefish",
+    "thin high kid · drizzle",
+    "breathy high-ish kid · tadpole",
+    "thin high kid · muskie",
+    "breathy high-ish teen girl · bluebell",
+    "smooth teen girl · lightning",
+    "clear high-ish teen girl · apricot",
+    "clear high-ish teen girl · lanyard",
+    "clear teen girl · dowel",
+    "clear teen girl · dovetail",
+    "clear high teen girl · cleat",
+    "clear high-ish teen girl · porcini",
+    "clear teen boy · halyard",
+    "smooth teen boy · rivet",
+    "warm low-ish teen boy · tenon",
+    "smooth low-ish teen boy · mortise"
    ]
   },
   {
    "name": "Characters and cartoons",
    "voices": [
     "boomy low older man, British, theatrical · swallowtail",
-    "clear high kid, robotic · sturgeon",
     "clear high-ish young woman, robotic · wrench",
     "gravelly low-ish middle-aged man, theatrical · bolete",
-    "nasal high kid, cartoon · bittersweet",
     "nasal high middle-aged man, cartoon · elderberry",
     "nasal high-ish middle-aged woman, other non-native English, theatrical · ciabatta",
     "nasal high-ish woman, theatrical · liverwort",
-    "thin high girl, cartoon · locust",
-    "thin high girl, cartoon · sprocket",
     "thin high girl, cartoon · sycamore",
-    "thin high kid, cartoon · gazebo",
-    "thin high kid, cartoon · hemlock",
-    "thin high kid, cartoon · paddlefish",
-    "thin high kid, cartoon · sunfish",
     "thin high young woman, cartoon · brioche",
-    "thin high young woman, cartoon · hammer"
+    "thin high man, cartoon · kinglet"
    ]
   }
  ],
  "voices": {
   "Voice 424": {
-   "label": "clear high young woman · chanterelle",
+   "label": "clear high girl · chanterelle",
    "tag": "chanterelle",
-   "category": "Women, bright and high, young",
-   "description": "A bright, youthful female voice with a clear, light tone, well-suited for an energetic student or a friendly neighbor.",
+   "category": "Kids and teens",
+   "description": "A bright, young girl's voice with a clear, light tone, well-suited for an energetic student or a friendly neighbor.",
    "ear_label": "bright high young woman, clear American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
@@ -761,17 +761,21 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high young woman · chanterelle"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 368": {
-   "label": "clear high young woman · cleat",
+   "label": "clear high teen girl · cleat",
    "tag": "cleat",
-   "category": "Women, bright and high, young",
-   "description": "A high-pitched, energetic, and clear female voice, ideal for a youthful, enthusiastic, or bubbly character.",
+   "category": "Kids and teens",
+   "description": "A high-pitched, energetic, and clear teenage girl's voice, ideal for a youthful, enthusiastic, or bubbly character.",
    "ear_label": "bright high woman, lively general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
@@ -780,17 +784,21 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high young woman · cleat"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 10": {
-   "label": "clear high young woman · hickory",
+   "label": "clear high girl · hickory",
    "tag": "hickory",
-   "category": "Women, bright and high, young",
-   "description": "A bright, high-pitched young woman's voice with a clear, energetic tone, perfect for a lively, optimistic character.",
+   "category": "Kids and teens",
+   "description": "A bright, high-pitched young girl's voice with a clear, energetic tone, perfect for a lively, optimistic character.",
    "ear_label": "bright high young woman, clear American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
@@ -799,7 +807,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high young woman · hickory"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 457": {
    "label": "clear high young woman · muffin",
@@ -821,14 +833,14 @@
    }
   },
   "Voice 366": {
-   "label": "clear high young woman · spline",
+   "label": "clear high girl · spline",
    "tag": "spline",
-   "category": "Women, bright and high, young",
-   "description": "A high-pitched, bright, and energetic young female voice, ideal for a cheerful, youthful, or animated character.",
+   "category": "Kids and teens",
+   "description": "A high-pitched, bright, and energetic young girl's voice, ideal for a cheerful, youthful, or animated character.",
    "ear_label": "bright high young woman, clear American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
@@ -840,7 +852,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high young woman · spline"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 149": {
    "label": "clear high young woman · summit",
@@ -960,14 +976,14 @@
    }
   },
   "Voice 213": {
-   "label": "clear high-ish young woman · apricot",
+   "label": "clear high-ish teen girl · apricot",
    "tag": "apricot",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear, and youthful female voice with a natural tone, well-suited for friendly, relatable, or everyday characters.",
+   "category": "Kids and teens",
+   "description": "A bright, clear, and teenage girl's voice with a natural tone, well-suited for friendly, relatable, or everyday characters.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -976,7 +992,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · apricot"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 254": {
    "label": "clear high-ish young woman · arcturus",
@@ -1017,14 +1037,14 @@
    }
   },
   "Voice 48": {
-   "label": "clear high-ish young woman · aster",
+   "label": "clear high-ish girl · aster",
    "tag": "aster",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear, and youthful female voice with a natural tone, well-suited for friendly, everyday characters or relatable narrators.",
+   "category": "Kids and teens",
+   "description": "A bright, clear, and young girl's voice with a natural tone, well-suited for friendly, everyday characters or relatable narrators.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -1033,7 +1053,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · aster"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 530": {
    "label": "clear high-ish young woman · auger",
@@ -1625,14 +1649,14 @@
    }
   },
   "Voice 359": {
-   "label": "clear high-ish young woman · lanyard",
+   "label": "clear high-ish teen girl · lanyard",
    "tag": "lanyard",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear, and youthful female voice with a natural tone, well-suited for friendly, everyday characters or modern narrators.",
+   "category": "Kids and teens",
+   "description": "A bright, clear, and teenage girl's voice with a natural tone, well-suited for friendly, everyday characters or modern narrators.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -1641,7 +1665,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · lanyard"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 522": {
    "label": "clear high-ish young woman · level",
@@ -1815,14 +1843,14 @@
    }
   },
   "Voice 376": {
-   "label": "clear high-ish young woman · minnow",
+   "label": "clear high-ish girl · minnow",
    "tag": "minnow",
-   "category": "Women, bright and high, young",
-   "description": "A clear, bright young woman's voice with a natural, even delivery, well-suited for friendly, relatable characters.",
+   "category": "Kids and teens",
+   "description": "A clear, bright young girl's voice with a natural, even delivery, well-suited for friendly, relatable characters.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -1831,7 +1859,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · minnow"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 60": {
    "label": "clear high-ish young woman · mist",
@@ -2062,14 +2094,14 @@
    }
   },
   "Voice 425": {
-   "label": "clear high-ish young woman · porcini",
+   "label": "clear high-ish teen girl · porcini",
    "tag": "porcini",
-   "category": "Women, bright and high, young",
-   "description": "A clear, youthful female voice with a bright tone, well-suited for an everyday, friendly character.",
+   "category": "Kids and teens",
+   "description": "A clear, teenage girl's voice with a bright tone, well-suited for an everyday, friendly character.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -2078,7 +2110,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · porcini"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 43": {
    "label": "clear high-ish young woman · primrose",
@@ -2103,14 +2139,14 @@
    }
   },
   "Voice 428": {
-   "label": "clear high-ish young woman · puffball",
+   "label": "clear high-ish girl · puffball",
    "tag": "puffball",
-   "category": "Women, bright and high, young",
-   "description": "A clear, youthful female voice with a bright tone, well-suited for friendly, relatable, or everyday characters.",
+   "category": "Kids and teens",
+   "description": "A clear, young girl's voice with a bright tone, well-suited for friendly, relatable, or everyday characters.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -2119,7 +2155,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · puffball"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 301": {
    "label": "clear high-ish young woman · pulley",
@@ -2486,14 +2526,14 @@
    }
   },
   "Voice 51": {
-   "label": "clear high-ish young woman · trillium",
+   "label": "clear high-ish girl · trillium",
    "tag": "trillium",
-   "category": "Women, bright and high, young",
-   "description": "A bright, youthful female voice with a clear, energetic tone, well-suited for friendly, modern characters.",
+   "category": "Kids and teens",
+   "description": "A bright, young girl's voice with a clear, energetic tone, well-suited for friendly, modern characters.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -2502,7 +2542,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · trillium"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 26": {
    "label": "clear high-ish young woman · tupelo",
@@ -3002,14 +3046,14 @@
    }
   },
   "Voice 365": {
-   "label": "clear young woman · dovetail",
+   "label": "clear teen girl · dovetail",
    "tag": "dovetail",
-   "category": "Women, bright and clear, young",
-   "description": "A bright, clear, and youthful female voice with a natural American accent, well-suited for friendly, everyday characters.",
+   "category": "Kids and teens",
+   "description": "A bright, clear, and teenage girl's voice with a natural American accent, well-suited for friendly, everyday characters.",
    "ear_label": "bright clear young woman, even American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid",
     "weight": "light",
     "brightness": "bright",
@@ -3018,17 +3062,21 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear young woman · dovetail"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 362": {
-   "label": "clear young woman · dowel",
+   "label": "clear teen girl · dowel",
    "tag": "dowel",
-   "category": "Women, bright and clear, young",
-   "description": "A clear, bright young woman's voice with a natural, even tone, well-suited for an approachable everyday character.",
+   "category": "Kids and teens",
+   "description": "A clear, bright teenage girl's voice with a natural, even tone, well-suited for an approachable everyday character.",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid",
     "weight": "light",
     "brightness": "bright",
@@ -3037,7 +3085,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear young woman · dowel"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 483": {
    "label": "clear young woman · genmaicha",
@@ -3268,14 +3320,14 @@
    }
   },
   "Voice 24": {
-   "label": "smooth young woman · persimmon",
+   "label": "smooth girl · persimmon",
    "tag": "persimmon",
-   "category": "Women, bright and clear, young",
-   "description": "A clear, youthful female voice with a bright and even tone, well-suited for a friendly neighbor or relatable protagonist.",
+   "category": "Kids and teens",
+   "description": "A clear, young girl's voice with a bright and even tone, well-suited for a friendly neighbor or relatable protagonist.",
    "ear_label": "bright young woman, smooth general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid",
     "weight": "light",
     "brightness": "bright",
@@ -3284,7 +3336,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth young woman · persimmon"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 252": {
    "label": "smooth young woman · polaris",
@@ -3819,14 +3875,14 @@
    }
   },
   "Voice 63": {
-   "label": "smooth young woman · lightning",
+   "label": "smooth teen girl · lightning",
    "tag": "lightning",
-   "category": "Women, smooth and warm, young",
-   "description": "A clear, even-toned young woman's voice with a natural, straightforward delivery suited for relatable everyday characters.",
+   "category": "Kids and teens",
+   "description": "A clear, even-toned teenage girl's voice with a natural, straightforward delivery suited for relatable everyday characters.",
    "ear_label": "smooth young woman, even general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid",
     "weight": "light",
     "brightness": "neutral",
@@ -3835,7 +3891,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth young woman · lightning"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 459": {
    "label": "smooth young woman · pancake",
@@ -4085,14 +4145,14 @@
    }
   },
   "Voice 66": {
-   "label": "smooth young woman · zephyr",
+   "label": "smooth boy · zephyr",
    "tag": "zephyr",
-   "category": "Women, smooth and warm, young",
-   "description": "A gentle, clear, and youthful female voice with a calm delivery, well-suited for a relatable everyday character or narrator.",
+   "category": "Kids and teens",
+   "description": "A gentle, clear, and young boy's voice with a calm delivery, well-suited for a relatable everyday character or narrator.",
    "ear_label": "smooth young woman, calm general American",
    "fields": {
-    "gender": "woman",
-    "age": "young adult",
+    "gender": "man",
+    "age": "child",
     "pitch": "mid",
     "weight": "light",
     "brightness": "neutral",
@@ -4101,7 +4161,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth young woman · zephyr"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 105": {
    "label": "smooth young woman · zinc",
@@ -5593,14 +5657,14 @@
    }
   },
   "Voice 37": {
-   "label": "breathy high-ish young woman · bluebell",
+   "label": "breathy high-ish teen girl · bluebell",
    "tag": "bluebell",
-   "category": "Women, soft and breathy",
-   "description": "A soft, breathy young woman's voice with a gentle, intimate quality, well-suited for a quiet, sensitive character.",
+   "category": "Kids and teens",
+   "description": "A soft, breathy teenage girl's voice with a gentle, intimate quality, well-suited for a quiet, sensitive character.",
    "ear_label": "breathy young woman, soft general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -5609,7 +5673,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "breathy high-ish young woman · bluebell"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 235": {
    "label": "breathy high-ish young woman · burlap",
@@ -5954,14 +6022,14 @@
    }
   },
   "Voice 5": {
-   "label": "breathy low-ish young woman · pine",
+   "label": "breathy low-ish girl · pine",
    "tag": "pine",
-   "category": "Women, soft and breathy",
-   "description": "A soft, breathy young woman's voice with a gentle, intimate quality, well-suited for a quiet, reflective character.",
+   "category": "Kids and teens",
+   "description": "A soft, breathy young girl's voice with a gentle, intimate quality, well-suited for a quiet, reflective character.",
    "ear_label": "breathy young woman, soft general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "low-mid",
     "weight": "light",
     "brightness": "neutral",
@@ -5970,7 +6038,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.95
-   }
+   },
+   "formerLabels": [
+    "breathy low-ish young woman · pine"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 176": {
    "label": "breathy woman · cormorant",
@@ -6011,14 +6083,14 @@
    }
   },
   "Voice 380": {
-   "label": "breathy young woman · bluegill",
+   "label": "breathy girl · bluegill",
    "tag": "bluegill",
-   "category": "Women, soft and breathy",
-   "description": "A soft, breathy young woman's voice with a gentle tone, well-suited for a quiet, introspective character or a close friend.",
+   "category": "Kids and teens",
+   "description": "A soft, breathy young girl's voice with a gentle tone, well-suited for a quiet, introspective character or a close friend.",
    "ear_label": "breathy young woman, soft general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid",
     "weight": "light",
     "brightness": "neutral",
@@ -6027,7 +6099,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.95
-   }
+   },
+   "formerLabels": [
+    "breathy young woman · bluegill"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 158": {
    "label": "breathy young woman · cardinal",
@@ -6239,23 +6315,27 @@
    }
   },
   "Voice 162": {
-   "label": "thin high young woman · kinglet",
+   "label": "thin high man, cartoon · kinglet",
    "tag": "kinglet",
-   "category": "Women, soft and breathy",
-   "description": "A bright, high-pitched, and energetic young female voice with a light, thin quality, ideal for a lively, youthful character.",
+   "category": "Characters and cartoons",
+   "description": "A hoarse, cunning, high-pitched male character voice — a devious goblin, a scheming sidekick, a fantasy heist crew.",
    "ear_label": "bright high-pitched young woman, energetic American",
    "fields": {
-    "gender": "woman",
-    "age": "young adult",
+    "gender": "man",
+    "age": "adult",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
     "texture": "thin",
     "energy": "lively",
     "accent": "general American",
-    "kind": "natural",
+    "kind": "cartoon",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "thin high young woman · kinglet"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 419": {
    "label": "thin high young woman · monarch",
@@ -6281,14 +6361,14 @@
    }
   },
   "Voice 373": {
-   "label": "thin high-ish young woman · camshaft",
+   "label": "thin high-ish girl · camshaft",
    "tag": "camshaft",
-   "category": "Women, soft and breathy",
-   "description": "A bright, youthful female voice with a light, slightly thin tone, well-suited for energetic, friendly, or conversational characters.",
+   "category": "Kids and teens",
+   "description": "A bright, young girl's voice with a light, slightly thin tone, well-suited for energetic, friendly, or conversational characters.",
    "ear_label": "bright young woman, thin general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "child",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -6297,7 +6377,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "thin high-ish young woman · camshaft"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 378": {
    "label": "husky low woman · guppy",
@@ -7626,14 +7710,14 @@
    }
   },
   "Voice 358": {
-   "label": "clear young man · halyard",
+   "label": "clear teen boy · halyard",
    "tag": "halyard",
-   "category": "Men, bright and clear, young",
-   "description": "A clear, even-toned young man's voice, well-suited for an approachable, everyday character or friendly narrator.",
+   "category": "Kids and teens",
+   "description": "A clear, even-toned teenage boy's voice, well-suited for an approachable, everyday character or friendly narrator.",
    "ear_label": "clear young adult man, even general American",
    "fields": {
     "gender": "man",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid",
     "weight": "medium",
     "brightness": "neutral",
@@ -7642,7 +7726,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear young man · halyard"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 292": {
    "label": "clear young man · kiln",
@@ -7949,23 +8037,27 @@
    }
   },
   "Voice 139": {
-   "label": "smooth low-ish young man · gully",
+   "label": "smooth low-ish woman, Australian · gully",
    "tag": "gully",
-   "category": "Men, smooth and warm, young",
-   "description": "A calm, clear young male voice with a steady pace, well-suited for a friendly neighbor or relatable everyday character.",
+   "category": "Women, from abroad",
+   "description": "A friendly, upbeat Australian woman's voice with a smooth, easy delivery, well-suited to lifestyle chat, travel and casual conversation.",
    "ear_label": "smooth young man, even general American",
    "fields": {
-    "gender": "man",
-    "age": "young adult",
+    "gender": "woman",
+    "age": "adult",
     "pitch": "low-mid",
     "weight": "medium",
     "brightness": "neutral",
     "texture": "smooth",
     "energy": "even",
-    "accent": "general American",
+    "accent": "Australian",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth low-ish young man · gully"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 122": {
    "label": "smooth low-ish young man · harbor",
@@ -8139,14 +8231,14 @@
    }
   },
   "Voice 364": {
-   "label": "smooth low-ish young man · mortise",
+   "label": "smooth low-ish teen boy · mortise",
    "tag": "mortise",
-   "category": "Men, smooth and warm, young",
-   "description": "A calm, steady young man's voice with a smooth, neutral tone, well-suited for an everyday protagonist or a reliable friend.",
+   "category": "Kids and teens",
+   "description": "A calm, steady teenage boy's voice with a smooth, neutral tone, well-suited for an everyday protagonist or a reliable friend.",
    "ear_label": "even low-mid young man, smooth American",
    "fields": {
     "gender": "man",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "low-mid",
     "weight": "medium",
     "brightness": "neutral",
@@ -8155,7 +8247,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth low-ish young man · mortise"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 240": {
    "label": "smooth low-ish young man · muslin",
@@ -8675,14 +8771,14 @@
    }
   },
   "Voice 361": {
-   "label": "smooth young man · rivet",
+   "label": "smooth teen boy · rivet",
    "tag": "rivet",
-   "category": "Men, smooth and warm, young",
-   "description": "A clear, conversational young man's voice with an even tone, well-suited for an everyday protagonist or friendly narrator.",
+   "category": "Kids and teens",
+   "description": "A clear, conversational teenage boy's voice with an even tone, well-suited for an everyday protagonist or friendly narrator.",
    "ear_label": "even mid-pitch young man, smooth American",
    "fields": {
     "gender": "man",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "mid",
     "weight": "medium",
     "brightness": "neutral",
@@ -8691,7 +8787,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth young man · rivet"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 350": {
    "label": "warm low-ish young man · barnacle",
@@ -8713,14 +8813,14 @@
    }
   },
   "Voice 363": {
-   "label": "warm low-ish young man · tenon",
+   "label": "warm low-ish teen boy · tenon",
    "tag": "tenon",
-   "category": "Men, smooth and warm, young",
-   "description": "A warm, clear, and calm young male voice with a gentle presence, well-suited for an approachable, everyday protagonist.",
+   "category": "Kids and teens",
+   "description": "A warm, clear, and calm teenage boy's voice with a gentle presence, well-suited for an approachable, everyday protagonist.",
    "ear_label": "warm calm young man, clear general American",
    "fields": {
     "gender": "man",
-    "age": "young adult",
+    "age": "teen",
     "pitch": "low-mid",
     "weight": "medium",
     "brightness": "neutral",
@@ -8729,7 +8829,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "warm low-ish young man · tenon"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 498": {
    "label": "mellow low-ish man · tarn",
@@ -9135,13 +9239,13 @@
    }
   },
   "Voice 431": {
-   "label": "smooth low-ish man · lichen",
+   "label": "smooth low-ish woman · lichen",
    "tag": "lichen",
-   "category": "Men, smooth and warm, grown",
-   "description": "A calm, steady male voice with a smooth delivery, well-suited for an everyday narrator or a reliable, down-to-earth character.",
+   "category": "Women, smooth and warm, grown",
+   "description": "A calm, steady woman's voice with a smooth delivery, well-suited for an everyday narrator or a reliable, down-to-earth character.",
    "ear_label": "even-toned adult man, smooth general American",
    "fields": {
-    "gender": "man",
+    "gender": "woman",
     "age": "adult",
     "pitch": "low-mid",
     "weight": "medium",
@@ -9151,7 +9255,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth low-ish man · lichen"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 200": {
    "label": "smooth low-ish man · marjoram",
@@ -12150,7 +12258,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 388": {
    "label": "clear high girl · bowfin",
@@ -12169,7 +12278,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.9
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 387": {
    "label": "clear high-ish girl · gar",
@@ -12188,7 +12298,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.8
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 392": {
    "label": "thin high girl · darter",
@@ -12207,7 +12318,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.9
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 54": {
    "label": "thin high kid · drizzle",
@@ -12226,7 +12338,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 386": {
    "label": "thin high kid · muskie",
@@ -12245,7 +12358,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 461": {
    "label": "thin high-ish girl · cheddar",
@@ -12264,7 +12378,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.8
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 30": {
    "label": "thin high-ish girl · hackberry",
@@ -12283,7 +12398,8 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.9
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 420": {
    "label": "boomy low older man, British, theatrical · swallowtail",
@@ -12307,7 +12423,7 @@
   "Voice 389": {
    "label": "clear high kid, robotic · sturgeon",
    "tag": "sturgeon",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high-pitched, clear child's voice with a robotic, synthetic quality, suitable for a toy, AI assistant, or young robot character.",
    "ear_label": "high clear child, robotic general American",
    "fields": {
@@ -12321,7 +12437,8 @@
     "accent": "general American",
     "kind": "robotic",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 514": {
    "label": "clear high-ish young woman, robotic · wrench",
@@ -12364,7 +12481,7 @@
   "Voice 50": {
    "label": "nasal high kid, cartoon · bittersweet",
    "tag": "bittersweet",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high-pitched, nasal child's voice with a bright tone, ideal for animated characters or youthful, energetic roles.",
    "ear_label": "bright nasal child, clear general American",
    "fields": {
@@ -12378,7 +12495,8 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 284": {
    "label": "nasal high middle-aged man, cartoon · elderberry",
@@ -12440,7 +12558,7 @@
   "Voice 29": {
    "label": "thin high girl, cartoon · locust",
    "tag": "locust",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high, bright, and thin child's voice with a cartoonish quality, ideal for animated characters or playful young roles.",
    "ear_label": "high-pitched child voice, bright and thin",
    "fields": {
@@ -12454,13 +12572,14 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.8
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 370": {
    "label": "thin high girl, cartoon · sprocket",
    "tag": "sprocket",
-   "category": "Characters and cartoons",
-   "description": "A high, bright, and energetic child-like voice, perfect for animated characters or playful, youthful roles.",
+   "category": "Kids and teens",
+   "description": "A high, bright, and energetic child's voice, perfect for animated characters or playful, youthful roles.",
    "ear_label": "high-pitched cartoon child, bright American",
    "fields": {
     "gender": "woman",
@@ -12473,7 +12592,8 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.9
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 9": {
    "label": "thin high girl, cartoon · sycamore",
@@ -12497,7 +12617,7 @@
   "Voice 325": {
    "label": "thin high kid, cartoon · gazebo",
    "tag": "gazebo",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high-pitched, energetic child's voice with a bright, slightly cartoonish quality, perfect for animated characters or youthful narrators.",
    "ear_label": "bright high child, thin general American",
    "fields": {
@@ -12511,12 +12631,13 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 16": {
    "label": "thin high kid, cartoon · hemlock",
    "tag": "hemlock",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high, thin, and slightly synthetic child's voice, ideal for animated characters or youthful, energetic roles.",
    "ear_label": "high-pitched child voice, bright and thin",
    "fields": {
@@ -12530,12 +12651,13 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 390": {
    "label": "thin high kid, cartoon · paddlefish",
    "tag": "paddlefish",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high-pitched, bright, and thin cartoon child's voice, perfect for animated characters or playful, energetic roles.",
    "ear_label": "high pitched cartoon child voice, bright and thin",
    "fields": {
@@ -12549,12 +12671,13 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 379": {
    "label": "thin high kid, cartoon · sunfish",
    "tag": "sunfish",
-   "category": "Characters and cartoons",
+   "category": "Kids and teens",
    "description": "A high-pitched, thin, and bright cartoonish child's voice, ideal for animated characters or playful, youthful roles.",
    "ear_label": "high-pitched cartoon child, thin and bright",
    "fields": {
@@ -12568,7 +12691,8 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.5
-   }
+   },
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 447": {
    "label": "thin high young woman, cartoon · brioche",
@@ -12590,14 +12714,14 @@
    }
   },
   "Voice 513": {
-   "label": "thin high young woman, cartoon · hammer",
+   "label": "thin high boy, cartoon · hammer",
    "tag": "hammer",
-   "category": "Characters and cartoons",
-   "description": "A high, bright, and energetic voice with a youthful, cartoonish quality, perfect for animated characters or upbeat, quirky personalities.",
+   "category": "Kids and teens",
+   "description": "A high, bright, and energetic boy's voice with a youthful, cartoonish quality, perfect for animated characters or upbeat, quirky personalities.",
    "ear_label": "high-pitched young woman, bright cartoonish tone",
    "fields": {
-    "gender": "woman",
-    "age": "young adult",
+    "gender": "man",
+    "age": "child",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
@@ -12606,7 +12730,11 @@
     "accent": "general American",
     "kind": "cartoon",
     "gender_confidence": 0.95
-   }
+   },
+   "formerLabels": [
+    "thin high young woman, cartoon · hammer"
+   ],
+   "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 627": {
    "label": "gravelly low older woman, Black American · sorghum",
@@ -12688,5 +12816,6 @@
    },
    "note": "Part 119.5: described by hand-run recipe (sample script via live proxy, gemini-3.5-flash, Part 118 schema)."
   }
- }
+ },
+ "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving"
 }

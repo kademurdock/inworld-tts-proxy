@@ -4640,6 +4640,15 @@ if (VOICE_PICKER_V2 && VOICE_CATALOG_V2 && VOICE_CATALOG_V2.voices) {
       VOICE_RENAMES[num] = label;
       VOICE_DESCRIBE[label] = info.description || "";
       VOICE_TAGS[label] = info.tag;
+      // Part 129: a re-filed voice keeps its old spelling(s) as hidden
+      // aliases -- a pick stored as "clear high young woman · hickory" still
+      // speaks and migrates to "clear high girl · hickory" through `renames`.
+      for (const former of Array.isArray(info.formerLabels) ? info.formerLabels : []) {
+        if (!former || former === label) continue;
+        VOICE_MAP[former] = target;
+        VOICE_RENAMES[former] = label;
+        if (!HIDDEN_VOICE_ALIASES.includes(former)) HIDDEN_VOICE_ALIASES.push(former);
+      }
       vs.push(label);
       newList.push(label);
     }
