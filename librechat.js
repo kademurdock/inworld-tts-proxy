@@ -1211,6 +1211,63 @@ router.post("/librechat/diary-admin-create", auth, async (req, res) => {
   }
 });
 
+// HISTORY MINER passthrough (Part 122.3). The fork has had the miner since
+// Aug 8 2026 — "retro-fill cards + logbook from every user's past chats" — and
+// it had no door out here, so a retro-fill could only be started by someone
+// sitting in the admin UI. Her ask, the night the memory cap was found full:
+// "can we retroactively run conversations through to get back some of the
+// memories they could have had?" That is exactly what /reset + /start do: the
+// miner marks each day it walks with a run-once claim, so days it already
+// walked WHILE THE CAP WAS FULL (every write refused) are claimed but empty.
+// Clearing those claims lets it walk them again with headroom.
+//
+// ⚠️ COST-BEARING. /start runs a keeper model over history — it spends money
+// per conversation. Standing rule: a real number in front of Kade first.
+// /status and /reset with dry:true are free; use them to size a run.
+router.get("/librechat/mining-status", auth, async (_req, res) => {
+  try {
+    res.json(await lc("GET", "/api/admin/mining/status"));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.post("/librechat/mining-start", auth, async (req, res) => {
+  const { scope, maxPerRun } = req.body || {};
+  try {
+    res.json(await lc("POST", "/api/admin/mining/start", {
+      ...(scope !== undefined ? { scope } : {}),
+      ...(maxPerRun !== undefined ? { maxPerRun } : {}),
+    }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.post("/librechat/mining-stop", auth, async (_req, res) => {
+  try {
+    res.json(await lc("POST", "/api/admin/mining/stop", {}));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+// body = { from, to, scope?, dry? } — clears run-once CLAIM ROWS ONLY for a date
+// window. Never a diary entry, card or message. dry:true counts first.
+router.post("/librechat/mining-reset", auth, async (req, res) => {
+  const { from, to, scope, dry } = req.body || {};
+  if (!from || !to) return res.status(400).json({ error: "from and to are required (YYYY-MM-DD)" });
+  try {
+    res.json(await lc("POST", "/api/admin/mining/reset", {
+      from, to,
+      ...(scope !== undefined ? { scope } : {}),
+      ...(dry !== undefined ? { dry } : {}),
+    }));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // ============================================================================
 // TWILIO + kade-ai-bridge control. These hit EXTERNAL services (Twilio REST API
 // and the bridge), NOT kademurdock.com — so they bypass lc()/the anti-abuse
