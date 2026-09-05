@@ -35,6 +35,7 @@ const SECTIONS = [
   { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
   { key: "whatsnew",        path: "/help/whats-new",       label: "What's New",          group: "Getting started" },
   { key: "createacharacter", path: "/help/create-a-character", label: "Create a Character", group: "Getting started" },
+  { key: "iphone",          path: "/help/iphone",          label: "The iPhone App",      group: "Getting started" },
   { key: "android",         path: "/help/android",         label: "The Android App",     group: "Getting started" },
 
   { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
@@ -255,6 +256,7 @@ PAGES.home = {
   <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
   <li data-terms="whats new what's new changelog updates latest features recently added new stuff toys"><a href="/help/whats-new"><span class="ico" aria-hidden="true">✨</span><span class="ttl">What's New</span><span class="desc">The latest toys, in plain language — updated every time something ships.</span></a></li>
   <li data-terms="create a character builder quiz make my own agent custom companion portrait picture avatar model engine describe description write my personality system prompt help me write this generate persona detailed prompt improve"><a href="/help/create-a-character"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Create a Character</span><span class="desc">Describe who you want and have their whole personality written for you, or answer eight easy questions. Portrait included.</span></a></li>
+  <li data-terms="iphone app ios app store apple download install get the app testflight"><a href="/help/iphone"><span class="ico" aria-hidden="true">📱</span><span class="ttl">The iPhone App</span><span class="desc">Kade-AI is on the App Store. One link, no searching.</span></a></li>
   <li data-terms="android app apk install download sideload phone samsung google pixel motorola galaxy get the app"><a href="/help/android"><span class="ico" aria-hidden="true">🤖</span><span class="ttl">The Android App</span><span class="desc">Got an Android phone? Install Kade-AI as a real app, straight from here.</span></a></li>
   <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
   <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report call me calls you ringtone wake-up wake me up alarm agent call answer rings"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
@@ -455,6 +457,11 @@ PAGES.whatsnew = {
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
+
+<h2>September 5, 2026 &mdash; afternoon</h2>
+<ul>
+  <li><strong>Kade-AI is on the App Store.</strong> No more invitations or TestFlight: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app here</a>, or search <em>Kade-AI</em> in the App Store (give Apple's search a day to catch up; the link works now). Same sign-in as the website. Everyone who was on TestFlight can keep it or install the store version right over it. Details on the new <a href="/help/iphone">iPhone App</a> page. A follow-up version with the newest fixes is already in Apple's queue and will update itself when it lands.</li>
+</ul>
 
 <h2>September 5, 2026</h2>
 <ul>
@@ -1741,6 +1748,42 @@ ${nextprev("troubleshooting", null)}
 `,
 };
 
+// ---- THE IPHONE APP (App Store, Sep 5 2026) --------------------------------
+PAGES.iphone = {
+  title: "The iPhone App",
+  h1: "The iPhone App",
+  tagline: "Kade-AI is on the App Store. One link, no searching.",
+  main: `
+<p class="lead">As of September 5, 2026, Kade-AI is a real App Store app. No more invitations, no TestFlight, no waiting on Kade to add you &mdash; open the link and install it like anything else.</p>
+
+<p><a class="cta" href="https://apps.apple.com/app/id6791024001">Get Kade-AI on the App Store</a></p>
+
+<p>Prefer to search? In the App Store app, search for <strong>Kade-AI</strong> (with the hyphen). If it does not show up in search on the very first day, that is Apple's catalog catching up; the link above works regardless.</p>
+
+<h2>Signing in</h2>
+<p>There is no sign-up screen. Use the account Kade set up for you &mdash; same email and password as the website. Everything you have here is already there: your conversations, your memory cards, your voice picks, your characters.</p>
+
+<h2>If you were on TestFlight</h2>
+<p>Nothing breaks. The App Store version installs over the TestFlight one, and you stay signed in. TestFlight will keep offering newer test builds a few days ahead of the store; take them or leave them. If you would rather be done with TestFlight, delete it &mdash; the App Store version updates itself from now on.</p>
+
+<h2>What the app does that the website cannot</h2>
+<ul>
+  <li><strong>Real calls.</strong> Ask a character to call you &mdash; a wake-up call, a check-in about your meds &mdash; and your phone rings like a real call at that moment. See <a href="/help/phone">Phone Calls</a>.</li>
+  <li><strong>Lock-screen notes.</strong> Reminders, a companion texting you first, the family's What's New.</li>
+  <li><strong>Every reply spoken in the character's own voice</strong>, with Stop and Play on every message, and the voice picker as wheels: pick who, spin the voice, hear each one.</li>
+  <li><strong>Scan Text, Siri, Lock Screen widgets</strong>, and Share from any app straight into a conversation.</li>
+  <li>Everything else the website has &mdash; memories and the logbook, the marketplace, the game parlor, Describe My World &mdash; in the same order, with the same names.</li>
+</ul>
+
+<h2>Screen reader notes (VoiceOver)</h2>
+<p>The app was built blind-first. Every message is one element with its actions on the rotor; the voice wheels speak each voice as you land on it; tool work reads as a short label ("web search", "weather") instead of a narration; settings have a search box that brings the actual switch to you. If something reads wrong, tell any character "tell Kade" and it lands on her board with the build number attached.</p>
+
+<h2>Android person?</h2>
+<p>The Android app is its own native app, installed straight from this site &mdash; see <a href="/help/android">The Android App</a>.</p>
+${nextprev("whatsnew", "android")}
+`,
+};
+
 // ---- THE ANDROID APP -------------------------------------------------------
 PAGES.android = {
   title: "The Android App",
@@ -1751,7 +1794,7 @@ PAGES.android = {
 
 <p>Already have the old app? Just download and install again &mdash; the new one goes right over the top, nothing to uninstall, and you stay signed in to the same account.</p>
 
-<p>iPhone person instead? The iPhone app comes through Apple's TestFlight and works by invitation — <strong>contact Kade</strong> and she'll add you.</p>
+<p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
 <p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI for Android (about 11&nbsp;MB)</a></p>
 
@@ -1774,7 +1817,7 @@ PAGES.android = {
 
 <h2>Is this safe?</h2>
 <p>Fair question — the honest answer: the app is built and signed by Kade, it simply skips the Play Store (which costs money and review time for a private family app). It only talks to <a href="${CHAT_URL}">kademurdock.com</a>, same as your browser does. If you're ever unsure a download really came from here, <strong>contact Kade</strong> before installing.</p>
-${nextprev("whatsnew", "voice")}
+${nextprev("iphone", "voice")}
 `,
 };
 
