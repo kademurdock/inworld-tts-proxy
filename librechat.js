@@ -796,6 +796,18 @@ router.get("/librechat/usage", auth, async (req, res) => {
 // Added Aug 21 2026 while refunding the $6/M default-rate hole (tx.ts had no
 // glm-5.x keys, so the fleet billed families at fantasy rates for days).
 // body = { userId, amountUSD } -> fork /api/kade/add-credits.
+// GET /librechat/my-cost?userId=<id> -> fork /api/kade/my-cost (admin read of one
+// person's month-to-date SERVER COST: charged model spend / multiplier + extras).
+router.get("/librechat/my-cost", auth, async (req, res) => {
+  const userId = String(req.query.userId || "");
+  if (!userId) return res.status(400).json({ error: "userId is required" });
+  try {
+    res.json(await lc("GET", `/api/kade/my-cost?userId=${encodeURIComponent(userId)}`));
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 router.post("/librechat/add-credits", auth, express.json({ limit: "16kb" }), async (req, res) => {
   const { userId, amountUSD } = req.body || {};
   if (!userId || !(Number(amountUSD) > 0)) {
