@@ -44,6 +44,7 @@ const SECTIONS = [
   { key: "characters",      path: "/help/characters",      label: "Characters & the Marketplace", group: "Using Kade-AI" },
   { key: "rooms",           path: "/help/debate-room",     label: "The Debate Room",     group: "Using Kade-AI" },
   { key: "games",           path: "/help/games",           label: "The Game Parlor",     group: "Using Kade-AI" },
+  { key: "world",           path: "/help/world",           label: "Reverie — the city",  group: "Using Kade-AI" },
   { key: "build",           path: "/help/build",           label: "Build Your Own Character", group: "Using Kade-AI" },
   { key: "memory",          path: "/help/memory",          label: "What It Remembers",   group: "Using Kade-AI" },
   { key: "images",          path: "/help/images",          label: "Making Pictures",     group: "Using Kade-AI" },
@@ -263,6 +264,7 @@ PAGES.home = {
   <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
   <li data-terms="characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
   <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share porch hangout front porch company"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room with a topic — or none at all on the front porch — and jump in.</span></a></li>
+  <li data-terms="reverie world city sims mud moo life game house rent family kids children pets cats dogs fishing bowling neighbors roleplay hang out live in a place tram ferry car bike compass buttons screen reader sounds ambience wards patch hook bell"><a href="/help/world"><span class="ico" aria-hidden="true">🏙️</span><span class="ttl">Reverie — the city</span><span class="desc">A city you live in with your friends: rent a place, work, cook, fish, bowl, fall in love, raise kids, get in trouble. Buttons or typing, every sound carries the game.</span></a></li>
   <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion cards against reality humanity wild blanks party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Nineteen real games by voice — Blackjack, Uno, War, Cards Against Reality (you know the game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard.</span></a></li>
   <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
   <li data-terms="memory remember forget notes saves recall cards shared private clean up remind reminder notification push birthday nudge"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">Memory cards: what sticks between chats, and how to boss it around.</span></a></li>
@@ -1159,6 +1161,43 @@ PAGES.games = {
 
 <h2>The small print (tiny, promise)</h2>
 <p>The games themselves are free — no tokens, no cost. Chips in Blackjack are pretend and can never turn into real money. If a character sings you a song or draws a picture during game night, that part follows the usual costs on your <a href="/help/donate">Usage &amp; Balance</a> tab, but the card games are on the house.</p>
+`,
+};
+
+PAGES.world = {
+  title: "Reverie — the city",
+  h1: "Reverie",
+  tagline: "A city you live in. Not a chat, not a text adventure — a place, with people in it, some of them real.",
+  main: `
+<p class="lead">Reverie is a small city that runs all the time at <a href="https://kademurdock.com/world">kademurdock.com/world</a>. You are a person in it. You walk streets, rent a room, work a shift, cook dinner, fish off a pier, bowl a game, fall for somebody, raise a kid, get in a little trouble, and hear about all of it at the barbershop the next day. Your friends and family are in the same city at the same time, and so are two dozen citizens who live there on their own schedules. You will not always be able to tell which is which. That is on purpose.</p>
+
+<h2>How you play it</h2>
+<p>Everything is a button <em>and</em> a typed command, and both do exactly the same thing. On a phone you tap: a compass that only lights up the directions that actually go somewhere (and says where), a row of things you can do right where you stand, and the people around you &mdash; tap a name and you get a menu: talk to, chat, joke, hug, flirt, argue. On a computer you can type the same words: <code>n</code>, <code>go to pats</code>, <code>chat merle</code>, <code>eat</code>. You can also tap the microphone, say it, and it goes.</p>
+<p>The screen reader reads one log, top to bottom, and everything that happens lands there in order. The picture &mdash; the colors, the weather, the meters &mdash; is for sighted eyes and is hidden from the reader completely. Nothing is ever only visual.</p>
+<p>Three words worth knowing: <strong>look</strong> (the room), <strong>what</strong> (what you can do right here), and <strong>help</strong> (fourteen short topics, or <code>help</code> plus any word).</p>
+
+<h2>Becoming somebody</h2>
+<p>The first time in, the city asks you nine short questions &mdash; your name in two parts (a hundred Rubies, one Ruby Boggs), your pronouns, roughly how old you are, how you look, how you came to be here, two traits, and what you want out of life. Answer with a number, a word, or the whole thing. Where you came from decides your first street, what is in your pockets, and one citizen who already knows your name.</p>
+<p>If you had a character before tonight, nothing changed &mdash; say <code>remake me</code> to answer the new questions and keep everything you own.</p>
+
+<h2>Living</h2>
+<p>You have five meters &mdash; fed, rested, clean, fun, company &mdash; and they only move while you are actually playing. Leave for a week and you come back exactly as you left. Nothing here can hurt you; a low meter just means uncomfortable, and the city says so and tells you where to fix it. Your mood is the average, and good moods learn faster.</p>
+<p><strong>A place of your own.</strong> Nine places are for rent, from a room over Pat&rsquo;s diner to a house behind the Fairlawn gates. Rent comes out weekly on its own; being behind is a nag and a rumor, never an eviction. Buy furniture at Hock&rsquo;s Pawn (or dented at the Salvage Yard), carry it home, and what you put in the room changes what you can do there &mdash; a bed sleeps you properly, a stove cooks, a shower cleans, a radio plays the Band. Set your door to open, friends-only, or locked; hand out keys; have people over.</p>
+<p><strong>Money.</strong> Work a shift wherever there is work &mdash; shifts add up to promotions and raises. Fish and sell the catch. Busk with a guitar. Grow and sell. Pawn things. Lose it at cards or on scratch tickets, if you like.</p>
+<p><strong>People.</strong> Friendship and romance grow from what you do together. Flirt, go on a proper date at the Pier or Dez&rsquo;s, propose with a ring, get married at the Courthouse, move in. Or fall out, argue, feud, and apologize later. Players always get to say yes first: a kiss, a proposal, a fight, a move-in are offers you <code>accept</code> or <code>decline</code>. Say <code>no flirting</code> and nobody can.</p>
+<p><strong>Family.</strong> Miss Reed at the Children&rsquo;s Office keeps a short list that changes daily; with a home and a crib or bunk you can adopt, or have a baby with your partner. Children grow on the real calendar &mdash; a baby for a day, a toddler for three, a kid for six, a teen for eight &mdash; go to school on Treehouse Row, and need feeding, playing, reading to. When one is grown you can <code>claim</code> them and play them yourself. Earn a stray&rsquo;s trust and it comes home with you.</p>
+<p><strong>Things to do.</strong> Ten frames at the Millrace Lanes, darts at Dez&rsquo;s, twenty-one in the Game Parlor, singing, dancing, reading at the Archive, running the Stairs, swimming off the Pier, cooking real recipes from real groceries, the Band on the radio, flattening a penny at the Grade Crossing when the freight comes through at 11:40.</p>
+<p><strong>Getting around.</strong> Walk, or <code>go to</code> anywhere by name. The tram and the ferry cost a coin. Buy a bike or a car off Royce&rsquo;s lot and <code>go to</code> uses it. Call Medallion 88 and a cab is there before you finish saying it.</p>
+
+<h2>Trouble</h2>
+<p>Not candy land, not the end of the world. Each ward has its own law: nothing rough in Sweetwater or near kids, the Fairlawn homeowners&rsquo; association fines you, and the Hook, the Patch and Tanglefoot mostly shrug. You can pick a pocket where the law shrugs; Sgt. Vann catches you sometimes and Honorable Pham&rsquo;s night court fines you and puts you on record for two weeks. Words go to shoves go to hands, and hands stop at bruised &mdash; and players can only fight players who agreed to it. Little Ray sells a little something on Gully Road after dark; it is fun for a minute and costs you everything else, and a habit is a real thing that fades if you let it. Whatever you do becomes what the city says about you &mdash; hear it at Levi&rsquo;s Chairs, the Salon, Pat&rsquo;s counter, or on the radio.</p>
+
+<h2>Sound</h2>
+<p>Every event has a sound and the sounds carry the game: the reader announces, the earcons play. Each ward has its own bed of sound and rooms their own tone. Leave the page open and the room reaches you live &mdash; a friend talking, a citizen wandering in, the freight horn &mdash; without typing a thing. Sounds and ambience have their own switches and volume in the settings panel, and the page remembers them.</p>
+
+<h2>The small print</h2>
+<p>Reverie costs nothing to play and uses no AI while you play &mdash; the city is a program, so it answers in a blink and never makes anything up about what is where. Coin is pretend. Nobody dies, nobody loses their character, and the Founder can see everything (it is her city).</p>
+${nextprev("games", "build")}
 `,
 };
 
