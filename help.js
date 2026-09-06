@@ -823,6 +823,8 @@ PAGES.voice = {
   <p><strong>Heads up about phones:</strong> if you added the site to your home screen, phone browsers sometimes block sound from playing on its own until you tap the screen once. If auto-play seems silent, tap a reply's play button once and it usually wakes up for the rest of the chat. (Apple's rule, not a bug here.)</p>
 </div>
 
+<p>In iPhone TestFlight build <strong>274</strong> and later, the thinking sound stays quiet between spoken parts of a reply. It can return when the character is actually thinking or using a tool. A pause while the next piece of speech loads is silent.</p>
+
 <h2>Speaking instead of typing</h2>
 <p>There's a <strong>microphone</strong> button by the message box. Activate it, say your message, and it gets turned into text for you to send. The first time, your browser or phone will ask permission to use the mic — say yes.</p>
 <div class="term"><strong>Speech-to-text</strong> is the feature that listens to your voice and writes down the words. <strong>Text-to-speech</strong> is the reverse — it reads written words out loud. This site does both.</div>
@@ -1173,7 +1175,7 @@ PAGES.games = {
 PAGES.world = {
   title: "Reverie — the city",
   h1: "Reverie",
-  tagline: "A city you live in. Not a chat, not a text adventure — a place, with people in it, some of them real.",
+  tagline: "A place to make a home, have people over, and see what happens.",
   main: `
 <p class="lead">Reverie is a small city that runs all the time at <a href="https://kademurdock.com/world">kademurdock.com/world</a>. You are a person in it. You walk streets, rent a room, work a shift, cook dinner, fish off a pier, bowl a game, fall for somebody, raise a kid, get in a little trouble, and hear about all of it at the barbershop the next day. Your friends and family are in the same city at the same time, and so are two dozen citizens who live there on their own schedules. You will not always be able to tell which is which. That is on purpose.</p>
 
@@ -1183,6 +1185,12 @@ PAGES.world = {
 <p>In iPhone TestFlight version 2.0.2, use the <strong>Move</strong>, <strong>Things you can do</strong>, and <strong>Here with you</strong> headings to find real buttons. Exits say where they lead. <strong>Your character</strong> opens your needs and other status. <strong>Read latest reply</strong> repeats the last answer, and <strong>World log</strong> opens older text without dragging you to the bottom. Character-creation choices are buttons too. In <strong>World settings</strong>, choose whether to hear the room live and whether to play background ambience. Live listening pauses when you leave the screen or put the app in the background.</p>
 <p>Three words worth knowing: <strong>look</strong> (the room), <strong>what</strong> (what you can do right here), and <strong>help</strong> (fourteen short topics, or <code>help</code> plus any word).</p>
 
+<h2>Have people over</h2>
+<p>Open <strong>Hangout</strong> to host a <strong>cookout</strong>, <strong>record night</strong>, or <strong>story circle</strong>. A friend in the same room can join immediately. Put out snacks, pull up a chair, change the topic, or add your own words. There is no timer and no cover charge. Food and supplies are provided.</p>
+<p>On the website, <strong>Add your own line</strong> prepares the command box for typing or dictation. In any client, say or type <code>hangout add</code> followed by your words. A story circle might start with a wedding cake in a stolen shopping cart; where it goes next is up to whoever is there. You can also just listen.</p>
+<p>The host can finish the gathering and keep its shared moments. <code>hangout memories</code> reads the last five gatherings saved in that room, with up to twelve contributions each. Only residents can host in someone&rsquo;s home; public places are open to anyone. If the host leaves the gathering, another guest takes over.</p>
+<p>The website also has furnished room pictures with the people present. Under <strong>Sound &amp; settings</strong>, turn pictures off or choose <strong>Roomy text</strong> for larger, more widely spaced reading. The pictures are decorative; the written room, people, and buttons contain the game information.</p>
+
 <h2>Becoming somebody</h2>
 <p>The first time in, the city asks you a short series of questions &mdash; your name in two parts (a hundred Rubies, one Ruby Boggs), your pronouns, roughly how old you are, how you look, how you came to be here, two traits, and what you want out of life. Answer with a number, a word, or the whole thing. Where you came from decides your first street, what is in your pockets, and one citizen who already knows your name.</p>
 <p>If you already have a character, say <code>remake me</code> to update your character choices while keeping your name, possessions, money, and earned skills. <code>cancel</code> leaves the remake and keeps that same character. <code>back</code> and <code>start over</code> stay within the remake questions.</p>
@@ -1190,20 +1198,20 @@ PAGES.world = {
 <h2>Living</h2>
 <p>You have five meters &mdash; fed, rested, clean, fun, company &mdash; and they only move while you are actually playing. Leave for a week and you come back exactly as you left. Nothing here can hurt you; a low meter just means uncomfortable, and the city says so and tells you where to fix it. Your mood is the average, and good moods learn faster.</p>
 <p><strong>A place of your own.</strong> Nine places are for rent, from a room over Pat&rsquo;s diner to a house behind the Fairlawn gates. Rent comes out weekly on its own; being behind is a nag and a rumor, never an eviction. Buy furniture at Hock&rsquo;s Pawn (or dented at the Salvage Yard), carry it home, and what you put in the room changes what you can do there &mdash; a bed sleeps you properly, a stove cooks, a shower cleans, a radio plays the Band. Set your door to open, friends-only, or locked; hand out keys; have people over.</p>
-<p><strong>Money.</strong> Work a shift wherever there is work &mdash; shifts add up to promotions and raises. Fish and sell the catch. Busk with a guitar. Grow and sell. Pawn things. Lose it at cards or on scratch tickets, if you like.</p>
+<p><strong>Money.</strong> Prices and your wallet use dollars. Old commands using &ldquo;coins&rdquo; still work, and existing balances keep their value. Work a shift wherever there is work &mdash; shifts add up to promotions and raises. Fish and sell the catch. Busk with a guitar. Grow and sell. Pawn things. Lose it at cards or on scratch tickets, if you like.</p>
 <p><strong>People.</strong> Friendship and romance grow from what you do together. Flirt, go on a proper date at the Pier or Dez&rsquo;s, propose with a ring, get married at the Courthouse, move in. Or fall out, argue, feud, and apologize later. Players always get to say yes first: a kiss, a proposal, a fight, a move-in are offers you <code>accept</code> or <code>decline</code>. Say <code>no flirting</code> and nobody can.</p>
 <p><strong>Family.</strong> Miss Reed at the Children&rsquo;s Office keeps a short list that changes daily; with a home and a crib or bunk you can adopt, or have a baby with your partner. Children grow on the real calendar &mdash; a baby for a day, a toddler for three, a kid for six, a teen for eight &mdash; go to school on Treehouse Row, and need feeding, playing, reading to. When one is grown you can <code>claim</code> them and play them yourself. Earn a stray&rsquo;s trust and it comes home with you.</p>
 <p><strong>Things to do.</strong> Ten frames at the Millrace Lanes, darts at Dez&rsquo;s, twenty-one in the Game Parlor, singing, dancing, reading at the Archive, running the Stairs, swimming off the Pier, cooking real recipes from real groceries, the Band on the radio, flattening a penny at the Grade Crossing when the freight comes through at 11:40.</p>
-<p><strong>Getting around.</strong> Walk, or <code>go to</code> anywhere by name. The tram and the ferry cost a coin. Buy a bike or a car off Royce&rsquo;s lot and <code>go to</code> uses it. Call Medallion 88 and a cab is there before you finish saying it.</p>
+<p><strong>Getting around.</strong> Walk, or <code>go to</code> anywhere by name. The tram and the ferry cost $1. Buy a bike or a car off Royce&rsquo;s lot and <code>go to</code> uses it. Call Medallion 88 and a cab is there before you finish saying it.</p>
 
 <h2>Trouble</h2>
 <p>Not candy land, not the end of the world. Each ward has its own law: nothing rough in Sweetwater or near kids, the Fairlawn homeowners&rsquo; association fines you, and the Hook, the Patch and Tanglefoot mostly shrug. You can pick a pocket where the law shrugs; Sgt. Vann catches you sometimes and Honorable Pham&rsquo;s night court fines you and puts you on record for two weeks. Words go to shoves go to hands, and hands stop at bruised &mdash; and players can only fight players who agreed to it. Little Ray sells a little something on Gully Road after dark; it is fun for a minute and costs you everything else, and a habit is a real thing that fades if you let it. Whatever you do becomes what the city says about you &mdash; hear it at Levi&rsquo;s Chairs, the Salon, Pat&rsquo;s counter, or on the radio.</p>
 
 <h2>Sound</h2>
-<p>Every event has a sound and the sounds carry the game: the reader announces, the earcons play. Each ward has its own bed of sound and rooms their own tone. Leave the page open and the room reaches you live &mdash; a friend talking, a citizen wandering in, the freight horn &mdash; without typing a thing. Sounds and ambience have their own switches and volume in the settings panel, and the page remembers them.</p>
+<p>Sounds help tell you what is happening while the reader carries the words. Hangouts have new cues for a chair being pulled up, paper rustling, snacks opening, and a record starting. Each ward has its own bed of sound and rooms their own tone. Leave the page open and the room reaches you live &mdash; a friend talking, a citizen wandering in, the freight horn &mdash; without typing a thing. Sounds and ambience have their own switches and volume in the settings panel, and the page remembers them.</p>
 
 <h2>The small print</h2>
-<p>Reverie costs nothing to play and uses no AI while you play &mdash; the city is a program, so it answers in a blink and never makes anything up about what is where. Coin is pretend. Nobody dies, nobody loses their character, and the Founder can see everything (it is her city).</p>
+<p>Reverie costs nothing to play and uses no AI while you play &mdash; the city is a program, so it answers in a blink and never makes anything up about what is where. The dollars are game money. Nobody dies, nobody loses their character, and the Founder can see everything (it is her city).</p>
 ${nextprev("games", "build")}
 `,
 };
