@@ -460,6 +460,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>September 6, 2026</h2>
+<ul>
+  <li><strong>Android 2.3 keeps hold of the conversation.</strong> Drafts and a pending reply survive turning your phone. If the connection drops while a reply is running, <strong>Check reply</strong> checks the same work. <strong>Recover message</strong> brings back an uncertain send without replacing your newer draft. <strong>Latest reply</strong> lets you jump down when you're ready. <a href="/help/android">Download the update</a>.</li>
+  <li><strong>A better memory between chats.</strong> The nightly reflection now follows activity across separate chats, keeps the dates with it, and remembers where it left off. Quiet time no longer wipes a companion's relationship history. The memory switch now covers this reflection too.</li>
+</ul>
+
 <h2>September 5, 2026 &mdash; afternoon</h2>
 <ul>
   <li><strong>Kade-AI is on the App Store.</strong> No more invitations or TestFlight: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app here</a>, or search <em>Kade-AI</em> in the App Store (give Apple's search a day to catch up; the link works now). Same sign-in as the website. Everyone who was on TestFlight can keep it or install the store version right over it. Details on the new <a href="/help/iphone">iPhone App</a> page. A follow-up version with the newest fixes is already in Apple's queue and will update itself when it lands.</li>
@@ -1276,6 +1282,7 @@ PAGES.memory = {
 <div class="term"><strong>Your Logbook</strong> &mdash; beside the cards, every companion keeps a dated logbook of your day-to-day: what happened, how it went, the rabbit holes you went down together. Cards hold who you ARE; the logbook holds what HAPPENED &mdash; and it has no size limit, because it stays on the shelf until a moment calls for it. Ask "what was I up to last week?" or "have I mentioned that before?" and your companion checks the real entries. Old moments also drift back naturally when they fit &mdash; the way a friend goes "wait, didn't you say&hellip;" Browse it all under You &rarr; Your Logbook: every entry by date, who holds it, a Forget button on each, and a box to add a line yourself. Same privacy as cards: an entry belongs to the companion you told. And two magic words work everywhere: say <em>"off the record"</em> and nothing gets remembered &mdash; cards or logbook &mdash; until you say you're back on.</div>
 
 <h2>How memories come to mind (new, August 2026)</h2>
+<p>Between chats, each companion also keeps a short account of what's been happening between you, things you've taught them, and questions still open. The nightly update reads new activity across your separate chats in date order, so a correction in another chat has a chance to catch up. A plan stays a plan until someone says what happened. Time away no longer erases this history. Turning memory off in your personalization settings also stops this relationship reflection from being read or updated.</p>
 <p>Your companions used to carry every single card into every single message, whether it mattered or not. Now they hold onto the essentials constantly &mdash; who you are, your people, how you like to be spoken to, anything you asked to be reminded of &mdash; and the rest of what they know <em>comes to mind when it's relevant</em>, the way a friend's memory actually works. Mention repainting a room and the color you love surfaces; talk about dinner and it stays out of the way. Nothing was deleted; it's all still theirs to remember &mdash; it just stops crowding the conversation. Every companion works this way.</p>
 <p>And the memory does a little connecting of its own now: if separate notes clearly belong together &mdash; a nephew here, his mom named over there &mdash; the notes get introduced to each other. Every one of those tidy-ups is kept on a trail, nothing is ever silently lost, and you can always ask any companion <em>"what changed in your memory lately?"</em> and hear it read back plainly.</p>
 
@@ -1836,7 +1843,11 @@ PAGES.android = {
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
-<p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI for Android (about 11&nbsp;MB)</a></p>
+<p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI 2.3 for Android (about 12&nbsp;MB)</a></p>
+
+<h2>Keeping your place in chat</h2>
+<p>Your draft and a confirmed pending reply survive turning the phone. If the connection drops while an agent is working, use <strong>Check reply</strong>: it checks the existing work without sending your message again. If the app couldn't confirm the original send, the text stays available; <strong>Recover message</strong> adds it to a newer draft. Check your conversations before sending an uncertain request again.</p>
+<p>You can read earlier messages while a reply arrives, then use <strong>Latest reply</strong> when you're ready. <strong>Stop the reply</strong> asks the server to stop, and the status tells you whether that worked. The read-aloud button announces whether it is on or off.</p>
 
 <h2>Installing it, step by step</h2>
 <p>Because this app comes from Kade personally instead of the Google Play Store, Android will be a little suspicious the first time. That's normal, it's just Android being protective. Here's the whole dance:</p>
