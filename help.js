@@ -1349,13 +1349,6 @@ PAGES.images = {
 <h2>Videos and designs, too</h2>
 <p>The specialists go further than pictures: <strong>Rio</strong> turns a description into a short <em>video clip</em>, and <strong>Indie</strong> makes designed images with clean readable text (flyers, logos, cards). Videos are the priciest thing on the whole site — roughly <strong>50 cents to a dollar per clip</strong> — so the character will casually tell you the ballpark cost before it runs, and the spend lands on your <a href="/help/donate">Usage &amp; Balance</a> page. Regular pictures stay cheap (a few cents) and skip the speech.</p>
 
-<h3>Start with an idea, then shape the result</h3>
-<p>The <strong>starting script</strong> picker gives you editable examples for a radio mystery, station ID, warm narration, comic monologue, ambience, and an instrumental bed. Loading an example is free. Download your current script before replacing an unsaved draft. Nothing renders until you confirm its estimate.</p>
-<p>On the <strong>website</strong>, open <em>Free audio workbench</em>. Choose a main recording from your device, set the start and end to keep, add fades, and optionally mix in another recording as background music or ambience. Adjust each track's volume separately and repeat the background if needed. Play the result and download a stereo WAV. Each input must be under 25 MB and the result can be up to five minutes. This local editor makes no upload and uses no generation credits; its result is saved by downloading, not automatically to My Creations.</p>
-<p>Long Scenema pieces advance while the Booth is open. If a piece fails or you stop it, reopen it and render the <strong>same script with the same settings</strong> to keep the finished parts and resume. Changing the script or voice creates a new take. A failed Stop leaves the job visibly active so you can try again.</p>
-<h3>Write the song with Lyric</h3>
-<p>Give Lyric a situation, genre, and the kind of delivery you want. It can write a whole song or work on just a chorus, verse, rhyme, or line. For a full generator-ready song it separates a <strong>Lyrics Box</strong>, a <strong>Tag Box</strong> describing the music, and a <strong>Negative Tag Box</strong> for unwanted musical traits. Use only the fields your chosen music program supports. Ask for <em>lyrics only</em> to get just the words and section labels. Writing a song does not automatically generate audio.</p>
-
 <h2>For folks using a screen reader</h2>
 <p>When the AI makes an image, ask it to <strong>describe the picture in detail</strong> too — it's happy to paint the full scene in words so you know exactly what it created. And <strong>Describe-It</strong> in the marketplace does the reverse: upload any photo and it tells you what's in it.</p>
 ${nextprev("memory", "audio")}
@@ -1427,6 +1420,13 @@ PAGES.audio = {
   <li>Before it spends anything it <strong>says the price out loud</strong> and asks once more. Nothing runs on one tap.</li>
   <li>Everything you make is saved in the Booth's <strong>library</strong> with its script, so you can open it back up, swap the voice, and render it again. Each take can be played, and <strong>saved or shared</strong> — on a phone that opens the share sheet, so "Save to Files" keeps a copy or you can send it straight to someone.</li>
 </ul>
+
+<h3>Start with an idea, then shape the result</h3>
+<p>The <strong>starting script</strong> picker gives you editable examples for a radio mystery, station ID, warm narration, comic monologue, ambience, and an instrumental bed. Loading an example is free. Download your current script before replacing an unsaved draft. Nothing renders until you confirm its estimate.</p>
+<p>On the <strong>website</strong>, open <em>Free audio workbench</em>. Choose a main recording from your device, set the start and end to keep, add fades, and optionally mix in another recording as background music or ambience. Adjust each track's volume separately and repeat the background if needed. Play the result and download a stereo WAV. Each input must be under 25 MB and the result can be up to five minutes. This local editor makes no upload and uses no generation credits; its result is saved by downloading, not automatically to My Creations.</p>
+<p>Long Scenema pieces advance while the Booth is open. If a piece fails or you stop it, reopen it and render the <strong>same script with the same settings</strong> to keep the finished parts and resume. Changing the script or voice creates a new take. A failed Stop leaves the job visibly active so you can try again.</p>
+<h3>Write the song with Lyric</h3>
+<p>Give Lyric a situation, genre, and the kind of delivery you want. It can write a whole song or work on just a chorus, verse, rhyme, or line. For a full generator-ready song it separates a <strong>Lyrics Box</strong>, a <strong>Tag Box</strong> describing the music, and a <strong>Negative Tag Box</strong> for unwanted musical traits. Use only the fields your chosen music program supports. Ask for <em>lyrics only</em> to get just the words and section labels. Writing a song does not automatically generate audio.</p>
 
 <h2>For folks using a screen reader</h2>
 <p>Every clip comes with a short written note of <strong>what you'll hear</strong> — who's speaking, the mood, the key sounds — right next to the player, and it's saved with the clip on your My Creations page. The player itself is a normal audio player you can reach and control with the keyboard or your screen reader.</p>
