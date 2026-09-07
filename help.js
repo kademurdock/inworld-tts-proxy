@@ -460,6 +460,12 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>September 7, 2026</h2>
+<ul>
+  <li><strong>A clearer iPhone Home, in TestFlight build 276.</strong> Cards have more space, and tool rows become full-width at accessibility text sizes. Version and build details now live in Settings &rarr; Support.</li>
+  <li><strong>Agent work is on the iPhone.</strong> From Home, open <strong>Agent work</strong> to check recent requests and open saved replies after a connection drops. Refresh checks existing work without sending another message. Opening a saved chat puts Conversations behind it, so Back returns to the list. These changes arrive in TestFlight first; the App Store version may be older.</li>
+</ul>
+
 <h2>September 6, 2026</h2>
 <ul>
   <li><strong>Safer recovery after a connection drops.</strong> Web chat checks the original request before trying again, including regenerated and continued replies. If the outcome is uncertain, choose <strong>Check this request</strong> to open its saved status without sending it again.</li>
@@ -1727,7 +1733,7 @@ PAGES.troubleshooting = {
 
 <h2>A reply seems stuck — it's "thinking" forever</h2>
 <p>If web chat offers <strong>Check this request</strong>, use it first. It opens the exact request's status in Agent work. The web client checks that record after a lost response and only retries automatically with the same request identifier when no record was found. An uncertain status stops automatic retries. Deliberately generating another reply is still a new request.</p>
-<p>Open <a href="https://kademurdock.com/agent-work">Agent work</a> from the website's Home page and choose <strong>Refresh requests</strong>. New ordinary chat requests appear there even when you sent them from the iPhone or Android app. On iPhone, open the link in Safari and sign in with your usual account if needed. This is currently a website page, not a new native app screen.</p>
+<p>Open <a href="https://kademurdock.com/agent-work">Agent work</a> from the website's Home page and choose <strong>Refresh requests</strong>. New ordinary chat requests appear there even when you sent them from the iPhone or Android app. On iPhone build 276 and later, <strong>Agent work</strong> is also on the app's Home screen. On an older build, open the link in Safari and sign in with your usual account if needed. Check your version under <strong>Settings &rarr; Support</strong> in the updated app.</p>
 <p><strong>Reply saved</strong> means the reply is in the chat. <strong>Working</strong> means the server is still handling it. <strong>Interrupted</strong> means a finished reply could not be confirmed. Open the chat to read what happened before deciding whether to send anything again, especially if an agent may already have performed an action. Refresh only checks existing work. It does not restart it or use AI credits.</p>
 <p>To stop a running reply, open that chat and use <strong>Stop</strong>. Stopping a run does not undo actions already performed. If several chats are working and the server cannot tell which one you meant, it asks you to select the chat instead of guessing. An expired chat request cannot stop a different chat.</p>
 <p>The request list begins with this update. Older conversations remain in Conversations. Temporary chats, regenerated replies and separate voice or coding sessions may not appear. A server restart does not automatically resume or repeat interrupted actions.</p>
@@ -1837,6 +1843,11 @@ PAGES.iphone = {
 
 <h2>If you were on TestFlight</h2>
 <p>Nothing breaks. The App Store version installs over the TestFlight one, and you stay signed in. TestFlight will keep offering newer test builds a few days ahead of the store; take them or leave them. If you would rather be done with TestFlight, delete it &mdash; the App Store version updates itself from now on.</p>
+
+<h2>Home and saved work, from build 276</h2>
+<p>Home has clearer cards and more space. At accessibility text sizes, paired tool buttons become full-width rows. To find the version and build number, open <strong>Settings &rarr; Support</strong>. Build 276 is a TestFlight update; the App Store may still offer an earlier build.</p>
+<p>After a connection drops, open <strong>Agent work</strong> from Home, then <strong>Refresh requests</strong>. It checks your recent chat requests without sending a message or using AI credits. Choose <strong>Open chat</strong> to read a saved reply. Back takes you to Conversations.</p>
+<p><strong>Reply saved</strong> means a reply is in the chat. <strong>Working</strong> means the server is still handling the request. <strong>Interrupted</strong> means a finished reply could not be confirmed. Read the chat and any action receipts before sending again. Refresh does not restart work, and stopping a reply does not undo actions already performed. Your older conversations remain in Conversations; temporary chats and separate voice or coding sessions may not appear here.</p>
 
 <h2>What the app does that the website cannot</h2>
 <ul>
