@@ -1850,7 +1850,7 @@ PAGES.iphone = {
 <p>Nothing breaks. The App Store version installs over the TestFlight one, and you stay signed in. TestFlight will keep offering newer test builds a few days ahead of the store; take them or leave them. If you would rather be done with TestFlight, delete it &mdash; the App Store version updates itself from now on.</p>
 
 <h2>Clubhouse sound</h2>
-<p>On the website, headphones clarity mode removes microphone processing; use headphones and turn it off before switching to speakers. Stereo depends on your browser, output device and the song. The iPhone's speaker-friendly calling mode does not provide stereo music. A headphones setting that uses the phone microphone and a separate stereo music player is being prepared for a later TestFlight update; it is not part of build 276.</p>
+<p>On the website, headphones clarity mode removes microphone processing; use headphones and turn it off before switching to speakers. Stereo depends on your browser, output device and the song. The iPhone's speaker-friendly calling mode does not provide stereo music. If your installed TestFlight build offers <strong>Headphones clarity and stereo</strong>, that setting uses the phone microphone and a separate stereo music player; disconnecting headphones restores speaker echo protection. Build 276 does not include that stereo player.</p>
 <h2>Home and saved work, from build 276</h2>
 <p>Home has clearer cards and more space. At accessibility text sizes, paired tool buttons become full-width rows. To find the version and build number, open <strong>Settings &rarr; Support</strong>. Build 276 is a TestFlight update; the App Store may still offer an earlier build.</p>
 <p>After a connection drops, open <strong>Agent work</strong> from Home, then <strong>Refresh requests</strong>. It checks your recent chat requests without sending a message or using AI credits. Choose <strong>Open chat</strong> to read a saved reply. Back takes you to Conversations.</p>
@@ -1862,7 +1862,7 @@ PAGES.iphone = {
   <li><strong>Lock-screen notes.</strong> Reminders, a companion texting you first, the family's What's New.</li>
   <li><strong>Every reply spoken in the character's own voice</strong>, with Stop and Play on every message, and the voice picker as wheels: pick who, spin the voice, hear each one.</li>
   <li><strong>Scan Text, Siri, Lock Screen widgets</strong>, and Share from any app straight into a conversation.</li>
-  <li>Everything else the website has &mdash; memories and the logbook, the marketplace, the game parlor, Describe My World &mdash; in the same order, with the same names.</li>
+  <li>Memories and the Logbook, the marketplace, Game Parlor, and Describe My World are also available in the app. Some website tools still require the browser.</li>
 </ul>
 
 <h2>Screen reader notes (VoiceOver)</h2>
