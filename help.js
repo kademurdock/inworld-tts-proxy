@@ -462,6 +462,7 @@ PAGES.whatsnew = {
 
 <h2>September 6, 2026</h2>
 <ul>
+  <li><strong>Find work after a dropped connection.</strong> The website's <a href="https://kademurdock.com/agent-work">Agent work</a> page shows new chat requests and links to saved replies. It distinguishes working, stopped, failed and interrupted requests. Checking it never sends the message again. Stop also stays with the chat you selected when its old run has ended.</li>
   <li><strong>More to make in the Sound Booth.</strong> Start from an editable radio scene, station ID, narration, comedy, ambience, or music-bed script. The web booth also has a free audio workbench: trim a recording, add fades and a background track, then download a WAV. Those editor files stay on your device.</li>
   <li><strong>Long recordings keep their progress.</strong> Stop targets the current part; rendering an unchanged failed or stopped project reuses its finished parts. Reopening a project restores its voice and reference clips. The web booth and iPhone build 275 ask you to confirm a current estimate for both full takes and voice previews.</li>
   <li><strong>Lyric writes for a vocalist.</strong> Its revised songwriting instructions focus on natural language, memorable hooks, rap craft, and stories that move. Full songs come with separate lyrics and production fields; ask for lyrics only, alternate bars, or a small repair when that is all you need.</li>
@@ -1723,7 +1724,10 @@ PAGES.troubleshooting = {
 <p>Apple doesn't reliably remember mic permission for home-screen web apps, so it re-asks — sometimes every time you start talking. <strong>Fix:</strong> just tap "Allow" again. There's no setting on this site that turns it off; it's an Apple limitation. Annoying, but harmless.</p>
 
 <h2>A reply seems stuck — it's "thinking" forever</h2>
-<p>Once in a while a reply stalls out behind the scenes. <strong>Fix:</strong> wait a few seconds, then if it's clearly hung, just send your message again. It almost always comes back fine on the second try.</p>
+<p>Open <a href="https://kademurdock.com/agent-work">Agent work</a> from the website's Home page and choose <strong>Refresh requests</strong>. New ordinary chat requests appear there even when you sent them from the iPhone or Android app. On iPhone, open the link in Safari and sign in with your usual account if needed. This is currently a website page, not a new native app screen.</p>
+<p><strong>Reply saved</strong> means the reply is in the chat. <strong>Working</strong> means the server is still handling it. <strong>Interrupted</strong> means a finished reply could not be confirmed. Open the chat to read what happened before deciding whether to send anything again, especially if an agent may already have performed an action. Refresh only checks existing work. It does not restart it or use AI credits.</p>
+<p>To stop a running reply, open that chat and use <strong>Stop</strong>. Stopping a run does not undo actions already performed. If several chats are working and the server cannot tell which one you meant, it asks you to select the chat instead of guessing. An expired chat request cannot stop a different chat.</p>
+<p>The request list begins with this update. Older conversations remain in Conversations. Temporary chats, regenerated replies and separate voice or coding sessions may not appear. A server restart does not automatically resume or repeat interrupted actions.</p>
 
 <h2>Where's my balance / how much have I used?</h2>
 <p>Each message shows its cost and usage right there in the chat, so you can keep an eye on it as you go. (Curious what the numbers mean? The <a href="/help/tokens">What Are Tokens?</a> page explains them.) Remember your balance refills automatically every 30 days — see <a href="/help/costs">What This Costs Kade</a>.</p>
