@@ -1849,6 +1849,8 @@ PAGES.iphone = {
 <h2>If you were on TestFlight</h2>
 <p>Nothing breaks. The App Store version installs over the TestFlight one, and you stay signed in. TestFlight will keep offering newer test builds a few days ahead of the store; take them or leave them. If you would rather be done with TestFlight, delete it &mdash; the App Store version updates itself from now on.</p>
 
+<h2>Clubhouse sound</h2>
+<p>On the website, headphones clarity mode removes microphone processing; use headphones and turn it off before switching to speakers. Stereo depends on your browser, output device and the song. The iPhone's speaker-friendly calling mode does not provide stereo music. A headphones setting that uses the phone microphone and a separate stereo music player is being prepared for a later TestFlight update; it is not part of build 276.</p>
 <h2>Home and saved work, from build 276</h2>
 <p>Home has clearer cards and more space. At accessibility text sizes, paired tool buttons become full-width rows. To find the version and build number, open <strong>Settings &rarr; Support</strong>. Build 276 is a TestFlight update; the App Store may still offer an earlier build.</p>
 <p>After a connection drops, open <strong>Agent work</strong> from Home, then <strong>Refresh requests</strong>. It checks your recent chat requests without sending a message or using AI credits. Choose <strong>Open chat</strong> to read a saved reply. Back takes you to Conversations.</p>

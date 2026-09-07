@@ -143,6 +143,16 @@ function isDirectionTag(inner) {
   return !isNonVerbalSound(inner);
 }
 
+// A laugh or sigh is an audio event even when no words accompany it.
+// Directions/reset alone are not. Keep Unicode speech, too.
+function hasPerformableContent(chunk) {
+  const text = String(chunk ?? '');
+  for (const match of text.matchAll(/\[([^\]]*)\]/g)) {
+    if (isNonVerbalSound(match[1])) return true;
+  }
+  return /[\p{L}\p{N}]/u.test(text.replace(/\[[^\]]*\]/g, ' '));
+}
+
 const LEADING_TAG = /^\s*\[([^\]]{1,300})\]\s*/;
 
 /**
@@ -178,4 +188,5 @@ function liftInstruction(chunk) {
 module.exports = {
   CANONICAL_SOUNDS, NOT_SOUNDS, SOUND_SET, RESET_TAG,
   normalizeTag, isNonVerbalSound, isDirectionTag, isResetTag, liftInstruction, LEADING_TAG,
+  hasPerformableContent,
 };

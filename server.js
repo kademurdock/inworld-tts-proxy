@@ -867,7 +867,7 @@ function splitChunkForInworld(chunk) {
 }
 
 function chunkHasSpeakableWords(chunk) {
-  return /[a-zA-Z0-9]/.test(String(chunk || "").replace(/\[[^\]]*\]/g, " "));
+  return hasPerformableContent(chunk);
 }
 
 // ---- WAV helpers ----
@@ -1903,7 +1903,7 @@ const STEERING_CLOSE = "%%%";
  * as a DIRECTION and CARRIED FORWARD onto every following paragraph, so a
  * `%%%gasp%%%` was pinned to the front of the whole rest of the reply instead
  * of gasping once. See sounds.js for the receipts. */
-const { isDirectionTag: soundsIsDirectionTag, isResetTag: soundsIsResetTag, liftInstruction } = require("./sounds");
+const { isDirectionTag: soundsIsDirectionTag, isResetTag: soundsIsResetTag, liftInstruction, hasPerformableContent } = require("./sounds");
 /* Kill switch for the instruction-field lift. "0" restores the old behaviour
  * exactly: directions ride inside the text as [brackets]. */
 const TTS_INSTRUCTION_FIELD = process.env.KADE_TTS_INSTRUCTION_FIELD !== "0";
