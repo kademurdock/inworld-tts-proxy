@@ -326,7 +326,7 @@ PAGES.starthere = {
 <p>There's a microphone button to speak your message, and replies can be read out loud in a real voice. There's even a phone number you can call and just talk, no computer needed. See <a href="/help/voice">Talking &amp; Listening</a> and <a href="/help/phone">Phone Calls</a>.</p>
 
 <h2>Does this cost me money?</h2>
-<p>Here's the deal, short version: <strong>your account starts with $10 of credit that Kade loads for you.</strong> Everything you do draws from it at exactly what it costs — usually fractions of a cent, so it lasts a long, long time. When it runs dry, you top it up through PayPal and keep going. No markup, no profit, no subscriptions — the full story is on <a href="/help/donate">Usage &amp; Balance</a>.</p>
+<p>Here's the deal, short version: <strong>your account starts with $10 of credit that Kade loads for you.</strong> Model usage is currently charged at twice the configured provider rate to help cover the platform; metered extras also draw from your balance. Ordinary chat speech is included in Kade's voice plan. When you need more credit, top up through PayPal. The details are on <a href="/help/donate">Usage &amp; Balance</a>.</p>
 
 <h2>Once you're comfortable</h2>
 <ul>
@@ -461,6 +461,7 @@ PAGES.whatsnew = {
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
 <h2>September 7, 2026</h2>
+<p>Billing and privacy wording now matches the platform's controls: model charges include a contribution toward running the service, administrators can access stored chats, and saying "off the record" is a request to the AI memory system. It does not stop the chat from being stored. See <a href="/help/donate">Usage &amp; Balance</a> and <a href="/help/privacy">Privacy &amp; Your Data</a>.</p>
 <ul>
   <li><strong>A clearer iPhone Home, in TestFlight build 276.</strong> Cards have more space, and tool rows become full-width at accessibility text sizes. Version and build details now live in Settings &rarr; Support.</li>
   <li><strong>Agent work is on the iPhone.</strong> From Home, open <strong>Agent work</strong> to check recent requests and open saved replies after a connection drops. Refresh checks existing work without sending another message. Opening a saved chat puts Conversations behind it, so Back returns to the list. These changes arrive in TestFlight first; the App Store version may be older.</li>
@@ -622,7 +623,7 @@ PAGES.whatsnew = {
 <ul>
   <li><strong>The diary has a proper name now: your Logbook.</strong> Same thing, better jacket. Find it under You, then Your Logbook &mdash; and it just got seeded with real history: the housekeeping pass sorted your companions' memory so day-by-day happenings (the July project beats, the paperwork saga milestones) now live as dated logbook entries, while the always-remembered cards keep just the lasting stuff. Fewer duplicate notes, cleaner recall, nothing lost. From here on the nightly tidy-up keeps things sorted on its own.</li>
   <li><strong>Companions keep their word now.</strong> When a character tells you they'll do something &mdash; have that verse ready, look into a thing &mdash; they remember promising, and the next conversation opens with them honoring it instead of you re-asking. And when you mention something coming up, like an appointment you're dreading, they may offer once to check in with you afterward. Say yes and it happens; say nothing and it doesn't.</li>
-  <li><strong>"Off the record" works everywhere.</strong> Say it and nothing from that stretch gets remembered &mdash; no memory, no logbook &mdash; until you say you're back on the record. Your companion will keep it between you, for real.</li>
+  <li><strong>"Off the record" asks your companion not to remember.</strong> It tells the AI memory system to leave that stretch out of cards, the logbook, and relationship reflections until you say you are back on the record. It is not a guarantee: the conversation is still stored. See <a href="/help/memory">memory controls</a>.</li>
   <li><strong>Voice messages perform; drafts paste clean.</strong> Ask for a voice message and it's written to be HEARD from the first word &mdash; spoken rhythm, real delivery, feeling on every beat. Ask a companion to write a text or email you're going to send, and the reply is the message itself, ready to copy &mdash; no "here's a draft," no quotes to trim. And when you ramble at them about something you love, they've been told: that's earned depth, not a two-line summary.</li>
 </ul>
 
@@ -749,7 +750,7 @@ PAGES.whatsnew = {
   <li><strong>Four new voices, two retired.</strong> Voices 325 through 328 just joined the picker &mdash; browse to the end of the list and give them a listen. Two older voices (118 and 270) left the picker; if something of yours was already using one, it keeps working exactly as before.</li>
   <li><strong>Cleaner conversation titles.</strong> Titles now name what the conversation was actually about more reliably, stray symbols stopped sneaking in, and call conversations in your chat history are stamped in Central time instead of a server clock several hours off.</li>
   <li><strong>Ask her to watch for something &mdash; video calls can now interrupt you (only when you ask).</strong> On a video call, tell the character to watch for anything you care about &mdash; <em>"tell me when a car pulls up," "let me know when the dryer light goes off," "watch the door and tell me when someone comes in"</em> &mdash; and an automatic checker quietly looks every few seconds. The moment it's visible, she takes one fresh look and <strong>speaks up on her own</strong>, in her own voice. Alerts wait for a quiet moment (never talk over you), watches are one-shot and re-armable, and one that sees nothing for half an hour says so and stands down instead of dying silently. Full details on the <a href="/help/voice">Talking &amp; Listening page</a>.</li>
-  <li><strong>"Feed the Server" is now "Usage &amp; Balance" &mdash; and the money deal is official.</strong> Every account starts with $10 of credit loaded by Kade; everything draws from your balance at exactly what it costs (no markup, no profit); when it runs dry, top up any amount through the PayPal button and it's added to your account. Chat stays nearly free &mdash; the $10 lasts months of talking &mdash; it's pictures, calls, and video that draw it down. Same page as before, honest new name: <a href="/help/donate">Usage &amp; Balance</a>.</li>
+  <li><strong>"Feed the Server" is now "Usage &amp; Balance" &mdash; and the money deal is official.</strong> Every account starts with $10 of credit loaded by Kade. Model usage is now charged at twice the configured provider rate to help cover the platform; metered extras draw from the same balance. Top up through PayPal when you need more credit. Same page as before, honest new name: <a href="/help/donate">Usage &amp; Balance</a>.</li>
   <li><strong>New low-vision display options.</strong> Settings &rarr; General &rarr; Accessibility now has three new controls: a <strong>High contrast (true black)</strong> theme &mdash; pure black background, bright white text, stronger borders everywhere; an <strong>Easy-read font</strong> picker with Lexend (designed for low vision) and OpenDyslexic (dyslexia-friendly); and a <strong>Line spacing</strong> control that gives text room to breathe. All three work on the website and in the iPhone app, and they remember your choice per device.</li>
   <li><strong>Reading view.</strong> Every AI reply now has a book-icon button next to the play and copy buttons that opens the reply full-screen &mdash; big text, nothing else on screen, close with the button or Escape. Made for actually reading long answers with limited vision instead of squinting at chat bubbles. It follows your font and spacing choices above.</li>
   <li><strong>Describe-It plays it straight about certainty.</strong> The photo-describing specialist now tells you how sure it is when lighting or blur makes reading risky, gives both readings when two are plausible, and for high-stakes stuff &mdash; medication labels, dosages, expiration dates, money &mdash; it always recommends a human double-check and can pass a note to a family member to take a look. It also says where information comes from ("based on the photo you sent earlier," "that part's a best guess") so you're never guessing about its guessing.</li>
@@ -1299,7 +1300,7 @@ PAGES.memory = {
 </ul>
 
 <h2>The Logbook: the long story of you</h2>
-<div class="term"><strong>Your Logbook</strong> &mdash; beside the cards, every companion keeps a dated logbook of your day-to-day: what happened, how it went, the rabbit holes you went down together. Cards hold who you ARE; the logbook holds what HAPPENED &mdash; and it has no size limit, because it stays on the shelf until a moment calls for it. Ask "what was I up to last week?" or "have I mentioned that before?" and your companion checks the real entries. Old moments also drift back naturally when they fit &mdash; the way a friend goes "wait, didn't you say&hellip;" Browse it all under You &rarr; Your Logbook: every entry by date, who holds it, a Forget button on each, and a box to add a line yourself. Same privacy as cards: an entry belongs to the companion you told. And two magic words work everywhere: say <em>"off the record"</em> and nothing gets remembered &mdash; cards or logbook &mdash; until you say you're back on.</div>
+<div class="term"><strong>Your Logbook</strong> &mdash; beside the cards, every companion keeps a dated logbook of your day-to-day: what happened, how it went, the rabbit holes you went down together. Cards hold who you ARE; the logbook holds what HAPPENED &mdash; and it has no size limit, because it stays on the shelf until a moment calls for it. Ask "what was I up to last week?" or "have I mentioned that before?" and your companion checks the real entries. Old moments also drift back naturally when they fit &mdash; the way a friend goes "wait, didn't you say&hellip;" Browse it all under You &rarr; Your Logbook: every entry by date, who holds it, a Forget button on each, and a box to add a line yourself. Same privacy as cards: an entry belongs to the companion you told. Saying <em>"off the record"</em> asks the AI not to save that stretch in cards, the logbook, or relationship reflections. This relies on the AI following the request; it does not stop the chat from being stored. For a direct control, turn remembering off in your memory settings. That stops automatic memory use and updates, but does not delete your chat history or previously saved memories.</div>
 
 <h2>How memories come to mind (new, August 2026)</h2>
 <p>Between chats, each companion also keeps a short account of what's been happening between you, things you've taught them, and questions still open. The nightly update reads new activity across your separate chats in date order, so a correction in another chat has a chance to catch up. A plan stays a plan until someone says what happened. Time away no longer erases this history. Turning memory off in your personalization settings also stops this relationship reflection from being read or updated.</p>
@@ -1583,7 +1584,7 @@ ${nextprev("tokens", "donate")}
 PAGES.donate = {
   title: "Usage & Balance",
   h1: "Usage & Balance: Your Tab, Your Top-Ups",
-  tagline: "Everything here costs exactly what it costs — no markup, no profit. This page is how the lights stay on.",
+  tagline: "Your balance, usage charges, and estimated server cost, explained separately.",
   main: `
 <div class="hero-art" aria-hidden="true" role="presentation">
 <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
@@ -1619,10 +1620,10 @@ PAGES.donate = {
 <p>This place used to run purely on Kade's wallet and an optional tip jar. It grew — more people, more voices, phone calls, pictures, video — and the honest way to keep it alive without anybody profiting off anybody is simple:</p>
 <ul>
   <li><strong>You start with $10 of credit, loaded by Kade.</strong> That's the house welcoming you in.</li>
-  <li><strong>Everything you do draws from your balance at exactly what it costs.</strong> Chat is fractions of a cent. Pictures are pennies. Phone calls are about a cent and a half a minute. Video and song-making are the big spenders. No markup on any of it — the receipts on this page are the same numbers the AI providers charge Kade.</li>
+  <li><strong>Model usage is currently charged at twice the configured provider rate.</strong> The extra helps cover the rest of the platform. Metered extras such as pictures, videos, and phone calls also draw from your balance at their recorded rates. Ordinary chat speech is included in Kade's voice plan. The server-cost line estimates provider cost separately from what your balance was charged.</li>
   <li><strong>When your balance runs dry, things pause until you top it up.</strong> Send whatever amount through the PayPal button below — <strong>put your name in the PayPal note</strong> so Kade knows whose balance to load — and it gets added to your account, usually the same day.</li>
 </ul>
-<p>That's the whole model. No subscriptions, no monthly bill, no surprise charges — a prepaid tab you control completely. <strong>Kade makes zero dollars on this.</strong> The only thing your money buys is your own usage, at cost.</p>
+<p>That's the whole model. No subscriptions, no monthly bill, no surprise charges — a prepaid tab you control completely. Your balance pays for your usage and contributes toward keeping the platform running.</p>
 
 <h2>See your own tab and balance</h2>
 <p>Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Usage &amp; Balance</strong>. It shows what you have left and your month so far — chat, voice, pictures, phone calls, the works — priced out honestly, item by item. No mystery meat.</p>
@@ -1786,17 +1787,21 @@ PAGES.privacy = {
 <p><strong>Crash reports.</strong> The iPhone app sends Apple's technical crash logs to Kade's server so breakage gets found and fixed. These are stack traces and device model &mdash; not your messages.</p>
 <p><strong>Location.</strong> Only if you deliberately use a feature that asks for it, like sharing where you are with a companion. It is not collected in the background, ever.</p>
 
+<h2>Administrator access</h2>
+<p>Administrators can access stored conversations, memory cards, logbook entries, and relationship reflections through support tools. Connections are encrypted in transit, but this is not end-to-end encrypted messaging. Asking for something to be "off the record" does not remove it from the stored conversation. You can review or delete saved information using the controls described below.</p>
+
 <h2>Who else touches it</h2>
 <p>The platform doesn't build its own AI models or voices &mdash; it rents them. That means parts of what you write or say pass through other companies to get the work done. Under their business terms these are service providers processing data on Kade-AI's behalf; they are not given your data to sell.</p>
 <ul>
-  <li><strong>Z.AI</strong> &mdash; the language models that write most of the replies, and the first place a message goes. It receives your message and the conversation context.</li>
+  <li><strong>Z.AI</strong> &mdash; language models used by some characters and background features. It receives the message and context needed for that request.</li>
+  <li><strong>xAI</strong> &mdash; Grok models used by characters including Kiana and Della, reached through OpenRouter. It receives your message and conversation context.</li>
   <li><strong>OpenRouter</strong> &mdash; the service the platform reaches several model companies through, and the stand-in whenever Z.AI is busy. It receives your message and the conversation context.</li>
   <li><strong>Moonshot AI</strong> &mdash; the models behind deep research and some longer thinking. They receive your message and the conversation context.</li>
   <li><strong>DeepSeek</strong> &mdash; names your conversations and helps read images. It receives the conversation being named, or the image.</li>
   <li><strong>Inworld AI and Fish Audio</strong> &mdash; text-to-speech. They receive the text being read aloud.</li>
   <li><strong>Deepgram</strong> &mdash; speech-to-text. It receives your voice audio when you talk instead of type.</li>
   <li><strong>Twilio</strong> &mdash; the phone line. It carries and records phone calls.</li>
-  <li><strong>Google</strong> &mdash; describing photos and documents, the live video lane, and search inside your own memories. It receives the image, file, or video you shared.</li>
+  <li><strong>Google</strong> &mdash; describing photos and documents, the live video lane, and search inside your own memories. It receives the image, file, or video you shared, or the memory text and search wording needed for memory lookup.</li>
   <li><strong>fal.ai and Black Forest Labs</strong> &mdash; picture, video, and music generation. They receive your prompt.</li>
   <li><strong>Tavily</strong> &mdash; web search, when a character looks something up. It receives the search wording.</li>
   <li><strong>Railway</strong> &mdash; the servers everything runs on. <strong>Backblaze</strong> &mdash; where files and nightly backups are stored. <strong>Apple</strong> &mdash; delivers push notifications to iPhones.</li>
