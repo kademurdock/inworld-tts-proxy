@@ -1458,9 +1458,17 @@ PAGES.world = {
 
 <h2>Sound</h2>
 <p>Sounds help tell you what is happening while the reader carries the words. Hangouts have new cues for a chair being pulled up, paper rustling, snacks opening, and a record starting. Each ward has its own bed of sound and rooms their own tone. Leave the page open and the room reaches you live &mdash; a friend talking, a citizen wandering in, the freight horn &mdash; without typing a thing. Sounds and ambience have their own switches and volume in the settings panel, and the page remembers them.</p>
+<p>Walking now follows the ground: boards, hard floors, carpet, grass, earth, metal, and wet ground have different cues. Rain turns soft paths muddy. The web world adds woodland, creek, campfire, home, and library backgrounds, with quieter outdoor sound indoors. Background sound pauses when the web page is hidden. Choose <strong>Notice surroundings</strong> for the sounds, smells, and feel of the place in words. Pictures can be hidden in settings.</p>
+
+<h2>Outdoors at your pace</h2>
+<p>Choose <strong>Explore outdoors</strong> to visit Alder Trail, Reedbank Creek, Alder Camp, or Alder Hide. The paths connect beyond Tandy Orchard. Track wildlife or take a field photograph; <code>field journal</code> keeps your last twenty discoveries as written entries. Rest by the fire, or start a shared gathering at camp.</p>
+<p><strong>Easy fishing</strong> lends you a pole and offers Keep or Release buttons. There is no reaction deadline. You can sell a kept catch at the Shack or use it in a fish fry. Wait a minute between catches. The original <code>cast</code>, listen, and strike fishing game is still available. At Alder Hide, <code>hunt</code> offers optional wild-rabbit hunting for cooking meat, tracking, or photography. It never targets residents or pets.</p>
+
+<h2>Talking with residents</h2>
+<p>Tap a resident and choose <strong>Say hello</strong> or <strong>Ask about here</strong>. To say your own words, use <code>converse Pat: How was your morning?</code>, then <code>reply</code> followed by your answer. The web Reply button fills that prefix for you. Recent exchanges stay with your character and that resident. <code>end conversation</code> finishes. Residents can discuss plans; purchases, gifts, travel, and relationship changes still use their normal actions. If free conversation is unavailable, Talk to continues to work.</p>
 
 <h2>The small print</h2>
-<p>Reverie costs nothing to play and uses no AI while you play &mdash; the city is a program, so it answers in a blink and never makes anything up about what is where. The dollars are game money. Nobody dies, nobody loses their character, and the Founder can see everything (it is her city).</p>
+<p>The city simulation runs without a model. Optional resident conversations use a small, fixed AI allowance funded by the Founder; it does not renew automatically. The dollars in your wallet are game money. No payment is taken from players for these activities.</p>
 ${nextprev("games", "build")}
 `,
 };
