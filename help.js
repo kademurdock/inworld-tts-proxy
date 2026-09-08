@@ -1072,6 +1072,7 @@ PAGES.voice = {
 
 <h2>Speaking instead of typing</h2>
 <p>There's a <strong>microphone</strong> button by the message box. Activate it, say your message, and it gets turned into text for you to send. The first time, your browser or phone will ask permission to use the mic — say yes.</p>
+<p><strong>In the native iPhone app:</strong> look for a microphone inside a filled circle immediately to the right of the message box, beside the upward-arrow Send button. Tap once to record, speak, then tap the red Stop circle. Review the words in the box and tap Send. You do not need to hold the button down. VoiceOver calls it <strong>Record a voice message</strong>. This is Kade-AI&rsquo;s own button above the keyboard; the microphone on Apple&rsquo;s keyboard uses iPhone dictation. <a href="/help/iphone#record-message">Step-by-step iPhone directions</a>.</p>
 <div class="term"><strong>Speech-to-text</strong> is the feature that listens to your voice and writes down the words. <strong>Text-to-speech</strong> is the reverse — it reads written words out loud. This site does both.</div>
 
 <h2>Changing the voice you hear</h2>
@@ -1433,7 +1434,8 @@ PAGES.world = {
 <h2>Have people over</h2>
 <p>Open <strong>Hangout</strong> to host a <strong>cookout</strong>, <strong>record night</strong>, or <strong>story circle</strong>. A friend in the same room can join immediately. Put out snacks, pull up a chair, change the topic, or add your own words. There is no timer and no cover charge. Food and supplies are provided.</p>
 <p>On the website, <strong>Add your own line</strong> prepares the command box for typing or dictation. In any client, say or type <code>hangout add</code> followed by your words. A story circle might start with a wedding cake in a stolen shopping cart; where it goes next is up to whoever is there. You can also just listen.</p>
-<p>The host can finish the gathering and keep its shared moments. <code>hangout memories</code> reads the last five gatherings saved in that room, with up to twelve contributions each. Only residents can host in someone&rsquo;s home; public places are open to anyone. If the host leaves the gathering, another guest takes over.</p>
+<p>The host can finish the gathering and keep its shared moments. Choose <strong>Read shared memories</strong>, even during a running hangout, or type <code>hangout memories</code>. A dated list shows the last five gatherings saved in this room. Choose one to read eight contributions at a time, then use <strong>Next page</strong>, <strong>Previous page</strong>, or <strong>Back to the hangout</strong>. Newly finished gatherings preserve up to 48 contributions; older memories keep the lines originally saved. Dates use UTC. Reading does not join, finish, or interrupt a gathering.</p>
+<p>Only residents can host in someone&rsquo;s home; public places are open to anyone. If the host leaves the gathering, another guest takes over. When the last guest leaves, the gathering is saved too. The room retains its five most recent gatherings; it is not a permanent archive.</p>
 <p>The website also has furnished room pictures with the people present. Under <strong>Sound &amp; settings</strong>, turn pictures off or choose <strong>Roomy text</strong> for larger, more widely spaced reading. The pictures are decorative; the written room, people, and buttons contain the game information.</p>
 
 <h2>Becoming somebody</h2>
@@ -2076,6 +2078,16 @@ PAGES.iphone = {
 
 <h2>If you were on TestFlight</h2>
 <p>Nothing breaks. The App Store version installs over the TestFlight one, and you stay signed in. TestFlight will keep offering newer test builds a few days ahead of the store; take them or leave them. If you would rather be done with TestFlight, delete it &mdash; the App Store version updates itself from now on.</p>
+
+<h2 id="record-message">Speak a message to your companion</h2>
+<ol>
+  <li>Open the conversation and find the message box at the bottom.</li>
+  <li>Immediately to its right is a <strong>microphone inside a filled circle</strong>, beside the upward-arrow Send button. Use this button above the keyboard, rather than the microphone on Apple&rsquo;s keyboard.</li>
+  <li>Tap once and speak. Allow microphone access if asked. You do not need to hold the button down.</li>
+  <li>Tap the <strong>red Stop circle</strong> when you finish. Wait for your words to appear in the message box.</li>
+  <li>Review or edit the words, then tap the upward-arrow <strong>Send</strong> button.</li>
+</ol>
+<p>With VoiceOver, find <strong>Record a voice message</strong> and double-tap. When you finish, double-tap <strong>Stop recording</strong>. Recording fills the draft; it does not send until you choose <strong>Send message</strong>.</p>
 
 <h2>Clubhouse sound</h2>
 <p>On the website, headphones clarity mode removes microphone processing; use headphones and turn it off before switching to speakers. Stereo depends on your browser, output device and the song. The iPhone's speaker-friendly calling mode does not provide stereo music. If your installed TestFlight build offers <strong>Headphones clarity and stereo</strong>, that setting uses the phone microphone and a separate stereo music player; disconnecting headphones restores speaker echo protection. Build 276 does not include that stereo player.</p>
