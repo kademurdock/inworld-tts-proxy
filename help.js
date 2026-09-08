@@ -29,52 +29,291 @@ const PAYPAL_URL = "https://paypal.me/kademurdock";
 // is rendered from this on every page, so links stay consistent and we can
 // verify offline that every route resolves.
 const SECTIONS = [
-  { key: "home",            path: "/help",                 label: "Help Home",          group: "Getting started" },
-  { key: "starthere",       path: "/help/start-here",      label: "Start Here (New to AI?)", group: "Getting started" },
-  { key: "quickstart",      path: "/help/quickstart",      label: "Your First Five Minutes", group: "Getting started" },
-  { key: "faq",             path: "/help/faq",             label: "Questions & Answers", group: "Getting started" },
-  { key: "whatsnew",        path: "/help/whats-new",       label: "What's New",          group: "Getting started" },
-  { key: "createacharacter", path: "/help/create-a-character", label: "Create a Character", group: "Getting started" },
-  { key: "iphone",          path: "/help/iphone",          label: "The iPhone App",      group: "Getting started" },
-  { key: "android",         path: "/help/android",         label: "The Android App",     group: "Getting started" },
-
-  { key: "voice",           path: "/help/voice",           label: "Talking & Listening", group: "Using Kade-AI" },
-  { key: "phone",           path: "/help/phone",           label: "Phone Calls", group: "Using Kade-AI" },
-  { key: "describe",        path: "/help/describe",        label: "Describe My World",   group: "Using Kade-AI" },
-  { key: "characters",      path: "/help/characters",      label: "Characters & the Marketplace", group: "Using Kade-AI" },
-  { key: "rooms",           path: "/help/debate-room",     label: "The Debate Room",     group: "Using Kade-AI" },
-  { key: "games",           path: "/help/games",           label: "The Game Parlor",     group: "Using Kade-AI" },
-  { key: "world",           path: "/help/world",           label: "Reverie — the city",  group: "Using Kade-AI" },
-  { key: "build",           path: "/help/build",           label: "Build Your Own Character", group: "Using Kade-AI" },
-  { key: "memory",          path: "/help/memory",          label: "What It Remembers",   group: "Using Kade-AI" },
-  { key: "images",          path: "/help/images",          label: "Making Pictures",     group: "Using Kade-AI" },
-  { key: "audio",           path: "/help/audio",           label: "Making Audio & Voices", group: "Using Kade-AI" },
-  { key: "temporary",       path: "/help/temporary",       label: "Starting Over & Private Chats", group: "Using Kade-AI" },
-  { key: "cheatsheet",      path: "/help/cheatsheet",      label: "The Cheat Sheet",     group: "Using Kade-AI" },
-
-  { key: "tokens",          path: "/help/tokens",          label: "What Are Tokens?",    group: "The money part" },
-  { key: "costs",           path: "/help/costs",           label: "What This Costs Kade", group: "The money part" },
-  { key: "donate",          path: "/help/donate",          label: "Usage & Balance",     group: "The money part" },
-
-  { key: "accessibility",   path: "/help/accessibility",   label: "Accessibility Tips",  group: "Getting the best experience" },
-  { key: "troubleshooting", path: "/help/troubleshooting", label: "When Something Breaks", group: "Getting the best experience" },
-  { key: "privacy",         path: "/help/privacy",         label: "Privacy & Your Data", group: "Getting the best experience" },
+  {
+    "key": "home",
+    "path": "/help",
+    "label": "Help Home",
+    "group": "Start and find your way",
+    "terms": "",
+    "icon": "•",
+    "description": "Find your way around Kade-AI."
+  },
+  {
+    "key": "starthere",
+    "path": "/help/start-here",
+    "label": "Start Here (New to AI?)",
+    "group": "Start and find your way",
+    "terms": "start here new ai beginner never used what is this chatgpt robot confused lost",
+    "icon": "🌱",
+    "description": "Never used AI before? This page assumes nothing. Read this one first."
+  },
+  {
+    "key": "quickstart",
+    "path": "/help/quickstart",
+    "label": "Your First Five Minutes",
+    "group": "Start and find your way",
+    "terms": "start basics first five minutes new beginner how",
+    "icon": "🚀",
+    "description": "The absolute basics, in order. Start here."
+  },
+  {
+    "key": "iphone",
+    "path": "/help/iphone",
+    "label": "The iPhone App",
+    "group": "Start and find your way",
+    "terms": "iphone app ios app store apple download install get the app testflight",
+    "icon": "📱",
+    "description": "Kade-AI is on the App Store. One link, no searching."
+  },
+  {
+    "key": "android",
+    "path": "/help/android",
+    "label": "The Android App",
+    "group": "Start and find your way",
+    "terms": "android app apk install download sideload phone samsung google pixel motorola galaxy get the app",
+    "icon": "🤖",
+    "description": "Got an Android phone? Install Kade-AI as a real app, straight from here."
+  },
+  {
+    "key": "faq",
+    "path": "/help/faq",
+    "label": "Questions & Answers",
+    "group": "Start and find your way",
+    "terms": "faq questions answers chatgpt private cost cost break",
+    "icon": "💬",
+    "description": "Is this ChatGPT? Is it private? Does it cost me? Quick honest answers."
+  },
+  {
+    "key": "cheatsheet",
+    "path": "/help/cheatsheet",
+    "label": "The Cheat Sheet",
+    "group": "Start and find your way",
+    "terms": "cheat sheet buttons quick reference where shortcuts deep think brain reasoning slow careful",
+    "icon": "📋",
+    "description": "Where the buttons are and how to do the common stuff. One page."
+  },
+  {
+    "key": "characters",
+    "path": "/help/characters",
+    "label": "Characters & the Marketplace",
+    "group": "Chat, voice and memory",
+    "terms": "characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya",
+    "icon": "🎭",
+    "description": "Kiana is your host, but there's a whole cast to meet."
+  },
+  {
+    "key": "voice",
+    "path": "/help/voice",
+    "label": "Talking & Listening",
+    "group": "Chat, voice and memory",
+    "terms": "voice talk listen speak microphone audio speech hear sound",
+    "icon": "🎧",
+    "description": "Speak instead of type, and have replies read out loud."
+  },
+  {
+    "key": "phone",
+    "path": "/help/phone",
+    "label": "Phone Calls",
+    "group": "Chat, voice and memory",
+    "terms": "phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report call me calls you ringtone wake-up wake me up alarm agent call answer rings",
+    "icon": "📞",
+    "description": "Call your characters on a real phone line — they can make calls for you, and even check in on family."
+  },
+  {
+    "key": "describe",
+    "path": "/help/describe",
+    "label": "Describe My World",
+    "group": "Chat, voice and memory",
+    "terms": "describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world",
+    "icon": "👁️",
+    "description": "Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud."
+  },
+  {
+    "key": "memory",
+    "path": "/help/memory",
+    "label": "What It Remembers",
+    "group": "Chat, voice and memory",
+    "terms": "memory remember forget notes saves recall cards shared private clean up remind reminder notification push birthday nudge",
+    "icon": "🧠",
+    "description": "Memory cards: what sticks between chats, and how to boss it around."
+  },
+  {
+    "key": "temporary",
+    "path": "/help/temporary",
+    "label": "Starting Over & Private Chats",
+    "group": "Chat, voice and memory",
+    "terms": "temporary private starting over new chat fresh delete",
+    "icon": "🧹",
+    "description": "Fresh start, or a chat that doesn't get saved."
+  },
+  {
+    "key": "work",
+    "path": "/help/agent-work",
+    "label": "Check a reply or coding job",
+    "group": "Get things done",
+    "terms": "stuck thinking reply saved coding job forge spending interrupted stop progress requests",
+    "icon": "✓",
+    "description": "Find a saved reply, check progress, and see what needs your attention."
+  },
+  {
+    "key": "projects",
+    "path": "/help/projects",
+    "label": "Work in a project",
+    "group": "Get things done",
+    "terms": "projects files documents instructions versions revisions downloads shared work",
+    "icon": "▤",
+    "description": "Keep instructions, reference text and working documents together."
+  },
+  {
+    "key": "createacharacter",
+    "path": "/help/create-a-character",
+    "label": "Create a Character",
+    "group": "Get things done",
+    "terms": "create a character builder quiz make my own agent custom companion portrait picture avatar model engine describe description write my personality system prompt help me write this generate persona detailed prompt improve",
+    "icon": "🎨",
+    "description": "Describe who you want and have their whole personality written for you, or answer eight easy questions. Portrait included."
+  },
+  {
+    "key": "build",
+    "path": "/help/build",
+    "label": "Build Your Own Character",
+    "group": "Get things done",
+    "terms": "build make own character agent create custom",
+    "icon": "🛠️",
+    "description": "No coding. Give it a name and a personality, and go."
+  },
+  {
+    "key": "images",
+    "path": "/help/images",
+    "label": "Making Pictures",
+    "group": "Create and spend time together",
+    "terms": "images pictures draw art generate flux make picture",
+    "icon": "🎨",
+    "description": "Ask for an image and it'll draw one. There's a limit, though."
+  },
+  {
+    "key": "audio",
+    "path": "/help/audio",
+    "label": "Making Audio & Voices",
+    "group": "Create and spend time together",
+    "terms": "audio sound cadence muse voice clone voices radio drama podcast narration text to speech tts music sound effects sfx seed audio make audio generate audio scene dialogue movie trailer song songs sing singing make a song write a song lyria minimax lyrics track melody",
+    "icon": "🎬",
+    "description": "Turn a few sentences into a full audio scene with Cadence — or a real, sung song with Muse."
+  },
+  {
+    "key": "clubhouse",
+    "path": "/help/clubhouse",
+    "label": "Kade’s Clubhouse",
+    "group": "Create and spend time together",
+    "terms": "clubhouse lounge friends room hotel jukebox stereo headphones music microphone mute",
+    "icon": "♫",
+    "description": "Join a live voice room, share music and invite companions."
+  },
+  {
+    "key": "rooms",
+    "path": "/help/debate-room",
+    "label": "The Debate Room",
+    "group": "Create and spend time together",
+    "terms": "debate room roleplay group multiple characters argue radio play conversation hall share porch hangout front porch company",
+    "icon": "🎙️",
+    "description": "Put a few characters in one room with a topic — or none at all on the front porch — and jump in."
+  },
+  {
+    "key": "games",
+    "path": "/help/games",
+    "label": "The Game Parlor",
+    "group": "Create and spend time together",
+    "terms": "games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion cards against reality humanity wild blanks party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey",
+    "icon": "🃏",
+    "description": "Nineteen real games by voice — Blackjack, Uno, War, Cards Against Reality (you know the game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard."
+  },
+  {
+    "key": "world",
+    "path": "/help/world",
+    "label": "Reverie — the city",
+    "group": "Create and spend time together",
+    "terms": "reverie world city sims mud moo life game house rent family kids children pets cats dogs fishing bowling neighbors roleplay hang out live in a place tram ferry car bike compass buttons screen reader sounds ambience wards patch hook bell",
+    "icon": "🏙️",
+    "description": "A city you live in with your friends: rent a place, work, cook, fish, bowl, fall in love, raise kids, get in trouble. Buttons or typing, every sound carries the game."
+  },
+  {
+    "key": "donate",
+    "path": "/help/donate",
+    "label": "Usage & Balance",
+    "group": "Account and costs",
+    "terms": "donate paypal feed server support usage balance top up topup credit money pay tab",
+    "icon": "🍕",
+    "description": "Your starting credit, what things cost, and topping up when it runs dry."
+  },
+  {
+    "key": "tokens",
+    "path": "/help/tokens",
+    "label": "What Are Tokens?",
+    "group": "Account and costs",
+    "terms": "tokens context counter words cost meaning",
+    "icon": "🔢",
+    "description": "That little counter, explained without the math homework."
+  },
+  {
+    "key": "costs",
+    "path": "/help/costs",
+    "label": "What This Costs Kade",
+    "group": "Account and costs",
+    "terms": "cost money bill credits balance economics pay",
+    "icon": "💸",
+    "description": "The honest money side. Spoiler: a real person pays a real bill."
+  },
+  {
+    "key": "privacy",
+    "path": "/help/privacy",
+    "label": "Privacy & Your Data",
+    "group": "Account and costs",
+    "terms": "privacy data delete account personal private security",
+    "icon": "◇",
+    "description": "Understand saved chats, memory and who can access your data."
+  },
+  {
+    "key": "troubleshooting",
+    "path": "/help/troubleshooting",
+    "label": "When Something Breaks",
+    "group": "Fix a problem",
+    "terms": "troubleshooting broken stuck fix audio microphone problem help report bug feedback feature request suggestion tell kade",
+    "icon": "🔧",
+    "description": "The usual hiccups and how to get unstuck."
+  },
+  {
+    "key": "accessibility",
+    "path": "/help/accessibility",
+    "label": "Accessibility Tips",
+    "group": "Fix a problem",
+    "terms": "accessibility screen reader voiceover nvda blind shortcuts",
+    "icon": "♿",
+    "description": "Get the smoothest ride with VoiceOver or NVDA."
+  },
+  {
+    "key": "whatsnew",
+    "path": "/help/whats-new",
+    "label": "What's New",
+    "group": "Fix a problem",
+    "terms": "whats new what's new changelog updates latest features recently added new stuff toys",
+    "icon": "✨",
+    "description": "The latest toys, in plain language — updated every time something ships."
+  }
 ];
 
-const GROUP_ORDER = ["Getting started", "Using Kade-AI", "The money part", "Getting the best experience"];
+const GROUP_ORDER = ["Start and find your way", "Chat, voice and memory", "Get things done", "Create and spend time together", "Account and costs", "Fix a problem"];
 
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function navHtml(currentKey) {
-  let out = '<nav aria-label="Help sections" class="sectionnav">';
-  for (const group of GROUP_ORDER) {
-    out += `<h2 class="navgroup">${group}</h2><ul>`;
-    for (const s of SECTIONS.filter((x) => x.group === group)) {
-      const current = s.key === currentKey ? ' aria-current="page"' : "";
-      out += `<li><a href="${s.path}"${current}>${s.label}</a></li>`;
-    }
-    out += "</ul>";
-  }
-  out += "</nav>";
-  return out;
+  return '<nav aria-label="Help sections" class="sectionnav" id="help-topics"><h2>Browse help</h2>' + GROUP_ORDER.map(group => {
+    const entries = SECTIONS.filter(s => s.group === group);
+    const active = entries.some(s => s.key === currentKey);
+    return `<details${active ? ' open' : ''}><summary>${escapeHtml(group)}</summary><ul>` +
+      entries.map(s => `<li><a href="${s.path}"${s.key === currentKey ? ' aria-current="page"' : ''}>${escapeHtml(s.label)}</a></li>`).join('') + '</ul></details>';
+  }).join('') + '</nav>';
 }
 
 // ---- Shared page shell ----
@@ -180,9 +419,53 @@ const STYLES = `
     nav.sectionnav { flex:none; width:auto; border-right:none; border-bottom:1px solid #262a33; }
     main { max-width:none; }
   }
+  html { scroll-padding-top:16px; }
+  body { overflow-wrap:anywhere; }
+  .wrap { max-width:1180px; }
+  header.site { padding:24px; }
+  .toplinks { display:flex; flex-wrap:wrap; gap:8px 24px; }
+  a.back { min-height:44px; display:inline-flex; align-items:center; margin:0 0 12px; }
+  .layout { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:24px; }
+  .home-layout { display:block; }
+  main { width:100%; max-width:78ch; padding:24px 24px 48px; }
+  .home-layout main { max-width:none; }
+  nav.sectionnav { border-right:0; border-left:1px solid #303846; padding:24px 16px; }
+  nav.sectionnav h2 { font-size:1.15rem; margin:0 0 12px; }
+  summary { cursor:pointer; min-height:44px; padding:10px 4px; font-weight:650; }
+  details { border-bottom:1px solid #303846; }
+  .contents { padding:4px 16px; border:1px solid #3a4150; border-radius:12px; background:#151c28; margin-bottom:24px; }
+  .contents a { display:inline-block; padding:8px 0; }
+  .cards { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:16px; padding:0; }
+  .cards a { background:linear-gradient(135deg,#1b2535,#181b25); border:1px solid #465268; padding:22px; }
+  .cards .desc, p.tagline, #searchcount, footer.site { color:#b8c3d4; }
+  .cards .ico { color:#accbff; }
+  .topic-group { margin-top:30px; }
+  .topic-group h2 { border-top:1px solid #303846; padding-top:22px; }
+  .quicklinks { display:flex; flex-wrap:wrap; gap:10px; list-style:none; padding:0; }
+  .quicklinks a { display:block; padding:12px 16px; border:1px solid #52647e; border-radius:24px; text-decoration:none; }
+  .hubsearch { padding:22px; border:1px solid #465268; border-radius:18px; background:linear-gradient(120deg,#17263c,#231e35); }
+  .hubsearch input { max-width:none; background:#101722; border-color:#718099; }
+  #clearsearch { min-height:44px; padding:10px 16px; border-radius:10px; border:1px solid #718099; background:#17263c; color:#eceef2; font:inherit; cursor:pointer; }
+  .float { animation:none; }
+  [hidden] { display:none !important; }
+  @media(max-width:820px) { .layout { display:block; } nav.sectionnav { border-left:0; border-top:1px solid #303846; } }
+  @media(max-width:400px) { main, header.site { padding-left:16px; padding-right:16px; } .hubsearch { padding:16px; } }
+  @media(prefers-reduced-motion:reduce) { .cards a:hover, a.cta:hover { transform:none; } }
+  @media(forced-colors:active) { h1 { background:none; -webkit-text-fill-color:CanvasText; color:CanvasText; } .cards a, .hubsearch, .contents, a.cta { background:Canvas; border:1px solid CanvasText; } a:focus-visible, summary:focus-visible, input:focus-visible { outline-color:Highlight; } }
+
 `;
 
+
+function articleContents(main, key) {
+  if (key === 'home') return '';
+  const headings = [...main.matchAll(/<h2\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/g)];
+  if (headings.length < 3) return '';
+  return '<details class="contents"><summary>On this page</summary><nav aria-label="On this page"><ul>' + headings.map((m, i) =>
+    `<li><a href="#${m[1]}">${m[2]}</a></li>`).join('') + '</ul></nav></details>';
+}
 function page({ key, title, h1, tagline, main }) {
+  let headingNumber = 0;
+  main = main.replace(/<h2(\s[^>]*)?>/g, (tag) => tag.includes("id=") ? tag : `<h2 id="section-${++headingNumber}">`);
   const fullTitle = title ? `${title} — Kade-AI Help` : "Kade-AI Help";
   return `<!DOCTYPE html>
 <html lang="en">
@@ -190,21 +473,23 @@ function page({ key, title, h1, tagline, main }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${fullTitle}</title>
+<link rel="canonical" href="${CHAT_URL}${SECTIONS.find(s => s.key === key)?.path || "/help"}">
 <style>${STYLES}</style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <div class="wrap">
   <header class="site">
-    <a class="back" href="${CHAT_URL}">← Back to Kade-AI chat</a>
+    <nav class="toplinks" aria-label="Kade-AI"><a class="back" href="${CHAT_URL}/home">Kade Home</a><a class="back" href="${CHAT_URL}">Chat</a><a class="back" href="/help">Help home</a>${key === "home" ? "" : '<a class="back" href="#help-topics">Browse help topics</a>'}</nav>
     <h1>${h1}</h1>
     ${tagline ? `<p class="tagline">${tagline}</p>` : ""}
   </header>
-  <div class="layout">
-    ${navHtml(key)}
+  <div class="layout${key === "home" ? " home-layout" : ""}">
     <main id="main" tabindex="-1">
+${articleContents(main, key)}
 ${main}
     </main>
+    ${key === "home" ? "" : navHtml(key)}
   </div>
   <footer class="site">
     <p>This is the help center for Kade-AI, a private little AI chat that Kade built and runs herself. Stuck on something not covered here? Just <strong>contact Kade</strong>.</p>
@@ -237,68 +522,9 @@ const PAGES = {};
 
 // ---- 1. HUB / HOME --------------------------------------------------------
 PAGES.home = {
-  title: "",
-  h1: "Welcome to Kade-AI Help",
-  tagline: "Everything you need to feel at home here — in plain language, built to work beautifully with a screen reader.",
-  main: `
-<p class="lead">Kade-AI is a friendly little AI chat that Kade built and runs herself, and opened up for family and friends. You type, an AI character types back (and can talk out loud if you want). That's the whole idea.</p>
-<p>Brand new to AI in general? <a href="/help/start-here">Start Here</a> assumes nothing at all. Already comfortable? Jump to <a href="/help/quickstart">Your First Five Minutes</a>. Got a quick question, like "does this cost me anything?" — jump to <a href="/help/faq">Questions &amp; Answers</a>. Everything else is in the menu, and you can search it right below.</p>
-
-<div class="hubsearch">
-  <label for="hubsearch">Search the help pages</label>
-  <input type="search" id="hubsearch" autocomplete="off" placeholder="Try: voice, cost, password, picture" aria-describedby="searchcount">
-  <p id="searchcount" role="status" aria-live="polite"></p>
-</div>
-
-<h2>Pick a topic</h2>
-<ul class="cards" id="hubcards">
-  <li data-terms="start here new ai beginner never used what is this chatgpt robot confused lost"><a href="/help/start-here"><span class="ico" aria-hidden="true">🌱</span><span class="ttl">Start Here (New to AI?)</span><span class="desc">Never used AI before? This page assumes nothing. Read this one first.</span></a></li>
-  <li data-terms="start basics first five minutes new beginner how"><a href="/help/quickstart"><span class="ico" aria-hidden="true">🚀</span><span class="ttl">Your First Five Minutes</span><span class="desc">The absolute basics, in order. Start here.</span></a></li>
-  <li data-terms="faq questions answers chatgpt private cost cost break"><a href="/help/faq"><span class="ico" aria-hidden="true">💬</span><span class="ttl">Questions &amp; Answers</span><span class="desc">Is this ChatGPT? Is it private? Does it cost me? Quick honest answers.</span></a></li>
-  <li data-terms="whats new what's new changelog updates latest features recently added new stuff toys"><a href="/help/whats-new"><span class="ico" aria-hidden="true">✨</span><span class="ttl">What's New</span><span class="desc">The latest toys, in plain language — updated every time something ships.</span></a></li>
-  <li data-terms="create a character builder quiz make my own agent custom companion portrait picture avatar model engine describe description write my personality system prompt help me write this generate persona detailed prompt improve"><a href="/help/create-a-character"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Create a Character</span><span class="desc">Describe who you want and have their whole personality written for you, or answer eight easy questions. Portrait included.</span></a></li>
-  <li data-terms="iphone app ios app store apple download install get the app testflight"><a href="/help/iphone"><span class="ico" aria-hidden="true">📱</span><span class="ttl">The iPhone App</span><span class="desc">Kade-AI is on the App Store. One link, no searching.</span></a></li>
-  <li data-terms="android app apk install download sideload phone samsung google pixel motorola galaxy get the app"><a href="/help/android"><span class="ico" aria-hidden="true">🤖</span><span class="ttl">The Android App</span><span class="desc">Got an Android phone? Install Kade-AI as a real app, straight from here.</span></a></li>
-  <li data-terms="voice talk listen speak microphone audio speech hear sound"><a href="/help/voice"><span class="ico" aria-hidden="true">🎧</span><span class="ttl">Talking &amp; Listening</span><span class="desc">Speak instead of type, and have replies read out loud.</span></a></li>
-  <li data-terms="phone call telephone dial 833 briefing news morning outbound ring think hard deep think reasoning check-in checkin wellness family companion grandpa grandma dad check up on schedule calls report call me calls you ringtone wake-up wake me up alarm agent call answer rings"><a href="/help/phone"><span class="ico" aria-hidden="true">📞</span><span class="ttl">Phone Calls</span><span class="desc">Call your characters on a real phone line — they can make calls for you, and even check in on family.</span></a></li>
-  <li data-terms="describe photo picture video pdf document letter mail read aloud read to me share share sheet shortcut eyes look see what is this blind vision appointment reminder describe my world"><a href="/help/describe"><span class="ico" aria-hidden="true">👁️</span><span class="ttl">Describe My World</span><span class="desc">Share any photo, video, or document from your phone and hear it described in rich detail — or read out loud.</span></a></li>
-  <li data-terms="characters marketplace agents personas switch browse matchmaker match quiz find your people companions companion friend lonely company earl opal dottie marcus wanda priya"><a href="/help/characters"><span class="ico" aria-hidden="true">🎭</span><span class="ttl">Characters &amp; the Marketplace</span><span class="desc">Kiana is your host, but there's a whole cast to meet.</span></a></li>
-  <li data-terms="debate room roleplay group multiple characters argue radio play conversation hall share porch hangout front porch company"><a href="/help/debate-room"><span class="ico" aria-hidden="true">🎙️</span><span class="ttl">The Debate Room</span><span class="desc">Put a few characters in one room with a topic — or none at all on the front porch — and jump in.</span></a></li>
-  <li data-terms="reverie world city sims mud moo life game house rent family kids children pets cats dogs fishing bowling neighbors roleplay hang out live in a place tram ferry car bike compass buttons screen reader sounds ambience wards patch hook bell"><a href="/help/world"><span class="ico" aria-hidden="true">🏙️</span><span class="ttl">Reverie — the city</span><span class="desc">A city you live in with your friends: rent a place, work, cook, fish, bowl, fall in love, raise kids, get in trouble. Buttons or typing, every sound carries the game.</span></a></li>
-  <li data-terms="games game parlor cards blackjack wild eights go fish uno war dealer play deal poker dice trivia casino pig phone sounds quiz leaderboard game room standings wins champion cards against reality humanity wild blanks party judge crab apples apples madlibs fill-in stories guess the sound battleship farkle liars dice hangman scramble tic tac toe rock paper scissors in between acey deucey"><a href="/help/games"><span class="ico" aria-hidden="true">🃏</span><span class="ttl">The Game Parlor</span><span class="desc">Nineteen real games by voice — Blackjack, Uno, War, Cards Against Reality (you know the game), Crab Apples, Battleship, Farkle, Liar's Dice, Trivia, Hangman and more. Real table sounds, family leaderboard.</span></a></li>
-  <li data-terms="build make own character agent create custom"><a href="/help/build"><span class="ico" aria-hidden="true">🛠️</span><span class="ttl">Build Your Own Character</span><span class="desc">No coding. Give it a name and a personality, and go.</span></a></li>
-  <li data-terms="memory remember forget notes saves recall cards shared private clean up remind reminder notification push birthday nudge"><a href="/help/memory"><span class="ico" aria-hidden="true">🧠</span><span class="ttl">What It Remembers</span><span class="desc">Memory cards: what sticks between chats, and how to boss it around.</span></a></li>
-  <li data-terms="images pictures draw art generate flux make picture"><a href="/help/images"><span class="ico" aria-hidden="true">🎨</span><span class="ttl">Making Pictures</span><span class="desc">Ask for an image and it'll draw one. There's a limit, though.</span></a></li>
-  <li data-terms="audio sound cadence muse voice clone voices radio drama podcast narration text to speech tts music sound effects sfx seed audio make audio generate audio scene dialogue movie trailer song songs sing singing make a song write a song lyria minimax lyrics track melody"><a href="/help/audio"><span class="ico" aria-hidden="true">🎬</span><span class="ttl">Making Audio &amp; Voices</span><span class="desc">Turn a few sentences into a full audio scene with Cadence — or a real, sung song with Muse.</span></a></li>
-  <li data-terms="temporary private starting over new chat fresh delete"><a href="/help/temporary"><span class="ico" aria-hidden="true">🧹</span><span class="ttl">Starting Over &amp; Private Chats</span><span class="desc">Fresh start, or a chat that doesn't get saved.</span></a></li>
-  <li data-terms="cheat sheet buttons quick reference where shortcuts deep think brain reasoning slow careful"><a href="/help/cheatsheet"><span class="ico" aria-hidden="true">📋</span><span class="ttl">The Cheat Sheet</span><span class="desc">Where the buttons are and how to do the common stuff. One page.</span></a></li>
-  <li data-terms="tokens context counter words cost meaning"><a href="/help/tokens"><span class="ico" aria-hidden="true">🔢</span><span class="ttl">What Are Tokens?</span><span class="desc">That little counter, explained without the math homework.</span></a></li>
-  <li data-terms="cost money bill credits balance economics pay"><a href="/help/costs"><span class="ico" aria-hidden="true">💸</span><span class="ttl">What This Costs Kade</span><span class="desc">The honest money side. Spoiler: a real person pays a real bill.</span></a></li>
-  <li data-terms="donate paypal feed server support usage balance top up topup credit money pay tab"><a href="/help/donate"><span class="ico" aria-hidden="true">🍕</span><span class="ttl">Usage &amp; Balance</span><span class="desc">Your starting credit, what things cost, and topping up when it runs dry.</span></a></li>
-  <li data-terms="accessibility screen reader voiceover nvda blind shortcuts"><a href="/help/accessibility"><span class="ico" aria-hidden="true">♿</span><span class="ttl">Accessibility Tips</span><span class="desc">Get the smoothest ride with VoiceOver or NVDA.</span></a></li>
-  <li data-terms="troubleshooting broken stuck fix audio microphone problem help report bug feedback feature request suggestion tell kade"><a href="/help/troubleshooting"><span class="ico" aria-hidden="true">🔧</span><span class="ttl">When Something Breaks</span><span class="desc">The usual hiccups and how to get unstuck.</span></a></li>
-</ul>
-
-<script>
-  (function(){
-    var input = document.getElementById("hubsearch");
-    var count = document.getElementById("searchcount");
-    var cards = Array.prototype.slice.call(document.querySelectorAll("#hubcards > li"));
-    function run(){
-      var q = (input.value || "").trim().toLowerCase();
-      var shown = 0;
-      cards.forEach(function(li){
-        var hay = (li.getAttribute("data-terms") + " " + li.textContent).toLowerCase();
-        var match = !q || hay.indexOf(q) !== -1;
-        li.style.display = match ? "" : "none";
-        if (match) shown++;
-      });
-      count.textContent = q ? (shown + (shown === 1 ? " topic matches" : " topics match") + " your search.") : "";
-    }
-    input.addEventListener("input", run);
-  })();
-</script>
-`,
+  title: "", h1: "How can we help?",
+  tagline: "Find your next step in Kade-AI. Clear guides for the website, iPhone and Android.",
+  main: "", // Built from the same topic model as navigation after all articles load.
 };
 
 // ---- 1b. START HERE (never used AI) ----------------------------------------
@@ -438,7 +664,7 @@ PAGES.createacharacter = {
 <p>That costs <strong>about a penny</strong> of credit each time, from the same allowance everything else uses, and the button says so. In practice it usually comes in well under that.</p>
 <p><strong>This works on a character you already have, too.</strong> Open any of your characters in the builder, find the personality box, and there's a <em>"Help me write this"</em> button. It takes what's already there and writes it out properly instead of starting over — which is the useful door if you know exactly who they should be and just can't get it onto the page. Same on the phone app.</p>
 <h2>Way two: eight quick questions</h2>
-<p>Free, and every question is answered by picking. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink.</p>
+<p>Free, and every question is answered by picking. Who are they to you? How do they talk? What do they love? Human, animal, robot, magical being, or an everyday object with a soul — this marketplace has a talking cast-iron skillet, so nobody will blink.</p>
 <p>When the questions are done, the page writes a first draft of your character: their name (pick from five offers or type your own), a one-line description, and a personality written out in plain words. You can change any of it, or none of it — and there's a button right there to have it <em>written out properly</em> if the short draft isn't enough, which turns it into the full detailed version and asks you the deepening questions.</p>
 <h2>The engine, in plain language</h2>
 <p>Every character runs on a thinking engine, and picking one used to mean reading robot code names. Now they're plain choices: <strong>The all-rounder</strong> (quick, warm, good memory — what nearly every character here runs), <strong>The deep thinker</strong> (slower, writes long and thorough), <strong>The chatterbox</strong> (snappy and playful), <strong>The speedster</strong> (fastest answers, lighter on nuance). If you're the technical sort, one toggle shows the real model names underneath. Nothing is hidden; it's just not required reading.</p>
@@ -447,7 +673,7 @@ PAGES.createacharacter = {
 <h2>For the pros</h2>
 <p>The regular builder — every field, every tool, every knob — is exactly where it always was. Both of these are front porches, not replacements, and anything they build can be fine-tuned in the full builder afterward, including on the phone app.</p>
 <h2>How long can a personality be?</h2>
-<p>Longer than you think. There's no limit, and the main character on this platform runs about forty thousand characters. If you're wondering whether yours can be as detailed as Kiana's — it can.</p>
+<p>You can write a detailed personality. Describe how the character talks, what they care about and how they respond in different situations. Keep instructions clear: longer is not automatically better.</p>
 <h2>One thing you don't have to write</h2>
 <p>You never have to tell your character to avoid sounding like a robot, skip corporate buzzwords, or vary how it ends its sentences. Every character here already gets told that on every single turn, automatically, whoever made them. Writing it again in the personality only fights the copy that's already there. Spend the words on <em>who they are</em> instead — that's the part nobody else can supply.</p>
 `,
@@ -461,6 +687,7 @@ PAGES.whatsnew = {
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
 <h2>September 7, 2026</h2>
+<ul><li><strong>Help is easier to find your way around.</strong> Search inside articles, browse by what you want to do, or use the quick links for speech, balances and missing replies. Saved work, projects and Clubhouse now have their own guides. Help links stay at kademurdock.com, including links opened from older apps.</li></ul>
 <ul>
   <li><strong>Check the exact coding job.</strong> Agent work has a coding-job view for the owner, with saved results, checks, spending and anything awaiting review. A service restart marks unfinished work as interrupted; it does not silently repeat the job. New Forge coding jobs reserve provider spending before each model call and stop before exceeding the agreed $1.00 ceiling. Missing charge receipts are shown as incomplete. This ceiling currently covers the coding worker; separate chat rewrites and background memory charges are not yet covered.</li>
   <li><strong>Trace and correct memories.</strong> On the web, choose <em>Sources and corrections</em> on a memory card. Open its recorded source, select related cards, and save a correction while keeping earlier versions. Corrected cards are protected from automatic replacement. Older cards may have no source evidence. The chat header's <em>Memory controls</em> lets you turn remembering off for that conversation and inspect the tools recorded for its latest reply.</li>
@@ -486,7 +713,7 @@ PAGES.whatsnew = {
 
 <h2>September 5, 2026 &mdash; afternoon</h2>
 <ul>
-  <li><strong>Kade-AI is on the App Store.</strong> No more invitations or TestFlight: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app here</a>, or search <em>Kade-AI</em> in the App Store (give Apple's search a day to catch up; the link works now). Same sign-in as the website. Everyone who was on TestFlight can keep it or install the store version right over it. Details on the new <a href="/help/iphone">iPhone App</a> page. A follow-up version with the newest fixes is already in Apple's queue and will update itself when it lands.</li>
+  <li><strong>Kade-AI is on the App Store.</strong> No more invitations or TestFlight: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app here</a>, or search <em>Kade-AI</em> in the App Store (the direct link is the easiest way to find it). Same sign-in as the website. Everyone who was on TestFlight can keep it or install the store version right over it. Details on the new <a href="/help/iphone">iPhone App</a> page. A follow-up version with the newest fixes is already in Apple's queue and will update itself when it lands.</li>
 </ul>
 
 <h2>September 5, 2026</h2>
@@ -947,7 +1174,7 @@ PAGES.phone = {
   <li><strong>Quiet hours are respected.</strong> Scheduled calls don't ring between 9pm and 8am Central unless you specifically told that call to — a wake-up call can, because you asked it to. If quiet hours hold a call back, you get an honest morning note about it instead.</li>
   <li><strong>Miss it? No drama.</strong> If you don't answer, the ringing stops on its own and the character leaves a note on your lock screen — "tried to call you at 8, call me back when you're free."</li>
   <li><strong>It's free.</strong> These ring through the app, not the phone line — no per-minute anything. A sensible daily cap keeps it from ever turning into spam.</li>
-  <li><strong>Needs the iPhone app</strong> — a current version from TestFlight. The 833 number and the browser can't do this one yet.</li>
+  <li><strong>Needs the iPhone app</strong> — check for updates if the control is missing. See <a href="/help/iphone">The iPhone App</a>. The 833 number and the browser can't do this one yet.</li>
 </ul>
 
 <h2>Characters can make calls FOR you</h2>
@@ -1563,10 +1790,10 @@ PAGES.costs = {
   h1: "How This Actually Costs Kade Money",
   tagline: "The honest, friendly version of the money side — because a real person is footing a real (if small) bill.",
   main: `
-<p class="lead">Every account runs on real, prepaid credit — $10 of it loaded for you on day one, drawn down at exactly what things cost, topped up by you when it runs dry. Here's exactly how it works, no mystery.</p>
+<p class="lead">Every account runs on real, prepaid credit — $10 of it loaded for you on day one, drawn down at the configured usage rates, topped up by you when it runs dry. Here's exactly how it works, no mystery.</p>
 
 <h2>Every message gets processed by an outside AI provider</h2>
-<p>Kade didn't build the AI brain from scratch — almost nobody does. When you send a message, it goes out to an outside AI service that does the actual thinking and sends a reply back. That service <strong>charges per token</strong> — those tiny text chunks from the <a href="/help/tokens">tokens page</a>. Every message, in and out, costs a sliver of a cent.</p>
+<p>Kade didn't build the AI brain from scratch — almost nobody does. When you send a message, it goes out to an outside AI service that does the actual thinking and sends a reply back. That service <strong>charges per token</strong> — those tiny text chunks from the <a href="/help/tokens">tokens page</a>. The cost depends on the model, the length of the conversation, and any tools used.</p>
 
 <h2>Kade pre-loads credits to cover it</h2>
 <p>So the lights stay on, Kade puts her own money in ahead of time as credits. Your chatting quietly draws that balance down, a few fractions of a cent at a time. It's small per message — but it's real, and it adds up across a whole family of people chatting away.</p>
@@ -1581,7 +1808,7 @@ PAGES.costs = {
 <p>Want to see your own numbers? Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Usage &amp; Balance</strong> — it shows your balance and your month so far, item by item, nothing hidden.</p>
 
 <h2>So why mention any of this?</h2>
-<p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about, priced at exactly what it costs and not a penny more. Knowing how the money actually flows helps everyone trust the place… and when your balance needs feeding, the next page is <a href="/help/donate">where that happens</a>.</p>
+<p>Not to make you feel guilty — the opposite. Kade opened this up because she wanted to share something cool with people she cares about, with usage charges contributing to the provider bills and the rest of the platform. Knowing how the money actually flows helps everyone trust the place… and when your balance needs feeding, the next page is <a href="/help/donate">where that happens</a>.</p>
 ${nextprev("tokens", "donate")}
 `,
 };
@@ -1632,18 +1859,13 @@ PAGES.donate = {
 <p>That's the whole model. No subscriptions, no monthly bill, no surprise charges — a prepaid tab you control completely. Your balance pays for your usage and contributes toward keeping the platform running.</p>
 
 <h2>See your own tab and balance</h2>
-<p>Open the <strong>account menu</strong> (your avatar, bottom-left), choose <strong>Explore</strong>, then <strong>Usage &amp; Balance</strong>. It shows what you have left and your month so far — chat, voice, pictures, phone calls, the works — priced out honestly, item by item. No mystery meat.</p>
+<p>On the website, open <a href="https://kademurdock.com/feed-the-server">Usage &amp; Balance</a> directly, or choose <strong>Feed the Server</strong> from Home. On iPhone, look under <strong>Settings &rarr; Usage &amp; Balance</strong>. Your remaining balance and estimated server cost are separate figures.</p>
 
 <h2>Topping up</h2>
 <div class="btnrow">
   <a class="cta big" href="${PAYPAL_URL}">🍕 Top up your balance (PayPal)</a>
 </div>
-<p>Any amount works. For scale, from real usage on this site:</p>
-<ul>
-  <li><strong>$5</strong> — months of heavy chatting, honestly. Text conversation is nearly free.</li>
-  <li><strong>$10</strong> — chatting plus a steady diet of pictures, voice calls, and check-in calls.</li>
-  <li><strong>$20</strong> — the works: video calls, song-making, video clips, the expensive toys, without watching the meter.</li>
-</ul>
+<p>How long a top-up lasts depends on the models, conversation lengths and features you use. Check your recent usage before choosing an amount, and read the current estimate before confirming a metered creation.</p>
 
 <div class="callout good">
   <p><strong>If money's tight, say so.</strong> This whole place exists because Kade's people deserve this stuff at cost instead of Silicon Valley prices. Nobody's getting cut off from a lifeline over grocery money — if your balance is empty and your month is hard, talk to Kade. That's not charity, that's family.</p>
@@ -1746,7 +1968,7 @@ PAGES.troubleshooting = {
 <p>The request list begins with this update. Older conversations remain in Conversations. Temporary chats, regenerated replies and separate voice or coding sessions may not appear. A server restart does not automatically resume or repeat interrupted actions.</p>
 
 <h2>Where's my balance / how much have I used?</h2>
-<p>Each message shows its cost and usage right there in the chat, so you can keep an eye on it as you go. (Curious what the numbers mean? The <a href="/help/tokens">What Are Tokens?</a> page explains them.) Remember your balance refills automatically every 30 days — see <a href="/help/costs">What This Costs Kade</a>.</p>
+<p>Each message shows its cost and usage right there in the chat, so you can keep an eye on it as you go. (Curious what the numbers mean? The <a href="/help/tokens">What Are Tokens?</a> page explains them.) Balances do not refill automatically. Open <a href="https://kademurdock.com/feed-the-server">Usage &amp; Balance</a> to check your credit and see top-up instructions.</p>
 
 <h2>Pictures stopped working</h2>
 <p>Image-making draws from a small separate pot of credits. If it suddenly won't make pictures, that pot may have run dry. <strong>Fix:</strong> contact Kade — she can top it up.</p>
@@ -1892,7 +2114,7 @@ PAGES.android = {
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
-<p><a class="cta" href="/Kade-AI.apk" download>Download Kade-AI 2.3 for Android (about 12&nbsp;MB)</a></p>
+<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.3 for Android (about 12&nbsp;MB)</a></p>
 
 <h2>Keeping your place in chat</h2>
 <p>Your draft and a confirmed pending reply survive turning the phone. If the connection drops while an agent is working, use <strong>Check reply</strong>: it checks the existing work without sending your message again. If the app couldn't confirm the original send, the text stays available; <strong>Recover message</strong> adds it to a newer draft. Check your conversations before sending an uncertain request again.</p>
@@ -1921,6 +2143,101 @@ ${nextprev("iphone", "voice")}
 `,
 };
 
+PAGES.work = {
+  title: 'Check a reply or coding job', h1: 'Check a reply or coding job',
+  tagline: 'See what finished, what is still working, and what needs you.',
+  main: `
+<p class="lead">If a connection drops, check the existing request before sending it again. <a class="cta" href="https://kademurdock.com/agent-work">Open Agent work</a></p>
+<h2>Find a chat reply</h2>
+<ol><li>Open <strong>Agent work</strong> from Home on the website, or in a recent iPhone app.</li><li>Choose <strong>Refresh requests</strong>. This checks saved work without sending another message or using AI credits.</li><li>Choose <strong>Open chat</strong> to read the reply. Older conversations remain in Conversations.</li></ol>
+<h2>Understand the status</h2>
+<ul><li><strong>Reply saved:</strong> read the chat to see the answer and any action receipts.</li><li><strong>Working:</strong> the server is still handling the request.</li><li><strong>Interrupted:</strong> a finished reply could not be confirmed. Check what happened before trying again.</li></ul>
+<p>Temporary chats and separate voice sessions may not appear here. To stop a running chat reply, open the chat and choose Stop. Stopping does not undo actions already performed.</p>
+<h2>Check a coding job</h2>
+<p>Open the coding-job view in Agent work to see that job’s saved result, checks, recorded spending and anything awaiting review. A passing check alone does not mean the requested work finished. Interrupted jobs do not restart automatically.</p>
+<p>New Forge coding jobs stop before their model calls exceed the agreed $1 ceiling. Other chat, background and tool charges are not all covered by this guard. Missing charge receipts are shown as incomplete.</p>
+<h2>See which tools were available</h2>
+<p>A saved reply may include a dated tools snapshot. It describes tools available for that request; it does not prove every connected service is working now.</p>
+<p>Still stuck? <a href="/help/troubleshooting">Find troubleshooting steps</a>, or contact Kade.</p>`,
+};
+PAGES.projects = {
+  title: 'Work in a project', h1: 'Work in a project',
+  tagline: 'Keep related chats, instructions and text documents together.',
+  main: `
+<p class="lead">Use a project for work that needs more than one conversation. Open <a href="https://kademurdock.com/projects">Projects</a> on the website, choose your project, then select <strong>Instructions and working files</strong>.</p>
+<h2>Set the shared instructions</h2>
+<p>Write the purpose of the project and the preferences its agents should follow. Save the instructions before continuing a chat in that project.</p>
+<h2>Add reference text and working documents</h2>
+<p>Reference text gives the agents material to use. Working documents are the text you and the agents revise. Ask an agent in the project to read its files, make the requested changes and return the saved download link.</p>
+<p>This workflow currently handles text documents. Uploading a file elsewhere in chat is a separate feature; it does not turn this editor into a Word or PDF editor.</p>
+<h2>Keep earlier versions</h2>
+<p>Saving a working document makes a new version. Download the version you need from the file’s history. If another edit happened while you were working, reload and review it before saving again.</p>
+<h2>Keep control of the project</h2>
+<p>Project files are checked against the owner’s account. Shared instructions mean shared across your project’s chats, not automatically shared with other people. Agents save a separate working document when using reference text.</p>`,
+};
+PAGES.clubhouse = {
+  title: 'Kade’s Clubhouse', h1: 'Kade’s Clubhouse',
+  tagline: 'A live voice room for your people, music and companion guests.',
+  main: `
+<p class="lead">Open <a href="https://kademurdock.com/clubhouse">Kade’s Clubhouse</a> from Home to join a live room. This is different from the <a href="/help/debate-room">Debate Room</a>, where characters take turns in a written conversation.</p>
+<h2>Join and talk</h2>
+<p>Choose a room and allow microphone access when asked. Use the room’s microphone control to mute yourself, and leave the room when you are finished. Private Hotel rooms use passcodes.</p>
+<h2>Music and companions</h2>
+<p>The shared jukebox lets people in the room choose music. You can also invite companion guests. Use the room’s labeled controls to manage the music and guests.</p>
+<h2>Choose sound settings for your device</h2>
+<p>On the website, headphones clarity mode removes microphone processing. Use it with headphones, and turn it off before switching to speakers. Stereo depends on the browser and output device.</p>
+<p>The iPhone’s ordinary speaker-friendly call mode does not provide stereo music. If your installed build has a headphones stereo setting, use headphones; available controls depend on the app version.</p>
+<h2>If sound misbehaves</h2>
+<p>Check the microphone permission, mute control and selected output. Try headphones for echo. See <a href="/help/voice">Talking &amp; Listening</a> for chat speech, or <a href="/help/troubleshooting">When Something Breaks</a> for more help.</p>`,
+};
+
+function plainText(html) {
+  return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ')
+    .replace(/&(?:amp|nbsp|mdash|ndash|rarr|middot);/g, ' ').replace(/&#\d+;/g, ' ').replace(/\s+/g, ' ');
+}
+function buildHome() {
+  const topics = GROUP_ORDER.map(group => {
+    const cards = SECTIONS.filter(s => s.group === group && s.key !== 'home').map(s => {
+      // Historical release notes should not drown current instructions in search.
+      const article = s.key === 'whatsnew' ? '' : plainText(PAGES[s.key].main);
+      return `<li data-search="${escapeHtml(s.label + ' ' + s.terms + ' ' + article)}"><a href="${s.path}"><span class="ico" aria-hidden="true">${s.icon}</span><span class="ttl">${escapeHtml(s.label)}</span><span class="desc">${s.description}</span></a></li>`;
+    }).join('');
+    return `<section class="topic-group"><h2>${escapeHtml(group)}</h2><ul class="cards">${cards}</ul></section>`;
+  }).join('');
+  return `<form class="hubsearch" role="search" action="/help" method="get">
+<label for="hubsearch">Search help</label><input type="search" name="q" id="hubsearch" autocomplete="off" placeholder="Try: missing reply, password, memory, microphone" aria-describedby="searchhint">
+<p id="searchhint">Search topics and the guidance inside them. You can also browse every topic below.</p>
+<button type="button" id="clearsearch" hidden>Clear search</button><p id="searchcount" role="status" aria-live="polite" aria-atomic="true"></p></form>
+<h2>Common next steps</h2><ul class="quicklinks"><li><a href="/help/quickstart">Start chatting</a></li><li><a href="/help/agent-work">Find a missing reply</a></li><li><a href="/help/voice">Fix or change speech</a></li><li><a href="/help/donate">Check balance</a></li></ul>
+<div id="noresults" class="callout" hidden><h2>No matching help topics</h2><p>Try a shorter word, such as “voice” or “password”. You can also <a href="/help/troubleshooting">open troubleshooting</a> or contact Kade.</p></div>
+<div id="hubtopics">${topics}</div>
+<script>
+(function () {
+  var input = document.getElementById('hubsearch'), count = document.getElementById('searchcount');
+  var clear = document.getElementById('clearsearch'), timer;
+  var groups = Array.from(document.querySelectorAll('.topic-group'));
+  var cards = Array.from(document.querySelectorAll('#hubtopics li'));
+  function normalize(t) { return t.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+  var indexed = cards.map(function (li) { return { li: li, text: normalize(li.dataset.search) }; });
+  function run() {
+    var terms = normalize(input.value).split(' ').filter(Boolean), shown = 0;
+    indexed.forEach(function (item) { item.li.hidden = !terms.every(function (word) { return item.text.includes(word); }); if (!item.li.hidden) shown++; });
+    groups.forEach(function (group) { group.hidden = !Array.from(group.querySelectorAll('li')).some(function (li) { return !li.hidden; }); });
+    document.getElementById('noresults').hidden = shown !== 0;
+    clear.hidden = !input.value;
+    window.clearTimeout(timer);
+    timer = window.setTimeout(function () { count.textContent = terms.length ? shown + (shown === 1 ? ' topic matches.' : ' topics match.') : ''; }, 250);
+  }
+  input.addEventListener('input', run);
+  input.form.addEventListener('submit', function (event) { event.preventDefault(); run(); });
+  clear.addEventListener('click', function () { input.value = ''; run(); input.focus(); });
+  input.value = new URLSearchParams(location.search).get('q') || '';
+  run();
+})();
+</script>`;
+}
+PAGES.home.main = buildHome();
+
 // ---- APK download + short link --------------------------------------------
 router.get("/Kade-AI.apk", (_req, res) => {
   res.set("Content-Type", "application/vnd.android.package-archive");
@@ -1930,6 +2247,13 @@ router.get("/Kade-AI.apk", (_req, res) => {
 router.get("/android", (_req, res) => res.redirect(302, "/help/android"));
 
 // ---- Register a route for every page --------------------------------------
+// Old app bookmarks keep working; only our fixed-origin public-page fetch skips this redirect.
+router.use('/help', (req, res, next) => {
+  if (req.hostname.endsWith('.railway.app') && req.get('X-Kade-Help-Proxy') !== '1') {
+    return res.redirect(302, CHAT_URL + req.originalUrl);
+  }
+  next();
+});
 for (const key of Object.keys(PAGES)) {
   const def = PAGES[key];
   const section = SECTIONS.find((s) => s.key === key);
