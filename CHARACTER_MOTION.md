@@ -72,8 +72,9 @@ need output-latency compensation on Bluetooth, and device acceptance remains owe
 
 ## Verification and limits
 
-23 focused Node tests pass, including cancellation ownership, out-of-order cues,
+24 focused Node tests pass, including cancellation ownership, out-of-order cues,
 stereo energy, silent clips, missing metadata, queue bounds and frame cleanup.
+Ending at the blink moment also returns to an open-eyed resting face.
 Edge played the actual WAV; sampled frames included open-mouth speech and a
 closed mouth while audio was still playing. Browser checks cover interruption,
 Lilly configuration, reduced motion, unknown-character fallback, 1040px light and

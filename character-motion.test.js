@@ -139,3 +139,14 @@ test('dispose drops queued work and prevents stale events', () => {
   assert.equal(c.schedule(token, { start: 0, duration: 1 }), false);
   assert.equal(c.sample(1).needsFrame, false);
 });
+
+test('ending or interrupting during a blink returns an open-eyed resting face', () => {
+  for (const operation of ['finish', 'interrupt']) {
+    const c = ready(); const token = c.speak(0);
+    assert.ok(c.sample(4.6).blink > 0.9);
+    c[operation](token);
+    const resting = c.sample(4.6);
+    assert.equal(resting.blink, 0); assert.equal(resting.nod, 0);
+    assert.equal(resting.tilt, 0); assert.equal(resting.needsFrame, false);
+  }
+});

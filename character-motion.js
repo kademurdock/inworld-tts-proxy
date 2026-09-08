@@ -107,7 +107,7 @@ const CharacterMotion = (() => {
       const state = expression.state();
       const frame = { characterId: character.id, mode, active, expression: active ? state.expression : 'neutral',
         mouth: 0, blink: 0, nod: 0, tilt: 0, needsFrame: active && ['listening', 'thinking', 'speaking'].includes(mode) };
-      if (!active) return frame;
+      if (!active || !frame.needsFrame) return frame;
       const elapsed = Math.max(0, time - since);
       const blinkPhase = elapsed % 4.7;
       frame.blink = blinkPhase > 4.5 ? Math.sin((blinkPhase - 4.5) / 0.2 * Math.PI) : 0;
