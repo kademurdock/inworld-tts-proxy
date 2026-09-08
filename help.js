@@ -277,7 +277,7 @@ const SECTIONS = [
     "path": "/help/troubleshooting",
     "label": "When Something Breaks",
     "group": "Fix a problem",
-    "terms": "troubleshooting broken stuck fix audio microphone problem help report bug feedback feature request suggestion tell kade",
+    "terms": "troubleshooting password login sign in account locked access broken stuck fix audio microphone problem help report bug feedback feature request suggestion tell kade",
     "icon": "🔧",
     "description": "The usual hiccups and how to get unstuck."
   },
@@ -1973,7 +1973,7 @@ PAGES.troubleshooting = {
 <h2>Pictures stopped working</h2>
 <p>Image-making draws from a small separate pot of credits. If it suddenly won't make pictures, that pot may have run dry. <strong>Fix:</strong> contact Kade — she can top it up.</p>
 
-<h2>I can't log in / I want an account for someone</h2>
+<h2>I can't log in, forgot my password, or need an account</h2>
 <p>Accounts are set up by Kade personally (it's an invite-only place). If you're locked out or want to add a family member, <strong>contact Kade</strong>.</p>
 
 <h2>Found a bug, or wish it did something new? Just say so.</h2>
