@@ -1,5 +1,22 @@
 'use strict';
 
+const { isNonVerbalSound, isResetTag } = require('./sounds');
+// Balanced/Steady preserve the feeling while keeping prose directions from
+// overriding the listener's speed. Lively retains intentional tempo acting.
+// Run before instruction lifting and Fish shaping, including saved replies.
+const TEMPO_DIRECTION = /\b(?:(?:not|never|do not|don't)\s+(?:too\s+)?)?(?:taking (?:your|her|his|their|its) time(?: with every word)?|picking up speed|slowing down|speeding up|at a crawl|no rush|rapid[- ]fire|double[- ]time|drawn[- ]out|slow(?:ly|er|ing)?|unhurried|unrushed|leisurely|languid(?:ly)?|fast(?:er)?|quick(?:ly|er)?|rapid(?:ly)?|brisk(?:ly)?|hurried(?:ly)?|rush(?:ed|ing)?|racing|breathless(?:ly)?|hastily|hasty|speedy|sluggish|glacial)(?:\s+(?:pace|pacing|tempo|cadence))?\b/gi;
+function shapeDeliveryPace(text, delivery) {
+  if (process.env.KADE_TTS_STEADY_PACE === '0') return text;
+  if (delivery !== 'BALANCED' && delivery !== 'STABLE') return text;
+  return String(text).replace(/\[([^\]\n]+)\]/g, (tag, direction) => {
+    if (isNonVerbalSound(direction) || isResetTag(direction)) return tag;
+    // Replace tempo clauses only. Dialogue outside tags, emotional direction,
+    // sound events and the explicit request speed remain intact.
+    const paced = direction.replace(TEMPO_DIRECTION, 'at a natural conversational pace');
+    return '[' + paced + ']';
+  });
+}
+
 // Provider adapters only; display text and authored directions stay intact.
 const EMPHASIZED_WORDS = new Set(['IS', 'IT', 'MY', 'ME', 'BE', 'DO', 'GO', 'SO', 'TO', 'NO', 'YES', 'NOT', 'THE', 'THIS', 'THAT', 'YOU', 'YOUR', 'ARE', 'WAS', 'WERE']);
 function normalizeInworldCaps(text) {
@@ -24,4 +41,4 @@ function shapeFishPauses(text) {
   return paced.replace(/\uE000(\d+)\uE001/g, (_, i) => tags[Number(i)]);
 }
 
-module.exports = { normalizeInworldCaps, shapeFishPauses };
+module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace };

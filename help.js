@@ -1060,6 +1060,9 @@ PAGES.voice = {
   h1: "Talking & Listening",
   tagline: "You can speak your messages instead of typing, and have replies read out loud. Here's how.",
   main: `
+<h2>Expression with a steadier pace</h2>
+<p>In the voice picker's Delivery control, <strong>Balanced</strong> and <strong>Steady</strong> now keep directions such as “unhurried” or “quick” from overriding your chosen speaking speed. Feelings and laughter stay available. <strong>Lively</strong> keeps the wider performance range, including deliberate pace changes. These adjustments apply to Inworld and Fish Audio when you generate speech, including a fresh replay of an older reply. Audio already downloaded or cached keeps its original performance.</p>
+<p>New replies are guided to change feeling when the conversation calls for it, rather than switching between quiet and upbeat on a schedule. Delivery varies by voice; use Preview to hear your choice.</p>
 <h2>Replaying replies on iPhone</h2>
 <p>In TestFlight build 279, replay uses the original character's current voice. Your personal voice choice takes priority; otherwise their current creator-set voice is used. Older replies are voiced when you play them, without regenerating your entire history.</p>
 <h2>Nine new voices</h2>

@@ -38,7 +38,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
-const { normalizeInworldCaps, shapeFishPauses } = require("./speech-prosody");
+const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -3106,9 +3106,9 @@ async function resolveSceneVoiceId(label) {
 
 // Synthesize one cast segment through the normal per-provider pipeline and
 // return { pcm, fmt } with loudness already normalized on ITS voice's memory.
-async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
+async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery) {
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
-  const steered = applySteeringTags(seg.text);
+  const steered = shapeDeliveryPace(applySteeringTags(seg.text), delivery || TTS_DELIVERY_MODE);
   const chunks = (segIsFish
     ? chunkText(steered).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
     : chunkText(steered).flatMap(shapeInworldSteering)
@@ -3121,10 +3121,10 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
   const wavs = await Promise.all(
     chunks.map((c, cj) =>
       segIsFish
-        ? fishSynthesizeChunk(c, seg.voiceId.slice(FISH_VOICE_PREFIX.length), speakingRate)
+        ? fishSynthesizeChunk(c, seg.voiceId.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery)
         : (() => {
             const { text: sayText, instruction } = splitChunkForInworld(c);
-            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction, contextFor(chunks, cj));
+            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction, contextFor(chunks, cj), delivery);
           })()
     )
   );
@@ -3193,7 +3193,7 @@ async function trySynthesizeScene(req, res, preppedText, ctx) {
 
   try {
     const t0 = Date.now();
-    const rendered = await Promise.all(cast.map((seg) => synthesizeSceneSegment(seg, ctx.inworldModel, ctx.speakingRate)));
+    const rendered = await Promise.all(cast.map((seg) => synthesizeSceneSegment(seg, ctx.inworldModel, ctx.speakingRate, ctx.delivery)));
 
     // Common-format guard: both providers run 24k/mono/16 today, but a drift
     // must degrade to a downsample, never to chipmunk audio.
@@ -3331,12 +3331,13 @@ app.post("/v1/audio/speech", async (req, res) => {
       baseVoiceId: inworldVoice,
       inworldModel,
       speakingRate,
+      delivery,
     });
     if (handled) return;
   }
 
   const ttsSessionKey = String(req.get("x-kade-tts-session") || "").slice(0, 64) || null;
-  const speakText = applySteeringTags(preppedText.replace(SCENE_TAG_G, " ").replace(/[ \t]{2,}/g, " "));
+  const speakText = shapeDeliveryPace(applySteeringTags(preppedText.replace(SCENE_TAG_G, " ").replace(/[ \t]{2,}/g, " ")), delivery || TTS_DELIVERY_MODE);
   console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
