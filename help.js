@@ -707,6 +707,7 @@ PAGES.whatsnew = {
   <li><strong>More to make in the Sound Booth.</strong> Start from an editable radio scene, station ID, narration, comedy, ambience, or music-bed script. The web booth also has a free audio workbench: trim a recording, add fades and a background track, then download a WAV. Those editor files stay on your device.</li>
   <li><strong>Long recordings keep their progress.</strong> Stop targets the current part; rendering an unchanged failed or stopped project reuses its finished parts. Reopening a project restores its voice and reference clips. The web booth and iPhone build 275 ask you to confirm a current estimate for both full takes and voice previews.</li>
   <li><strong>Lyric writes for a vocalist.</strong> Its revised songwriting instructions focus on natural language, memorable hooks, rap craft, and stories that move. Full songs come with separate lyrics and production fields; ask for lyrics only, alternate bars, or a small repair when that is all you need.</li>
+  <li><strong>Android 2.4: clearer at larger text sizes.</strong> A full-width message field, wrapping headers, scrolling Settings, High contrast and Reduce motion controls. Notification taps open their destination, and More includes Agent work and Projects. <a href="/help/android">Download the update</a>.</li>
   <li><strong>Android 2.3 keeps hold of the conversation.</strong> Drafts and a pending reply survive turning your phone. If the connection drops while a reply is running, <strong>Check reply</strong> checks the same work. <strong>Recover message</strong> brings back an uncertain send without replacing your newer draft. <strong>Latest reply</strong> lets you jump down when you're ready. <a href="/help/android">Download the update</a>.</li>
   <li><strong>A better memory between chats.</strong> The nightly reflection now follows activity across separate chats, keeps the dates with it, and remembers where it left off. Quiet time no longer wipes a companion's relationship history. The memory switch now covers this reflection too.</li>
 </ul>
@@ -2137,7 +2138,15 @@ PAGES.android = {
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
-<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.3 for Android (about 12&nbsp;MB)</a></p>
+<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.4 for Android</a></p>
+
+<h2>Appearance, motion, and larger text</h2>
+<p>In version <strong>2.4 (build 104)</strong>, open <strong>More, Settings</strong> for <strong>High contrast</strong> and <strong>Reduce motion</strong>. High contrast uses stronger text and surface colors. Decorative motion stops when Reduce motion is on, Android animations are disabled, an accessibility service is enabled, Battery Saver is on, or the app is in the background.</p>
+<p>The message field now has its own full-width row, with microphone and Send underneath. Headers wrap, and navigation labels use two rows at larger text sizes. Settings scrolls to its last control. Your phone&rsquo;s text size also updates platform pages while they are open.</p>
+<h2>Platform pages and notification taps</h2>
+<p><strong>More</strong> now includes <strong>Agent work</strong>, <strong>Projects</strong>, and <strong>What&rsquo;s new</strong>. These open signed-in platform pages. When a page asks you for a file, Android&rsquo;s file picker opens; select the file there, then use the page&rsquo;s own controls to submit it.</p>
+<p>A notification with a supported destination opens that page. An unfamiliar notification opens your Notifications page, where you can read it. Receiving or tapping a call notification does not start a voice call automatically. If a page fails to load, the app shows a reload control.</p>
+<p><strong>Refresh</strong> updates Conversations. If loading older chats fails, the chats already shown stay in place and the error is visible. The app prevents duplicate page requests.</p>
 
 <h2>Keeping your place in chat</h2>
 <p>Your draft and a confirmed pending reply survive turning the phone. If the connection drops while an agent is working, use <strong>Check reply</strong>: it checks the existing work without sending your message again. If the app couldn't confirm the original send, the text stays available; <strong>Recover message</strong> adds it to a newer draft. Check your conversations before sending an uncertain request again.</p>
