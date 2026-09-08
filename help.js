@@ -709,6 +709,7 @@ PAGES.whatsnew = {
   <li><strong>More to make in the Sound Booth.</strong> Start from an editable radio scene, station ID, narration, comedy, ambience, or music-bed script. The web booth also has a free audio workbench: trim a recording, add fades and a background track, then download a WAV. Those editor files stay on your device.</li>
   <li><strong>Long recordings keep their progress.</strong> Stop targets the current part; rendering an unchanged failed or stopped project reuses its finished parts. Reopening a project restores its voice and reference clips. The web booth and iPhone build 275 ask you to confirm a current estimate for both full takes and voice previews.</li>
   <li><strong>Lyric writes for a vocalist.</strong> Its revised songwriting instructions focus on natural language, memorable hooks, rap craft, and stories that move. Full songs come with separate lyrics and production fields; ask for lyrics only, alternate bars, or a small repair when that is all you need.</li>
+  <li><strong>Android 2.7: native Projects.</strong> Search projects, edit instructions and reference or working text, and read saved versions. Conflicting or uncertain saves keep your draft for comparison. <a href="/help/android">Download the update</a>.</li>
   <li><strong>Android 2.6: keep your draft and recover uploads.</strong> Unsent messages and pending-reply handles survive reopening the app. ChatGPT export uploads now have size checks, progress, cancellation and an explicit retry. <a href="/help/android">Download the update</a>.</li>
   <li><strong>Android 2.5: voice playback and native saved work.</strong> Refreshed voice choices, bounded direction carry, clearer playback failures, a native Agent work screen, and labeled import and memory-sharing controls. <a href="/help/android">Download the update</a>.</li>
   <li><strong>Android 2.4: clearer at larger text sizes.</strong> A full-width message field, wrapping headers, scrolling Settings, High contrast and Reduce motion controls. Notification taps open their destination, and More includes Agent work and Projects. <a href="/help/android">Download the update</a>.</li>
@@ -2152,8 +2153,12 @@ PAGES.android = {
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
-<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.6 for Android</a></p>
+<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.7 for Android</a></p>
 
+<h2>Native Projects in 2.7</h2>
+<p>Android <strong>2.7 (build 108)</strong> opens a native Projects screen from <strong>More &rarr; Projects</strong>. Search and page through your projects, create one, edit its shared instructions, and add or edit reference text and working documents. Expand a file's versions to read and copy any earlier saved text.</p>
+<p>If a save loses its connection or another edit reaches the server first, your edit stays on screen. Choose <strong>Reload for comparison</strong>, compare your draft with the saved text, and acknowledge the loaded revision before saving again. Back asks before discarding an edit. Edits survive Android's saved-screen restoration; unlike chat drafts, these project edits are not yet guaranteed across a force-stop or cold restart. There is no automatic resend.</p>
+<p><strong>Manage project chats on the web</strong> opens the existing website for chat organization. File import/download, project rename/delete and chat assignment remain on the web for this release. The native editor accepts typed or pasted text in .txt, .md, .csv and .json files, not Word or PDF documents.</p>
 <h2>Draft recovery and export uploads in 2.6</h2>
 <p>Android <strong>2.6 (build 107)</strong> keeps your unsent message on this phone when you close and reopen the app. Open the same conversation to continue. For a chat you have not sent yet, pick the same character again. Drafts are separate for each signed-in account and are not included in phone backups. Clearing the message field clears that draft.</p>
 <p>If a send could not be confirmed, <strong>Recover message</strong> keeps that text available beside your newer draft. If the server confirmed a running reply, <strong>Check reply</strong> checks that existing work after reopening; it never sends again automatically. Check Chats before you resend an uncertain request.</p>
@@ -2220,6 +2225,9 @@ PAGES.projects = {
   tagline: 'Keep related chats, instructions and text documents together.',
   main: `
 <p class="lead">Use a project for work that needs more than one conversation. Open <a href="https://kademurdock.com/projects">Projects</a> on the website, choose your project, then select <strong>Instructions and working files</strong>.</p>
+<h2>Projects on Android</h2>
+<p>In Android 2.7 (build 108), open <strong>More &rarr; Projects</strong> for native project search, creation, instruction/file editing and read-only version history. Reference files are maintained by you; working documents may also be revised by an agent in the project's chats. Text may be typed or pasted. Chat management, file import/download and project rename/delete remain on the website.</p>
+<p>After a conflict or uncertain save, reload for comparison. Your draft remains unchanged while you read the saved text. Acknowledge that revision before saving. Project editor recovery uses saved-screen state, not the persistent chat-draft store; save useful work before closing the app.</p>
 <h2>Set the shared instructions</h2>
 <p>Write the purpose of the project and the preferences its agents should follow. Save the instructions before continuing a chat in that project.</p>
 <h2>Add reference text and working documents</h2>
