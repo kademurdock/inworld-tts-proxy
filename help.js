@@ -1307,6 +1307,10 @@ PAGES.characters = {
 <h2>How to switch</h2>
 <p>Pick any character to start talking to it. Switching characters starts a conversation with that one — your chat with Kiana is still saved in your list, so hopping around never loses anything.</p>
 
+<h2>When Kiana repeats an earlier answer</h2>
+<p>Kiana's chat replies have a stronger check for repeating old explanations or advice after you have moved the conversation forward. You can still ask her to repeat or explain more, and long replies are welcome when they add something useful. This applies to new chat replies; saved messages are not rewritten. Live phone and Clubhouse conversations use a different speech path.</p>
+<p>She can still miss the point. If that happens, use Feedback or ask her to send a bug report, including which reply went wrong. You do not need to delete the conversation or start over.</p>
+
 <div class="callout good">
   <p><strong>Tip:</strong> if a character isn't quite what you wanted, there's no harm done. Just switch back, or start a <a href="/help/temporary">new chat</a>. You can't break anything by exploring.</p>
 </div>
