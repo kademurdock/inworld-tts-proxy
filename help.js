@@ -686,6 +686,8 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>September 8, 2026: iPhone TestFlight 279</h2>
+<p>Older replies replay in the character's current voice, thinking feedback restarts reliably, and call and playback decorations respect motion preferences. Stronger contrast, earlier large-text stacking and bigger search controls make the updated screens easier to use.</p>
 <h2>September 7, 2026</h2>
 <ul><li><strong>Help is easier to find your way around.</strong> Search inside articles, browse by what you want to do, or use the quick links for speech, balances and missing replies. Saved work, projects and Clubhouse now have their own guides. Help links stay at kademurdock.com, including links opened from older apps.</li></ul>
 <ul>
@@ -1056,6 +1058,8 @@ PAGES.voice = {
   h1: "Talking & Listening",
   tagline: "You can speak your messages instead of typing, and have replies read out loud. Here's how.",
   main: `
+<h2>Replaying replies on iPhone</h2>
+<p>In TestFlight build 279, replay uses the original character's current voice. Your personal voice choice takes priority; otherwise their current creator-set voice is used. Older replies are voiced when you play them, without regenerating your entire history.</p>
 <h2>Nine new voices</h2>
 <p>New voice tags to search for: <strong>moonflower, starflower, silverleaf, rainlily, snowberry, sunstone, rainbird, windflower and meadowlark</strong>. They are mixed into the existing voice categories. Your saved voices keep their settings. Voice descriptions are a listening guide; preview a voice to choose the sound you prefer.</p>
 <p>September 8 listening corrections: <strong>Magnolia, Mulberry, Pumpernickel and Sunflower</strong> are now under <strong>Kids and teens</strong>; <strong>Sequoia</strong> is under <strong>Characters and cartoons</strong>. Their sounds and your saved choices stay the same. Fully close and reopen the iPhone app to refresh its voice list.</p>
@@ -2084,6 +2088,11 @@ PAGES.iphone = {
 <p><a class="cta" href="https://apps.apple.com/app/id6791024001">Get Kade-AI on the App Store</a></p>
 
 <p>Prefer to search? In the App Store app, search for <strong>Kade-AI</strong> (with the hyphen). If it does not show up in search on the very first day, that is Apple's catalog catching up; the link above works regardless.</p>
+
+<h2>Voice and display improvements, TestFlight build 279</h2>
+<p>Thinking feedback restarts for a fresh send, including after playback ends or a failed send is retried. Replaying an older reply uses its original character's current voice: your personal choice takes priority, followed by that character's current default. Older replies are voiced when you play them; the app does not regenerate your whole history.</p>
+<p>Gentle call, recording, waiting and playback decorations stay still with Reduce Motion, VoiceOver, Low Power Mode or the app in the background. They follow changes while the screen is open and add no VoiceOver stops. System Increase Contrast and the app's contrast setting give stronger outlines. The call button has a darker fill behind its white label, tool rows stack sooner at large text, and search-clear buttons have larger touch targets.</p>
+<p>These changes are in TestFlight first; the App Store version may be older. Actual audio, VoiceOver focus and headphone behavior still need checks on a phone.</p>
 
 <h2>Signing in</h2>
 <p>There is no sign-up screen. Use the account Kade set up for you &mdash; same email and password as the website. Everything you have here is already there: your conversations, your memory cards, your voice picks, your characters.</p>
