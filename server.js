@@ -38,6 +38,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
+const { normalizeInworldCaps, shapeFishPauses } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1127,6 +1128,7 @@ function sleep(ms) {
 const INWORLD_TIMEOUT_MS = 20000;
 
 async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery) {
+  text = normalizeInworldCaps(text);
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
   let response;
@@ -1330,7 +1332,7 @@ async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, sp
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text: sayText,
+          text: normalizeInworldCaps(sayText),
           voiceId: inworldVoice,
           modelId: inworldModel,
           audioConfig: {
@@ -2474,7 +2476,7 @@ function isDirectionTag(inner) {
  * Core tags the docs call most reliable: [laugh] [sigh] [gasp] [pause]
  * [whisper] [emphasis] [excited] [sad] [angry] [surprised]. The dialect below
  * maps our house non-verbals onto those instead of free-form -ing forms. */
-const FISH_NONVERBAL_DIALECT = { laugh: "laugh", sigh: "sigh", yawn: "yawning", breathe: "(breath)" };
+const FISH_NONVERBAL_DIALECT = { laugh: "laugh", sigh: "sigh", yawn: "yawning", breathe: "inhale" };
 const FISH_SEED_PER_SENTENCE = process.env.FISH_SEED_PER_SENTENCE === "1";
 const FISH_NORMALIZE = process.env.FISH_NORMALIZE === "1";
 // Aug 6 2026 (her fish-docs pointer: "they say emphasis on some words in the
@@ -2533,13 +2535,13 @@ function seedFishSteering(chunk) {
   if (chunk.indexOf("[") === -1) return chunk;
   let text = chunk.replace(/\[(laugh|sigh|yawn|breathe)\]/gi, (_, w) => {
     const d = FISH_NONVERBAL_DIALECT[w.toLowerCase()];
-    return d.startsWith("(") ? d : `[${d}]`; // paralanguage stays in parentheses
+    return `[${d}]`;
   });
   const parts = text.split(/(\n\s*\n+)/);
   if (!FISH_SEED_PER_SENTENCE) {
-    // Part 116.11: one tag per paragraph is the documented contract; a
-    // paragraph break is a (long-break) so the pause is explicit.
-    return parts.map((seg, i) => (i % 2 === 1 ? " (long-break) " : seg)).join("");
+    // Keep paragraph boundaries for splitFishParagraphs. S2 cues use brackets;
+    // sentence pauses are added after each paragraph becomes a request.
+    return parts.join("");
   }
   for (let i = 0; i < parts.length; i += 2) {
     const para = parts[i];
@@ -3108,7 +3110,7 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate) {
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
   const steered = applySteeringTags(seg.text);
   const chunks = (segIsFish
-    ? chunkText(steered).map(seedFishSteering).flatMap(splitFishParagraphs)
+    ? chunkText(steered).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
     : chunkText(steered).flatMap(shapeInworldSteering)
   ).filter(chunkHasSpeakableWords);
   if (!chunks.length) {
@@ -3348,7 +3350,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // re-seeds the active direction per sentence; Inworld gets one direction
     // per request (identical repeats dropped, real changes split the chunk).
     const chunks = (isFishVoice
-      ? chunkText(speakText).map(seedFishSteering).flatMap(splitFishParagraphs)
+      ? chunkText(speakText).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
       : chunkText(speakText).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {

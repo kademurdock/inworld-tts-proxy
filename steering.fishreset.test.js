@@ -56,14 +56,14 @@ test('Part 116.11: ONE direction per paragraph (no per-sentence re-stamping), pa
   const out = seedFishSteering('[warm] One sentence long enough to matter here. Another sentence long enough to matter here too.\n\n[reset] Done now, plain and simple, nothing more to perform tonight.');
   assert.ok(out.startsWith('[warm]'), 'leading direction kept');
   assert.strictEqual((out.match(/\[warm\]/g) || []).length, 1, 'a tag applies until the next tag -- no re-seeding');
-  assert.ok(out.includes('(long-break)'), 'explicit pause at the paragraph boundary: ' + out);
-  assert.ok(!/\n\s*\n/.test(out), 'no bare paragraph break left');
+  assert.ok(out.includes('\n\n'), 'paragraph boundary retained for separate requests: ' + out);
+  assert.ok(!out.includes('(long-break)'), 'no legacy pause token');
 });
 
 test('Part 116.11: house non-verbals map to fish core tags / paralanguage', () => {
   const out = seedFishSteering('[warm] Long enough to be a sentence here. [laugh] Long enough again here. [breathe] And one more here.');
   assert.ok(out.includes('[laugh]'), out);
-  assert.ok(out.includes('(breath)'), out);
+  assert.ok(out.includes('[inhale]'), out);
   assert.ok(!out.includes('[laughing]') && !out.includes('[break]'), out);
 });
 
