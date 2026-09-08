@@ -52,13 +52,11 @@
     "clear high-ish young woman · loom",
     "clear high-ish young woman · loveseat",
     "clear high-ish young woman · luna",
-    "clear high-ish young woman · magnolia",
     "clear high-ish young woman · mallet",
     "clear high-ish young woman · mist",
     "clear high-ish young woman · mocha",
     "clear high-ish young woman · monsoon",
     "clear high-ish young woman · moth",
-    "clear high-ish young woman · mulberry",
     "clear high-ish young woman · overcast",
     "clear high-ish young woman · oystercap",
     "clear high-ish young woman · papaya",
@@ -68,7 +66,6 @@
     "clear high-ish young woman · peppercorn",
     "clear high-ish young woman · primrose",
     "clear high-ish young woman · pulley",
-    "clear high-ish young woman · pumpernickel",
     "clear high-ish young woman · quilt",
     "clear high-ish young woman · rafter",
     "clear high-ish young woman · ratchet",
@@ -80,7 +77,6 @@
     "clear high-ish young woman · spindle",
     "clear high-ish young woman · stratus",
     "clear high-ish young woman · sunbeam",
-    "clear high-ish young woman · sunflower",
     "clear high-ish young woman · swallow",
     "clear high-ish young woman · thunder",
     "clear high-ish young woman · tidepool",
@@ -140,7 +136,6 @@
     "clear high-ish woman · spanner",
     "clear high-ish woman · verdigris",
     "clear high-ish woman, Black American · filbert",
-    "nasal high-ish woman · sequoia",
     "smooth high-ish woman · starflower",
     "smooth high-ish woman · snowberry",
     "smooth high-ish woman · sunstone",
@@ -733,7 +728,11 @@
     "clear teen boy · halyard",
     "smooth teen boy · rivet",
     "warm low-ish teen boy · tenon",
-    "smooth low-ish teen boy · mortise"
+    "smooth low-ish teen boy · mortise",
+    "clear high-ish youthful voice · magnolia",
+    "clear high-ish youthful voice · mulberry",
+    "clear high-ish youthful voice · pumpernickel",
+    "clear high-ish youthful voice · sunflower"
    ]
   },
   {
@@ -748,7 +747,8 @@
     "thin high girl, cartoon · sycamore",
     "thin high young woman, cartoon · brioche",
     "thin high man, cartoon · kinglet",
-    "dry man, robotic · silverleaf"
+    "dry man, robotic · silverleaf",
+    "nasal high-ish character · sequoia"
    ]
   }
  ],
@@ -1814,14 +1814,14 @@
    }
   },
   "Voice 20": {
-   "label": "clear high-ish young woman · magnolia",
+   "label": "clear high-ish youthful voice · magnolia",
    "tag": "magnolia",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear, and youthful female voice with an energetic tone, well-suited for a friendly, upbeat, or optimistic character.",
-   "ear_label": "bright young woman, clear general American",
+   "category": "Kids and teens",
+   "description": "A clear, high-ish youthful voice, filed under Kids and teens after Kade listened.",
+   "ear_label": "clear high-ish kid or teen voice",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -1830,7 +1830,10 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · magnolia"
+   ]
   },
   "Voice 297": {
    "label": "clear high-ish young woman · mallet",
@@ -1951,14 +1954,14 @@
    }
   },
   "Voice 25": {
-   "label": "clear high-ish young woman · mulberry",
+   "label": "clear high-ish youthful voice · mulberry",
    "tag": "mulberry",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear, and youthful female voice with a natural tone, well-suited for friendly, everyday characters or relatable narrators.",
-   "ear_label": "bright young woman, clear general American",
+   "category": "Kids and teens",
+   "description": "A clear, high-ish youthful voice, filed under Kids and teens after Kade listened.",
+   "ear_label": "clear high-ish kid or teen voice",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -1967,7 +1970,10 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.95
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · mulberry"
+   ]
   },
   "Voice 74": {
    "label": "clear high-ish young woman · overcast",
@@ -2190,14 +2196,14 @@
    }
   },
   "Voice 446": {
-   "label": "clear high-ish young woman · pumpernickel",
+   "label": "clear high-ish youthful voice · pumpernickel",
    "tag": "pumpernickel",
-   "category": "Women, bright and high, young",
-   "description": "A clear, youthful female voice with a bright tone, well-suited for friendly, everyday characters or relatable narrators.",
-   "ear_label": "bright young woman, clear general American",
+   "category": "Kids and teens",
+   "description": "A clear, high-ish youthful voice, filed under Kids and teens after Kade listened.",
+   "ear_label": "clear high-ish kid or teen voice",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -2206,7 +2212,10 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · pumpernickel"
+   ]
   },
   "Voice 587": {
    "label": "clear high-ish young woman · quilt",
@@ -2421,14 +2430,14 @@
    }
   },
   "Voice 45": {
-   "label": "clear high-ish young woman · sunflower",
+   "label": "clear high-ish youthful voice · sunflower",
    "tag": "sunflower",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear young woman's voice with a natural, friendly tone, well-suited for relatable everyday characters or helpful narrators.",
-   "ear_label": "bright young woman, clear general American",
+   "category": "Kids and teens",
+   "description": "A clear, high-ish youthful voice, filed under Kids and teens after Kade listened.",
+   "ear_label": "clear high-ish kid or teen voice",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
@@ -2437,7 +2446,10 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "clear high-ish young woman · sunflower"
+   ]
   },
   "Voice 164": {
    "label": "clear high-ish young woman · swallow",
@@ -3466,11 +3478,11 @@
    }
   },
   "Voice 19": {
-   "label": "nasal high-ish woman · sequoia",
+   "label": "nasal high-ish character · sequoia",
    "tag": "sequoia",
-   "category": "Women, bright and clear, grown",
-   "description": "A bright, high-pitched female voice with a nasal quality, well-suited for energetic, talkative, or comedic characters.",
-   "ear_label": "bright nasal woman, lively general American",
+   "category": "Characters and cartoons",
+   "description": "A nasal, high-ish character voice, filed under Characters and cartoons after Kade listened.",
+   "ear_label": "nasal high-ish character voice",
    "fields": {
     "gender": "woman",
     "age": "adult",
@@ -3480,9 +3492,12 @@
     "texture": "nasal",
     "energy": "lively",
     "accent": "general American",
-    "kind": "natural",
+    "kind": "character",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "nasal high-ish woman · sequoia"
+   ]
   },
   "Voice 588": {
    "label": "smooth low-ish young woman · afghan",
