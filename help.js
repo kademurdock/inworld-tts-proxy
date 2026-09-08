@@ -2151,7 +2151,7 @@ PAGES.android = {
 <p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.5 for Android</a></p>
 
 <h2>Voice playback and saved work in 2.5</h2>
-<p>Android <strong>2.5 (build 105)</strong> refreshes your personal voice choice when you play a reply, carries speaking directions between nearby parts, and stops old playback work when you choose another reply. If audio fails, a message explains how to retry; the full reply stays available as text.</p>
+<p>Android <strong>2.5 (build 106)</strong> refreshes your personal voice choice when you play a reply, carries speaking directions between nearby parts, and stops old playback work when you choose another reply. If audio fails, a message explains how to retry; the full reply stays available as text.</p>
 <p><strong>More, Agent work</strong> now opens a native screen for saved replies and interrupted requests. The coding-job view shows saved results and available spending receipts. Job notifications can open their specific result. Opening a saved chat checks its original character and does not send another request.</p>
 <p>The import-logbook option is one labeled switch. Memory-sharing options announce their checked or selected state once, and memory tabs wrap at larger text sizes.</p>
 <h2>Appearance, motion, and larger text</h2>
