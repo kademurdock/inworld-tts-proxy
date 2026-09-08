@@ -4548,6 +4548,59 @@ const FISH_ADDITIONS_2026_09_03 = {
   });
 }
 
+// September 7, 2026: nine requested Inworld voices. Existing IDs stay fixed.
+const VOICE_ADDITIONS_2026_09_07 = {
+  "Voice 631": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__chaka",
+    "name": "Chaka"
+  },
+  "Voice 632": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__kaila",
+    "name": "Kaila"
+  },
+  "Voice 633": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__karstley",
+    "name": "Karstley"
+  },
+  "Voice 634": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__posia",
+    "name": "Posia"
+  },
+  "Voice 635": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__rosaliah",
+    "name": "Rosaliah"
+  },
+  "Voice 636": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__sardonia",
+    "name": "Sardonia"
+  },
+  "Voice 637": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__tanayah",
+    "name": "Tanayah"
+  },
+  "Voice 638": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__vanesse",
+    "name": "Vanesse"
+  },
+  "Voice 639": {
+    "target": "default-e-m11vgtr9l-m7afw4kmnw__verchi",
+    "name": "verchi"
+  }
+};
+{
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  for (const [label, info] of Object.entries(VOICE_ADDITIONS_2026_09_07)) {
+    if (VOICE_MAP[label] || seenTargets.has(info.target)) throw new Error(`09-07 voice collision: ${label}`);
+    seenTargets.add(info.target);
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[`${label} ${info.name}`] = info.target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(`${label} ${info.name}`);
+  }
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck

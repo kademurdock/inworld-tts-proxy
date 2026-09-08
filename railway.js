@@ -26,7 +26,7 @@ const router = express.Router();
 
 const RW_TOKEN = process.env.RAILWAY_API_TOKEN;
 const SECRET = process.env.RAILWAY_PROXY_SECRET;
-const GQL = "https://backboard.railway.app/graphql/v2";
+const { railwayQuery } = require("./railway-client");
 
 function auth(req, res, next) {
   const h = req.get("authorization") || "";
@@ -39,14 +39,7 @@ function auth(req, res, next) {
 }
 
 async function gql(query, variables) {
-  const r = await fetch(GQL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RW_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables: variables || {} }),
-  });
-  const data = await r.json();
-  if (data.errors) throw new Error(JSON.stringify(data.errors).slice(0, 300));
-  return data.data;
+  return railwayQuery(RW_TOKEN, query, variables || {});
 }
 
 // GET /railway/overview -> all projects, their environments, and services (ids + names)

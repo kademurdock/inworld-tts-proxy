@@ -140,7 +140,11 @@
     "clear high-ish woman · spanner",
     "clear high-ish woman · verdigris",
     "clear high-ish woman, Black American · filbert",
-    "nasal high-ish woman · sequoia"
+    "nasal high-ish woman · sequoia",
+    "smooth high-ish woman · starflower",
+    "smooth high-ish woman · snowberry",
+    "smooth high-ish woman · sunstone",
+    "smooth high-ish woman · windflower"
    ]
   },
   {
@@ -263,7 +267,11 @@
     "warm low-ish woman, Black American · tug",
     "warm woman · arbor",
     "warm low-ish woman, Black American · bramble",
-    "smooth low-ish woman · lichen"
+    "smooth low-ish woman · lichen",
+    "smooth woman · moonflower",
+    "smooth woman · rainlily",
+    "smooth woman · rainbird",
+    "smooth woman · meadowlark"
    ]
   },
   {
@@ -739,7 +747,8 @@
     "nasal high-ish woman, theatrical · liverwort",
     "thin high girl, cartoon · sycamore",
     "thin high young woman, cartoon · brioche",
-    "thin high man, cartoon · kinglet"
+    "thin high man, cartoon · kinglet",
+    "dry man, robotic · silverleaf"
    ]
   }
  ],
@@ -12815,6 +12824,186 @@
     "gender_confidence": 1.0
    },
    "note": "Part 119.5: described by hand-run recipe (sample script via live proxy, gemini-3.5-flash, Part 118 schema)."
+  },
+  "Voice 631": {
+   "label": "smooth woman · moonflower",
+   "tag": "moonflower",
+   "category": "Women, smooth and warm, grown",
+   "description": "A calm, clear, and neutral American woman's voice with a balanced, natural tone suitable for steady listening.",
+   "ear_label": "Calm, clear neutral American woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 632": {
+   "label": "smooth high-ish woman · starflower",
+   "tag": "starflower",
+   "category": "Women, bright and clear, grown",
+   "description": "A calm, clear, and natural-sounding adult woman's voice with a mid-high pitch and a bright, smooth tone.",
+   "ear_label": "Calm, bright adult female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 633": {
+   "label": "dry man, robotic · silverleaf",
+   "tag": "silverleaf",
+   "category": "Characters and cartoons",
+   "description": "A calm, mid-pitched synthetic male voice with a neutral American accent, characterized by a slightly robotic, dry texture and a steady, even delivery.",
+   "ear_label": "Calm, mid-pitched synthetic male voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "dry",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "robotic",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 634": {
+   "label": "smooth woman · rainlily",
+   "tag": "rainlily",
+   "category": "Women, smooth and warm, grown",
+   "description": "A calm and clear adult woman's voice speaking with a neutral American accent, characterized by its smooth texture and balanced, mid-range pitch.",
+   "ear_label": "Calm, clear adult woman with neutral American accent",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 635": {
+   "label": "smooth high-ish woman · snowberry",
+   "tag": "snowberry",
+   "category": "Women, bright and clear, grown",
+   "description": "A calm and clear adult woman's voice with a mid-high pitch, a light weight, and a bright, smooth texture.",
+   "ear_label": "Calm, bright mid-high adult female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 636": {
+   "label": "smooth high-ish woman · sunstone",
+   "tag": "sunstone",
+   "category": "Women, bright and clear, grown",
+   "description": "A calm, clear, and natural adult woman's voice with a mid-high pitch, light weight, and a neutral American accent.",
+   "ear_label": "Calm, clear mid-high adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 637": {
+   "label": "smooth woman · rainbird",
+   "tag": "rainbird",
+   "category": "Women, smooth and warm, grown",
+   "description": "A calm, clear, and neutral American woman's voice with a balanced, mid-range pitch and a smooth, natural delivery.",
+   "ear_label": "Calm, clear mid-range American woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 638": {
+   "label": "smooth high-ish woman · windflower",
+   "tag": "windflower",
+   "category": "Women, bright and clear, grown",
+   "description": "A calm and clear adult woman's voice with a mid-high pitch, light weight, and a bright, smooth texture.",
+   "ear_label": "Calm mid-high adult female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 639": {
+   "label": "smooth woman · meadowlark",
+   "tag": "meadowlark",
+   "category": "Women, smooth and warm, grown",
+   "description": "A calm, clear adult woman's voice speaking with a neutral American accent, characterized by its smooth texture and balanced, mid-range pitch.",
+   "ear_label": "Calm, clear adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
   }
  },
  "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving"

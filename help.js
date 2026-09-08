@@ -1055,6 +1055,8 @@ PAGES.voice = {
   h1: "Talking & Listening",
   tagline: "You can speak your messages instead of typing, and have replies read out loud. Here's how.",
   main: `
+<h2>Nine new voices</h2>
+<p>New voice tags to search for: <strong>moonflower, starflower, silverleaf, rainlily, snowberry, sunstone, rainbird, windflower and meadowlark</strong>. They are mixed into the existing voice categories. Your saved voices keep their settings. Voice descriptions are a listening guide; preview a voice to choose the sound you prefer.</p>
 <p class="lead">Two separate things live here, and you can use either, both, or neither:</p>
 <ul>
   <li><strong>Listening</strong> — having the AI's replies read out loud to you.</li>
@@ -2169,6 +2171,7 @@ PAGES.work = {
 <p>Open the coding-job view in Agent work to see that job’s saved result, checks, recorded spending and anything awaiting review. A passing check alone does not mean the requested work finished. Interrupted jobs do not restart automatically.</p>
 <p>New Forge coding jobs stop before their model calls exceed the agreed $1 ceiling. Other chat, background and tool charges are not all covered by this guard. Missing charge receipts are shown as incomplete.</p>
 <h2>See which tools were available</h2>
+<p>If Forge reports that a hosting request timed out or its outcome is unknown, ask it to check the current deployment before repeating a restart or change. A lost response does not mean the change failed.</p>
 <p>A saved reply may include a dated tools snapshot. It describes tools available for that request; it does not prove every connected service is working now.</p>
 <p>Still stuck? <a href="/help/troubleshooting">Find troubleshooting steps</a>, or contact Kade.</p>`,
 };
