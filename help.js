@@ -686,6 +686,9 @@ PAGES.whatsnew = {
   main: `
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>September 9, 2026: Help getting back into your account</h2>
+<p>The website's sign-in page has a <strong>Need help signing in?</strong> link. It explains forgotten passwords, linked phone numbers and keeping your original chats and balance. Email recovery is not enabled yet; contact Kade for a reset. The recovery forms now handle failed requests and expired links more clearly.</p>
+
 <h2>September 8, 2026: iPhone TestFlight 279</h2>
 <p>Older replies replay in the character's current voice, thinking feedback restarts reliably, and call and playback decorations respect motion preferences. Stronger contrast, earlier large-text stacking and bigger search controls make the updated screens easier to use.</p>
 <h2>September 7, 2026</h2>
@@ -2004,7 +2007,9 @@ PAGES.troubleshooting = {
 <p>Image-making draws from a small separate pot of credits. If it suddenly won't make pictures, that pot may have run dry. <strong>Fix:</strong> contact Kade — she can top it up.</p>
 
 <h2>I can't log in, forgot my password, or need an account</h2>
-<p>Accounts are set up by Kade personally (it's an invite-only place). If you're locked out or want to add a family member, <strong>contact Kade</strong>.</p>
+<p>Choose <strong>Need help signing in?</strong> on the sign-in page. If you remember your password but forgot your email address, try the phone number already linked to your account.</p>
+<p>Email password recovery is not enabled here yet. For a forgotten password, a phone-only account, a lost email inbox, or lost two-step verification codes, <strong>contact Kade</strong>. Keep your original account so your chats, characters and balance stay together. Don't make a second account to recover the first one, and don't send anyone your password or recovery codes.</p>
+<p>When email recovery becomes available, the reset page will send a link to your account email. Use the newest link within 15 minutes. An expired or already-used link needs a new request. A failed request will say so instead of claiming an email was sent.</p>
 
 <h2>Found a bug, or wish it did something new? Just say so.</h2>
 <p>You don't have to track Kade down. Tell <em>any</em> character — Kiana, a companion, whoever you're already talking to — something like <em>"that's broken, can you report it?"</em> or <em>"I wish it could do this."</em> They'll offer to send it to Kade for you, and once you say yes it goes straight to her with your name on it so she can follow up. Works in chat and on the phone. Free, and it actually reaches her.</p>
@@ -2022,7 +2027,7 @@ PAGES.privacy = {
   h1: "Privacy & Your Data",
   tagline: "What gets stored, who else sees it, and how to take it all with you. In plain English.",
   main: `
-<p class="lead">Kade-AI is a small, invite-only place run by one person, Kade Murdock, out of her own pocket. It is not a company and it does not make money from you. Nothing here is sold, rented, or handed to advertisers &mdash; there are no ads on this platform and no advertising or tracking code in it. This page explains, honestly, what is kept and why.</p>
+<p class="lead">Kade-AI is a small, invite-only place run by Kade Murdock. Usage charges include a contribution toward running the platform, as explained in <a href="/help/donate">Usage &amp; Balance</a>. Your personal data is not sold, rented, or handed to advertisers &mdash; there are no ads on this platform and no advertising or tracking code in it. This page explains, honestly, what is kept and why.</p>
 
 <h2>The short version</h2>
 <ul>
