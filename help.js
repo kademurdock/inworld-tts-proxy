@@ -684,6 +684,9 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>September 9, 2026: animated voice messages</h2>
+<p>Characters can appear while you listen to voice replies: on the website, iPhone TestFlight <strong>280</strong>, and Android <strong>2.9 (build 110)</strong>. Kiana blinks and moves her mouth with playback; other characters keep their own portraits with gentle movement. Web portraits have Pause and Resume for the same recording. Animation can be switched off without changing the voice or text. <a href="/help/voice">Voice portrait controls</a>.</p>
+
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
 <h2>September 9, 2026: Help getting back into your account</h2>
@@ -1065,6 +1068,12 @@ PAGES.voice = {
   h1: "Talking & Listening",
   tagline: "You can speak your messages instead of typing, and have replies read out loud. Here's how.",
   main: `
+<h2>Animated voice messages</h2>
+<p>Voice replies can show the speaking character while you listen, including outside calls. This is available on the website, in iPhone TestFlight build <strong>280</strong>, and in Android <strong>2.9 (build 110)</strong>. The App Store release may be older.</p>
+<p>Kiana has blinking and a mouth that follows the recording&rsquo;s loudness. Other characters use their own portrait with gentle movement while individual facial artwork is prepared. An unavailable or changed portrait falls back safely. Animation does not change the voice and adds no speech-generation request. Playing an older text reply can still generate speech at the normal voice cost.</p>
+<p>On the website, the portrait has <strong>Pause voice message</strong> and <strong>Resume voice message</strong>; Resume continues the same loaded recording. Use <strong>Settings &rarr; Speech &rarr; Animated voice portraits</strong> to hide it. On iPhone, use <strong>Settings &rarr; Feedback &amp; Sounds &rarr; Animated voice portraits</strong>. On Android, use <strong>Settings &rarr; Appearance &amp; motion &rarr; Hide voice portraits</strong>. The text and ordinary audio controls remain available.</p>
+<p>Reduce Motion keeps portraits still. Images do not become screen-reader stops. iPhone voice portraits may move while VoiceOver is on; Android&rsquo;s existing motion policy keeps them still with an accessibility service active. Phone battery-saving and background rules also apply.</p>
+
 <h2>Expression with a steadier pace</h2>
 <p>In the voice picker's Delivery control, <strong>Balanced</strong> and <strong>Steady</strong> now keep directions such as “unhurried” or “quick” from overriding your chosen speaking speed. Feelings and laughter stay available. <strong>Lively</strong> keeps the wider performance range, including deliberate pace changes. These adjustments apply to Inworld and Fish Audio when you generate speech, including a fresh replay of an older reply. Audio already downloaded or cached keeps its original performance.</p>
 <p>Companions are now guided to give their voices more natural pitch movement, emphasis and phrasing, while keeping a comfortable pace. You can ask for a smile in the voice, a skeptical edge, a gentler reading or deliberate deadpan. Their directions should follow the conversation rather than defaulting to a flat, straightforward reading. This improves the guidance they write; the chosen voice and Delivery setting still affect the result. Existing recordings keep their original delivery.</p>
@@ -2100,6 +2109,10 @@ PAGES.iphone = {
   h1: "The iPhone App",
   tagline: "Kade-AI is on the App Store. One link, no searching.",
   main: `
+<h2>Animated voice portraits, TestFlight build 280</h2>
+<p>While a voice message plays, its character appears beside the reply. This also works while a new reply is arriving. Kiana&rsquo;s prepared portrait blinks and opens its mouth with actual playback; other characters keep their own portrait with gentle movement. Pausing stops the animation. The transcript and VoiceOver actions are unchanged.</p>
+<p>Use <strong>Settings &rarr; Feedback &amp; Sounds &rarr; Animated voice portraits</strong> to turn the picture off. Reduce Motion, Low Power Mode and backgrounding keep it still. The picture is decorative and does not add VoiceOver stops. This update is in TestFlight; the public App Store build may be older.</p>
+
 <p class="lead">As of September 5, 2026, Kade-AI is a real App Store app. No more invitations, no TestFlight, no waiting on Kade to add you &mdash; open the link and install it like anything else.</p>
 
 <p><a class="cta" href="https://apps.apple.com/app/id6791024001">Get Kade-AI on the App Store</a></p>
@@ -2158,6 +2171,10 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.9 (build 110): animated voice portraits</h2>
+<p>Voice-message playback now shows the original character&rsquo;s portrait. Kiana has prepared eye and mouth movements; other characters keep their own picture with gentle movement. Pause and Resume keep the current audio. Unknown audio formats keep a closed mouth while the voice continues.</p>
+<p>In <strong>Settings &rarr; Appearance &amp; motion</strong>, turn on <strong>Hide voice portraits</strong> to remove the picture. Reduce Motion, TalkBack or another accessibility service, battery saving and backgrounding keep movement still. Pictures do not add TalkBack stops, and the full transcript remains readable.</p>
+
 <p class="lead">If you carry an Android phone, you can have Kade-AI as a real app &mdash; and as of August 28, 2026 it's a <strong>truly native app</strong>, the same breed as the iPhone one. Native chat with every companion, replies spoken in their real voices, dictation that adds to your draft instead of wiping it, your memory cards, and the whole toolbox. It follows your phone's own text size and display size settings, and the layout reflows instead of overlapping when you magnify &mdash; built low-vision-first.</p>
 
 <p>Already have the old app? Just download and install again &mdash; the new one goes right over the top, nothing to uninstall, and you stay signed in to the same account.</p>
