@@ -2073,4 +2073,75 @@ router.post("/librechat/janitor", auth, async (req, res) => {
   }
 });
 
+/* ── PROVIDER VOICE INVENTORY (Part 176, Sep 11 2026) ─────────────────────────
+ * Her ask, again: "there are a few new inworld voices I want you to add, added
+ * to my account today." Every earlier session pulled api.inworld.ai directly
+ * with the key copied off Railway; this session's sandbox could reach neither.
+ * The key already lives on THIS service, so the inventory comes through the
+ * door Forge already has. Read-only, bearer-guarded, never echoes the key.
+ *   GET /librechat/provider-voices?provider=inworld   -> every voice the
+ *       Inworld workspace can see (follows nextPageToken to the end); pass
+ *       custom=1 for only the workspace's own clones (ids carrying "__").
+ *   GET /librechat/provider-voices?provider=fish      -> her fish.audio
+ *       library (self=true), all pages.
+ * Shape: { provider, count, voices:[{ id, name, description, created, langs }] }. */
+router.get("/librechat/provider-voices", auth, async (req, res) => {
+  const provider = String(req.query.provider || "inworld").toLowerCase();
+  const customOnly = String(req.query.custom || "") === "1";
+  try {
+    if (provider === "inworld") {
+      const key = process.env.INWORLD_API_KEY;
+      if (!key) return res.status(500).json({ error: "INWORLD_API_KEY not set on this service" });
+      const out = [];
+      let pageToken = "";
+      for (let page = 0; page < 40; page++) {
+        const u = new URL("https://api.inworld.ai/tts/v1/voices");
+        u.searchParams.set("pageSize", "200");
+        if (pageToken) u.searchParams.set("pageToken", pageToken);
+        const r = await fetch(u, { headers: { Authorization: `Basic ${key}`, "User-Agent": UA } });
+        const body = await r.text();
+        if (!r.ok) return res.status(502).json({ error: `inworld ${r.status}`, detail: body.slice(0, 300) });
+        let j;
+        try { j = JSON.parse(body); } catch { return res.status(502).json({ error: "inworld: unreadable response" }); }
+        for (const v of j.voices || []) {
+          const id = v.voiceId || v.id || v.name || "";
+          if (customOnly && !/__/.test(id)) continue;
+          out.push({
+            id,
+            name: v.displayName || v.name || "",
+            description: v.description || "",
+            created: v.createTime || v.createdAt || null,
+            langs: v.langCode ? [v.langCode] : Array.isArray(v.languages) ? v.languages : undefined,
+            tags: Array.isArray(v.tags) ? v.tags : undefined,
+          });
+        }
+        pageToken = j.nextPageToken || "";
+        if (!pageToken) break;
+      }
+      return res.json({ provider, count: out.length, voices: out });
+    }
+    if (provider === "fish") {
+      const key = process.env.FISH_API_KEY;
+      if (!key) return res.status(500).json({ error: "FISH_API_KEY not set on this service" });
+      const out = [];
+      for (let page = 1; page < 40; page++) {
+        const r = await fetch(`https://api.fish.audio/model?self=true&page_size=100&page_number=${page}`, {
+          headers: { Authorization: `Bearer ${key}`, "User-Agent": UA },
+        });
+        const body = await r.text();
+        if (!r.ok) return res.status(502).json({ error: `fish ${r.status}`, detail: body.slice(0, 300) });
+        let j;
+        try { j = JSON.parse(body); } catch { return res.status(502).json({ error: "fish: unreadable response" }); }
+        const items = j.items || [];
+        for (const v of items) out.push({ id: v._id, name: v.title || "", description: v.description || "", created: v.created_at || null, langs: v.languages });
+        if (items.length < 100 || out.length >= (j.total || Infinity)) break;
+      }
+      return res.json({ provider, count: out.length, voices: out });
+    }
+    return res.status(400).json({ error: "provider must be inworld or fish" });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 module.exports = router;
