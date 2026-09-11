@@ -5180,4 +5180,14 @@ app.post("/v1/audio/transcriptions", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);
+  /* Part 180.5: listener reports move voices between picker sections on
+   * their own — replay earlier moves from the board at boot, then sweep the
+   * open rows every few minutes. Pure half + tests in voice-moves.js. */
+  try {
+    require("./voice-moves").start({
+      state: { VOICE_MAP, VOICE_RENAMES, VOICE_DESCRIBE, VOICE_TAGS, HIDDEN_VOICE_ALIASES, VOICE_PICKER_CATEGORIES, VOICE_LIST },
+      port: PORT,
+      secret: process.env.LIBRECHAT_PROXY_SECRET,
+    });
+  } catch (e) { console.warn(`[voice-moves] not started: ${e.message}`); }
 });
