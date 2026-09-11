@@ -103,7 +103,13 @@
     "smooth high-ish young woman · foghorn",
     "smooth high-ish young woman · pecorino",
     "smooth high-ish young woman · waffle",
-    "smooth high-ish young woman · wasp"
+    "smooth high-ish young woman · wasp",
+    "clear high-ish young woman · juniper",
+    "clear high-ish young woman · quartzite",
+    "clear high-ish young woman · marigold",
+    "clear high-ish young woman · hollyhock",
+    "clear high-ish young woman · peridot",
+    "clear high-ish young woman · nutmeg"
    ]
   },
   {
@@ -139,7 +145,10 @@
     "smooth high-ish woman · starflower",
     "smooth high-ish woman · snowberry",
     "smooth high-ish woman · sunstone",
-    "smooth high-ish woman · windflower"
+    "smooth high-ish woman · windflower",
+    "clear high-ish woman · cedarwood",
+    "clear woman · ironwood",
+    "clear woman · flint"
    ]
   },
   {
@@ -560,7 +569,10 @@
     "husky low-ish young man, Black American · sled",
     "warm low man · aqueduct",
     "warm low man · lintel",
-    "warm low man · moorhen"
+    "warm low man · moorhen",
+    "smooth low man · slate",
+    "smooth low man · cobalt",
+    "warm low man · tamarack"
    ]
   },
   {
@@ -622,7 +634,6 @@
     "gravelly low older man · biscuit",
     "gravelly low older man · boulder",
     "gravelly low older man · dale",
-    "gravelly low older man · gouda",
     "gravelly low older man · harrow",
     "gravelly low older man · knoll",
     "gravelly low older man · lantern",
@@ -682,7 +693,8 @@
     "smooth low-ish man, Indian English · fennel",
     "smooth low-ish middle-aged man, British · driftwood",
     "smooth young man, Scottish · drift",
-    "warm low-ish man, Australian · rudder"
+    "warm low-ish man, Australian · rudder",
+    "smooth low-ish man, Indian English · saffron"
    ]
   },
   {
@@ -11293,23 +11305,27 @@
    }
   },
   "Voice 462": {
-   "label": "gravelly low older man · gouda",
-   "tag": "gouda",
-   "category": "Men, seasoned and gravelly",
-   "description": "A deep, gravelly, and slow-spoken older male voice, ideal for a weary grandfather or a seasoned, quiet mentor.",
-   "ear_label": "gravelly older man, low-pitched and slow",
+   "label": "smooth low man · slate",
+   "tag": "slate",
+   "category": "Men, low and husky",
+   "description": "A deep, resonant, and steady male voice with a smooth tone, well-suited for professional narrations and announcements.",
+   "ear_label": "Steady, deep adult man's voice",
    "fields": {
     "gender": "man",
-    "age": "older",
+    "age": "adult",
     "pitch": "low",
     "weight": "full",
-    "brightness": "dark",
-    "texture": "gravelly",
-    "energy": "soft",
-    "accent": "general American",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "steady",
+    "accent": "neutral American",
     "kind": "natural",
-    "gender_confidence": 1.0
-   }
+    "gender_confidence": 1
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test. Voice 462 was the fish clone Deej (gravelly low older man · gouda) until this date; the number now speaks as Zondi and the old label resolves here.",
+   "formerLabels": [
+    "gravelly low older man · gouda"
+   ]
   },
   "Voice 621": {
    "label": "gravelly low older man · harrow",
@@ -13019,7 +13035,247 @@
     "gender_confidence": 1.0
    },
    "note": "Part 152: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 640": {
+   "label": "clear high-ish young woman · juniper",
+   "tag": "juniper",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear female voice with a friendly, professional tone, ideal for instructional content and virtual assistants.",
+   "ear_label": "Clear, bright young adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 641": {
+   "label": "smooth low man · cobalt",
+   "tag": "cobalt",
+   "category": "Men, low and husky",
+   "description": "A deep and smooth male voice with a warm, resonant tone, ideal for professional narration and audiobooks.",
+   "ear_label": "Warm, deep adult man's voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "low",
+    "weight": "full",
+    "brightness": "dark",
+    "texture": "smooth",
+    "energy": "steady",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 642": {
+   "label": "warm low man · tamarack",
+   "tag": "tamarack",
+   "category": "Men, low and husky",
+   "description": "A deep and resonant male voice with a warm, steady tone, ideal for professional narration and audiobooks.",
+   "ear_label": "Steady, warm adult man's voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "low",
+    "weight": "full",
+    "brightness": "neutral",
+    "texture": "warm",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 643": {
+   "label": "clear high-ish young woman · quartzite",
+   "tag": "quartzite",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear young adult female voice with a steady tone, well-suited for friendly narration and e-learning.",
+   "ear_label": "Clear, bright young adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 1
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 644": {
+   "label": "clear high-ish young woman · marigold",
+   "tag": "marigold",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear young adult woman's voice with a steady, friendly tone, ideal for virtual assistants and instructional content.",
+   "ear_label": "Bright, clear young adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 0.98
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 645": {
+   "label": "clear high-ish woman · cedarwood",
+   "tag": "cedarwood",
+   "category": "Women, bright and clear, grown",
+   "description": "A clear and steady female voice with a neutral tone, well-suited for professional presentations and audiobooks.",
+   "ear_label": "Steady, clear adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 646": {
+   "label": "clear high-ish young woman · hollyhock",
+   "tag": "hollyhock",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear young adult female voice with a steady tone, suitable for e-learning and narration.",
+   "ear_label": "Clear, steady young adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.98
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 647": {
+   "label": "smooth low-ish man, Indian English · saffron",
+   "tag": "saffron",
+   "category": "Men, from abroad",
+   "description": "A warm and steady adult male voice with a clear Indian English accent, well-suited for narration and instructional content.",
+   "ear_label": "Steady, smooth Indian-accented man's voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "low-mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "steady",
+    "accent": "Indian English",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 648": {
+   "label": "clear high-ish young woman · peridot",
+   "tag": "peridot",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear young adult female voice with a steady, professional tone, well-suited for e-learning and virtual assistants.",
+   "ear_label": "Clear, bright young adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 649": {
+   "label": "clear woman · ironwood",
+   "tag": "ironwood",
+   "category": "Women, bright and clear, grown",
+   "description": "A balanced and clear female voice with a professional tone, suitable for reading and instructional content.",
+   "ear_label": "Clear, professional adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 650": {
+   "label": "clear woman · flint",
+   "tag": "flint",
+   "category": "Women, bright and clear, grown",
+   "description": "A clear and steady adult woman's voice with a neutral tone, well-suited for narration and assistant tasks.",
+   "ear_label": "Steady, clear adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 651": {
+   "label": "clear high-ish young woman · nutmeg",
+   "tag": "nutmeg",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear young adult female voice with a steady tone, well-suited for narration and e-learning.",
+   "ear_label": "Clear, steady young adult woman's voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "neutral American",
+    "kind": "natural",
+    "gender_confidence": 1
+   },
+   "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
   }
  },
- "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving"
+ "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving | Part 176 (Sep 11 2026): Voice 462 re-voiced Deej -> Zondi (formerLabels keeps the old pick resolving); Voices 640-651 added, Gemini 3.5 Flash ear pass on Inworld previews."
 }

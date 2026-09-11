@@ -3892,7 +3892,7 @@ const FISH_VOICE_ADDITIONS_2026_07_22 = {
   "Voice 459": "fish:98b45cf162ea4fec9674cdfe127c7fda", // Samaria
   "Voice 460": "fish:f50747df0da34c4f9d4b4b5e0dc4cf9f", // Monique synthetic
   "Voice 461": "fish:5255be4011ec404ab80e5716f2583bf8", // Kid mya, synthetic
-  "Voice 462": "fish:810855eb85924765b66b8b198d47ee78", // Deej
+  "Voice 462": "fish:810855eb85924765b66b8b198d47ee78", // Deej — REPLACED by Zondi at boot, Part 176 (Sep 11 2026); see DEEJ_REPLACEMENT_2026_09_11
   "Voice 463": "fish:21197f5e2e5f42cfb5846fcf7bc3734b", // Amber casual
   "Voice 464": "fish:00644e8178f044f7a77891ef9b629b56", // Me casual
   "Voice 465": "fish:3bf859ed5bca442ebc2ee4f146dbf742", // Emani
@@ -4602,6 +4602,66 @@ const VOICE_ADDITIONS_2026_09_07 = {
     CUSTOM_VOICE_NUMBERS.add(label);
     HIDDEN_VOICE_ALIASES.push(`${label} ${info.name}`);
   }
+}
+
+// ── 2026-09-11 (Part 176) DEEJ REPLACED + TWELVE INWORLD ADDITIONS ──────────
+// Kade: "the fish audio voice Deej needs removed from my platform" and, on the
+// same night, "add them all, and if you need to replace deej with one of those
+// voices that's fine... nobody currently uses the deej voice." So Voice 462
+// keeps its NUMBER and changes its VOICE — the July 17 gap-refill pattern —
+// from the fish clone Deej to the Inworld workspace clone Zondi. Every alias
+// that still pointed at Deej's fish id (bare number, "(Beta)" spellings, the
+// v2 label via the catalog) is repointed, so nothing anyone saved can break
+// and nothing on the platform can reach Deej any more. The other twelve of the
+// thirteen unregistered non-hold-out workspace voices (live diff this session:
+// 299 workspace clones, 269 registered, 17 hold-outs parked as ever) are
+// APPEND-ONLY as Voice 640–651. Numbered-only displays per her Aug 6 rule.
+const DEEJ_REPLACEMENT_2026_09_11 = {
+  "Voice 462": { target: "default-e-m11vgtr9l-m7afw4kmnw__zondi", name: "Zondi", was: "fish:810855eb85924765b66b8b198d47ee78" },
+};
+{
+  for (const [label, info] of Object.entries(DEEJ_REPLACEMENT_2026_09_11)) {
+    if (NUMBERED_VOICE_ALIASES[label] !== info.was) throw new Error(`deej replacement: ${label} is not Deej any more (${NUMBERED_VOICE_ALIASES[label]})`);
+    if (Object.values(NUMBERED_VOICE_ALIASES).includes(info.target)) throw new Error(`deej replacement: ${info.target} already registered`);
+    let repointed = 0;
+    for (const [k, t] of Object.entries(VOICE_MAP)) if (t === info.was) { VOICE_MAP[k] = info.target; repointed++; }
+    for (const [k, t] of Object.entries(NUMBERED_VOICE_ALIASES)) if (t === info.was) NUMBERED_VOICE_ALIASES[k] = info.target;
+    if (repointed === 0) throw new Error(`deej replacement: nothing in VOICE_MAP pointed at Deej`);
+    VOICE_MAP[`${label} ${info.name}`] = info.target;
+    HIDDEN_VOICE_ALIASES.push(`${label} ${info.name}`);
+    console.log(`[voices] Part 176: ${label} now speaks as ${info.name}; ${repointed} stored spellings repointed off Deej`);
+  }
+}
+const VOICE_ADDITIONS_2026_09_11 = {
+  "Voice 640": { target: "default-e-m11vgtr9l-m7afw4kmnw__sanya", name: "Sanya" },
+  "Voice 641": { target: "default-e-m11vgtr9l-m7afw4kmnw__raydella", name: "Raydella" },
+  "Voice 642": { target: "default-e-m11vgtr9l-m7afw4kmnw__sanori", name: "Sanori" },
+  "Voice 643": { target: "default-e-m11vgtr9l-m7afw4kmnw__ashlyn", name: "Ashlyn" },
+  "Voice 644": { target: "default-e-m11vgtr9l-m7afw4kmnw__matzi", name: "Matzi" },
+  "Voice 645": { target: "default-e-m11vgtr9l-m7afw4kmnw__sennadasia", name: "Sennadasia" },
+  "Voice 646": { target: "default-e-m11vgtr9l-m7afw4kmnw__tia", name: "Tia" },
+  "Voice 647": { target: "default-e-m11vgtr9l-m7afw4kmnw__azhe", name: "Azhe" },
+  "Voice 648": { target: "default-e-m11vgtr9l-m7afw4kmnw__keeksley", name: "Keeksley" },
+  "Voice 649": { target: "default-e-m11vgtr9l-m7afw4kmnw__miranda", name: "Miranda" },
+  "Voice 650": { target: "default-e-m11vgtr9l-m7afw4kmnw__noki", name: "Noki" },
+  "Voice 651": { target: "default-e-m11vgtr9l-m7afw4kmnw__panthia", name: "Panthia" },
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_09_11);
+  if (entries.length !== 12) throw new Error(`additions 09-11: expected 12, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, info], idx) => {
+    if (label !== `Voice ${640 + idx}`) throw new Error(`additions 09-11: non-contiguous at ${label}`);
+    if (!info.target.startsWith("default-e-")) throw new Error(`additions 09-11: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(info.target)) throw new Error(`additions 09-11: collision at ${label}`);
+    seenTargets.add(info.target);
+    NUMBERED_VOICE_ALIASES[label] = info.target;
+    VOICE_MAP[label] = info.target;
+    VOICE_MAP[`${label} ${info.name}`] = info.target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+    HIDDEN_VOICE_ALIASES.push(`${label} ${info.name}`);
+  });
 }
 
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely

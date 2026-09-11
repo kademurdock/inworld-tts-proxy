@@ -695,6 +695,8 @@ PAGES.whatsnew = {
 
 <p class="lead">Kade keeps building. This page is the running list of what's new, so you find out about the good stuff without anyone having to explain it one phone call at a time.</p>
 
+<h2>September 11, 2026: twelve new voices, and Kiana looks things up</h2>
+<p>Twelve Inworld voices joined the voice picker (search the tags juniper, cobalt, tamarack, quartzite, marigold, cedarwood, hollyhock, saffron, peridot, ironwood, flint and nutmeg), and one retired voice's slot now speaks as <strong>smooth low man &middot; slate</strong>. Separately, asking a companion about something out in the world &mdash; a new phone, a release date, a price, a rumor &mdash; now brings the web search along more reliably, and a companion that has to say &ldquo;I'd need to look that up&rdquo; will actually go look when you say yes.</p>
 <h2>September 9, 2026: Help getting back into your account</h2>
 <p>The website's sign-in page has a <strong>Need help signing in?</strong> link. You can request a password-reset email and keep your original chats and balance. Use the newest link within 15 minutes. For a phone-only account or a lost email inbox, contact Kade.</p>
 
@@ -1086,6 +1088,8 @@ PAGES.voice = {
 <p>New replies are guided to change feeling when the conversation calls for it, rather than switching between quiet and upbeat on a schedule. Delivery varies by voice; use Preview to hear your choice.</p>
 <h2>Replaying replies on iPhone</h2>
 <p>In TestFlight build 279, replay uses the original character's current voice. Your personal voice choice takes priority; otherwise their current creator-set voice is used. Older replies are voiced when you play them, without regenerating your entire history.</p>
+<h2>Twelve new voices, one replaced</h2>
+<p>September 11, 2026: twelve Inworld voices joined the picker. Tags to search for: <strong>juniper, cobalt, tamarack, quartzite, marigold, cedarwood, hollyhock, saffron, peridot, ironwood, flint and nutmeg</strong>. They sit in the ordinary categories: mostly bright young women, three deep men, and one smooth Indian English man under Men, from abroad. One older voice, <strong>gravelly low older man &middot; gouda</strong>, left the platform and its slot now speaks as <strong>smooth low man &middot; slate</strong>; nobody had it saved, and anything that did point at it would simply speak in the new voice. Descriptions are a listening guide from a machine ear, not a human's; preview before you pick. Fully close and reopen the iPhone app to refresh its voice list.</p>
 <h2>Nine new voices</h2>
 <p>New voice tags to search for: <strong>moonflower, starflower, silverleaf, rainlily, snowberry, sunstone, rainbird, windflower and meadowlark</strong>. They are mixed into the existing voice categories. Your saved voices keep their settings. Voice descriptions are a listening guide; preview a voice to choose the sound you prefer.</p>
 <p>September 8 listening corrections: <strong>Magnolia, Mulberry, Pumpernickel and Sunflower</strong> are now under <strong>Kids and teens</strong>; <strong>Sequoia</strong> is under <strong>Characters and cartoons</strong>. Their sounds and your saved choices stay the same. Fully close and reopen the iPhone app to refresh its voice list.</p>
