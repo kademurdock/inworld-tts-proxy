@@ -2144,4 +2144,27 @@ router.get("/librechat/provider-voices", auth, async (req, res) => {
   }
 });
 
+/* Part 176: the free, unmetered Inworld preview for one voice, so a session
+ * can hand it to a listener (Gemini) for the catalog description without the
+ * key leaving this service. GET /librechat/provider-voice-preview?id=<voiceId>
+ * [&model=inworld-tts-2] -> { audioContent: <base64 mp3> } straight from Inworld. */
+router.get("/librechat/provider-voice-preview", auth, async (req, res) => {
+  const id = String(req.query.id || "");
+  const model = String(req.query.model || "inworld-tts-2");
+  if (!id) return res.status(400).json({ error: "id is required" });
+  const key = process.env.INWORLD_API_KEY;
+  if (!key) return res.status(500).json({ error: "INWORLD_API_KEY not set on this service" });
+  try {
+    const u = new URL("https://api.inworld.ai/tts/v1/voice:preview");
+    u.searchParams.set("voice_id", id);
+    u.searchParams.set("model_id", model);
+    const r = await fetch(u, { headers: { Authorization: `Basic ${key}`, "User-Agent": UA } });
+    const body = await r.text();
+    if (!r.ok) return res.status(502).json({ error: `inworld ${r.status}`, detail: body.slice(0, 300) });
+    res.type("application/json").send(body);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 module.exports = router;
