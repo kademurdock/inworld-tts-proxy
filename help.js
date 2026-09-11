@@ -1095,6 +1095,7 @@ PAGES.voice = {
 <h2>Nine new voices</h2>
 <p>New voice tags to search for: <strong>moonflower, starflower, silverleaf, rainlily, snowberry, sunstone, rainbird, windflower and meadowlark</strong>. They are mixed into the existing voice categories. Your saved voices keep their settings. Voice descriptions are a listening guide; preview a voice to choose the sound you prefer.</p>
 <p>September 8 listening corrections: <strong>Magnolia, Mulberry, Pumpernickel and Sunflower</strong> are now under <strong>Kids and teens</strong>; <strong>Sequoia</strong> is under <strong>Characters and cartoons</strong>. Their sounds and your saved choices stay the same. Fully close and reopen the iPhone app to refresh its voice list.</p>
+<p>September 11 listening correction: <strong>Monarch</strong> is now under <strong>Kids and teens</strong> (reported from the phone picker by a family member as sounding like a kid or a teen). A saved pick of the old name keeps working; the picker just files it in the right section.</p>
 <p class="lead">Two separate things live here, and you can use either, both, or neither:</p>
 <ul>
   <li><strong>Listening</strong> — having the AI's replies read out loud to you.</li>

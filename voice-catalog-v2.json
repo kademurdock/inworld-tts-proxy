@@ -312,8 +312,7 @@
     "breathy young woman · thyme",
     "breathy young woman · timpani",
     "breathy young woman · trowel",
-    "thin high young woman · honeysuckle",
-    "thin high young woman · monarch"
+    "thin high young woman · honeysuckle"
    ]
   },
   {
@@ -744,7 +743,8 @@
     "clear high-ish youthful voice · magnolia",
     "clear high-ish youthful voice · mulberry",
     "clear high-ish youthful voice · pumpernickel",
-    "clear high-ish youthful voice · sunflower"
+    "clear high-ish youthful voice · sunflower",
+    "thin high youthful voice · monarch"
    ]
   },
   {
@@ -6374,14 +6374,14 @@
    "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 419": {
-   "label": "thin high young woman · monarch",
+   "label": "thin high youthful voice · monarch",
    "tag": "monarch",
-   "category": "Women, soft and breathy",
-   "description": "A high-pitched, bright, and energetic young woman's voice with a thin, crisp tone, ideal for bubbly, youthful, or animated characters.",
-   "ear_label": "bright high young woman, crisp American",
+   "category": "Kids and teens",
+   "description": "A thin, high, bright youthful voice, filed under Kids and teens after Amber A listened.",
+   "ear_label": "bright thin high kid or teen voice, crisp American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
@@ -6394,7 +6394,11 @@
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "thin high young woman · monarch"
+   ],
+   "recat": "Part 180 (Sep 11 2026): listener report 6aa4481d0e696191bbcea954 from the phone picker (Amber A) — filed under Women, sounds like a kid or a teen. Moved with the Sep 8 pattern."
   },
   "Voice 373": {
    "label": "thin high-ish girl · camshaft",
