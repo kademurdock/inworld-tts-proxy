@@ -103,10 +103,7 @@
     "clear high-ish young woman · marigold",
     "clear high-ish young woman · hollyhock",
     "clear high-ish young woman · peridot",
-    "clear high-ish young woman · nutmeg",
-    "bright high young woman · cortado",
-    "bright high-ish young woman · bagel",
-    "bright high young woman · monarch"
+    "clear high-ish young woman · nutmeg"
    ]
   },
   {
@@ -186,7 +183,6 @@
     "smooth young woman · tweed",
     "smooth young woman · viaduct",
     "smooth young woman · zinc",
-    "smooth young woman, Black American · horsetail",
     "smooth young woman, Black American · latte"
    ]
   },
@@ -305,9 +301,7 @@
     "breathy young woman · thyme",
     "breathy young woman · timpani",
     "breathy young woman · trowel",
-    "thin high young woman · honeysuckle",
-    "breathy high-ish young woman · shiitake",
-    "breathy high-ish young woman · quartzite"
+    "thin high young woman · honeysuckle"
    ]
   },
   {
@@ -473,8 +467,7 @@
     "smooth young man · junebug",
     "smooth young man · leather",
     "smooth young man · mandolin",
-    "warm low-ish young man · barnacle",
-    "smooth young man · lichen"
+    "warm low-ish young man · barnacle"
    ]
   },
   {
@@ -740,9 +733,15 @@
     "clear high-ish youthful voice · mulberry",
     "clear high-ish youthful voice · pumpernickel",
     "clear high-ish youthful voice · sunflower",
-    "bright high girl · pecorino",
-    "bright high teen girl · waffle",
-    "light high-ish girl · manchego",
+    "thin high youthful voice · monarch",
+    "smooth youthful voice, Black American · horsetail",
+    "smooth low-ish youthful voice · lichen",
+    "breathy high-ish youthful voice · cortado",
+    "breathy high-ish youthful voice · manchego",
+    "smooth high-ish youthful voice · pecorino",
+    "smooth high-ish youthful voice · waffle",
+    "clear high-ish youthful voice · quartzite",
+    "clear high-ish youthful voice · shiitake",
     "clear high-ish youthful voice · batten"
    ]
   },
@@ -760,6 +759,7 @@
     "thin high man, cartoon · kinglet",
     "dry man, robotic · silverleaf",
     "nasal high-ish character · sequoia",
+    "breathy character · bagel",
     "clear high character · muffin"
    ]
   }
@@ -855,7 +855,7 @@
    "formerLabels": [
     "clear high young woman · muffin"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. muffin: Amber A's picker report, Sep 11 2026, auto-moved live; the catalog file now says the same."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. muffin: Amber A's picker report, Sep 11 2026 (row 6aa466fbb0010a7ad2fc99ad), auto-moved live; the catalog file now says the same."
   },
   "Voice 366": {
    "label": "clear high girl · spline",
@@ -1143,7 +1143,7 @@
    "formerLabels": [
     "clear high-ish young woman · batten"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. batten: Amber A's picker report, Sep 11 2026, auto-moved live; the catalog file now says the same."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. batten: Amber A's picker report, Sep 11 2026 (row 6aa46659b0010a7ad2fc9956), auto-moved live; the catalog file now says the same."
   },
   "Voice 13": {
    "label": "clear high-ish young woman · beech",
@@ -2336,18 +2336,18 @@
    }
   },
   "Voice 426": {
-   "label": "breathy high-ish young woman · shiitake",
+   "label": "clear high-ish youthful voice · shiitake",
    "tag": "shiitake",
-   "category": "Women, soft and breathy",
-   "description": "A soft, breathy young woman's voice with a gentle, natural tone, well-suited for friendly, everyday characters or helpful narrators.",
+   "category": "Kids and teens",
+   "description": "A clear, bright youthful voice with a natural tone, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "breathy",
+    "texture": "clear",
     "energy": "even",
     "accent": "general American",
     "kind": "natural",
@@ -2356,7 +2356,7 @@
    "formerLabels": [
     "clear high-ish young woman · shiitake"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. shiitake: the second ear heard soft and breathy at 0.9, not bright; pitch 270 Hz."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. shiitake: Amber A's picker report, Sep 11 2026 (row 6aa462feb0010a7ad2fc97bc), auto-moved live; the catalog file now says the same."
   },
   "Voice 546": {
    "label": "clear high-ish young woman · sloop",
@@ -2958,18 +2958,18 @@
    }
   },
   "Voice 468": {
-   "label": "bright high girl · pecorino",
+   "label": "smooth high-ish youthful voice · pecorino",
    "tag": "pecorino",
    "category": "Kids and teens",
-   "description": "A clear, bright young girl's voice with a gentle, even tone, well-suited for a friendly narrator or an approachable everyday character.",
+   "description": "A clear, bright youthful voice with a gentle, even tone, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "child",
-    "pitch": "high",
+    "age": "kid or teen",
+    "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "bright",
+    "texture": "smooth",
     "energy": "even",
     "accent": "general American",
     "kind": "natural",
@@ -2978,21 +2978,21 @@
    "formerLabels": [
     "smooth high-ish young woman · pecorino"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. pecorino: measured pitch 324 Hz sits with the Kids and teens voices (258-407), far above the Women, bright and high shelf (238-261); the second ear heard a child at 0.95."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. pecorino: Amber A's picker report, Sep 11 2026 (row 6aa45f8cb0010a7ad2fc96bc), auto-moved live; measured pitch 324 Hz agrees."
   },
   "Voice 458": {
-   "label": "bright high teen girl · waffle",
+   "label": "smooth high-ish youthful voice · waffle",
    "tag": "waffle",
    "category": "Kids and teens",
-   "description": "A clear, bright, and teenage girl's voice with a gentle tone, well-suited for friendly, helpful, or everyday characters.",
+   "description": "A clear, bright youthful voice with a gentle tone, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "bright young woman, clear general American",
    "fields": {
     "gender": "woman",
-    "age": "teen",
-    "pitch": "high",
+    "age": "kid or teen",
+    "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "bright",
+    "texture": "smooth",
     "energy": "even",
     "accent": "general American",
     "kind": "natural",
@@ -3001,7 +3001,7 @@
    "formerLabels": [
     "smooth high-ish young woman · waffle"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. waffle: pitch 300 Hz, above every Women, bright and high calibration voice; the second ear heard a teenager at 0.9."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. waffle: Amber A's picker report, Sep 11 2026 (row 6aa45f73b0010a7ad2fc96b2), auto-moved live; measured pitch 300 Hz agrees."
   },
   "Voice 411": {
    "label": "smooth high-ish young woman · wasp",
@@ -4243,14 +4243,14 @@
    }
   },
   "Voice 433": {
-   "label": "smooth young woman, Black American · horsetail",
+   "label": "smooth youthful voice, Black American · horsetail",
    "tag": "horsetail",
-   "category": "Women, smooth and warm, young",
-   "description": "A warm, smooth, and even-toned young woman's voice, well-suited for a friendly neighbor or a supportive friend character.",
+   "category": "Kids and teens",
+   "description": "A smooth, warm youthful voice, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "warm smooth young woman, Black American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid",
     "weight": "medium",
     "brightness": "neutral",
@@ -4262,7 +4262,11 @@
     "accent": "Black American",
     "kind": "natural",
     "gender_confidence": 1.0
-   }
+   },
+   "formerLabels": [
+    "smooth young woman, Black American · horsetail"
+   ],
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. horsetail: Amber A's picker report, Sep 11 2026 (row 6aa45782b0010a7ad2fc940f), auto-moved live; the catalog file now says the same."
   },
   "Voice 486": {
    "label": "smooth young woman, Black American · latte",
@@ -5755,18 +5759,18 @@
    }
   },
   "Voice 487": {
-   "label": "bright high young woman · cortado",
+   "label": "breathy high-ish youthful voice · cortado",
    "tag": "cortado",
-   "category": "Women, bright and high, young",
-   "description": "A bright, high young woman's voice with a cheerful, upbeat quality, well-suited for a close friend or confidante.",
+   "category": "Kids and teens",
+   "description": "A soft, breathy youthful voice, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "breathy young woman, soft general American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
-    "pitch": "high",
+    "age": "kid or teen",
+    "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "bright",
+    "texture": "breathy",
     "energy": "calm",
     "accent": "general American",
     "kind": "natural",
@@ -5775,7 +5779,7 @@
    "formerLabels": [
     "breathy high-ish young woman · cortado"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. cortado: filed soft and breathy (173-203 Hz shelf) but measures 291 Hz; the second ear heard bright and high at 0.95."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. cortado: Amber A's picker report, Sep 11 2026 (row 6aa44c775bbc5ef55c925283), auto-moved live; the catalog file now says the same."
   },
   "Voice 140": {
    "label": "breathy high-ish young woman · hollow",
@@ -5797,18 +5801,18 @@
    }
   },
   "Voice 467": {
-   "label": "light high-ish girl · manchego",
+   "label": "breathy high-ish youthful voice · manchego",
    "tag": "manchego",
    "category": "Kids and teens",
-   "description": "A light, breathy young girl's voice with a gentle, intimate tone, perfect for a quiet, sensitive character.",
+   "description": "A light, breathy youthful voice, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "breathy young woman, soft general American",
    "fields": {
     "gender": "woman",
-    "age": "child",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "light",
+    "texture": "breathy",
     "energy": "soft",
     "accent": "general American",
     "kind": "natural",
@@ -5817,7 +5821,7 @@
    "formerLabels": [
     "breathy high-ish young woman · manchego"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. manchego: filed soft and breathy, whose voices measure 173-203 Hz; this one is 261 Hz and the second ear heard a child at 0.95."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. manchego: Amber A's picker report, Sep 11 2026 (row 6aa44c1a5bbc5ef55c92526c), auto-moved live; the catalog file now says the same."
   },
   "Voice 268": {
    "label": "breathy high-ish young woman · piccolo",
@@ -6128,18 +6132,18 @@
    }
   },
   "Voice 451": {
-   "label": "bright high-ish young woman · bagel",
+   "label": "breathy character · bagel",
    "tag": "bagel",
-   "category": "Women, bright and high, young",
-   "description": "A light, bright young woman's voice with an airy, upbeat tone, well-suited for an intimate, thoughtful, or comforting character.",
+   "category": "Characters and cartoons",
+   "description": "A soft, breathy character voice, filed under Characters and cartoons after Amber A listened (sounds like a character or cartoon).",
    "ear_label": "breathy young woman, soft general American",
    "fields": {
     "gender": "woman",
     "age": "young adult",
-    "pitch": "mid-high",
+    "pitch": "mid",
     "weight": "light",
     "brightness": "neutral",
-    "texture": "bright",
+    "texture": "breathy",
     "energy": "soft",
     "accent": "general American",
     "kind": "natural",
@@ -6148,7 +6152,7 @@
    "formerLabels": [
     "breathy young woman · bagel"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. bagel: 261 Hz against the breathy shelf's 173-203; the second ear heard bright and high at 0.9."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. bagel: Amber A's picker report, Sep 11 2026 (row 6aa449fc0e696191bbcea9ea), auto-moved live; the catalog file now says the same."
   },
   "Voice 380": {
    "label": "breathy girl · bluegill",
@@ -6406,28 +6410,31 @@
    "recat": "Part 129 (Sep 4 2026): Kade's own title / vendor description outranks the machine ear"
   },
   "Voice 419": {
-   "label": "bright high young woman · monarch",
+   "label": "thin high youthful voice · monarch",
    "tag": "monarch",
-   "category": "Women, bright and high, young",
-   "description": "A bright, high, bubbly young woman's voice, cheerful and quick.",
+   "category": "Kids and teens",
+   "description": "A thin, high, bright youthful voice, filed under Kids and teens after Amber A listened.",
    "ear_label": "bright thin high kid or teen voice, crisp American",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "bright",
+    "texture": [
+     "thin",
+     "crisp",
+     "clear"
+    ],
     "energy": "lively",
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 1.0
    },
    "formerLabels": [
-    "thin high young woman · monarch",
-    "thin high youthful voice · monarch"
+    "thin high young woman · monarch"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. monarch: flagged again after the Part 180 move to Kids and teens; the second ear heard a young adult woman at 0.95, so it goes back to Women, bright and high."
+   "recat": "Part 180 (Sep 11 2026): listener report 6aa4481d0e696191bbcea954 from the phone picker (Amber A) — filed under Women, sounds like a kid or a teen. Moved with the Sep 8 pattern."
   },
   "Voice 373": {
    "label": "thin high-ish girl · camshaft",
@@ -9308,15 +9315,15 @@
    }
   },
   "Voice 431": {
-   "label": "smooth young man · lichen",
+   "label": "smooth low-ish youthful voice · lichen",
    "tag": "lichen",
-   "category": "Men, smooth and warm, young",
-   "description": "A calm, steady young man's voice with a smooth delivery, well-suited for an everyday narrator or a reliable, down-to-earth character.",
+   "category": "Kids and teens",
+   "description": "A smooth, steady youthful voice, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "even-toned adult man, smooth general American",
    "fields": {
-    "gender": "man",
-    "age": "young adult",
-    "pitch": "mid",
+    "gender": "woman",
+    "age": "kid or teen",
+    "pitch": "low-mid",
     "weight": "medium",
     "brightness": "neutral",
     "texture": "smooth",
@@ -9329,7 +9336,7 @@
     "smooth low-ish man · lichen",
     "smooth low-ish woman · lichen"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. lichen: flagged again after the Part 129 move to Women; both machine ears hear a man (0.95), pitch 212 Hz, so it goes to Men, smooth and warm, young."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. lichen: Amber A's picker report, Sep 11 2026 (row 6aa44d325bbc5ef55c9252b7), auto-moved live; the catalog file now says the same."
   },
   "Voice 200": {
    "label": "smooth low-ish man · marjoram",
@@ -13131,18 +13138,18 @@
    "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
   },
   "Voice 643": {
-   "label": "breathy high-ish young woman · quartzite",
+   "label": "clear high-ish youthful voice · quartzite",
    "tag": "quartzite",
-   "category": "Women, soft and breathy",
-   "description": "A soft, breathy young woman's voice with a gentle, intimate tone, well-suited for friendly narration and e-learning.",
+   "category": "Kids and teens",
+   "description": "A bright, clear youthful voice with a steady tone, filed under Kids and teens after Amber A listened (sounds like a kid or a teen).",
    "ear_label": "Clear, bright young adult woman's voice",
    "fields": {
     "gender": "woman",
-    "age": "young adult",
+    "age": "kid or teen",
     "pitch": "mid-high",
     "weight": "light",
     "brightness": "bright",
-    "texture": "breathy",
+    "texture": "clear",
     "energy": "steady",
     "accent": "general American",
     "kind": "natural",
@@ -13152,7 +13159,7 @@
    "formerLabels": [
     "clear high-ish young woman · quartzite"
    ],
-   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. quartzite: the second ear heard a soft, airy, intimate delivery at 0.95, not bright and high."
+   "recat": "Part 182 (Sep 12 2026): the family listener's report is the authority; the catalog file now matches what the proxy's auto-mover applied live on Sep 11. quartzite: Amber A's picker report, Sep 11 2026 (row 6aa45f27b0010a7ad2fc9686), auto-moved live; measured pitch 296 Hz agrees."
   },
   "Voice 644": {
    "label": "clear high-ish young woman · marigold",
@@ -13315,5 +13322,5 @@
    "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
   }
  },
- "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving | Part 176 (Sep 11 2026): Voice 462 re-voiced Deej -> Zondi (formerLabels keeps the old pick resolving); Voices 640-651 added, Gemini 3.5 Flash ear pass on Inworld previews. | Part 182 (Sep 12 2026): Voice 468: Women, bright and high, young -> Kids and teens, Voice 458: Women, bright and high, young -> Kids and teens, Voice 467: Women, soft and breathy -> Kids and teens, Voice 426: Women, bright and high, young -> Women, soft and breathy, Voice 643: Women, bright and high, young -> Women, soft and breathy, Voice 487: Women, soft and breathy -> Women, bright and high, young, Voice 451: Women, soft and breathy -> Women, bright and high, young, Voice 419: Kids and teens -> Women, bright and high, young, Voice 431: Women, smooth and warm, grown -> Men, smooth and warm, young | Part 182 (Sep 12 2026): Voice 468: Kids and teens -> Kids and teens, Voice 458: Kids and teens -> Kids and teens, Voice 467: Kids and teens -> Kids and teens, Voice 426: Women, soft and breathy -> Women, soft and breathy, Voice 643: Women, soft and breathy -> Women, soft and breathy, Voice 487: Women, bright and high, young -> Women, bright and high, young, Voice 451: Women, bright and high, young -> Women, bright and high, young, Voice 419: Women, bright and high, young -> Women, bright and high, young, Voice 431: Men, smooth and warm, young -> Men, smooth and warm, young, Voice 367: Women, bright and high, young -> Kids and teens, Voice 457: Women, bright and high, young -> Characters and cartoons"
+ "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving | Part 176 (Sep 11 2026): Voice 462 re-voiced Deej -> Zondi (formerLabels keeps the old pick resolving); Voices 640-651 added, Gemini 3.5 Flash ear pass on Inworld previews. | Part 182 (Sep 12 2026): Voice 433: Women, smooth and warm, young -> Kids and teens, Voice 431: Women, smooth and warm, grown -> Kids and teens, Voice 487: Women, soft and breathy -> Kids and teens, Voice 467: Women, soft and breathy -> Kids and teens, Voice 468: Women, bright and high, young -> Kids and teens, Voice 458: Women, bright and high, young -> Kids and teens, Voice 643: Women, bright and high, young -> Kids and teens, Voice 426: Women, bright and high, young -> Kids and teens, Voice 451: Women, soft and breathy -> Characters and cartoons, Voice 367: Women, bright and high, young -> Kids and teens, Voice 457: Women, bright and high, young -> Characters and cartoons"
 }
