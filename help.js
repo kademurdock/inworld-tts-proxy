@@ -29,7 +29,7 @@ const PAYPAL_URL = "https://paypal.me/kademurdock";
 // is rendered from this on every page, so links stay consistent and we can
 // verify offline that every route resolves.
 const SECTIONS = [
-  { key: "library", path: "/help/library", label: "The Library", group: "Create and spend time together", terms: "books DAISY audiobook video audio sharing shelves TubeVault", icon: "📚", description: "Add files, find your place, and browse shared media." },
+  { key: "library", path: "/help/library", label: "The Library", group: "Create and spend time together", terms: "books DAISY audiobook video audio sharing shelves TubeVault Windows uploader download donate", icon: "📚", description: "Add files, find your place, and browse shared media." },
   {
     "key": "home",
     "path": "/help",
@@ -2391,12 +2391,21 @@ PAGES.library = { title: "The Library", h1: "The Library", tagline: "Books, Audi
 <p>For individual audio or video files, choose Add audio or video. Choose a type if you know it; an ordinary recording does not have to be an audiobook. Videos offer Describe this video and What just happened; sound recordings do not need visual descriptions.</p>
 <h2>Private and public</h2><p>Your uploads belong to you. Regular members submit items for the librarian to approve; until then they are private. The librarian’s uploads are shared by default, with a Keep this upload private control. Sharing does not give other people your reading progress.</p>
 <h2>Filing corrections</h2><p>Use Suggest a different shelf on an item. The librarian can move it without uploading it again. TubeVault’s source paths stay attached for duplicate detection. Clear brand matches can refine Other Commercials into a useful product shelf; ambiguous titles stay for review. Inspirational story collections have their own nonfiction shelf.</p>
-<h2>Donate from a Windows computer</h2><p>Kade Library Uploader is a standalone Windows 10 or 11 app that Kade can send you. Open the EXE and sign in with your own platform account. Choose Donate for review or Keep private, add files or a folder, check Edit details, then choose Start / resume. It keeps Books, Audio, and Videos separate and lets you organize your own uploaded items. Ordinary-member donations remain private until reviewed; an administrator can publish directly.</p>
-<p>The app saves its queue and supports keyboard navigation with native Windows controls. F1 opens its full guide; Alt+M goes to status messages. Large media uploads can resume completed parts while their links remain valid. If a book says Check library, look for it before retrying to avoid a second copy. The app never moves or deletes files on your computer. No Python installation is needed. This initial release is unsigned; obtain it directly from Kade.</p>
+<h2>Donate from a Windows computer</h2><p><a href="/help/library-uploader-download">Download Kade Library Uploader for Windows (EXE, 17 MB)</a> · <a href="/help/library-uploader-zip">Download the app and guide together (ZIP, 17 MB)</a></p><p>Version 1.0 for Windows 10 or 11, 64-bit. Open the EXE and sign in with your own platform account. Choose Donate for review or Keep private, add files or a folder, check Edit details, then choose Start / resume. It keeps Books, Audio, and Videos separate and lets you organize your own uploaded items. Ordinary-member donations remain private until reviewed; an administrator can publish directly.</p>
+<p>The app saves its queue and supports keyboard navigation with native Windows controls. F1 opens its full guide; Alt+M goes to status messages. Large media uploads can resume completed parts while their links remain valid. If a book says Check library, look for it before retrying to avoid a second copy. The app never moves or deletes files on your computer. No Python installation is needed. This initial release is unsigned, so Windows may show an unknown-publisher prompt.</p>
 <h2>Pictures and motion</h2><p>The library illustration is decorative. Lilly now has her own speaking and blinking portrait. The existing portrait and reduced-motion settings still apply; pictures never replace labels or screen-reader controls.</p>` };
 PAGES.home.main = buildHome();
 
 // ---- APK download + short link --------------------------------------------
+for (const [name, type] of [['Kade-Library-Uploader.exe', 'application/octet-stream'], ['Kade-Library-Uploader.zip', 'application/zip']]) {
+  router.get('/' + name, (_req, res) => {
+    res.set('Content-Type', type);
+    res.set('Content-Disposition', 'attachment; filename="' + name + '"');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Cache-Control', 'public, max-age=60');
+    res.sendFile(nodePath.join(__dirname, name));
+  });
+}
 router.get("/Kade-AI.apk", (_req, res) => {
   res.set("Content-Type", "application/vnd.android.package-archive");
   res.set("Content-Disposition", 'attachment; filename="Kade-AI.apk"');

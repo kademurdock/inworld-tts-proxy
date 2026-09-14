@@ -3,10 +3,29 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { SECTIONS, PAGES, renderPage } = require('./help');
 
+test('Windows download serves the packaged executable with its expected hash', async t => {
+  const crypto = require('node:crypto');
+  const app = require('express')(); app.use(require('./help'));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  for (const [name, type] of [['Kade-Library-Uploader.exe', 'application/octet-stream'], ['Kade-Library-Uploader.zip', 'application/zip']]) {
+    const res = await fetch(`http://127.0.0.1:${server.address().port}/${name}`);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('content-type'), type);
+    assert.match(res.headers.get('content-disposition'), /attachment/);
+    const received = Buffer.from(await res.arrayBuffer());
+    const local = require('node:fs').readFileSync(require('node:path').join(__dirname, name));
+    assert.equal(crypto.createHash('sha256').update(received).digest('hex'), crypto.createHash('sha256').update(local).digest('hex'));
+  }
+  assert.match(PAGES.library.main, /\/help\/library-uploader-download/);
+  assert.match(PAGES.library.main, /\/help\/library-uploader-zip/);
+});
+
 test('every help destination renders once with a canonical domain and valid local anchors', () => {
   assert.equal(new Set(SECTIONS.map(s => s.path)).size, SECTIONS.length);
   assert.equal(SECTIONS.length, Object.keys(PAGES).length);
-  const paths = new Set([...SECTIONS.map(s => s.path), '/help/android-download']);
+  const paths = new Set([...SECTIONS.map(s => s.path), '/help/android-download', '/help/library-uploader-download', '/help/library-uploader-zip']);
   for (const s of SECTIONS) {
     const html = renderPage({ key: s.key, ...PAGES[s.key] });
     assert.equal((html.match(/<h1>/g) || []).length, 1, s.key);
