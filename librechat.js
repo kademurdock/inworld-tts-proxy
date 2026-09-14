@@ -2167,4 +2167,18 @@ router.get("/librechat/provider-voice-preview", auth, async (req, res) => {
   }
 });
 
+// Catalog review keeps the fork's public-or-own scope and stale-write guards.
+router.get("/librechat/library-inventory", auth, async (req, res) => {
+  try {
+    const qs = new URLSearchParams({ after: String(req.query.after || ""), limit: String(req.query.limit || 1000) });
+    res.json(await lc("GET", "/api/kade/reading-room/librarian/inventory?" + qs));
+  } catch (e) { fail(res, e); }
+});
+router.post("/librechat/library-organize", auth, async (req, res) => {
+  try {
+    if (!Array.isArray(req.body?.moves) || !req.body.moves.length || req.body.moves.length > 500) return res.status(400).json({ error: "Supply 1-500 reviewed moves." });
+    res.json(await lc("POST", "/api/kade/reading-room/librarian/organize", { moves: req.body.moves }));
+  } catch (e) { fail(res, e); }
+});
+
 module.exports = router;
