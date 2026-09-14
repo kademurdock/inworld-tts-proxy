@@ -29,6 +29,7 @@ const PAYPAL_URL = "https://paypal.me/kademurdock";
 // is rendered from this on every page, so links stay consistent and we can
 // verify offline that every route resolves.
 const SECTIONS = [
+  { key: "library", path: "/help/library", label: "The Library", group: "Create and spend time together", terms: "books DAISY audiobook video audio sharing shelves TubeVault", icon: "📚", description: "Add files, find your place, and browse shared media." },
   {
     "key": "home",
     "path": "/help",
@@ -2384,6 +2385,13 @@ function buildHome() {
 })();
 </script>`;
 }
+PAGES.library = { title: "The Library", h1: "The Library", tagline: "Books, Audio, and Videos, with your own place kept for you.", main: `<p>Open <a href="https://kademurdock.com/reading-room">The Library</a>, or on iPhone choose Home, Tools, The Library.</p>
+<h2>Find something</h2><p>Choose Public library or Your uploads. Browse Books, Audio, or Videos, then a subject or collection. Your shelf keeps items you added or opened. Removing a checked-out item from your shelf does not remove it from the public library.</p>
+<h2>Add a file</h2><p>Share a file from another app to Kade-AI and choose the Library, or use the Add controls. DAISY text and recorded-audio ZIPs use the same book importer. Recorded DAISY plays its original narrator, in the publication’s order, with chapter navigation and saved progress. ZIPs may be up to 256 MB; encrypted audio and missing recordings cannot be imported. Text books use the voice you select.</p>
+<p>For individual audio or video files, choose Add audio or video. Choose a type if you know it; an ordinary recording does not have to be an audiobook. Videos offer Describe this video and What just happened; sound recordings do not need visual descriptions.</p>
+<h2>Private and public</h2><p>Your uploads belong to you. Regular members submit items for the librarian to approve; until then they are private. The librarian’s uploads are shared by default, with a Keep this upload private control. Sharing does not give other people your reading progress.</p>
+<h2>Filing corrections</h2><p>Use Suggest a different shelf on an item. The librarian can move it without uploading it again. TubeVault’s source paths stay attached for duplicate detection. Clear brand matches can refine Other Commercials into a useful product shelf; ambiguous titles stay for review. Inspirational story collections have their own nonfiction shelf.</p>
+<h2>Pictures and motion</h2><p>The library illustration is decorative. Lilly now has her own speaking and blinking portrait. The existing portrait and reduced-motion settings still apply; pictures never replace labels or screen-reader controls.</p>` };
 PAGES.home.main = buildHome();
 
 // ---- APK download + short link --------------------------------------------
