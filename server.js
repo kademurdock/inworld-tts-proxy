@@ -4664,6 +4664,20 @@ const VOICE_ADDITIONS_2026_09_11 = {
   });
 }
 
+// Kade explicitly requested these named voices and their placement in Women.
+const VOICE_ADDITIONS_2026_09_14 = {
+  "Voice 652": { target: "fish:a61737cbbea74c6ca3c112cf1f319d35", name: "Kade Murdock" },
+  "Voice 653": { target: "default-e-m11vgtr9l-m7afw4kmnw__miss_a", name: "Miss-A" },
+};
+for (const [label, info] of Object.entries(VOICE_ADDITIONS_2026_09_14)) {
+  if (NUMBERED_VOICE_ALIASES[label] || Object.values(NUMBERED_VOICE_ALIASES).includes(info.target)) throw new Error(`Requested voice already registered: ${label}`);
+  NUMBERED_VOICE_ALIASES[label] = info.target;
+  VOICE_MAP[label] = info.target;
+  VOICE_MAP[info.name] = info.target;
+  VOICE_LIST.push(label);
+  CUSTOM_VOICE_NUMBERS.add(label);
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck

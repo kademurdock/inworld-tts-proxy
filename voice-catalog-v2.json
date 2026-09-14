@@ -3,6 +3,13 @@
  "script": "neutral read, no steering tag (Part 118)",
  "categories": [
   {
+   "name": "Women, named voices",
+   "voices": [
+    "Kade Murdock",
+    "Miss-A"
+   ]
+  },
+  {
    "name": "Women, bright and high, young",
    "voices": [
     "clear high young woman · summit",
@@ -13320,6 +13327,24 @@
     "gender_confidence": 1
    },
    "note": "Part 176 (Sep 11 2026): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 652": {
+   "label": "Kade Murdock",
+   "tag": "Kade Murdock",
+   "category": "Women, named voices",
+   "description": "Kade Murdock. Fish Audio voice, named and filed with Women at Kade’s request.",
+   "formerLabels": [],
+   "note": "Part188: user-selected name and gender category; provider identity verified; no inferred pitch or age."
+  },
+  "Voice 653": {
+   "label": "Miss-A",
+   "tag": "Miss-A",
+   "category": "Women, named voices",
+   "description": "Miss-A. Inworld professional voice clone, named and filed with Women at Kade’s request.",
+   "formerLabels": [
+    "Miss A"
+   ],
+   "note": "Part188: user-selected name and gender category; provider identity verified; no inferred pitch or age."
   }
  },
  "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving | Part 176 (Sep 11 2026): Voice 462 re-voiced Deej -> Zondi (formerLabels keeps the old pick resolving); Voices 640-651 added, Gemini 3.5 Flash ear pass on Inworld previews. | Part 182 (Sep 12 2026): Voice 433: Women, smooth and warm, young -> Kids and teens, Voice 431: Women, smooth and warm, grown -> Kids and teens, Voice 487: Women, soft and breathy -> Kids and teens, Voice 467: Women, soft and breathy -> Kids and teens, Voice 468: Women, bright and high, young -> Kids and teens, Voice 458: Women, bright and high, young -> Kids and teens, Voice 643: Women, bright and high, young -> Kids and teens, Voice 426: Women, bright and high, young -> Kids and teens, Voice 451: Women, soft and breathy -> Characters and cartoons, Voice 367: Women, bright and high, young -> Kids and teens, Voice 457: Women, bright and high, young -> Characters and cartoons"
