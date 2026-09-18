@@ -13,7 +13,12 @@ test('real ask route forwards the brief policy, preserves ordinary asks, and rej
     res.json({ streamId: 'offline-stream' });
   });
   fork.get('/api/agents/chat/stream/:id', (_req, res) => {
-    res.type('text/event-stream').end('data: ' + JSON.stringify({ final: true, text: 'A short morning brief.' }) + '\n\n');
+    const final = 'data: ' + JSON.stringify({ final: true, text: 'A short morning brief.' }) + '\n\n';
+    res.type('text/event-stream');
+    if (starts.length === 2) {
+      res.write(final);
+      setTimeout(() => res.destroy(), 50);
+    } else res.end(final);
   });
   const forkServer = fork.listen(0, '127.0.0.1');
   await new Promise((resolve) => forkServer.once('listening', resolve));

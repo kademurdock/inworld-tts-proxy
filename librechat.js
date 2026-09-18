@@ -1734,7 +1734,7 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     const dec = new TextDecoder();
     let buf = "";
     let rawLines = [];
-    for await (const chunk of streamR.body) {
+    readReply: for await (const chunk of streamR.body) {
       buf += dec.decode(chunk, { stream: true });
       const lines = buf.split("\n");
       buf = lines.pop() ?? "";
@@ -1758,7 +1758,7 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
               const full = messageText(d.responseMessage) || (typeof d.text === "string" ? d.text : "");
               if (full) reply = full;
             }
-            break;
+            break readReply;
           }
         } catch {}
       }
