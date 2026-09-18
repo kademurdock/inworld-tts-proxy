@@ -1659,6 +1659,7 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     // Amber's report files as Amber instead of the service account. Absent
     // field = old behavior.
     kadeOnBehalfOf: userEmail || undefined,
+    kadeToolPolicy: opts.toolPolicy === "morning-brief" ? "morning-brief" : undefined,
     conversationId: "new",
     parentMessageId: "00000000-0000-0000-0000-000000000000",
     // isTemporary (July 15 2026 -- Kade: 45 orphaned "shadow" conversations found
@@ -1791,11 +1792,15 @@ router.post("/librechat/ask", auth, async (req, res) => {
   if (!agentId || !Array.isArray(messages)) {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
+  if (req.body.toolPolicy !== undefined && req.body.toolPolicy !== "morning-brief") {
+    return res.status(400).json({ error: "Unknown tool policy" });
+  }
   try {
     const seatName = (req.body || {}).seat || "admin";
     const text = await lcAsk(agentId, messages, (req.body || {}).userEmail, {
       deleteAfter: (req.body || {}).deleteAfter === true,
       seat: seatName,
+      toolPolicy: req.body.toolPolicy,
     });
     console.log("[lcAsk] success, reply length=", text.length, "seat=", seatName);
     res.json({ text, seat: seatName });
