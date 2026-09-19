@@ -2118,10 +2118,10 @@ PAGES.privacy = {
 <p>The platform doesn't build its own AI models or voices &mdash; it rents them. That means parts of what you write or say pass through other companies to get the work done. Under their business terms these are service providers processing data on Kade-AI's behalf; they are not given your data to sell.</p>
 <ul>
   <li><strong>Z.AI</strong> &mdash; language models used by some characters and background features. It receives the message and context needed for that request.</li>
-  <li><strong>xAI</strong> &mdash; Grok models used by characters including Kiana and Della, reached through OpenRouter. It receives your message and conversation context.</li>
+  <li><strong>xAI</strong> &mdash; Grok models, which ran the characters until September 19, 2026 and may still run an agent someone sets to Grok by hand. Reached through OpenRouter. It receives your message and conversation context.</li>
   <li><strong>OpenRouter</strong> &mdash; the service the platform reaches several model companies through, and the stand-in whenever Z.AI is busy. It receives your message and the conversation context.</li>
   <li><strong>Moonshot AI</strong> &mdash; the models behind deep research and some longer thinking. They receive your message and the conversation context.</li>
-  <li><strong>DeepSeek</strong> &mdash; names your conversations and helps read images. It receives the conversation being named, or the image.</li>
+  <li><strong>DeepSeek</strong> &mdash; since September 19, 2026 the DeepSeek V4.1 Flash model runs the characters, including Kiana and Della, as a trial. It is an open model, and we do not send your chats to DeepSeek the company or to any host in China: Kade-AI only allows United States hosting companies that OpenRouter lists as keeping no copy of your data (DeepInfra, Fireworks, Together, BaseTen, Parasail). They receive your message and conversation context. An older DeepSeek model also names your conversations and helps read images, under the same rule.</li>
   <li><strong>Inworld AI and Fish Audio</strong> &mdash; text-to-speech. They receive the text being read aloud.</li>
   <li><strong>Deepgram</strong> &mdash; speech-to-text. It receives your voice audio when you talk instead of type.</li>
   <li><strong>Twilio</strong> &mdash; the phone line. It carries and records phone calls.</li>
