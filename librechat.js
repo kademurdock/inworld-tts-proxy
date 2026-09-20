@@ -2186,4 +2186,20 @@ router.post("/librechat/library-organize", auth, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+/* Part 237: Jev files the catch-all commercials. A passthrough only — every
+ * rule about what may move lives in the fork's route, which is the thing that
+ * can see the catalog. Without `apply` it previews and writes nothing. The
+ * fork's own leash is 6000 items, and a full run takes minutes, so the
+ * timeout here is generous. */
+router.post("/librechat/library-jev-ads", auth, async (req, res) => {
+  try {
+    const b = req.body || {};
+    res.json(await lc("POST", "/api/kade/reading-room/librarian/jev-file-ads", {
+      ...(b.apply === true ? { apply: true } : {}),
+      ...(b.limit ? { limit: Number(b.limit) } : {}),
+      ...(typeof b.decade === "string" ? { decade: b.decade } : {}),
+    }));
+  } catch (e) { fail(res, e); }
+});
+
 module.exports = router;
