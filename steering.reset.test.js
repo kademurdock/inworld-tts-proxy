@@ -120,8 +120,8 @@ test('THE REAL FIX: the cap emits [reset] so Inworld actually stops', () => {
   const reply = ['%%%unhurried and warm%%% One.', 'Two.', 'Three.', 'Four.'].join('\n\n');
   const out = applySteeringTags(reply);
   assert.strictEqual(out,
-    '[unhurried and warm] One.\n\n[warm] Two.\n\n[warm] Three.\n\n[reset] Four.',
-    'author verbatim, two tempo-stripped carries, then an explicit stop');
+    '[warm] One.\n\n[warm] Two.\n\n[warm] Three.\n\n[reset] Four.',
+    'Sep 20 2026: the authored tag loses its tempo word too; two carries, then an explicit stop');
   assert.strictEqual((out.match(/\[reset\]/g) || []).length, 1, 'exactly one, at the boundary');
 });
 
@@ -140,10 +140,14 @@ test('a paragraph that opens with its OWN direction is never given a [reset]', (
 test('THE PART-109 FIX: the carried copy keeps the mood and drops the tempo word', () => {
   const reply = ['%%%quick and animated still a little spooked by it%%% First beat.', 'Second.', 'Third.'].join('\n\n');
   const out = applySteeringTags(reply);
-  assert.ok(/\[quick and animated still a little spooked by it\] First beat\./.test(out),
-    "the author's own tag is left exactly as written — that is intent, not accident");
-  assert.strictEqual((out.match(/\[quick /g) || []).length, 1,
-    'and "quick" appears nowhere else: no carried copy may set a clock');
+  /* Sep 20 2026: this asserted that the author's own tag kept "quick". With
+   * DeepSeek writing a direction on nearly every paragraph, authored tempo words
+   * became the lurch Kade hears ("slow, quiet and calm, then fast as hell, loud,
+   * hurried"). A direction describes the voice; it does not set the clock. */
+  assert.ok(/\[animated still a little spooked by it\] First beat\./.test(out),
+    "the author's feeling survives whole; only the metronome word is gone");
+  assert.strictEqual((out.match(/\bquick\b/g) || []).length, 0,
+    '"quick" reaches the synth nowhere: not authored, not carried');
   assert.ok(/\[animated still a little spooked by it\] Second\./.test(out),
     'the carry still runs, still carries the FEELING — going flat is the bug it exists to prevent');
 });
@@ -157,7 +161,7 @@ test('a purely emotional direction carries verbatim — the fix touches nothing 
 test('a direction that is ONLY tempo carries as no tag at all, never as an empty bracket', () => {
   const reply = ['%%%unhurried%%% One.', 'Two.', 'Three.'].join('\n\n');
   const out = applySteeringTags(reply);
-  assert.ok(/\[unhurried\] One\./.test(out), 'the authored one stands');
+  assert.ok(/^ ?One\./.test(out), 'Sep 20 2026: an authored direction that is nothing but tempo leaves no bracket');
   assert.ok(!/\[\s*\]/.test(out), 'an empty bracket would be read aloud as punctuation');
   assert.ok(/\n\nTwo\./.test(out), 'the carried paragraph is simply left bare');
 });
@@ -179,4 +183,19 @@ test('without reset the direction still carries — the fix changes nothing else
 
 test('untagged text is untouched', () => {
   assert.strictEqual(applySteeringTags('Just words.\n\nMore words.'), 'Just words.\n\nMore words.');
+});
+
+test('SEP 20 2026: authored tempo words never reach the synth; feeling, sounds and reset do', () => {
+  const reply = [
+    '%%%slow, quiet and calm, almost tender%%% I hear you.',
+    '%%%rushed and loud, words tumbling out, thrilled%%% But wait till you hear this!',
+    '%%%laugh%%% Girl.',
+    '%%%reset%%% Anyway.',
+  ].join('\n\n');
+  const out = applySteeringTags(reply);
+  assert.ok(!/\b(?:slow|rushed|quick|hurried|fast)\b/i.test(out), out);
+  assert.ok(/calm/.test(out) && /tender/.test(out) && /thrilled/.test(out), 'every feeling word is still there: ' + out);
+  assert.ok(/\[laugh\] Girl\./.test(out), 'a sound is not a direction and is untouched');
+  assert.ok(/\[reset\] Anyway\./.test(out), 'reset is untouched');
+  assert.ok(!/\[\s*\]/.test(out), 'never an empty bracket');
 });

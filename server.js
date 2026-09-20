@@ -2215,6 +2215,32 @@ const TEMPO_WORDS = new RegExp(
  *  is stamped with no tag at all rather than an empty bracket. */
 function stripTempoForCarry(direction) {
   if (!CARRY_TEMPO_STRIP) return direction;
+  return stripTempo(direction);
+}
+
+/* ⭐ SEP 20 2026 — THE AUTHOR'S OWN TEMPO WORDS GO TOO. Part 109 left them
+ * alone on purpose ("that is intent"), and that held while Grok wrote one
+ * direction per reply. The fleet moved to DeepSeek on Sep 19, and at Kade's
+ * word every spoken reply now opens on a direction and they come vivid and
+ * frequent, nearly one a paragraph. So authored tempo words are everywhere,
+ * and each one is a 27 to 42 percent change of speaking speed that holds until
+ * the next tag. Kade, Sep 20: "she goes from one chunk of text being slow,
+ * quiet, and calm, then she might do another few sentences in fast as hell,
+ * loud, hurried. It's jarring during a conversation... the tag must have said
+ * rushed or quick or hurried... it really needs to be a steering transcriptive
+ * thing, like someone's auditing a live transcription of speech."
+ *
+ * That is the rule now: a direction DESCRIBES the voice (feeling, tone,
+ * texture) the way a transcriber would note it; it does not drive the clock.
+ * The measurement above is why this is safe: the feeling costs one to three
+ * percent and survives whole; only the metronome word is removed. "[quick and
+ * animated, a little spooked]" is spoken as "[animated, a little spooked]". A
+ * direction that was nothing but tempo leaves no bracket. [reset] and sounds
+ * like [laugh] are never touched.
+ * Kill switch: TTS_AUTHOR_TEMPO=1 lets authored tempo words through again. */
+const AUTHOR_TEMPO_STRIP = process.env.TTS_AUTHOR_TEMPO !== "1";
+
+function stripTempo(direction) {
   const cleaned = String(direction)
     .replace(TEMPO_WORDS, " ")
     // tidy what removal leaves behind: doubled separators, dangling joins,
@@ -2266,7 +2292,9 @@ function applySteeringTags(text) {
   const converted = text.replace(tagRe, (_, raw) => {
     /* Aug 8 2026: physical stage business becomes vocal color or vanishes —
      * see vocalizeDirection above. A dropped tag leaves no bracket at all. */
-    const vocal = sanitizeDirectionText(vocalizeDirection(raw));
+    let vocal = sanitizeDirectionText(vocalizeDirection(raw));
+    // Sep 20 2026: a direction describes the voice; it does not set the clock.
+    if (AUTHOR_TEMPO_STRIP && vocal && !soundsIsResetTag(vocal)) vocal = stripTempo(vocal);
     return vocal && vocal.length > 0 ? `[${vocal}]` : '';
   });
 
