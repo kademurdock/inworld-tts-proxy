@@ -136,7 +136,27 @@ function applyReport(state, row) {
 }
 
 // ── the network half ────────────────────────────────────────────────────────
-function makeRunner({ state, port, secret, log = console.log, warn = console.warn, fetchImpl = globalThis.fetch }) {
+/* Part 236 (Sep 20 2026) — JEV SHADOW, LOG ONLY. A wrong move is written to
+ * the feedback board and REPLAYED AT EVERY BOOT, so a model does not get to
+ * pick sections here until it has earned it. What it gets is a seat beside the
+ * regex: after targetFor has decided and the move is applied, the same report
+ * (label, the voice's description, what the listener said, where it was filed)
+ * goes to Jev as one choice over the same section names, and one line is
+ * logged: `[voice-move][jev] regex=<x> jev=<y> conf=<c>`. Read the log after a
+ * few dozen reports and decide then. Never awaited by the sweep, never touches
+ * state, never runs in the boot replay, never throws. `jev` is injected so the
+ * tests stay off the network. Kill: KADE_JEV_VOICEMOVE=0, KADE_JEV=0, or unset
+ * TYPESAFE_API_KEY. */
+function shadowAsk(jev, log, input, sections, regexTarget) {
+  try {
+    if (!jev || !jev.enabled("KADE_JEV_VOICEMOVE") || !sections.length) return null;
+    return jev.voiceSection(input, sections)
+      .then((a) => { log(`[voice-move][jev] regex=${regexTarget} jev=${a.section} conf=${Number(a.confidence).toFixed(2)} agree=${a.section === regexTarget} label="${input.label}" report="${input.report}"`); })
+      .catch((e) => { log(`[voice-move][jev] regex=${regexTarget} jev=none (${e.message})`); });
+  } catch (_) { return null; }
+}
+
+function makeRunner({ state, port, secret, log = console.log, warn = console.warn, fetchImpl = globalThis.fetch, jev = require("./jev") }) {
   const base = `http://127.0.0.1:${port}`;
   const headers = { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" };
   async function get(path) {
@@ -169,8 +189,19 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
     let n = 0;
     for (const row of list) {
       if (!isReport(row)) continue;
+      /* Part 236: what the shadow needs is read BEFORE the move, because the
+       * move deletes the old label's description. */
+      const parsed = parseReport(row.detail);
+      const describedAs = parsed ? state.VOICE_DESCRIBE && state.VOICE_DESCRIBE[parsed.label] : null;
+      const sections = (state.VOICE_PICKER_CATEGORIES || []).map((c) => c.name);
       const res = applyReport(state, row);
       if (!res.ok) { warn(`[voice-moves] could not move from row ${row._id}: ${res.why}`); continue; }
+      /* Fire and forget: the regex has already decided and the move is done. */
+      if (parsed && !res.already) {
+        const input = { label: parsed.label, report: parsed.heard, filedUnder: parsed.heading };
+        if (describedAs) input.description = describedAs;
+        shadowAsk(jev, log, input, sections, res.target);
+      }
       const note = res.already
         ? `[auto-move] ${res.oldLabel} was already under ${res.target}; nothing to move.`
         : `[auto-move] ${res.oldLabel} → ${res.target}, now listed as "${res.newLabel}" (live at once; a saved pick keeps working).`;

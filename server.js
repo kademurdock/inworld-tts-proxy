@@ -2027,11 +2027,25 @@ function looksLikeDirection(raw) {
   return false;
 }
 
-function rescueLooseDirections(text) {
+/* Part 236 (Sep 20 2026) — `verdicts` is the optional second opinion from
+ * loose-jev.js: a Map(lowercased span -> "delivery" | "timing" | "physical" |
+ * "silent") for spans the word list above does NOT recognise, already gated
+ * there. The word list is always asked first and always wins. With no Map
+ * (key unset, kill switch, timeout, any failure, every old caller) this
+ * function is byte-for-byte what it was on Aug 20.
+ * A Jev "physical" or "silent" span is DROPPED rather than wrapped: if it had
+ * a vocal translation PHYSICAL_TO_VOCAL would have matched it above, and the
+ * Aug 8 note is why a body is never handed to the synthesizer. */
+function rescueLooseDirections(text, verdicts) {
   if (!text) return text;
   const rescue = (inner) => {
     const kind = looksLikeDirection(inner);
-    if (!kind) return null;                       // not a direction: leave it exactly as written
+    if (!kind) {
+      const second = verdicts && verdicts.get(String(inner).trim().toLowerCase());
+      if (!second) return null;                   // not a direction: leave it exactly as written
+      if (second === "delivery") return `${STEERING_OPEN}${String(inner).trim()}${STEERING_CLOSE}`;
+      return "";                                  // timing, physical, silent: nothing a voice can do
+    }
     if (kind === "timing") return "";             // Second Law: the clock is never a direction
     return `${STEERING_OPEN}${String(inner).trim()}${STEERING_CLOSE}`;
   };
@@ -2048,6 +2062,16 @@ function rescueLooseDirections(text) {
   });
   return out;
 }
+/* Part 236 (Sep 20 2026) — the async half of the second opinion. The rescue
+ * above is sync and sits in the middle of a sync prep chain, so the asking is
+ * done ONCE, up front, in the /v1/audio/speech handler, and the answers ride
+ * down as a Map. resolve() never throws, never outlasts 600 ms, and returns
+ * null when Jev is off, which is every deployment without TYPESAFE_API_KEY. */
+const looseJev = require("./loose-jev").createLooseResolver({
+  looksLikeDirection,
+  jev: require("./jev"),
+  log: (line) => console.log(line),
+});
 
 /* ── MARKDOWN EMPHASIS -> SPOKEN EMPHASIS (Aug 20 2026) ──────────────────────
  * Kade, reading a Kiana reply: "I saw some word with emphasis having stars
@@ -3347,7 +3371,13 @@ app.post("/v1/audio/speech", async (req, res) => {
   // SPEAKS the token. Same hygiene class as citation markers.
   // Prep chain minus steering first: scenes must split BEFORE steering so
   // each speaker's %%% carry-forward stays inside their own lines.
-  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(emphasisFromMarkdown(rescueLooseDirections(stripThinkingBlock(effectiveInput))))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  /* Part 236 (Sep 20 2026): the ONE place this handler can now wait before
+   * first audio. Only when the text holds a "(span)" or "*span*" the word list
+   * does not know and the pre-filters let by; then one Jev request, capped at
+   * 600 ms, 160-410 ms measured. No key, kill switch, timeout or error -> null
+   * -> the chain below runs exactly as it always has. */
+  const looseVerdicts = await looseJev.resolve(stripThinkingBlock(effectiveInput));
+  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(emphasisFromMarkdown(rescueLooseDirections(stripThinkingBlock(effectiveInput), looseVerdicts)))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
 
   // Multi-speaker scene lane (Aug 6 2026): double-bracket speaker tags turn a
   // message into a stitched multi-voice performance. Anything short of a real

@@ -97,3 +97,60 @@ test("the runner reads open rows, applies them, resolves each with an [auto-move
   assert.equal(posted[0].id, "a".repeat(24)); assert.equal(posted[0].status, "resolved"); assert.match(posted[0].note, /^\[auto-move\] breathy high-ish young woman · cortado → Kids and teens/);
   assert.ok(s.VOICE_PICKER_CATEGORIES.find((c) => c.name === "Kids and teens").voices.includes("breathy high-ish youthful voice · cortado"));
 });
+
+// ── Part 236 (Sep 20 2026): the Jev shadow. Log only, never the outcome. ─────
+function shadowHarness(jev) {
+  const s = freshState();
+  const posted = [];
+  const lines = [];
+  const rows = [
+    { _id: "a".repeat(24), subject: "Voice in the wrong section: Cortado", status: "open", detail: detail("breathy high-ish young woman · cortado", "Women", "a kid or a teen") },
+    { _id: "c".repeat(24), subject: "Voice in the wrong section: Bagel", status: "resolved", detail: detail("breathy young woman · bagel", "Women", "a character or cartoon") + "\n\n[2026-09-11 → resolved] [auto-move] moved" },
+  ];
+  const fetchImpl = async (url, opts = {}) => {
+    if (opts.method === "POST") { posted.push(JSON.parse(opts.body)); return { ok: true, json: async () => ({ ok: true }) }; }
+    if (/status=all/.test(url)) return { ok: true, json: async () => rows };
+    return { ok: true, json: async () => rows.filter((r) => r.status === "open") };
+  };
+  const runner = vm.makeRunner({ state: s, port: 1, secret: "x", log: (l) => lines.push(l), warn() {}, fetchImpl, jev });
+  return { s, posted, lines, runner };
+}
+const settle = () => new Promise((r) => setTimeout(r, 20));
+
+test("jev shadow: a DISAGREEING Jev changes nothing and logs one line; the boot replay never asks", async () => {
+  const asked = [];
+  const jev = { enabled: (f) => f === "KADE_JEV_VOICEMOVE", voiceSection: async (input, sections) => { asked.push({ input, sections }); return { section: "Women, low and husky", confidence: 0.91 }; } };
+  const h = shadowHarness(jev);
+  assert.equal(await h.runner.replayResolved(), 1);
+  assert.equal(asked.length, 0, "boot replay is not shadowed");
+  assert.equal(await h.runner.sweepOpen(), 1);
+  await settle();
+  assert.equal(asked.length, 1);
+  assert.deepEqual(asked[0].input, { label: "breathy high-ish young woman · cortado", report: "a kid or a teen", filedUnder: "Women", description: "old words" });
+  assert.deepEqual(asked[0].sections, CATS);
+  assert.ok(h.s.VOICE_PICKER_CATEGORIES.find((c) => c.name === "Kids and teens").voices.includes("breathy high-ish youthful voice · cortado"), "the regex decision stands");
+  assert.deepEqual(h.s.VOICE_PICKER_CATEGORIES.find((c) => c.name === "Women, low and husky").voices, []);
+  assert.match(h.posted[0].note, /→ Kids and teens/);
+  const shadow = h.lines.filter((l) => l.startsWith("[voice-move][jev]"));
+  assert.equal(shadow.length, 1);
+  assert.match(shadow[0], /^\[voice-move\]\[jev\] regex=Kids and teens jev=Women, low and husky conf=0\.91 /);
+});
+
+test("jev shadow: the sweep does not wait for Jev, and a Jev that fails or never answers changes nothing", async () => {
+  for (const voiceSection of [async () => { throw new Error("HTTP 500"); }, () => new Promise(() => {}), () => { throw new Error("sync boom"); }]) {
+    const h = shadowHarness({ enabled: () => true, voiceSection });
+    assert.equal(await h.runner.sweepOpen(), 1);
+    await settle();
+    assert.equal(h.posted.length, 1);
+    assert.ok(h.s.VOICE_PICKER_CATEGORIES.find((c) => c.name === "Kids and teens").voices.includes("breathy high-ish youthful voice · cortado"));
+  }
+});
+
+test("jev shadow: off (no key / kill switch) means Jev is never called and nothing is logged", async () => {
+  let called = 0;
+  const h = shadowHarness({ enabled: () => false, voiceSection: async () => { called++; return { section: "x", confidence: 1 }; } });
+  assert.equal(await h.runner.sweepOpen(), 1);
+  await settle();
+  assert.equal(called, 0);
+  assert.equal(h.lines.filter((l) => l.startsWith("[voice-move][jev]")).length, 0);
+});
