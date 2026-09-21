@@ -565,7 +565,11 @@ router.post("/librechat/agent-edit", auth, agentPatchHandler);
 router.get("/librechat/feedback", auth, async (req, res) => {
   try {
     const status = req.query.status === "all" ? "all" : "open";
-    res.json(await lc("GET", `/api/kade/feedback?status=${encodeURIComponent(status)}`));
+    /* Part 239: `twins=1` asks the fork to annotate each row with the older
+     * row it looks like — the admin-alert echo that has cost real time more
+     * than once. Annotation only: nothing is merged, closed or hidden. */
+    const twins = req.query.twins === "1" ? "&twins=1" : "";
+    res.json(await lc("GET", `/api/kade/feedback?status=${encodeURIComponent(status)}${twins}`));
   } catch (e) { fail(res, e); }
 });
 /* Part 100 (Aug 30 2026) — her ask, verbatim: "make it mark resolved when it
