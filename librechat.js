@@ -2230,4 +2230,21 @@ router.post("/librechat/library-jev-audio", auth, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+/* THE LAST 2,270, WITH EYES (Part 238) — one frame per commercial to a cheap
+ * vision model, then the same Jev question that knows the 49 shelves. OFF at
+ * the fork until KADE_LIBRARY_VISION_FILE=1; a 409 here means exactly that.
+ * Previews unless `apply`, and every move carries `seen` so the label the eye
+ * reported can be read before anything is written. */
+router.post("/librechat/library-vision-ads", auth, async (req, res) => {
+  try {
+    const b = req.body || {};
+    res.json(await lc("POST", "/api/kade/reading-room/librarian/vision-file-ads", {
+      ...(b.apply === true ? { apply: true } : {}),
+      ...(b.limit ? { limit: Number(b.limit) } : {}),
+      ...(b.skip ? { skip: Number(b.skip) } : {}),
+      ...(typeof b.decade === "string" ? { decade: b.decade } : {}),
+    }));
+  } catch (e) { fail(res, e); }
+});
+
 module.exports = router;
