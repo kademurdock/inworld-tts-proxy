@@ -2202,4 +2202,32 @@ router.post("/librechat/library-jev-ads", auth, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+/* THE LOCAL SHELF (Part 238) — Jev puts a kind between the Ozarks root and
+ * the decade, so 1,672 Springfield items stop being one list of 1,207. Her
+ * words: "people can find my local stuff quickly and easily". Preview unless
+ * `apply`. Nothing ever leaves the Ozarks root. */
+router.post("/librechat/library-jev-local", auth, async (req, res) => {
+  try {
+    const b = req.body || {};
+    res.json(await lc("POST", "/api/kade/reading-room/librarian/jev-file-local", {
+      ...(b.apply === true ? { apply: true } : {}),
+      ...(b.limit ? { limit: Number(b.limit) } : {}),
+      ...(typeof b.decade === "string" ? { decade: b.decade } : {}),
+    }));
+  } catch (e) { fail(res, e); }
+});
+
+/* THE AUDIO SHELF (Part 238) — her radio ads out of the raw drop folder and
+ * onto `Audio/...` by category and decade, with the Springfield airchecks
+ * routed to her local shelf. Preview unless `apply`. */
+router.post("/librechat/library-jev-audio", auth, async (req, res) => {
+  try {
+    const b = req.body || {};
+    res.json(await lc("POST", "/api/kade/reading-room/librarian/jev-file-audio", {
+      ...(b.apply === true ? { apply: true } : {}),
+      ...(b.limit ? { limit: Number(b.limit) } : {}),
+    }));
+  } catch (e) { fail(res, e); }
+});
+
 module.exports = router;
