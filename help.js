@@ -2226,13 +2226,14 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
-<h2>Android 2.14 (build 115): faces, the Talk button, and everything the iPhone has</h2>
+<h2>Android 2.14 (build 115, updated to 2.14.1 the same evening): faces, the Talk button, and everything the iPhone has</h2>
 <p><strong>Real faces.</strong> Harley, Lilly, Kiana and Della now use the same drawn faces as the iPhone and the website: they smile, frown, look surprised, skeptical, sad or worried, and laugh, following the directions in their own replies, with mouth shapes while they talk and a blink now and then. Kiana's face had stopped moving on Android after her picture changed on September 19; it moves again. Characters with a Fish voice now move their mouths too.</p>
 <p><strong>A face at the top of every conversation.</strong> The character stays at the top of the chat the whole time, not only while a voice message plays. It sways and blinks while quiet, moves big while talking, and tips its head while a reply is on the way. It shrinks while the keyboard is up and at very large text. TalkBack never lands on it. To remove it, turn on <strong>Settings &rarr; Hide character faces</strong>. Faces now keep moving while TalkBack is on, as on the iPhone, so a sighted person beside you can see them; Reduce motion, turning off Android's animations, and Battery Saver still keep them still.</p>
 <p><strong>Talk to your main agent from anywhere.</strong> A <strong>Talk to</strong> button sits at the bottom of every screen except a conversation and opens a new chat with your main agent. Everyone starts with Kiana. Choose someone else in <strong>Settings &rarr; Your main agent</strong>. If Kade sets your main agent for you, the phone uses it once, and your own later choice stays.</p>
 <p><strong>Photos and files in a chat.</strong> The paperclip beside the microphone attaches one photo or file to your next message: <strong>Choose a photo</strong>, <strong>Choose a file</strong>, or <strong>Paste a photo or file</strong> you copied. You can send a photo with no words. Files up to 30 megabytes.</p>
 <p><strong>Voice message speed.</strong> <strong>Settings &rarr; Voice message speed</strong> plays voices from 0.75 times to 2 times normal speed. The voice is not remade, so speed changes cost nothing.</p>
 <p><strong>Every iPhone destination is in More.</strong> More is now in headed sections (Talk, Make and listen, Games and company, Your companions, Your records, Settings and help), so TalkBack's headings take you group to group. New here: The Library, Kade's Clubhouse, Transcribe, Matchmaker, the Debate Room, the Conversation Hall, Create a character, the Marketplace, Bookmarks, Prompts, Announcements, Calls and conversations, and Your Spotter. Pages that need the microphone or camera, such as Transcribe and the Clubhouse, ask through Android's own permission prompt. Notifications about the Library, the Sound Booth, What's New and the rest now open their own page.</p>
+<p>2.14.1 moves the Talk button above Android&rsquo;s own Back and Home buttons on screens without the tab bar.</p>
 <p>Still pages rather than native Android screens: voice calls and the live Spotter call, the Library player, the Sound Booth, the Parlor and the Clubhouse. They all work from More.</p>
 <h2>Android 2.12 (build 113): expressive companion portraits</h2>
 <p>Voice-message playback now shows the original character&rsquo;s portrait. Kiana and Della have their own prepared eye, mouth and brow movements, with graduated opening and closing and individual movement rhythms; other characters keep their own picture with gentle movement. Pause and Resume keep the current audio. Unknown audio formats keep a closed mouth while the voice continues.</p>
@@ -2244,7 +2245,7 @@ PAGES.android = {
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
-<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.14 for Android</a></p>
+<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.14.1 for Android</a></p>
 
 <h2>Project file import and export in 2.8</h2>
 <p>Android <strong>2.8 (build 109)</strong> adds <strong>Import a text file</strong> inside <strong>More &rarr; Projects</strong>. Choose a UTF-8 .txt, .md, .csv or .json file from Android's file picker. The app accepts up to 50,000 characters, rejects binary or invalid UTF-8 content, and stops reading oversized files. An imported file opens as a new, unsaved working-document draft. Review its name and contents, select Reference if appropriate, then choose <strong>Save a new version</strong> to upload it. Selecting a file alone never changes the saved project.</p>
