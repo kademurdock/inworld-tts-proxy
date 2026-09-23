@@ -38,7 +38,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
-const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace } = require("./speech-prosody");
+const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -76,7 +76,8 @@ const FISH_TTS_SPEED = parseFloat(process.env.FISH_TTS_SPEED || "1.0");
  * transcript-matched: t=1.0/top_p=0.85 → 6/6 clean, t=1.0/top_p=1.0 → 6/6
  * clean. The hallucination lever was request length, not temperature
  * (117.1's table), so the temperature can sit at the ceiling. */
-const FISH_TEMPERATURE = parseFloat(process.env.FISH_TEMPERATURE || "1.0");
+// Sep 23 2026 (Kade: fish "could be more creative ... prob have a temp of like 90 percent").
+const FISH_TEMPERATURE = parseFloat(process.env.FISH_TEMPERATURE || "0.9");
 const FISH_TOP_P = parseFloat(process.env.FISH_TOP_P || "0.85");
 const FISH_VOICE_PREFIX = "fish:";
 
@@ -86,7 +87,8 @@ const FISH_VOICE_PREFIX = "fish:";
 // emotional-range knob here, not temperature. speakingRate is separate --
 // pure pacing, [0.5, 1.5], 1.0 = the voice's own native speed.
 // Both env-overridable so they can be re-tuned without a code change.
-const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "CREATIVE";
+// Sep 23 2026 (Kade: Lively "makes them sound a bit drunk"): Balanced is the default.
+const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "BALANCED";
 // Part 129 (Sep 4 2026, the TTS-2 GA mail): `enhanceGeneration` is Inworld's
 // new denoise pass on the synthesized audio. Measured the day it shipped, two
 // voices, same line: no latency cost (2.2-2.5 s either way), same billed
@@ -100,7 +102,8 @@ const TTS_ENHANCE = process.env.TTS_ENHANCE === "1";
  * fish's temperature (0-1): STABLE 0.5 · BALANCED 0.75 · CREATIVE 1.0 (the
  * 117.7 ceiling), so one control means the same thing on both engines. */
 const DELIVERY_MODES = new Set(["STABLE", "BALANCED", "CREATIVE"]);
-const FISH_TEMPERATURE_BY_DELIVERY = { STABLE: 0.5, BALANCED: 0.75, CREATIVE: 1.0 };
+// Balanced on fish is 0.9 since Sep 23 2026, the same as the default (was 0.75).
+const FISH_TEMPERATURE_BY_DELIVERY = { STABLE: 0.5, BALANCED: 0.9, CREATIVE: 1.0 };
 function parseDelivery(raw) {
   if (typeof raw !== "string") return undefined;
   const d = raw.trim().toUpperCase();
@@ -851,6 +854,15 @@ function contextFor(chunks, i, sessionKey) {
   return out;
 }
 
+/* The instruction a chunk is sent with: its own direction, or on Balanced the lively
+ * baseline when it has none (speech-prosody.js says why). */
+function inworldInstruction(instruction, delivery) {
+  if (!TTS_INSTRUCTION_FIELD) return instruction;
+  const out = baselineInstruction(instruction, delivery || TTS_DELIVERY_MODE);
+  if (out && !instruction) console.log('[TTS] steering -> lively baseline (Balanced, no direction given)');
+  return out;
+}
+
 function splitChunkForInworld(chunk) {
   if (!TTS_INSTRUCTION_FIELD) return { text: chunk, instruction: null };
   const out = liftInstruction(chunk);
@@ -1262,6 +1274,7 @@ function chunkStatsToday() {
 }
 
 async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery) {
+  instruction = inworldInstruction(instruction, delivery);
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
@@ -1316,8 +1329,9 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * bytes would double-speak the opening of a sentence.
  */
 async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery }) {
-  const { text: sayText, instruction } = splitChunkForInworld(chunk);
+  const { text: sayText, instruction: lifted } = splitChunkForInworld(chunk);
   if (!sayText || !sayText.trim()) return false;
+  const instruction = inworldInstruction(lifted, delivery);
   return inworldLimiter(async () => {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);

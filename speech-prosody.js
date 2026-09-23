@@ -17,6 +17,21 @@ function shapeDeliveryPace(text, delivery) {
   });
 }
 
+/* Sep 23 2026, Kade: "I'd like to make the balanced mode sound as lively as possible via
+ * steering, but lively in temp with inworld seems to go from yelling to whispering too much
+ * and weird stuff like that, as if it lost context of what it's saying." So the default is
+ * Balanced, which keeps the voice steady, and this direction asks for the energy. It goes in
+ * Inworld's instruction field only when the reply gave no direction of its own: whatever a
+ * character asked for (a whisper, a sad line) always wins. Steady and Lively are untouched.
+ * No tempo words: speed stays the listener's. KADE_TTS_LIVELY_BASELINE=0 turns it off;
+ * KADE_TTS_LIVELY_BASELINE_TEXT replaces the wording. */
+const LIVELY_BASELINE = 'Warm, lively and animated, with natural pitch movement and clear emphasis, fully engaged with the meaning of every line, at a steady speaking volume.';
+function baselineInstruction(instruction, delivery) {
+  if (instruction) return instruction;
+  if (process.env.KADE_TTS_LIVELY_BASELINE === '0' || delivery !== 'BALANCED') return null;
+  return (process.env.KADE_TTS_LIVELY_BASELINE_TEXT || '').trim() || LIVELY_BASELINE;
+}
+
 // Provider adapters only; display text and authored directions stay intact.
 const EMPHASIZED_WORDS = new Set(['IS', 'IT', 'MY', 'ME', 'BE', 'DO', 'GO', 'SO', 'TO', 'NO', 'YES', 'NOT', 'THE', 'THIS', 'THAT', 'YOU', 'YOUR', 'ARE', 'WAS', 'WERE']);
 function normalizeInworldCaps(text) {
@@ -41,4 +56,4 @@ function shapeFishPauses(text) {
   return paced.replace(/\uE000(\d+)\uE001/g, (_, i) => tags[Number(i)]);
 }
 
-module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace };
+module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, LIVELY_BASELINE };

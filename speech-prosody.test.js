@@ -13,3 +13,14 @@ test('preserves punctuation inside directions, abbreviations, decimals, ellipses
   assert.equal(shapeFishPauses(input), input);
   assert.equal(shapeFishPauses('One. [inhale] Two.'), 'One. [inhale] Two.');
 });
+
+test('lively baseline: Balanced only, never over a direction the character wrote', () => {
+  const { baselineInstruction, LIVELY_BASELINE } = require('./speech-prosody');
+  assert.equal(baselineInstruction(null, 'BALANCED'), LIVELY_BASELINE);
+  assert.equal(baselineInstruction('whispering, sad', 'BALANCED'), 'whispering, sad');
+  assert.equal(baselineInstruction(null, 'STABLE'), null);
+  assert.equal(baselineInstruction(null, 'CREATIVE'), null);
+  assert.doesNotMatch(LIVELY_BASELINE, /\b(?:slow|fast|quick|unhurried|pace|tempo)\b/i, "speed stays the listener's");
+  process.env.KADE_TTS_LIVELY_BASELINE = '0';
+  try { assert.equal(baselineInstruction(null, 'BALANCED'), null); } finally { delete process.env.KADE_TTS_LIVELY_BASELINE; }
+});
