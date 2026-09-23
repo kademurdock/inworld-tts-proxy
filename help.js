@@ -1651,6 +1651,7 @@ PAGES.memory = {
 <p>Separate from memory cards: within one conversation, a character can only hold so many recent messages in its attention at once. In very long chats the earliest messages used to simply fall out of reach &mdash; the "did you forget what we talked about an hour ago?" feeling. Now, when a conversation gets near that limit, the character first writes itself a compact "story so far" checkpoint &mdash; names, promises, running jokes, where things stand &mdash; and keeps chatting from that plus the newest messages. Nothing visible is deleted or rewritten: the whole conversation stays right there to scroll, and a small note marks the one spot where the condensing happened. It's automatic and free, and it works on every character, in text chats and voice conversations alike.</p>
 
 <h2>Bossing the memory around (just talk to it)</h2>
+<p>A phone push reminder needs a registered phone. If none is registered, the character will say the reminder was not set and explain how to connect the app. Test and review accounts do not send phone notifications.</p>
 <ul>
   <li><strong>"Remember that..."</strong> — saves a card, even for little stuff.</li>
   <li><strong>"Forget about..."</strong> — deletes the matching card(s), gone for real.</li>

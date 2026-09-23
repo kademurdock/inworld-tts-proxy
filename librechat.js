@@ -1900,7 +1900,7 @@ function stripCitationAnchors(t) {
   if (!t) return t;
   return t
     .replace(/[\ue200-\ue2ff]/g, "")
-    .replace(/\bturn\d+(?:search|news|image|ref|fetch|forecast)\d*\b/g, "")
+    .replace(/\bturn\d+[a-z]+\d+\b/gi, "")
     .replace(/[ \t]{2,}/g, " ");
 }
 
