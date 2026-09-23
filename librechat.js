@@ -88,12 +88,22 @@ const SEATS = {
     pass: () => process.env.LIBRECHAT_SEAT_VISCHECK_PASS,
     token: null,
   },
+  evalclean: {
+    user: () => process.env.LIBRECHAT_SEAT_EVALCLEAN_USER,
+    pass: () => process.env.LIBRECHAT_SEAT_EVALCLEAN_PASS,
+    token: null,
+  },
+  evalfixture: {
+    user: () => process.env.LIBRECHAT_SEAT_EVALFIXTURE_USER,
+    pass: () => process.env.LIBRECHAT_SEAT_EVALFIXTURE_PASS,
+    token: null,
+  },
 };
 function seatByName(name) {
   const key = String(name || "admin").toLowerCase();
   const seat = SEATS[key];
   if (!seat) {
-    const e = new Error(`unknown seat "${name}" (admin|vischeck)`);
+    const e = new Error(`unknown seat "${name}" (admin|vischeck|evalclean|evalfixture)`);
     e.status = 400; throw e;
   }
   if (!seat.user() || !seat.pass()) {
@@ -433,6 +443,45 @@ router.get("/librechat/agent", auth, async (req, res) => {
   } catch (e) {
     fail(res, e);
   }
+});
+
+// Evaluation copies are owned by their test seat, so ordinary users never see
+// them and no public ACL is needed. Source settings stay byte-identical.
+router.post('/librechat/eval-agent', auth, async (req, res) => {
+  const { seat: name, name: label } = req.body || {};
+  if (!['evalclean', 'evalfixture'].includes(name) || !label) {
+    return res.status(400).json({ error: 'An evaluation seat and name are required' });
+  }
+  try {
+    const source = await lc('GET', '/api/agents/agent_6llV0eMu4fmIaj8f2x1Sb');
+    const body = Object.fromEntries(['provider', 'model', 'instructions', 'model_parameters', 'tools', 'tool_resources', 'category'].filter(k => source[k] !== undefined).map(k => [k, source[k]]));
+    body.name = String(label).slice(0, 100);
+    body.description = 'Private Kiana evaluation copy. Synthetic test conversations only.';
+    const seat = seatByName(name);
+    const created = await paced(async () => {
+      if (!seatToken(seat)) await seatLogin(seat);
+      const r = await fetch(`${BASE}/api/agents`, buildOpts('POST', body, seatToken(seat)));
+      if (!r.ok) throw new Error(`evaluation copy creation failed ${r.status}`);
+      return r.json();
+    });
+    res.json(created);
+  } catch (e) { fail(res, e); }
+});
+
+router.post('/librechat/eval-cleanup', auth, async (req, res) => {
+  const { seat: name, conversationId } = req.body || {};
+  if (!['evalclean', 'evalfixture'].includes(name) || !conversationId) {
+    return res.status(400).json({ error: 'An evaluation seat and conversationId are required' });
+  }
+  try {
+    const seat = seatByName(name);
+    await paced(async () => {
+      if (!seatToken(seat)) await seatLogin(seat);
+      const r = await fetch(`${BASE}/api/convos/`, buildOpts('DELETE', { arg: { conversationId } }, seatToken(seat)));
+      if (!r.ok) throw new Error(`evaluation cleanup failed ${r.status}`);
+    });
+    res.json({ ok: true });
+  } catch (e) { fail(res, e); }
 });
 
 // POST /librechat/agent -> create a NEW agent (created PRIVATE; publish separately).
@@ -1650,7 +1699,7 @@ function composeTextWithHistory(messages) {
 }
 
 async function lcAsk(agentId, messages, userEmail, opts = {}) {
-  const userText = composeTextWithHistory(messages);
+  const userText = opts.continueConversation ? String(messages.at(-1)?.content || '') : composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
     agentId,
@@ -1664,8 +1713,8 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     // field = old behavior.
     kadeOnBehalfOf: userEmail || undefined,
     kadeToolPolicy: opts.toolPolicy === "morning-brief" ? "morning-brief" : undefined,
-    conversationId: "new",
-    parentMessageId: "00000000-0000-0000-0000-000000000000",
+    conversationId: opts.continueConversation ? (opts.conversationId || "new") : "new",
+    parentMessageId: opts.continueConversation ? (opts.parentMessageId || "00000000-0000-0000-0000-000000000000") : "00000000-0000-0000-0000-000000000000",
     // isTemporary (July 15 2026 -- Kade: 45 orphaned "shadow" conversations found
     // cluttering chat history). ROOT CAUSE: every headless ask -- phone-call turns,
     // voice-stream/Twilio turns, outreach/wellness generation via askAgentRich --
@@ -1720,7 +1769,8 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     // own conversation once the reply is read. Stronger than isTemporary
     // alone, which still surfaces in the admin logs drill-down and lingers
     // ~30 days; a deleted probe never haunts anyone's account, hers least.
-    const bornConversationId = startData.conversationId || null;
+    let bornConversationId = startData.conversationId || (body.conversationId !== 'new' ? body.conversationId : null);
+    let responseMessageId = null;
 
     // Phase 2: subscribe to SSE stream (give job ~300ms to start)
     await new Promise((res) => setTimeout(res, 300));
@@ -1754,6 +1804,8 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
             }
           }
           if (d.final) {
+            bornConversationId = d.conversation?.conversationId || d.responseMessage?.conversationId || bornConversationId;
+            responseMessageId = d.responseMessage?.messageId || null;
             // Same fix as lcAskStream (July 1 2026): tool-using turns deliver
             // their text at/near the final event in shapes the delta loop
             // above can miss entirely -- reconcile against the final
@@ -1784,7 +1836,8 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
         .then(() => console.log(`[lcAsk] probe convo deleted (${bornConversationId.slice(0, 8)}…) as ${seat === SEATS.admin ? "admin" : "vischeck"}`))
         .catch((e) => console.warn("[lcAsk] probe delete failed (harmless):", e.message));
     }
-    return stripCitationAnchors(reply);
+    const text = stripCitationAnchors(reply);
+    return opts.continueConversation ? { text, conversationId: bornConversationId, parentMessageId: responseMessageId } : text;
   });
 }
 
@@ -1799,15 +1852,25 @@ router.post("/librechat/ask", auth, async (req, res) => {
   if (req.body.toolPolicy !== undefined && req.body.toolPolicy !== "morning-brief") {
     return res.status(400).json({ error: "Unknown tool policy" });
   }
+  const continuing = req.body.continueConversation === true;
+  if (continuing && !['evalclean', 'evalfixture'].includes(req.body.seat)) {
+    return res.status(400).json({ error: 'Conversation continuation is restricted to evaluation seats' });
+  }
+  if (continuing && Boolean(req.body.conversationId) !== Boolean(req.body.parentMessageId)) {
+    return res.status(400).json({ error: 'conversationId and parentMessageId must be provided together' });
+  }
   try {
     const seatName = (req.body || {}).seat || "admin";
     const text = await lcAsk(agentId, messages, (req.body || {}).userEmail, {
       deleteAfter: (req.body || {}).deleteAfter === true,
       seat: seatName,
       toolPolicy: req.body.toolPolicy,
+      continueConversation: continuing,
+      conversationId: req.body.conversationId,
+      parentMessageId: req.body.parentMessageId,
     });
     console.log("[lcAsk] success, reply length=", text.length, "seat=", seatName);
-    res.json({ text, seat: seatName });
+    res.json(continuing ? { ...text, seat: seatName } : { text, seat: seatName });
   } catch (err) {
     console.error("[lcAsk] error:", err.message);
     const status = typeof err.status === "number" ? err.status : 500;
