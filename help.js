@@ -685,6 +685,9 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>September 22, 2026: Android 2.15.1 reads cleanly and welcomes newcomers</h2>
+<p>Android <strong>2.15.1 (build 118)</strong> fixes something Android users have been living with: replies showed, and TalkBack read aloud, the directions meant for the voices, such as percent signs around &ldquo;warm, a little playful&rdquo;. Replies now read cleanly on the screen and in TalkBack, and the voices still get their directions.</p>
+<p>After signing in, a new person now lands right in a chat with their main character, with a short welcome and three starter ideas that fill the message box without sending. The sign-in screen says what the app is, accepts an email or a phone number, and has <strong>New here? Ask Kade to join</strong> and <strong>Forgot your password?</strong>, which opens the website&rsquo;s password reset.</p>
 <h2>September 22, 2026: Live calls on Android, and more expressive faces</h2>
 <p>Android <strong>2.15 (build 117)</strong> adds live voice calls. Open a conversation, choose <strong>Call</strong>, then <strong>Start call</strong>. Speak naturally, even while your companion is talking. Mute, speaker and hang-up controls are on the call screen; mute and hang-up are also in the ongoing call notification. Calls started in an existing chat keep that chat&rsquo;s context. Afterward, return to the chat to read the transcript once it arrives.</p>
 <p>Kiana, Della, Lilly and Harley have eight additional facial expressions and their own movement rhythms in this Android update.</p>
@@ -2230,6 +2233,10 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.15.1 (build 118): clean replies and a friendlier start</h2>
+<p><strong>Replies read cleanly.</strong> The directions written for the voices (the words between percent signs), scene names in double brackets, and markdown stars no longer show in the chat or get read by TalkBack. Play still speaks with the voice directions. Notifications are cleaned the same way.</p>
+<p><strong>A friendlier first minute.</strong> Signing in opens a chat with your main agent (Kiana unless you chose someone else), with Chats underneath so Back still takes you to your list. A brand-new chat says who you are talking to and offers three starter ideas; choosing one puts it in the message box for you to send or change. Opening a saved chat now says <strong>Opening your conversation</strong> instead of pretending someone is replying.</p>
+<p><strong>Sign-in doors.</strong> The field accepts an email or a phone number. <strong>New here? Ask Kade to join</strong> opens the join form, and <strong>Forgot your password?</strong> opens the website&rsquo;s password reset in your browser.</p>
 <h2>Android 2.15 (build 117): live calls and richer faces</h2>
 <p>Open a chat and choose <strong>Call &rarr; Start call</strong>. Allow the microphone when Android asks. You can speak while your companion is talking to interrupt naturally. Mute your microphone, switch the speaker on or off, or hang up from the call screen. The call continues when you lock the screen; its notification has mute and hang-up controls.</p>
 <p>A call started from an existing conversation keeps its context and saves the call transcript there. When you hang up, <strong>Back to chat</strong> returns to that conversation. The transcript can take a moment; use Refresh if it has not arrived. A call started in a new chat appears in Chats after the server saves it.</p>
