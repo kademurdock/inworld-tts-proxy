@@ -52,11 +52,11 @@ To change the defaults, edit `VOICE_MAP` in `server.js`.
 
 | OpenAI model | Inworld model |
 |---|---|
-| tts-1 | inworld-tts-1.5-max |
-| tts-1-hd | inworld-tts-1.5-max |
-| gpt-4o-mini-tts | inworld-tts-1.5-max |
+| tts-1 | inworld-tts-2 |
+| tts-1-hd | inworld-tts-2 |
+| gpt-4o-mini-tts | inworld-tts-2 |
 
-Edit `MODEL_MAP` in `server.js` to use `inworld-tts-2` (research preview) if you have access.
+Inworld uses TTS-2 with Lively (`CREATIVE`) as the default delivery. Fish voices use `s2.1-pro`, temperature 0.9, top-p 0.85, and normal latency. A saved per-request delivery overrides the default. See [VOICE_PROVIDER_GUIDE.md](VOICE_PROVIDER_GUIDE.md) for current provider behavior, continuity handling, and testing limits.
 
 ## Health check
 

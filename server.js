@@ -38,7 +38,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
-const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction } = require("./speech-prosody");
+const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -50,17 +50,10 @@ const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 // VOICE_MAP targets prefixed "fish:<model_id>" route to fishSynthesizeChunk
 // below instead of Inworld; everything downstream (chunking, silence splice,
 // loudness EMA, telephony mu-law, /voices.json) is provider-blind.
-// Model tier is s2.1-pro by Kade's explicit choice July 22 (the free tier
-// s2.1-pro-free ends July 31 2026 AND retains audio for training — wrong fit
-// for a family platform; pro ≈ $15/M UTF-8 bytes ≈ a nickel per 10-min call).
-// Steering (UPDATED Aug 3 2026): fish gets per-SENTENCE direction re-seeding
-// at synth (seedFishSteering) — fish cues are sentence-scoped, one leading tag
-// per paragraph left its later sentences flat. Inworld chunks get one-
-// direction-per-request shaping (shapeInworldSteering). Original note below:
-// fish s2.1 interprets the same [bracket] free-text word-level tags
-// applySteeringTags already emits for Inworld TTS-2, so %%% tags translate
-// with NO agent-side changes (s1 would need a preset-parentheses menu — do
-// not downgrade FISH_TTS_MODEL below s2 without revisiting steering).
+// Paid s2.1-pro remains Kade's chosen tier, explicitly sent in the model header.
+// S2 understands free-form bracket directions; S1 used a different dialect.
+// Sentence reseeding is OFF by default after measured repeat/gibberish failures.
+// Current provider contracts, context limits and sources: VOICE_PROVIDER_GUIDE.md.
 const FISH_API_KEY = process.env.FISH_API_KEY;
 const FISH_TTS_MODEL = process.env.FISH_TTS_MODEL || "s2.1-pro";
 const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|balanced|low
@@ -87,8 +80,9 @@ const FISH_VOICE_PREFIX = "fish:";
 // emotional-range knob here, not temperature. speakingRate is separate --
 // pure pacing, [0.5, 1.5], 1.0 = the voice's own native speed.
 // Both env-overridable so they can be re-tuned without a code change.
-// Sep 23 2026 (Kade: Lively "makes them sound a bit drunk"): Balanced is the default.
-const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "BALANCED";
+// Sep 23: Kade prefers Lively after the Balanced trial. Continuity is repaired
+// separately; saved per-character delivery choices still take precedence.
+const TTS_DELIVERY_MODE = process.env.TTS_DELIVERY_MODE || "CREATIVE";
 // Part 129 (Sep 4 2026, the TTS-2 GA mail): `enhanceGeneration` is Inworld's
 // new denoise pass on the synthesized audio. Measured the day it shipped, two
 // voices, same line: no latency cost (2.2-2.5 s either way), same billed
@@ -806,15 +800,18 @@ function sessionContext(key) {
   if (Date.now() - row.at > TTS_SESSION_TTL_MS) { ttsSessions.delete(key); return null; }
   return row.texts.length ? row.texts.slice() : null;
 }
-function rememberSpoken(key, text) {
+let ttsRequestSequence = 0;
+function rememberSpoken(key, text, sequence = ++ttsRequestSequence) {
   if (!TTS_CONTEXT_ON || !key) return;
   const clean = String(text || "").replace(/\[[^\]]*\]/g, " ").replace(/\s+/g, " ").trim();
   if (!clean) return;
   const now = Date.now();
   for (const [k, v] of ttsSessions) if (now - v.at > TTS_SESSION_TTL_MS) ttsSessions.delete(k);
   const row = ttsSessions.get(key) || { texts: [], at: now };
-  row.texts.push(clean);
-  if (row.texts.length > TTS_CONTEXT_MAX) row.texts = row.texts.slice(-TTS_CONTEXT_MAX);
+  // Prefetches may finish out of order. Keep request order, not response order.
+  row.entries = (row.entries || []).concat({ text: clean, sequence })
+    .sort((a, b) => a.sequence - b.sequence).slice(-TTS_CONTEXT_MAX);
+  row.texts = row.entries.map(entry => entry.text);
   row.at = now;
   ttsSessions.set(key, row);
 }
@@ -828,9 +825,9 @@ const TTS_CONTEXT_MAX = Number(process.env.KADE_TTS_CONTEXT_MAX || 3);
  * chunks that day (4.5%) against a normal of zero. See tts-context.js. */
 const TTS_CONTEXT_MAX_CHARS = Number(process.env.KADE_TTS_CONTEXT_MAX_CHARS || 1900);
 const TTS_CONTEXT_ON = process.env.KADE_TTS_CONTEXT !== "0";
-function contextFor(chunks, i, sessionKey) {
+function contextFor(chunks, i, previousTexts = []) {
   if (!TTS_CONTEXT_ON) return null;
-  const prior = sessionContext(sessionKey) || [];
+  const prior = previousTexts || [];
   const within = chunks
     .slice(Math.max(0, i - TTS_CONTEXT_MAX), i)
     .map((c) => String(c).replace(/\[[^\]]*\]/g, " ").replace(/\s+/g, " ").trim())
@@ -1189,8 +1186,8 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
        * every boundary and the pieces sounded stapled together.
        * FREE IN LATENCY: this is TEXT WE ALREADY HAVE before any request is
        * made, so the chunks still fire in parallel. Nothing waits on anything.
-       * Capped because context is billed as characters and the marginal value
-       * of a fifth sentence back is not worth paying for. */
+       * Context is not billed. Its combined text must stay below 2,000
+       * characters, and a few recent pieces provide the relevant continuity. */
       ...(previousTexts && previousTexts.length
         ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
         : {}),
@@ -2336,13 +2333,9 @@ function applySteeringTags(text) {
     return vocal && vocal.length > 0 ? `[${vocal}]` : '';
   });
 
-  // Pass 2: carry the most recent leading direction across paragraph breaks.
-  // chunkText() groups whole paragraphs into a chunk and only sub-splits a
-  // single paragraph that alone exceeds MAX_CHUNK_LEN, so aligning to
-  // paragraph boundaries here means virtually every resulting TTS chunk
-  // opens with a direction. (The rare case of one oversized paragraph with
-  // no blank line getting sentence-split mid-paragraph is a known, narrow
-  // limitation -- only its first sentence-group carries the tag.)
+  // Pass 2: carry the last authored direction across paragraph breaks, with
+  // the existing carry cap. carryChunkDirections separately restores the
+  // active cue at artificial boundaries inside oversized paragraphs.
   const bracketAtStart = /^\s*\[([^\]]+)\]/;
   const parts = converted.split(/(\n\s*\n+)/); // odd indices are the blank-line separators themselves
   let active = null;
@@ -2350,6 +2343,9 @@ function applySteeringTags(text) {
   for (let i = 0; i < parts.length; i++) {
     if (i % 2 === 1 || !parts[i].trim()) continue; // separator or blank -- leave untouched
     const opens = parts[i].match(bracketAtStart);
+    const authoredLast = [...parts[i].matchAll(/\[([^\]]+)\]/g)]
+      .filter(m => soundsIsDirectionTag(m[1])).at(-1)?.[1].trim();
+    try {
     if (opens) {
       /* ⭐ AUG 25 2026 — [reset] ENDS THE CARRY, WHICH IS ITS ENTIRE JOB.
        * Kade: "it read the whole voice clip in a really fast, rushed tone and
@@ -2468,6 +2464,15 @@ function applySteeringTags(text) {
       const stamped = stripTempoForCarry(active);
       if (stamped) { parts[i] = `[${stamped}] ${parts[i]}`; }
       carried++;
+    }
+    } finally {
+      // An inline change governs the next paragraph too. Looking only at
+      // the opening tag used to resurrect amusement after concern or reset.
+      // Scan the author's paragraph, never the copy we just prefixed.
+      if (authoredLast) {
+        active = soundsIsResetTag(authoredLast) ? null : authoredLast;
+        carried = 0;
+      }
     }
   }
   // July 27 2026: same residual sweep as the early return -- any %%-run that
@@ -3176,8 +3181,8 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery)
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
   const steered = shapeDeliveryPace(applySteeringTags(seg.text), delivery || TTS_DELIVERY_MODE);
   const chunks = (segIsFish
-    ? chunkText(steered).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
-    : chunkText(steered).flatMap(shapeInworldSteering)
+    ? carryChunkDirections(chunkText(steered)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
+    : carryChunkDirections(chunkText(steered)).flatMap(shapeInworldSteering)
   ).filter(chunkHasSpeakableWords);
   if (!chunks.length) {
     // a castmate whose whole part was a bare direction contributes silence
@@ -3329,7 +3334,9 @@ app.post("/v1/audio/speech", async (req, res) => {
   // every other audition.
   const NATIVE_PREVIEW_SENTINEL = "Hi there. This is how I sound.";
   let effectiveInput = input;
+  let isVoicePreview = false;
   if (typeof input === "string" && input.trim() === NATIVE_PREVIEW_SENTINEL) {
+    isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_SCRIPTS).split("{voice}").join(String(voice));
     console.log(`[TTS] native preview sentinel swapped for audition script, label="${voice}"`);
   }
@@ -3346,9 +3353,11 @@ app.post("/v1/audio/speech", async (req, res) => {
    * AUDITION_SCRIPTS (each keeps the four-PARAGRAPH shape Part 110 measured;
    * collapsing any of them to one paragraph restores the leak). */
   if (typeof input === "string" && input.trim() === NATIVE_QUICK_PREVIEW_LINE) {
+    isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_QUICK_LINES);
     console.log(`[TTS] native quick preview swapped for a pooled line, label="${voice}"`);
   } else if (typeof input === "string" && input.trim() === AUDITION_TEXT.trim()) {
+    isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_SCRIPTS).split("{voice}").join(String(voice));
     console.log(`[TTS] web audition script swapped for a pooled script, label="${voice}"`);
   }
@@ -3373,6 +3382,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   // exact request can be found in Railway logs by timestamp instead of
   // guessed at after the fact.
   console.log(`[TTS] voice request: label="${voice}" -> resolved="${inworldVoice}"`);
+  console.log(`[TTS] performance: provider=${isFishVoice ? 'fish' : 'inworld'} model=${isFishVoice ? FISH_TTS_MODEL : inworldModel} delivery=${isFishVoice ? (delivery || 'DEFAULT') : (delivery || TTS_DELIVERY_MODE)} preview=${isVoicePreview}`);
 
   // Strip web-search citation markers before speaking. The search-augmented
   // model embeds inline citation tokens (a private-use char U+E200-U+E20F
@@ -3408,7 +3418,14 @@ app.post("/v1/audio/speech", async (req, res) => {
     if (handled) return;
   }
 
-  const ttsSessionKey = String(req.get("x-kade-tts-session") || "").slice(0, 64) || null;
+  // An audition is a standalone script. It must neither borrow the chat's
+  // situation nor color the next reply. Resolve aliases before scoping voices.
+  const ttsSeat = String(req.get("x-kade-tts-session") || "").slice(0, 64);
+  const ttsSessionKey = !isVoicePreview && ttsSeat ? JSON.stringify([ttsSeat, inworldVoice]) : null;
+  const requestSequence = ++ttsRequestSequence;
+  // Snapshot once: a parallel request completing midway through this one
+  // must not become the "past" of its later provider chunks.
+  const previousTexts = sessionContext(ttsSessionKey);
   const speakText = shapeDeliveryPace(applySteeringTags(preppedText.replace(SCENE_TAG_G, " ").replace(/[ \t]{2,}/g, " ")), delivery || TTS_DELIVERY_MODE);
   console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
@@ -3419,12 +3436,12 @@ app.post("/v1/audio/speech", async (req, res) => {
   }
 
   try {
-    // Provider-aware steering shaping (Aug 3 2026, see helpers above): fish
-    // re-seeds the active direction per sentence; Inworld gets one direction
-    // per request (identical repeats dropped, real changes split the chunk).
+    // Preserve the active cue at request boundaries. Provider adapters remove
+    // redundant repeats and keep real authored changes; Fish sentence reseeding
+    // is disabled by default. See VOICE_PROVIDER_GUIDE.md for current behavior.
     const chunks = (isFishVoice
-      ? chunkText(speakText).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
-      : chunkText(speakText).flatMap(shapeInworldSteering)
+      ? carryChunkDirections(chunkText(speakText)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
+      : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {
       console.log('[TTS] every chunk was words-free after shaping — returning silence, not a 500');
@@ -3453,12 +3470,12 @@ app.post("/v1/audio/speech", async (req, res) => {
         inworldVoice,
         inworldModel,
         speakingRate,
-        previousTexts: contextFor(chunks, 0, ttsSessionKey),
+        previousTexts: contextFor(chunks, 0, previousTexts),
         voiceLabel: voice,
         delivery,
       });
       if (handled) {
-        rememberSpoken(ttsSessionKey, speakText);
+        rememberSpoken(ttsSessionKey, speakText, requestSequence);
         return;
       }
     }
@@ -3472,7 +3489,7 @@ app.post("/v1/audio/speech", async (req, res) => {
           ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery)
           : (() => {
               const { text: sayText, instruction } = splitChunkForInworld(chunk);
-              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, ttsSessionKey), delivery);
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery);
             })()
       )
     );
@@ -3482,7 +3499,7 @@ app.post("/v1/audio/speech", async (req, res) => {
      * Only after a successful synthesis: a failed call was never heard, and
      * feeding it forward would give the next sentence context for audio that
      * does not exist. */
-    rememberSpoken(ttsSessionKey, speakText);
+    rememberSpoken(ttsSessionKey, speakText, requestSequence);
 
     const parsed = wavBuffers.map(parseWav);
     const format = {

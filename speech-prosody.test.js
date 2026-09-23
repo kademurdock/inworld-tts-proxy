@@ -1,6 +1,17 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeInworldCaps, shapeFishPauses } = require('./speech-prosody');
+
+test('chunk carry follows the last direction, preserves sounds once, and obeys resets', () => {
+  const {carryChunkDirections}=require('./speech-prosody');
+  assert.deepEqual(carryChunkDirections(['[amused] One. [concerned] Two.', '[laugh] Three.', '[reset] Four.', 'Five.']),
+    ['[amused] One. [concerned] Two.', '[concerned] [laugh] Three.', '[reset] Four.', 'Five.']);
+  assert.deepEqual(carryChunkDirections(['[amused] One.', '[sigh] [sad] Two.', 'Three.']),
+    ['[amused] One.', '[sigh] [sad] Two.', '[sad] Three.']);
+  assert.deepEqual(carryChunkDirections(['[laugh] One.', 'Two.']), ['[laugh] One.', 'Two.']);
+  assert.deepEqual(carryChunkDirections(['[warm] One. [emphasis] Two.', '[short pause] Three.', '[inhale] Four.']),
+    ['[warm] One. [emphasis] Two.', '[warm] [short pause] Three.', '[warm] [inhale] Four.']);
+});
 test('ordinary emphasized words remain words while acronyms and steering survive', () => {
   assert.equal(normalizeInworldCaps('[IS this deliberate?] This IS it. NASA uses API and USB.'), '[IS this deliberate?] This is it. NASA uses API and USB.');
 });

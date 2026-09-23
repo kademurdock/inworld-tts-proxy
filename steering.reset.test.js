@@ -10,6 +10,14 @@ const fs = require('fs');
 const vm = require('vm');
 const sounds = require('./sounds');
 
+test('a mid-paragraph change, including reset, wins over its old opening direction', () => {
+  const apply = loadApplySteeringTags();
+  const out = apply('%%%amused%%% That was funny, %%%concerned%%% but are you okay?\n\nTell me what happened.');
+  assert.match(out, /\[concerned\] Tell me/);
+  const ended = apply('%%%amused%%% That was funny. %%%reset%%% Anyway.\n\nTell me what happened.');
+  assert.doesNotMatch(ended, /\[amused\] Tell me/);
+});
+
 // ── sounds.js ───────────────────────────────────────────────────────────────
 test('reset is recognised, case and spacing insensitive', () => {
   for (const v of ['reset', 'RESET', 'Reset', ' reset ', '[reset]'.slice(1, -1)]) {

@@ -26,9 +26,9 @@ test('real HTTP handler preserves delivery and speed in buffered, streamed, Fish
   assert.ok(calls.some(r=>r.body.temperature===.9));assert.ok(calls.some(r=>r.body.deliveryMode==='BALANCED'));
   for(const {body:b} of calls){assert.match(b.instruction||b.text,/delighted|warm/);assert.doesNotMatch(b.instruction||b.text,/unhurried|quick/);}
   // Sep 23 2026: Balanced with no direction of its own gets the lively baseline; a direction
-  // the character wrote always wins; Steady and Lively get none; no delivery means Balanced.
+  // the character wrote always wins; Steady and Lively get none; no delivery means Lively.
   const {LIVELY_BASELINE}=require('./speech-prosody');
-  for(const [delivery,input,want] of [['BALANCED','Plain words, nothing steering them.',LIVELY_BASELINE],[undefined,'Plain words again.',LIVELY_BASELINE],
+  for(const [delivery,input,want] of [['BALANCED','Plain words, nothing steering them.',LIVELY_BASELINE],[undefined,'Plain words again.',undefined],
     ['BALANCED','%%%whispering, sad%%% Plain words.','whispering, sad'],['STABLE','Plain words.',undefined],['CREATIVE','Plain words.',undefined]]){
    for(const stream of [false,true]){
     const before=rows().length;
@@ -37,7 +37,7 @@ test('real HTTP handler preserves delivery and speed in buffered, streamed, Fish
     const [call]=rows().slice(before);
     if(want==='whispering, sad'){assert.match(call.body.instruction||'',/whisper/);assert.notEqual(call.body.instruction,LIVELY_BASELINE);}
     else assert.equal(call.body.instruction,want,JSON.stringify([delivery,input,stream]));
-    assert.equal(call.body.deliveryMode,delivery||'BALANCED');
+    assert.equal(call.body.deliveryMode,delivery||'CREATIVE');
    }
   }
   const beforeFish=rows().length;

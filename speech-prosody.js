@@ -1,8 +1,8 @@
 'use strict';
 
 const { isNonVerbalSound, isResetTag } = require('./sounds');
-// Balanced/Steady preserve the feeling while keeping prose directions from
-// overriding the listener's speed. Lively retains intentional tempo acting.
+// Balanced/Steady also catch tempo phrases missed by the shared author-tempo
+// filter. Lively bypasses this extra filter, not the shared one in server.js.
 // Run before instruction lifting and Fish shaping, including saved replies.
 const TEMPO_DIRECTION = /\b(?:(?:not|never|do not|don't)\s+(?:too\s+)?)?(?:taking (?:your|her|his|their|its) time(?: with every word)?|picking up speed|slowing down|speeding up|at a crawl|no rush|rapid[- ]fire|double[- ]time|drawn[- ]out|slow(?:ly|er|ing)?|unhurried|unrushed|leisurely|languid(?:ly)?|fast(?:er)?|quick(?:ly|er)?|rapid(?:ly)?|brisk(?:ly)?|hurried(?:ly)?|rush(?:ed|ing)?|racing|breathless(?:ly)?|hastily|hasty|speedy|sluggish|glacial)(?:\s+(?:pace|pacing|tempo|cadence))?\b/gi;
 function shapeDeliveryPace(text, delivery) {
@@ -19,8 +19,9 @@ function shapeDeliveryPace(text, delivery) {
 
 /* Sep 23 2026, Kade: "I'd like to make the balanced mode sound as lively as possible via
  * steering, but lively in temp with inworld seems to go from yelling to whispering too much
- * and weird stuff like that, as if it lost context of what it's saying." So the default is
- * Balanced, which keeps the voice steady, and this direction asks for the energy. It goes in
+ * and weird stuff like that, as if it lost context of what it's saying." The
+ * Balanced trial used this direction to ask for energy. Lively is now the default;
+ * this remains available when a listener explicitly chooses Balanced. It goes in
  * Inworld's instruction field only when the reply gave no direction of its own: whatever a
  * character asked for (a whisper, a sad line) always wins. Steady and Lively are untouched.
  * No tempo words: speed stays the listener's. KADE_TTS_LIVELY_BASELINE=0 turns it off;
@@ -56,4 +57,24 @@ function shapeFishPauses(text) {
   return paced.replace(/\uE000(\d+)\uE001/g, (_, i) => tags[Number(i)]);
 }
 
-module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, LIVELY_BASELINE };
+// A provider call starts a new performance. Preserve the LAST active direction
+// at an artificial chunk boundary, including changes halfway through a paragraph.
+// A sound is a one-shot event; reset ends carry. This does not add sentence tags.
+function carryChunkDirections(chunks) {
+  let active = null;
+  const oneShot = tag => isNonVerbalSound(tag) || /^(?:(?:short |long )?pause|emphasis|inhale|exhale)$/i.test(tag.trim());
+  return chunks.map(chunk => {
+    const tags = [...String(chunk).matchAll(/\[([^\]\n]+)\]/g)];
+    const leading = String(chunk).match(/^\s*(?:\[[^\]\n]+\]\s*)+/)?.[0] || '';
+    const hasOpeningDirection = [...leading.matchAll(/\[([^\]\n]+)\]/g)]
+      .some(m => !oneShot(m[1]));
+    const out = active && !hasOpeningDirection ? `[${active}] ${chunk}` : chunk;
+    for (const tag of tags) {
+      if (isResetTag(tag[1])) active = null;
+      else if (!oneShot(tag[1])) active = tag[1];
+    }
+    return out;
+  });
+}
+
+module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, LIVELY_BASELINE, carryChunkDirections };

@@ -5,6 +5,7 @@ global.fetch=async(url,options)=>{
  const u=String(url);
  if(!['https://api.inworld.ai/tts/v1/voice','https://api.inworld.ai/tts/v1/voice:stream','https://api.fish.audio/v1/tts'].includes(u))throw Error('External network blocked by fixture');
  fs.appendFileSync(process.env.PROVIDER_RECEIPT,JSON.stringify({url:u,body:JSON.parse(options.body)})+'\n');
+ if(JSON.parse(options.body).text==='Context first request.')await new Promise(r=>setTimeout(r,150));
  if(u.endsWith(':stream'))return new Response(JSON.stringify({result:{audioContent:wav.toString('base64')}})+'\n', {headers:{'Content-Type':'application/x-ndjson'}});
  return u.includes('fish.audio')?new Response(pcm):Response.json({audioContent:wav.toString('base64')});
 };
