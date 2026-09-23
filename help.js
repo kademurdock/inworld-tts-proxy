@@ -685,6 +685,9 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>September 23, 2026: Dictated messages carry their context</h2>
+<p>Voice messages recorded in Android now tell your companion that the words came from speech transcription. The context stays with the message through draft edits, reopening the app and retrying a send. Recording still adds to your draft for review before sending. Review names if your phone often mishears them.</p>
+
 <h2>September 22, 2026: Android 2.15.1 reads cleanly and welcomes newcomers</h2>
 <p>Android <strong>2.15.1 (build 118)</strong> fixes something Android users have been living with: replies showed, and TalkBack read aloud, the directions meant for the voices, such as percent signs around &ldquo;warm, a little playful&rdquo;. Replies now read cleanly on the screen and in TalkBack, and the voices still get their directions.</p>
 <p>After signing in, a new person now lands right in a chat with their main character, with a short welcome and three starter ideas that fill the message box without sending. The sign-in screen says what the app is, accepts an email or a phone number, and has <strong>New here? Ask Kade to join</strong> and <strong>Forgot your password?</strong>, which opens the website&rsquo;s password reset.</p>
@@ -2233,6 +2236,9 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.15.2 (build 119): context for dictated messages</h2>
+<p>Voice messages recorded in Android now tell your companion that the words came from speech transcription. The context stays with the message through draft edits, reopening the app and retrying a send. Recording still adds to your draft for review before sending. Review names if your phone often mishears them.</p>
+
 <h2>Android 2.15.1 (build 118): clean replies and a friendlier start</h2>
 <p><strong>Replies read cleanly.</strong> The directions written for the voices (the words between percent signs), scene names in double brackets, and markdown stars no longer show in the chat or get read by TalkBack. Play still speaks with the voice directions. Notifications are cleaned the same way.</p>
 <p><strong>A friendlier first minute.</strong> Signing in opens a chat with your main agent (Kiana unless you chose someone else), with Chats underneath so Back still takes you to your list. A brand-new chat says who you are talking to and offers three starter ideas; choosing one puts it in the message box for you to send or change. Opening a saved chat now says <strong>Opening your conversation</strong> instead of pretending someone is replying.</p>
@@ -2260,7 +2266,7 @@ PAGES.android = {
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
 
-<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.15 for Android</a></p>
+<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.15.2 for Android</a></p>
 
 <h2>Project file import and export in 2.8</h2>
 <p>Android <strong>2.8 (build 109)</strong> adds <strong>Import a text file</strong> inside <strong>More &rarr; Projects</strong>. Choose a UTF-8 .txt, .md, .csv or .json file from Android's file picker. The app accepts up to 50,000 characters, rejects binary or invalid UTF-8 content, and stops reading oversized files. An imported file opens as a new, unsaved working-document draft. Review its name and contents, select Reference if appropriate, then choose <strong>Save a new version</strong> to upload it. Selecting a file alone never changes the saved project.</p>
