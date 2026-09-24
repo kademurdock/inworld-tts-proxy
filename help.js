@@ -1313,7 +1313,12 @@ PAGES.describe = {
 <h2>Android: it just shows up</h2>
 <p>On Android, install Kade-AI to your home screen (Chrome menu → Add to Home Screen) and <strong>Kade-AI appears in the regular share menu by itself</strong> — share a photo to it like you'd share to Messages.</p>
 
-<h2>The honest fine print</h2>
+<h2>Make a described video</h2>
+<p>For a video with spoken descriptions mixed into its soundtrack, open <a href="https://kademurdock.com/described-video">Make a described video</a>. Adult accounts can upload a video, paste a YouTube link, or start from a Library video they can access. Choose a narrator, description detail and speed. Try a preview, describe the whole video, or select a part. Standard mode fits narration into gaps; pause mode can briefly pause the picture and soundtrack for a description.</p>
+<p><strong>Price:</strong> the confirmation shows the estimated metered analysis cost and the maximum charge you approve. That maximum is reserved from your account balance. Unused money comes back when the run finishes or stops. There is no separate daily dollar allowance or five-dollar job cap. Narration, voice samples and re-voicing saved descriptions are included. Administrators' processing is paid by the platform. If further paid work needs a new approval, finished sections are kept.</p>
+<p>Optional first look surveys a longer video for context; closer look examines slower, larger clips. Both appear in the estimate. After processing, play or download the described video, audio or transcript. Review and correct individual descriptions, remake the narration, retry failed parts, or write fresh descriptions. Earlier finished versions stay available while a replacement is made.</p>
+<p>Progress is saved between sections so interrupted processing can continue. Finished copies expire after the date shown unless kept longer or saved to your Library. Library sharing is your choice; access to the describer does not grant access to someone else's private shelves. Video analysis uses Google Gemini through OpenRouter, dialogue timing uses Deepgram, and the platform narration service receives the description text.</p>
+<h2>Photo and document description details</h2>
 <ul>
   <li><strong>Cost:</strong> around a tenth of a cent per description — pocket lint, but it's on your <a href="/help/donate">Usage &amp; Balance</a> tab like everything else.</li>
   <li><strong>Privacy:</strong> the file itself is described and thrown away within the hour — it's never saved to the site. (The description text stays on your screen until you leave the page.)</li>
