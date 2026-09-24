@@ -2419,7 +2419,13 @@ function buildHome() {
 })();
 </script>`;
 }
-PAGES.library = { title: "The Library", h1: "The Library", tagline: "Books, Audio, and Videos, with your own place kept for you.", main: `<p>Open <a href="https://kademurdock.com/reading-room">The Library</a>, or on iPhone choose Home, Tools, The Library.</p>
+PAGES.library = { title: "The Library", h1: "The Library", tagline: "Books, Audio, and Videos, with your own place kept for you.", main: `<p>Open <a href="https://kademurdock.com/reading-room">The Library</a>, or use the Library tab on iPhone.</p>
+<h2>Talk to the Librarian</h2>
+<p>On the website, choose <strong>Talk to the Librarian</strong> to open a conversation with <strong>Mrs. Olivia Witherspoon</strong>. Speak or type using the usual chat, microphone, call and voice controls. She has a voice from the existing website catalog; your saved voice choice for her takes priority.</p>
+<p>Tell her a title, a few words, a brand, a station, a place, a decade, or something you remember. She can search the collection, offer likely matches with Library links, ask follow-up questions, and discuss an item. On an item's player page, <strong>Ask Mrs. Witherspoon about this item</strong> opens her chat with a question ready to send.</p>
+<p>Her searches use catalog facts, available source descriptions and existing scene notes. She can read passages from text books. Recordings without descriptions or transcripts may need more clues; a possible match is not a verified identification. She can see the shared library and your own available uploads, with the same account restrictions as the Library. She cannot change or delete your collection.</p>
+<p>The dedicated iPhone Library button is prepared for a future app update. This website release does not require an iPhone build.</p>
+<p>Mrs. Witherspoon has her own animated portrait during website voice-message playback, with blinking, expressions and speaking mouth shapes. It uses the same animation controls and reduced-motion setting as the main companions.</p>
 <h2>Reading voice and text</h2><p>Text books have a <strong>Delivery</strong> setting: Steady, Balanced, or Lively. The website saves it in this browser. The new iPhone TestFlight update saves it in the library voice picker on your phone, separately from your companions. Preview auditions use the same choice. Recorded books keep their original narrator.</p>
 <p>Marked DAISY and EPUB page numbers are left out of speech, including page markers inside a sentence. Existing books update when reopened. Ordinary numbers in the story stay. A number that was typed into the prose without a page marker may still be read.</p>
 <p><strong>Follow along</strong> offers larger, more widely spaced text with a highlighted current passage. This is passage highlighting, not word-by-word tracking, and does not move VoiceOver focus.</p>
