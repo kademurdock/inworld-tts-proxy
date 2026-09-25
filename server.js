@@ -4942,6 +4942,12 @@ if (VOICE_PICKER_V2 && VOICE_CATALOG_V2 && VOICE_CATALOG_V2.voices) {
     console.log(`[voice-catalog] integrity check: ${have.size} numbered voices, contiguous 1-${max}, no unexpected dupes.`);
   }
 }
+/* Describer picker (Sep 25 2026, Kade: "Fish audio voices sound less natural when sped up"):
+ * the picker labels that speak through fish.audio, so the describer can say so next to them.
+ * Labels only, never ids. */
+function fishPickerLabels() {
+  return VOICE_LIST.filter((label) => String(VOICE_MAP[label] || "").startsWith(FISH_VOICE_PREFIX));
+}
 const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
 // Short expressive audition monologue for every picker's browse-as-you-go
 // samples (rewritten July 22 2026 on Kade's spec: "something everyone can say
@@ -5215,7 +5221,7 @@ app.get("/voices.json", (_req, res) => {
   // union these with `voices` so stored old picks keep working forever.
   // `categories` (July 23 2026): ordered picker sections, presentation only.
   // `renames` / `describe` / `tags` (Part 118): see the VOICE CATALOG V2 block.
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS });
+  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS, fish: fishPickerLabels() });
 });
 
 // RETIRED July 3 2026 (Kade's call): the standalone Voice Library page is
