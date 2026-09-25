@@ -1926,7 +1926,11 @@ function messageText(msg) {
   return contentToText(msg.content);
 }
 
-async function lcAskStream(agentId, messages, onToken, userEmail) {
+// Sep 25 2026 (Part 291 review F11): opts.billCaller === true (the bridge marks a call the
+// caller started: inbound phone, app and web voice) adds kadeBillCaller: true, the ONLY thing
+// that lets the fork bill this turn to the person on the line when its KADE_VOICE_BILL_REAL
+// switch is on. lcAsk (friend texts, previews, briefs, canaries) never sends it.
+async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
   const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
@@ -1938,6 +1942,7 @@ async function lcAskStream(agentId, messages, onToken, userEmail) {
     parentMessageId: "00000000-0000-0000-0000-000000000000",
     isTemporary: true, // same fix as lcAsk above (July 15 2026) -- see comment there
     kadeOnBehalfOf: userEmail || undefined, // session 23 identity threading -- see lcAsk
+    kadeBillCaller: opts.billCaller === true ? true : undefined,
   };
 
   return paced(async () => {
@@ -2026,7 +2031,8 @@ async function lcAskStream(agentId, messages, onToken, userEmail) {
 // POST /librechat/ask-stream  { agentId, messages[] } -> SSE { token } stream
 router.post("/librechat/ask-stream", auth, async (req, res) => {
   const { agentId, messages, userEmail } = req.body;
-  console.log("[lcAskStream] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array", userEmail ? `onBehalfOf=${userEmail}` : "");
+  const billCaller = (req.body || {}).billCaller === true;
+  console.log("[lcAskStream] hit, agentId=", agentId, "msgs=", Array.isArray(messages) ? messages.length : "not array", userEmail ? `onBehalfOf=${userEmail}` : "", billCaller ? "billCaller" : "");
   if (!agentId || !Array.isArray(messages)) {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
@@ -2042,7 +2048,7 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
   try {
     await lcAskStream(agentId, messages, (token) => {
       try { res.write(`data: ${JSON.stringify({ token })}\n\n`); } catch {}
-    }, userEmail);
+    }, userEmail, { billCaller });
     res.write("data: [DONE]\n\n");
   } catch (err) {
     console.error("[lcAskStream] error:", err.message);
