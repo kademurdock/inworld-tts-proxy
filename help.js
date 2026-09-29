@@ -686,6 +686,9 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>September 29, 2026: Android public beta 2.16.1</h2>
+<p>This update fixes things you would notice every day in the Library. Every shelf and every search now shows its first page. Before, the first page was skipped. The app remembers your listening place when you pause from the lock screen or a headset, when you close a recording, and when a recording ends. A finished recording starts from the beginning next time. Your playback speed comes back with your place. Moving to the next reading passage is announced. The speed buttons say which speed is selected.</p>
+<p>Other fixes: when your sign-in expires, the app renews it instead of signing you out. Closing the Start Spotter notice with Back counts as Not now, so the call keeps working. If the server asks the app to slow down, buttons pause for a minute instead of staying off. <a href="/help/android">Download the latest Android beta</a> and install it over your existing copy.</p>
 <h2>September 29, 2026: Android public beta 2.16.0</h2>
 <p>The Android app now has five tabs: <strong>Talk, Library, Create, Play and More</strong>. Each keeps your place, with Back at the top left. Library browsing and playback, bookmarks, transcription, file descriptions, saved creations, prompts, alerts and announcements have new native Android screens. Spotter can share your camera during a live call after you turn it on.</p>
 <p>This is a public beta. Sound Booth generation, described video, the Clubhouse and several games still open the website inside the app. <a href="/help/android">Download the latest Android beta and read the directions</a>. Install over your existing copy.</p>
@@ -2262,6 +2265,16 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.16.1 (build 121): Library fixes</h2>
+<ul>
+<li>Every Library shelf and search shows its first page. Version 2.16.0 skipped it.</li>
+<li>Your listening place is saved when you pause from the lock screen or a headset, when you close a recording, and when it ends. A finished recording starts from the beginning. Your speed comes back with your place. Skipping back or ahead no longer jumps to the start while a part is still loading.</li>
+<li>Moving to the next or previous reading passage is announced to TalkBack. The speed buttons say which speed is selected.</li>
+<li>An expired sign-in is renewed instead of signing you out.</li>
+<li>Closing the Start Spotter notice with Back or a tap outside counts as Not now.</li>
+<li>If the server asks the app to slow down, the buttons on that screen pause for a minute instead of staying off.</li>
+</ul>
+<p>Checked with the app's automatic tests (172 passed). It has not been tried on a physical phone yet.</p>
 <h2>Android 2.16.0 (build 120): five tabs and more native screens</h2>
 <p><strong>Android is a public beta.</strong> This page always offers the latest checked release. Install it over your existing copy to keep your sign-in and saved drafts.</p>
 <p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI ${androidRelease.versionName} for Android</a></p>
