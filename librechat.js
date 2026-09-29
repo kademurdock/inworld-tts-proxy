@@ -531,7 +531,10 @@ async function agentPatchHandler(req, res) {
       if (typeof patch.instructions === "string") {
         return res.status(400).json({ error: "send either instructions OR find/replace/append, not both" });
       }
-      const cur = String((live && live.instructions) || "");
+      // `let`: the stale-read retry below re-reads it. As a const, a find that
+      // missed on the first read threw "Assignment to constant variable" and
+      // came back as a 502 instead of the intended re-read or 409.
+      let cur = String((live && live.instructions) || "");
       let next = cur;
       let occurrences = 0;
       if (typeof body.find === "string" && body.find.length > 0) {
@@ -1785,6 +1788,12 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
 
     // Read SSE: accumulate d.text (LibreChat sends full text-so-far in each chunk)
     let reply = "";
+    // Sep 29 2026: the site reports a turn it refused (the balance gate's
+    // "prepaid credit has run dry", a provider failure) as `event: error` +
+    // `data: {"error": "..."}`. Keep its words so a failed ask says WHY
+    // instead of "empty reply from agent" — the nightly battery read 24
+    // nulls on Sep 28 that were one dry test seat.
+    let siteError = "";
     const dec = new TextDecoder();
     let buf = "";
     let rawLines = [];
@@ -1797,6 +1806,7 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
         if (!line.startsWith("data: ")) continue;
         try {
           const d = JSON.parse(line.slice(6));
+          if (!siteError && d && typeof d.error === "string" && d.error.trim()) siteError = d.error.trim();
           // LibreChat streams text via on_message_delta events
           if (d.event === "on_message_delta" && Array.isArray(d.data?.delta?.content)) {
             for (const part of d.data.delta.content) {
@@ -1823,7 +1833,7 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     console.log("[lcAsk] SSE lines received:", rawLines.length);
     console.log("[lcAsk] first 5 lines:", JSON.stringify(rawLines.slice(0, 5)));
     console.log("[lcAsk] last 3 lines:", JSON.stringify(rawLines.slice(-3)));
-    if (!reply) throw new Error("empty reply from agent");
+    if (!reply) throw new Error(siteError ? `empty reply from agent (site said: ${siteError.slice(0, 240)})` : "empty reply from agent");
     if (opts.deleteAfter && bornConversationId) {
       // Fire-and-forget through the same paced lane; a failed delete is
       // only cosmetic (the convo is still isTemporary), never a failed ask.

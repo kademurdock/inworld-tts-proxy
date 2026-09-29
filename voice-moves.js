@@ -183,6 +183,12 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
     return n;
   }
 
+  /* Sep 29 2026: a row the mover cannot apply (a tagless label such as a
+   * personal voice) stays open for a person, but it is only WARNED once per
+   * reason. Row 6ab6e3d3… warned every five minutes for four days (976 lines)
+   * and buried everything else the proxy logged at error level. */
+  const warnedWhy = new Map();
+
   async function sweepOpen() {
     const rows = await get("/librechat/feedback?status=open");
     const list = Array.isArray(rows) ? rows : rows.rows || [];
@@ -195,7 +201,15 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
       const describedAs = parsed ? state.VOICE_DESCRIBE && state.VOICE_DESCRIBE[parsed.label] : null;
       const sections = (state.VOICE_PICKER_CATEGORIES || []).map((c) => c.name);
       const res = applyReport(state, row);
-      if (!res.ok) { warn(`[voice-moves] could not move from row ${row._id}: ${res.why}`); continue; }
+      if (!res.ok) {
+        const id = String(row._id);
+        if (warnedWhy.get(id) !== res.why) {
+          warnedWhy.set(id, res.why);
+          warn(`[voice-moves] could not move from row ${row._id}: ${res.why} (left open for a person; not repeated)`);
+        }
+        continue;
+      }
+      warnedWhy.delete(String(row._id));
       /* Fire and forget: the regex has already decided and the move is done. */
       if (parsed && !res.already) {
         const input = { label: parsed.label, report: parsed.heard, filedUnder: parsed.heading };

@@ -154,3 +154,21 @@ test("jev shadow: off (no key / kill switch) means Jev is never called and nothi
   assert.equal(called, 0);
   assert.equal(h.lines.filter((l) => l.startsWith("[voice-move][jev]")).length, 0);
 });
+
+test("an unmovable report (tagless label) is warned once per reason, stays open, and is not re-warned every sweep", async () => {
+  const s = freshState();
+  const posted = [];
+  const warned = [];
+  const rows = [
+    { _id: "d".repeat(24), subject: "Voice in the wrong section: Kade Murdock", status: "open", detail: detail("Kade Murdock", "Women", "a woman") },
+  ];
+  const fetchImpl = async (url, opts = {}) => {
+    if (opts.method === "POST") { posted.push(JSON.parse(opts.body)); return { ok: true, json: async () => ({ ok: true }) }; }
+    return { ok: true, json: async () => rows };
+  };
+  const runner = vm.makeRunner({ state: s, port: 1, secret: "x", log() {}, warn: (l) => warned.push(l), fetchImpl });
+  for (let i = 0; i < 5; i++) assert.equal(await runner.sweepOpen(), 0);
+  assert.equal(posted.length, 0, "the row is left open for a person");
+  assert.equal(warned.length, 1, "one warning, not one per sweep");
+  assert.match(warned[0], /could not move from row d{24}: label has no tag/);
+});
