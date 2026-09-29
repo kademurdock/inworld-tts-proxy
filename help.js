@@ -686,6 +686,10 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>September 29, 2026: longer Spotter calls, plainer Reverie, and a describer fix</h2>
+<p><strong>Spotter calls keep going.</strong> Google ends every live connection after about ten minutes. Before, your Spotter call handed back to your character at that point. Now the call moves to a fresh connection and keeps going, and your Spotter remembers what was said.</p>
+<p><strong>Reverie reads more plainly.</strong> The older places in the city, from Court Street to the Lantern Rows, now use shorter sentences and everyday words. Each direction has its own sentence. The jokes and details are still there.</p>
+<p><strong>Described video.</strong> Making a new version with different narration, or fixing a line of the script, stopped at once and asked for more money even though narration is free. That is fixed.</p>
 <h2>September 29, 2026: Android public beta 2.16.1</h2>
 <p>This update fixes things you would notice every day in the Library. Every shelf and every search now shows its first page. Before, the first page was skipped. The app remembers your listening place when you pause from the lock screen or a headset, when you close a recording, and when a recording ends. A finished recording starts from the beginning next time. Your playback speed comes back with your place. Moving to the next reading passage is announced. The speed buttons say which speed is selected.</p>
 <p>Other fixes: when your sign-in expires, the app renews it instead of signing you out. Closing the Start Spotter notice with Back counts as Not now, so the call keeps working. If the server asks the app to slow down, buttons pause for a minute instead of staying off. <a href="/help/android">Download the latest Android beta</a> and install it over your existing copy.</p>
