@@ -5280,7 +5280,12 @@ app.post("/v1/audio/transcriptions", (req, res) => {
       if(!dg.ok) return res.status(502).json({ error: (j && (j.err_msg || j.message)) || "Deepgram error" });
       const alt = (j && j.results && j.results.channels && j.results.channels[0] &&
                    j.results.channels[0].alternatives && j.results.channels[0].alternatives[0]) || {};
-      return res.json({ text: (alt.transcript || "").trim() });
+      const text = (alt.transcript || "").trim();
+      // Sep 29 2026: an empty transcript reaches the site as "Missing data in
+      // response from the STT API" (Amber A, three in a row on Sep 28) and
+      // nothing here said why. One line: what arrived and what Deepgram heard.
+      if(!text) console.warn(`[stt] empty transcript: ${audio.length} bytes, sent as ${ct} (part said ${partType || "nothing"}), Deepgram heard ${j && j.metadata && j.metadata.duration != null ? Number(j.metadata.duration).toFixed(1) + " s" : "no duration"}, confidence ${alt.confidence != null ? alt.confidence : "none"}`);
+      return res.json({ text });
     } catch(e){ return res.status(502).json({ error: String(e) }); }
   });
   req.pipe(bb);
