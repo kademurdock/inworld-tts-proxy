@@ -3,6 +3,21 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { SECTIONS, PAGES, renderPage } = require('./help');
 
+test('Android public beta download matches its release manifest and label', async t => {
+  const release = require('./android-release.json');
+  const app = require('express')(); app.use(require('./help'));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/Kade-AI.apk`);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-disposition'), /attachment/);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'), release.sha256);
+  assert.ok(PAGES.android.main.includes(`Download Kade-AI ${release.versionName} for Android`));
+  assert.match(PAGES.android.main, /public beta/);
+});
+
 test('Windows download serves the packaged executable with its expected hash', async t => {
   const crypto = require('node:crypto');
   const app = require('express')(); app.use(require('./help'));

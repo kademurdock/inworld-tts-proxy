@@ -19,6 +19,7 @@
 
 const express = require("express");
 const nodePath = require("path");
+const androidRelease = require("./android-release.json");
 const router = express.Router();
 
 const CHAT_URL = "https://kademurdock.com";
@@ -685,6 +686,10 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>September 29, 2026: Android public beta 2.16.0</h2>
+<p>The Android app now has five tabs: <strong>Talk, Library, Create, Play and More</strong>. Each keeps your place, with Back at the top left. Library browsing and playback, bookmarks, transcription, file descriptions, saved creations, prompts, alerts and announcements have new native Android screens. Spotter can share your camera during a live call after you turn it on.</p>
+<p>This is a public beta. Sound Booth generation, described video, the Clubhouse and several games still open the website inside the app. <a href="/help/android">Download the latest Android beta and read the directions</a>. Install over your existing copy.</p>
+
 <h2>September 23, 2026: Dictated messages carry their context</h2>
 <p>Voice messages recorded in Android now tell your companion that the words came from speech transcription. The context stays with the message through draft edits, reopening the app and retrying a send. Recording still adds to your draft for review before sending. Review names if your phone often mishears them.</p>
 
@@ -2241,6 +2246,15 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.16.0 (build 120): five tabs and more native screens</h2>
+<p><strong>Android is a public beta.</strong> This page always offers the latest checked release. Install it over your existing copy to keep your sign-in and saved drafts.</p>
+<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI ${androidRelease.versionName} for Android</a></p>
+<p><strong>Talk, Library, Create, Play and More</strong> match the iPhone's main sections. Each tab keeps your place; tap the selected tab again to return to its first screen. Back is at the top left. Search finds screens, characters, recent chats and Library items.</p>
+<p><strong>Library</strong> has shelves, search, recently opened items, collections, reading positions and bookmarks. Recordings play in a native player with speed, skip and media controls. Text books have chapters and readable passages. Narration and advanced Library tools still use the website.</p>
+<p><strong>Call your Spotter</strong> is on Talk. Choose Start call, allow the microphone, and use <strong>Show my surroundings</strong> to allow and turn on the camera. Front/back camera and light controls are available during the call. Camera sharing pauses when you leave the call screen or the app goes into the background.</p>
+<p><strong>Describe</strong> accepts a chosen photo, short video or document. <strong>Transcribe</strong> records words into text you can review, edit, copy or share. Bookmarks, prompts, My Creations, Wall of Fame, alerts, full announcements and searchable settings now have Android screens too.</p>
+<p><strong>Still opening the website:</strong> Sound Booth generation, described video, Clubhouse rooms, several games, the character builder and advanced account tools. The native Android app is not yet fully caught up with the iPhone app.</p>
+<h2>Earlier Android updates</h2>
 <h2>Android 2.15.2 (build 119): context for dictated messages</h2>
 <p>Voice messages recorded in Android now tell your companion that the words came from speech transcription. The context stays with the message through draft edits, reopening the app and retrying a send. Recording still adds to your draft for review before sending. Review names if your phone often mishears them.</p>
 
@@ -2270,8 +2284,6 @@ PAGES.android = {
 <p>Already have the old app? Just download and install again &mdash; the new one goes right over the top, nothing to uninstall, and you stay signed in to the same account.</p>
 
 <p>iPhone person instead? Kade-AI is on the App Store now: <a href="https://apps.apple.com/app/id6791024001">get the iPhone app</a>, or see <a href="/help/iphone">The iPhone App</a>.</p>
-
-<p><a class="cta" href="https://kademurdock.com/help/android-download" download>Download Kade-AI 2.15.2 for Android</a></p>
 
 <h2>Project file import and export in 2.8</h2>
 <p>Android <strong>2.8 (build 109)</strong> adds <strong>Import a text file</strong> inside <strong>More &rarr; Projects</strong>. Choose a UTF-8 .txt, .md, .csv or .json file from Android's file picker. The app accepts up to 50,000 characters, rejects binary or invalid UTF-8 content, and stops reading oversized files. An imported file opens as a new, unsaved working-document draft. Review its name and contents, select Reference if appropriate, then choose <strong>Save a new version</strong> to upload it. Selecting a file alone never changes the saved project.</p>
