@@ -838,6 +838,8 @@ router.post("/librechat/publish", auth, async (req, res) => {
   }
 });
 
+require("./monthly-books").attachMonthlyBooks(router, { auth, lc });
+
 // GET /librechat/usage?days=30 -> admin usage dashboard data (spend per user/service)
 router.get("/librechat/usage", auth, async (req, res) => {
   const days = parseInt(req.query.days, 10) || 30;
