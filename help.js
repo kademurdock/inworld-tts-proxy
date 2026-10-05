@@ -661,6 +661,7 @@ PAGES.createacharacter = {
   tagline: "Describe who you want, or answer eight easy questions. Either way, a friend of your own making at the end — portrait and all.",
   main: `
 <p class="lead">You don't need to know anything about AI to make somebody worth talking to, and now you don't have to find the right words either. Go to <strong>kademurdock.com/create-a-character</strong> and pick one of two ways in.</p>
+<p>Character drafts include suggested opening lines. Review them alongside the personality. In the builder, <strong>Suggest starters from this personality (free)</strong> makes a new set without a writing charge. Keep up to 24 lines, edit any of them, and save when they fit your character.</p>
 <h2>Way one: just describe them</h2>
 <p>There's a box. Say who you want, however it comes out — "a therapist who works the way acceptance and commitment therapy does, but borrows from other approaches when it fits," or "my grandma's kitchen in a person," or one sentence, or five. Press the button and a <strong>full, detailed personality gets written for you</strong>: who they are, where they come from, how they talk, what they will and won't do, and a page of lines in their own voice so they actually sound like somebody.</p>
 <p>Then comes the part that matters. It asks you <strong>two or three questions</strong> — the ones whose answers would make them better. Things like "what does she sound like when she disagrees with you?" Answer one, or all of them, or none, and press deepen. It rewrites, keeping everything it already had. You can go around as many times as you like, and every word stays yours to edit.</p>
@@ -1351,6 +1352,8 @@ PAGES.characters = {
   h1: "Characters & the Marketplace",
   tagline: "Kiana's your host — but she brought friends. A whole marketplace of them.",
   main: `
+<h2>A fresh way into a conversation</h2>
+<p>A new chat shows four suggested opening lines from that character's own interests and personality. The selection changes between conversations and stays steady while you are choosing or typing. Tap one to put it in the message box, or say whatever you came to say. There is no extra charge for showing a new selection.</p>
 <p class="lead">A <strong>character</strong> (you might also see the word <strong>agent</strong>) is an AI with its own personality and specialty. Kiana is the all-rounder who greets everybody. The rest each have a thing they're great at.</p>
 
 <h2>What's in there</h2>
@@ -1612,6 +1615,7 @@ PAGES.build = {
   tagline: "Yes, you. No coding, no jargon. If you can describe a person, you can make one.",
   main: `
 <p class="lead">Want an AI that talks exactly how you like, or knows about exactly your hobby? You can make your own character in a few minutes.</p>
+<p><strong>Conversation starters</strong> are things someone can say to your character. Save up to 24, with a fresh selection of four shown in each new chat. The free suggestion button uses the personality you have written. Suggestions stay editable and do not save themselves.</p>
 
 <h2>The gentle version</h2>
 <ol>
@@ -1663,6 +1667,11 @@ PAGES.memory = {
   tagline: "It can remember helpful things about you over time — but it's not reading your mind. Here's the honest version.",
   main: `
 <p class="lead">Kade-AI has a <strong>memory</strong> feature. Over time, it holds onto useful facts you've shared, so you don't have to repeat yourself in every new chat.</p>
+
+<h2>Getting to know people and developing a perspective</h2>
+<p>Characters can recognize people they have talked to and keep track of introductions. Knowing a name is different from meeting someone. If two people share a name, the character may ask which one you mean. Recognizing an acquaintance does not give the character permission to share that person's private conversations or personal details.</p>
+<p>Each character can develop its own impressions, interests and opinions from actual conversations. Liking somebody, trusting their claims and feeling at ease with them are different things. A character can disagree while treating you with respect. Its reflections keep track of what changed its mind and what still holds. Imagined scenes and dreams do not establish facts about real people.</p>
+<p>Your relationship reflections stay private to your conversations with that character. Turning remembering off stops personal recall and new relationship reflection, including on the phone. The character's own established identity and general history continue. You can ask it to forget an impression about you as well as a fact.</p>
 
 <div class="term"><strong>Memory cards</strong> — each thing it remembers is its own small card, one topic per card: "has a dog named Biscuit," "hates cilantro," "going to the Shinedown show in July." Like a friend remembering the gist of you, not a recording of everything you've ever said. Each card can be looked at, fixed, or thrown out on its own.</div>
 
