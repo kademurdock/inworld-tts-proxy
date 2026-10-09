@@ -688,6 +688,10 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>October 8, 2026: clearer characters and Android 2.16.3</h2>
+<p><strong>Character portraits on the website are easier to see and control.</strong> Voice replies have a larger portrait, a clear playback status, and Pause or Resume. Describe character opens a written description of a supported character's current portrait. You can use it with animated faces hidden. Portrait movement pauses when audio buffers or the picture leaves the screen.</p>
+<p><strong>Android characters change expressions more smoothly</strong> and keep the right face when you change speakers. Describe character is available in chats and calls, including with faces hidden. You can search inside a conversation, return to a running call, and open a finished call as written chat.</p>
+<p>Companion call notices offer Answer and Not now. Calls preserve connected headphones and hearing aids; Audio check shows the output and volume. Spotter camera controls and reconnecting are clearer. Sign-in details and signed-in web cookies stay out of Android backups. <a href="/help/android">Download Android 2.16.3</a> and install it over your existing copy. Physical phone, TalkBack, Bluetooth, and real incoming-call checks remain open.</p>
 <h2>October 5, 2026: grounded song drafts and clearer lyric spacing</h2>
 <p>The Sound Booth song desk has revised instructions for plain, singable phrases that stay on your subject. A soulful voice or R&amp;B style does not call for an invented romance, and encouragement can leave real problems unresolved. Supplied refrains and their repeated words take priority. Generated lyrics now keep section tags on their own lines, the lines of each section together, and one blank line between sections. Your own lyrics keep their formatting. Read the draft and adjust any line you would not sing before making a take.</p>
 <h2>October 2, 2026: Sound Booth fixes, a family sky, and iPhone 2.2.3</h2>
@@ -1354,6 +1358,9 @@ PAGES.characters = {
   h1: "Characters & the Marketplace",
   tagline: "Kiana's your host — but she brought friends. A whole marketplace of them.",
   main: `
+<h2>See or describe a character</h2>
+<p>When a voice message plays on the website, its character has a larger portrait with a Pause or Resume button. The picture shows whether playback is speaking, paused or buffering. Use <strong>Describe character</strong> to open a written description of a prepared portrait. This remains available when <strong>Animated voice portraits</strong> is off, and opening it keeps the audio playing.</p>
+<p>Portrait motion follows Reduce Motion. The changing picture stays out of the screen reader's reading order; its controls and description remain available. A newly replaced picture may not have a description yet.</p>
 <h2>A fresh way into a conversation</h2>
 <p>A new chat shows four suggested opening lines from that character's own interests and personality. The selection changes between conversations and stays steady while you are choosing or typing. Tap one to put it in the message box, or say whatever you came to say. There is no extra charge for showing a new selection.</p>
 <p class="lead">A <strong>character</strong> (you might also see the word <strong>agent</strong>) is an AI with its own personality and specialty. Kiana is the all-rounder who greets everybody. The rest each have a thing they're great at.</p>
@@ -2232,10 +2239,9 @@ PAGES.iphone = {
   h1: "The iPhone App",
   tagline: "Kade-AI is on the App Store. One link, no searching.",
   main: `
-<h2>Expressive portraits and voice calls, TestFlight build 281</h2>
-<p>TestFlight <strong>282</strong> adds more varied blinking, brow movement during pauses, and smoother head movement for Kiana and Della. The signed update is available to internal testers. The public App Store submission remains version 2.0.2, build 281, awaiting Apple review.</p>
-<p>While a voice message plays, its character appears beside the reply. This also works while a new reply is arriving. Kiana and Della have individual eye, mouth and brow movement with actual playback; other characters keep their own portrait with gentle movement. Voice calls can show the originating companion while listening, thinking and speaking. Pausing stops the animation. The transcript and VoiceOver actions are unchanged.</p>
-<p>Use <strong>Settings &rarr; Feedback &amp; Sounds &rarr; Animated voice portraits</strong> to turn the picture off. Reduce Motion, Low Power Mode and backgrounding keep it still. The picture is decorative and does not add VoiceOver stops. Build 281 is in TestFlight. Version 2.0.2 has been submitted for public App Store review; the store stays on its earlier version until Apple approves the update.</p>
+<h2>Character portraits and voice calls</h2>
+<p>The character's face stays above the conversation and responds while you listen to a voice message. Prepared portraits have their own eye, mouth and expression movements. Other characters keep their own picture. Voice calls can show the companion while listening, thinking and speaking. The transcript remains available throughout.</p>
+<p>Use <strong>Settings &rarr; Feedback &amp; Sounds &rarr; Animated character face</strong> to turn the picture off. Reduce Motion, Low Power Mode and backgrounding keep it still. The moving picture does not add VoiceOver stops or speak over the conversation. TestFlight may offer a newer version than the App Store; check <strong>Settings &rarr; Support</strong> for your installed version.</p>
 
 <p class="lead">As of September 5, 2026, Kade-AI is a real App Store app. No more invitations, no TestFlight, no waiting on Kade to add you &mdash; open the link and install it like anything else.</p>
 
@@ -2296,6 +2302,15 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.16.3 (build 123): characters, conversations, and calls</h2>
+<ul>
+<li>Expressions change smoothly, and changing characters clears the previous portrait immediately. Describe character opens a scrollable description of the current supported portrait in chat or calls, even with faces hidden.</li>
+<li>Search inside a conversation, copy or share a message, return to your running call, and open a finished call as written chat.</li>
+<li>Companion call notices have separate Answer and Not now choices. Opening a notice does not start your microphone; Answer is a deliberate action.</li>
+<li>Calls preserve connected headphones and hearing aids. Audio check reports the output and volume. Spotter's camera controls and reconnecting are clearer.</li>
+<li>Sign-in details, call-answer proofs, drafts, and signed-in web cookies stay out of Android backups.</li>
+</ul>
+<p>The 257-test suite and corrected focused retest, lint, release assembly, package signature, and file alignment checks passed. Large-text screens were inspected at 200%. Physical phone, TalkBack, Bluetooth, and real push delivery have not been tested yet.</p>
 <h2>Android 2.16.1 (build 121): Library fixes</h2>
 <ul>
 <li>Every Library shelf and search shows its first page. Version 2.16.0 skipped it.</li>
