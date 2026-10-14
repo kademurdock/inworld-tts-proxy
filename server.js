@@ -50,12 +50,13 @@ const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 // VOICE_MAP targets prefixed "fish:<model_id>" route to fishSynthesizeChunk
 // below instead of Inworld; everything downstream (chunking, silence splice,
 // loudness EMA, telephony mu-law, /voices.json) is provider-blind.
-// Paid s2.1-pro remains Kade's chosen tier, explicitly sent in the model header.
-// S2 understands free-form bracket directions; S1 used a different dialect.
+// Drama3 is Kade's chosen model, explicitly sent in the model header.
+// Drama3 and S2 understand free-form bracket directions; S1 used a different dialect.
 // Sentence reseeding is OFF by default after measured repeat/gibberish failures.
 // Current provider contracts, context limits and sources: VOICE_PROVIDER_GUIDE.md.
 const FISH_API_KEY = process.env.FISH_API_KEY;
-const FISH_TTS_MODEL = process.env.FISH_TTS_MODEL || "s2.1-pro";
+const FISH_TTS_MODEL = process.env.FISH_TTS_MODEL || "drama-3";
+const FISH_TTS_MODELS = new Set(["drama-3", "drama-3-preview", "s2.1-pro", "s2.1-pro-free", "s2-pro", "s1"]);
 const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|balanced|low
 // Fish clones speak at their source sample's natural pace — do NOT inherit
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
@@ -1493,6 +1494,11 @@ const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
 const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
 
 async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery) {
+  // Fish silently falls back to S2.1 Pro for an unknown header. Refuse typos
+  // before a paid request, while keeping Inworld and the explicit rollback usable.
+  if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
+    throw new Error("Unsupported FISH_TTS_MODEL; choose an exact Fish API model name.");
+  }
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
   let response;
@@ -1592,6 +1598,7 @@ app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     service: "inworld-tts-proxy",
+    fishModel: FISH_TTS_MODEL,
     chunksToday: {
       ...today,
       day: centralDay(),

@@ -1,6 +1,6 @@
 # Voice delivery: provider behavior and platform decisions
 
-Reviewed against official documentation September 23, 2026. This file supersedes dated explanatory comments when they describe an older provider behavior. The implementation and request receipts remain the evidence for what actually runs.
+Reviewed against official documentation October 13, 2026 (Fish Drama3); Inworld review September 23, 2026. This file supersedes dated explanatory comments when they describe an older provider behavior. The implementation and request receipts remain the evidence for what actually runs.
 
 ## Inworld
 
@@ -16,15 +16,17 @@ Sources: [steering](https://docs.inworld.ai/tts/capabilities/steering), [streami
 
 ## Fish Audio
 
-The production model remains `s2.1-pro`, selected in the HTTP `model` header. S2 understands free-form bracket descriptions learned from training; these are not a guaranteed finite command language. S1's parenthesis dialect is different. Use sparse, compatible descriptions close to the affected words. Keep sounds separate from persistent attitude; avoid repeated cue resets and contradictory combinations.
+The default is `drama-3`, selected explicitly in the HTTP `model` header for every Fish voice. Existing reference IDs and the shared PCM path remain the same. `FISH_TTS_MODEL=s2.1-pro` is an explicit rollback. Unknown model names are refused before synthesis, because Fish otherwise silently falls back to S2.1 Pro. Drama3 retains free-form bracket descriptions and supports scoped paired tags; this change does not rewrite authored directions or add new tags. S1's parenthesis dialect is different. Use sparse, compatible descriptions close to the affected words. Keep sounds separate from persistent attitude; avoid repeated cue resets and contradictory combinations.
 
 Current production defaults: temperature 0.9, top-p 0.85, normal latency, source speed 1.0, and our existing text normalization before synthesis. Explicit delivery maps Steady/Balanced/Lively to 0.5/0.9/1.0. Fish's latency value named `balanced` is a speed/quality setting, unrelated to our Delivery picker. Keep normal latency for the quality baseline. Per-sentence reseeding stays off. The one-paragraph request boundary and bounded sentence pauses remain because earlier platform trials found repeated/gibberish output with joined paragraphs; this session fixes lost directions without discarding that evidence.
 
-The API documents `condition_on_previous_chunks` (default true) for audio continuity **inside a request**. It is not a previous-conversation-text field. Do not prepend earlier dialogue to Fish's `text`: it would be spoken again. The current separate HTTP requests cannot share that internal audio state. Longer requests or WebSocket contexts need fresh fidelity and latency trials before replacing the measured short-request path. No experimental model, quality-guard flag, or new paid voice training was enabled.
+The API documents `condition_on_previous_chunks` (default true) for audio continuity **inside a request**. It is not a previous-conversation-text field. Do not prepend earlier dialogue to Fish's `text`: it would be spoken again. The current separate HTTP requests cannot share that internal audio state. Longer requests or WebSocket contexts need fresh fidelity and latency trials before replacing the measured short-request path. No quality-guard flag or new paid voice training was enabled.
+
+Published Drama3 API pricing is $10 per million characters through November 12, 2026, then $50 per million. This is separate from creator subscription credits. Previous paid S2.1 Pro pricing was $15 per million UTF-8 bytes. The proxy does not calculate user charges from a hard-coded Fish rate. These are published rates, not an invoice measurement. Self-hosting requires a separate hardware and license assessment; open weights do not remove the Community License's restriction on providing a TTS or cloning service to others.
 
 Fish's API schema currently says normal latency and chunk length 300 are defaults, while its prose guide gives balanced and 200. We explicitly send normal latency and treat the API schema/request receipts as authoritative. Its model overview describes broader S2 language support than the older emotion reference. Do not copy S1 examples or stale comments into S2 wiring. Old comments claiming a guaranteed sentence-only cue scope or a currently expired free tier are historical, not current provider contracts.
 
-Sources: [models and S2 controls](https://docs.fish.audio/developer-guide/models-pricing/models-overview), [emotion guidance](https://docs.fish.audio/developer-guide/core-features/emotions), [TTS API schema](https://docs.fish.audio/api-reference/endpoint/openapi-v1/text-to-speech), [TTS guide](https://docs.fish.audio/features/text-to-speech), [clone recording](https://docs.fish.audio/developer-guide/best-practices/voice-cloning), [pricing](https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits).
+Sources: [Drama3 release, pricing and license summary](https://fish.audio/blog/fish-audio-drama-3/), [Drama3 API controls](https://docs.fish.audio/features/text-to-speech/drama-3), [models and S2 controls](https://docs.fish.audio/developer-guide/models-pricing/models-overview), [emotion guidance](https://docs.fish.audio/developer-guide/core-features/emotions), [TTS API schema](https://docs.fish.audio/api-reference/endpoint/openapi-v1/text-to-speech), [TTS guide](https://docs.fish.audio/features/text-to-speech), [clone recording](https://docs.fish.audio/developer-guide/best-practices/voice-cloning), [pricing](https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits).
 
 ## Verification and limits
 
