@@ -6,7 +6,13 @@ const { SCENES, POOLS, audienceFor, pickScene, createScenePicker } = require('./
 
 test('all published voices route by their actual catalog group, including binding aliases', () => {
   const rows = require('./selected-voices.json').voices;
-  assert.equal(rows.length,598);
+  assert.equal(rows.length,601);
+  for (const label of ['Miss-A (Amber A)', 'Kadiana (Expressive)', 'Kade (HQ)']) {
+    const row = rows.find(value => value.label === label);
+    assert.ok(row, `Missing family voice: ${label}`);
+    assert.ok(row.categories.every(category => category.startsWith('Women, ')));
+    assert.equal(audienceFor(row.categories), 'adults');
+  }
   for (const row of rows) {
     const expected = row.categories.some(c => c.startsWith('Kids and teens,')) ? 'kids'
       : row.categories.some(c => c.startsWith('Characters,')) ? 'characters' : 'adults';

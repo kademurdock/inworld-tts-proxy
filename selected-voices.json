@@ -1,5 +1,5 @@
 {
-  "version": "selected-drama3-20261014-lalal",
+  "version": "selected-drama3-20261014-lalal-family",
   "descriptionModel": "xiaomi/mimo-v2.6-flash",
   "voices": [
     {
@@ -10234,6 +10234,57 @@
       "metadataSha256": "b17360c6d23c6d4e98e7a5164d853b5dd0e479c47c89e943a8f16927e7daf7bb",
       "referenceKey": "voice-references/20261014/23a6c8529edb27afe95e9c26d9a9e974a9803f394c41cb48358200f139425631.mp3",
       "metadataKey": "voice-references/20261014/23a6c8529edb27afe95e9c26d9a9e974a9803f394c41cb48358200f139425631.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_bf1767b03e81b7b7",
+      "label": "Miss-A (Amber A)",
+      "tag": "miss-a",
+      "description": "Miss-A, also known as Amber A. A clear, smooth, mid-range feminine voice with gentle brightness and an American accent. The reference has an even conversational delivery and crisp articulation, suited to everyday chat and relaxed narration.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Warm & Soothing"
+      ],
+      "language": "English",
+      "accent": "Standard American",
+      "sha256": "93698c5c588571b994f7bf320b69c4a35568ad1dc870e32fc3158738971a09aa",
+      "metadataSha256": "5bba182ea0ff72515281e8002b0a2ddea474e49fd4f4e5d1ce9f3ea85cd50e59",
+      "referenceKey": "voice-references/20261014/93698c5c588571b994f7bf320b69c4a35568ad1dc870e32fc3158738971a09aa.mp3",
+      "metadataKey": "voice-references/20261014/93698c5c588571b994f7bf320b69c4a35568ad1dc870e32fc3158738971a09aa.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_98888fc96b2b118f",
+      "label": "Kadiana (Expressive)",
+      "tag": "kadiana",
+      "description": "Kade’s Kadiana voice. A smooth, gently textured feminine voice with an American accent, clear articulation and a measured pace. The reference moves from reflective narration to a candid conversational delivery, with quieter emphasis.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Warm & Soothing"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "6de0e948769222ff2058c1de979fe39c92f7b261a4d89c9aec5661f015c91841",
+      "metadataSha256": "1448cd867d9c11f308db9863e78edfecbc9c0196d7919581ae77b6102c96066f",
+      "referenceKey": "voice-references/20261014/6de0e948769222ff2058c1de979fe39c92f7b261a4d89c9aec5661f015c91841.mp3",
+      "metadataKey": "voice-references/20261014/6de0e948769222ff2058c1de979fe39c92f7b261a4d89c9aec5661f015c91841.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_766d05487fa1b67b",
+      "label": "Kade (HQ)",
+      "tag": "kade-hq",
+      "description": "Kade’s HQ voice. A bright, smooth feminine voice with a mid-to-high pitch and an American accent. The reference is animated and conversational, moving between relaxed phrases and lively emphasis while keeping the words clear.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Light & Youthful"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "faede21f8527ee09ef569482a1a8a2e43e06ce4b2ba4f636460be024ec039727",
+      "metadataSha256": "5e95f3a3a91a17f470a4906581217f41e607986daebb53159edf94e7dd3a3d10",
+      "referenceKey": "voice-references/20261014/faede21f8527ee09ef569482a1a8a2e43e06ce4b2ba4f636460be024ec039727.mp3",
+      "metadataKey": "voice-references/20261014/faede21f8527ee09ef569482a1a8a2e43e06ce4b2ba4f636460be024ec039727.json",
       "testedModel": "drama-3"
     }
   ]
