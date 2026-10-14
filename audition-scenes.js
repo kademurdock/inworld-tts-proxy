@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
 
 // October 14: curated, group-aware scripts. %%% cues use the existing Drama3
 // adapter (and retained Inworld adapter); no model call writes these scripts.
@@ -54,6 +56,30 @@ const SCENES = [
   ['adults','book','hopeful',"He put two cups on the counter, then moved one back into the cupboard. A moment later, there was a knock. He took the cup out again and went to answer the door.","He put the second cup away. Then someone knocked at the door."],
 ];
 
+// Each original scene has a full reading and a short excerpt for the wheel.
+// Fixed local files keep previews predictable and require no generation call.
+for (const audience of ['kids', 'characters', 'adults']) {
+  for (const kind of ['conversation', 'book']) {
+    const file = `${audience}-${kind}.txt`;
+    const lines = fs.readFileSync(path.join(__dirname, 'audition-library', file), 'utf8').trim().split(/\r?\n/);
+    if (lines.length !== 92) throw new Error(`Incomplete audition library: ${file}`);
+    for (const line of lines) {
+      const [feeling, monologue, extra] = line.split('|');
+      if (extra !== undefined || !/^[a-z ]+$/.test(feeling) || !monologue) {
+        throw new Error(`Invalid audition scene in ${file}`);
+      }
+      const sentences = monologue.match(/[^.!?]+[.!?]+/g)?.map(s => s.trim()) || [];
+      const limit = 160 - `%%%${feeling}%%% `.length;
+      if (sentences.length < 3 || monologue.length >= 440 || sentences[0].length > limit) {
+        throw new Error(`Invalid audition length in ${file}`);
+      }
+      let quick = sentences[0];
+      if (`${quick} ${sentences[1]}`.length <= limit) quick += ` ${sentences[1]}`;
+      SCENES.push([audience, kind, feeling, monologue, quick]);
+    }
+  }
+}
+
 const POOLS = Object.fromEntries(['kids','characters','adults'].map(audience => [audience, {
   long: SCENES.filter(s => s[0] === audience).map(s => `%%%${s[2]}%%% ${s[3]}`),
   quick: SCENES.filter(s => s[0] === audience).map(s => `%%%${s[2]}%%% ${s[4]}`),
@@ -67,17 +93,33 @@ function audienceFor(categories) {
   return 'kids'; // Unknown metadata gets family-safe scenes, never the adult pool.
 }
 
-const last = new Map();
-function pickScene(row, quick = false, random = Math.random) {
-  const audience = audienceFor(row?.categories);
-  const pool = POOLS[audience][quick ? 'quick' : 'long'];
-  const key = `${row?.id || audience}:${quick ? 'quick' : 'long'}`;
-  const previous = last.get(key);
-  let index = Math.floor(random() * (pool.length - (previous === undefined ? 0 : 1)));
-  if (previous !== undefined && index >= previous) index++;
-  last.set(key, index);
-  if (last.size > 10000) last.delete(last.keys().next().value);
-  return pool[index];
+function createScenePicker() {
+  // Six process-local bags, shared across voices. Browsing a different voice
+  // cannot reset the category's rotation; a service restart starts fresh bags.
+  const rotations = new Map();
+  return function pickScene(row, quick = false, random = Math.random) {
+    const audience = audienceFor(row?.categories);
+    const length = quick ? 'quick' : 'long';
+    const pool = POOLS[audience][length];
+    const key = `${audience}:${length}`;
+    const state = rotations.get(key) || { remaining: [], previous: undefined };
+    if (!state.remaining.length) {
+      state.remaining = pool.map((_, index) => index);
+      for (let i = state.remaining.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [state.remaining[i], state.remaining[j]] = [state.remaining[j], state.remaining[i]];
+      }
+      const end = state.remaining.length - 1;
+      if (state.remaining[end] === state.previous) {
+        [state.remaining[0], state.remaining[end]] = [state.remaining[end], state.remaining[0]];
+      }
+    }
+    const index = state.remaining.pop();
+    state.previous = index;
+    rotations.set(key, state);
+    return pool[index];
+  };
 }
 
-module.exports = { SCENES, POOLS, audienceFor, pickScene };
+const pickScene = createScenePicker();
+module.exports = { SCENES, POOLS, audienceFor, pickScene, createScenePicker };

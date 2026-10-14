@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { SCENES, POOLS, audienceFor, pickScene } = require('./audition-scenes');
+const { SCENES, POOLS, audienceFor, pickScene, createScenePicker } = require('./audition-scenes');
 
 test('all published voices route by their actual catalog group, including binding aliases', () => {
   const rows = require('./selected-voices.json').voices;
@@ -16,13 +16,15 @@ test('all published voices route by their actual catalog group, including bindin
   assert.equal(audienceFor(['Characters, Clear & Neutral','Kids and teens, Bright & Lively']),'kids');
   assert.equal(audienceFor(undefined),'kids');
 });
-test('each group has sixteen distinct new monologues and previews with conversation and book coverage', () => {
-  assert.equal(SCENES.length,48);
+test('1200 scripts cover 600 original scenes, evenly split by audience and use', () => {
+  assert.equal(SCENES.length,600);
+  assert.equal(new Set(SCENES.map(s=>s[3])).size,600);
+  assert.equal(new Set(SCENES.map(s=>s[4])).size,600);
   for (const audience of Object.keys(POOLS)) {
-    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='conversation').length,8);
-    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='book').length,8);
-    assert.equal(new Set(POOLS[audience].long).size,16);
-    assert.equal(new Set(POOLS[audience].quick).size,16);
+    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='conversation').length,100);
+    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='book').length,100);
+    assert.equal(new Set(POOLS[audience].long).size,200);
+    assert.equal(new Set(POOLS[audience].quick).size,200);
   }
   for (const [audience,kind,feeling,long,quick] of SCENES) {
     assert.match(feeling,/^[a-z ]+$/);
@@ -34,6 +36,7 @@ test('each group has sixteen distinct new monologues and previews with conversat
   }
 });
 test('random picks vary without immediate repeats for each voice and preview length', () => {
+  const pickScene = createScenePicker();
   for (const audience of Object.keys(POOLS)) {
     const row={id:'test-'+audience,categories:[audience==='kids'?'Kids and teens, Test':audience==='characters'?'Characters, Test':'Women, Test']};
     for (const quick of [false,true]) {
@@ -42,6 +45,47 @@ test('random picks vary without immediate repeats for each voice and preview len
       assert.ok(seen.size>=12);
     }
   }
+});
+
+test('browsing different voices exhausts a whole category before any repeat', () => {
+  for (const random of [()=>0, ()=>0.999999, Math.random]) {
+    const pick = createScenePicker();
+    for (const audience of Object.keys(POOLS)) {
+      const categories = [audience === 'kids' ? 'Kids and teens' : audience === 'characters' ? 'Characters' : 'Men'];
+      for (const quick of [false, true]) {
+        let previous;
+        for (let cycle = 0; cycle < 3; cycle++) {
+          const seen = new Set();
+          for (let i = 0; i < 200; i++) {
+            const current = pick({ id: `voice-${i}`, categories }, quick, random);
+            assert.notEqual(current, previous, 'including the cycle boundary');
+            assert.ok(!seen.has(current), 'no repeats inside a category cycle');
+            seen.add(current);
+            previous = current;
+          }
+          assert.deepEqual(seen, new Set(POOLS[audience][quick ? 'quick' : 'long']));
+        }
+      }
+    }
+  }
+});
+
+test('category and preview-length rotations remain independent when interleaved', () => {
+  const pick = createScenePicker();
+  const seen = new Map();
+  for (let i = 0; i < 200; i++) {
+    for (const [audience, category] of [['kids','Kids and teens'],['characters','Characters'],['adults','Women']]) {
+      for (const quick of [false,true]) {
+        const key = `${audience}:${quick}`;
+        const values = seen.get(key) || new Set();
+        const current = pick({id:'same-id', categories:[category]},quick,()=>0.25);
+        assert.ok(!values.has(current));
+        values.add(current);
+        seen.set(key,values);
+      }
+    }
+  }
+  for (const values of seen.values()) assert.equal(values.size,200);
 });
 test('every existing preview sentinel passes its voice into selection; normal speech is untouched',()=>{
   const code=fs.readFileSync(require.resolve('./server'),'utf8');
