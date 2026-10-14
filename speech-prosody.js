@@ -77,4 +77,20 @@ function carryChunkDirections(chunks) {
   });
 }
 
-module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, LIVELY_BASELINE, carryChunkDirections };
+// Drama3's seven paired delivery tags apply only to enclosed words. Close and
+// reopen a scope at an artificial request seam, instead of losing it or letting
+// it leak into the next words. Plain percent/bracket directions are unchanged.
+function carryDrama3Scopes(chunks) {
+  const active = [];
+  return chunks.map(chunk => {
+    const opening = active.map(name => `<${name}>`).join('');
+    const normalized = String(chunk).replace(/<(\/?)(whisper|emphasis|soft|fast|slow|stress|forceful)>/gi, (_, slash, name) => `<${slash}${name.toLowerCase()}>`);
+    for (const token of normalized.matchAll(/<(\/?)(whisper|emphasis|soft|fast|slow|stress|forceful)>/g)) {
+      if (!token[1]) active.push(token[2]);
+      else if (active.at(-1) === token[2]) active.pop();
+    }
+    return opening + normalized + active.slice().reverse().map(name => `</${name}>`).join('');
+  });
+}
+
+module.exports = { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, LIVELY_BASELINE, carryChunkDirections, carryDrama3Scopes };

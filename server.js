@@ -1,5 +1,8 @@
 const express = require("express");
 const crypto = require("crypto");
+const { createReferenceStore, fishBody, selectedPicker } = require("./private-voice-references");
+let selectedReferenceStore = null;
+let selectedVoicePicker = null;
 const app = express();
 // July 18 2026: raised from the 100kb default so /github/commit can carry
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
@@ -38,7 +41,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
-const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections } = require("./speech-prosody");
+const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -654,7 +657,7 @@ function splitSentences(text) {
   // them here, the global match cannot close that sentence and silently
   // SKIPS the whole quoted span -- dropping it from the audio (Kade, July
   // 2026: read-aloud was losing jokes/dialogue that ended inside quotes).
-  const matches = masked.match(/[^.!?]+[.!?]+["'”’»)\]}]*(\s+|$)|[^.!?]+$/g);
+  const matches = masked.match(/[^.!?]+[.!?]+(?:["'”’»)\]}]|<\/(?:whisper|emphasis|soft|fast|slow|stress|forceful)>)*(\s+|$)|[^.!?]+$/g);
   const restore = (s) =>
     s.split(ELLIPSIS_TOKEN).join("...").split(DOT_TOKEN).join(".");
 
@@ -1499,6 +1502,16 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
     throw new Error("Unsupported FISH_TTS_MODEL; choose an exact Fish API model name.");
   }
+  if (fishModelId.startsWith('ref_') && FISH_TTS_MODEL !== 'drama-3') {
+    throw new Error('Selected sample voices require Drama3.');
+  }
+  const payload = {
+    text, format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
+    temperature: (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE,
+    top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
+    prosody: { speed: speakingRate != null ? speakingRate : FISH_TTS_SPEED },
+  };
+  const encoded = await fishBody(payload, fishModelId, selectedReferenceStore);
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
   let response;
@@ -1508,31 +1521,10 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
       method: "POST",
       headers: {
         Authorization: `Bearer ${FISH_API_KEY}`,
-        "Content-Type": "application/json",
+        "Content-Type": encoded.contentType,
         model: FISH_TTS_MODEL, // tier lives in a HEADER on fish's API, not the body
       },
-      body: JSON.stringify({
-        text,
-        reference_id: fishModelId,
-        format: "pcm",
-        sample_rate: FISH_SAMPLE_RATE,
-        latency: FISH_TTS_LATENCY,
-        // Aug 6 2026 (Kade: "hopefully fish is tuned to be as expressive as it
-        // can be... temp and whatever else"): fish's own docs — temperature
-        // "controls expressiveness, higher is more varied" (0-1, default 0.7).
-        // We never sent it = stock 0.7 the whole time. 0.9 = expressive with a
-        // margin off the hallucination edge; both knobs env-tunable.
-        temperature: (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE, // Part 119.3
-        top_p: FISH_TOP_P,
-        // Part 116.11: off so (break)/(breath) paralanguage is honoured; the
-        // proxy normalizes text itself before it gets here.
-        normalize: FISH_NORMALIZE,
-        prosody: {
-          // Fish accepts 0.5–2.0; the endpoint's shared clamp (0.5–1.5, chosen
-          // for Inworld parity) arrives here already sane.
-          speed: speakingRate != null ? speakingRate : FISH_TTS_SPEED,
-        },
-      }),
+      body: encoded.body,
     });
   } catch (err) {
     if (err.name === "AbortError") {
@@ -3188,7 +3180,7 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery)
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
   const steered = shapeDeliveryPace(applySteeringTags(seg.text), delivery || TTS_DELIVERY_MODE);
   const chunks = (segIsFish
-    ? carryChunkDirections(chunkText(steered)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
+    ? carryDrama3Scopes(carryChunkDirections(chunkText(steered)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses))
     : carryChunkDirections(chunkText(steered)).flatMap(shapeInworldSteering)
   ).filter(chunkHasSpeakableWords);
   if (!chunks.length) {
@@ -3310,7 +3302,7 @@ async function trySynthesizeScene(req, res, preppedText, ctx) {
 }
 
 app.post("/v1/audio/speech", async (req, res) => {
-  const { input, voice = "alloy", model = "tts-1", speed } = req.body;
+  const { input, voice = selectedVoicePicker?.voices[0] || "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
   // Inworld hard range is 0.5-1.5 (verified live 2026-07-01: 1.8 and 2.0
@@ -3447,7 +3439,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // redundant repeats and keep real authored changes; Fish sentence reseeding
     // is disabled by default. See VOICE_PROVIDER_GUIDE.md for current behavior.
     const chunks = (isFishVoice
-      ? carryChunkDirections(chunkText(speakText)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses)
+      ? carryDrama3Scopes(carryChunkDirections(chunkText(speakText)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses))
       : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {
@@ -4953,6 +4945,7 @@ if (VOICE_PICKER_V2 && VOICE_CATALOG_V2 && VOICE_CATALOG_V2.voices) {
  * the picker labels that speak through fish.audio, so the describer can say so next to them.
  * Labels only, never ids. */
 function fishPickerLabels() {
+  if (selectedVoicePicker) return selectedVoicePicker.voices;
   return VOICE_LIST.filter((label) => String(VOICE_MAP[label] || "").startsWith(FISH_VOICE_PREFIX));
 }
 const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
@@ -5209,6 +5202,24 @@ app.get("/healthz", (_req, res) =>
   res.json({ ok: true, rev: (process.env.RAILWAY_GIT_COMMIT_SHA || "unknown").slice(0, 7) }));
 
 // JSON version of the catalog + which entries are Kade's custom voices.
+// The legacy resolution pool stays unchanged: its order also determines saved
+// implicit scene voices. Only the public picker is replaced by the selected set.
+if (process.env.SELECTED_VOICES_ENABLED === '1') {
+  const rows = require('./selected-voices.json').voices;
+  selectedVoicePicker = selectedPicker(rows, {
+    voices: VOICE_LIST, hidden: HIDDEN_VOICE_ALIASES, aliases: Object.keys(CUSTOM_VOICE_MAP),
+    map: VOICE_MAP, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS,
+  });
+  selectedReferenceStore = createReferenceStore(rows);
+  rows.forEach(row => {
+    const binding = FISH_VOICE_PREFIX + row.id;
+    if (VOICE_MAP[row.label] && VOICE_MAP[row.label] !== binding) throw new Error('Selected voice label collision.');
+    VOICE_MAP[row.label] = binding;
+    VOICE_MAP[binding] = binding;
+  });
+  console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);
+}
+
 // Consumed by the fork's in-app voice pickers (agent-builder audition picker,
 // settings voice dropdown) so the SAME source of truth that orders and badges
 // the /voices library page orders the pickers too -- no hardcoded copy in the
@@ -5228,7 +5239,9 @@ app.get("/voices.json", (_req, res) => {
   // union these with `voices` so stored old picks keep working forever.
   // `categories` (July 23 2026): ordered picker sections, presentation only.
   // `renames` / `describe` / `tags` (Part 118): see the VOICE CATALOG V2 block.
-  res.json({ voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS, fish: fishPickerLabels() });
+  res.json(selectedVoicePicker
+    ? { ...selectedVoicePicker, sample: SAMPLE_TEXT, audition: AUDITION_TEXT }
+    : { voices: VOICE_LIST, custom: [...CUSTOM_VOICE_NUMBERS], aliases: Object.keys(CUSTOM_VOICE_MAP), hidden: HIDDEN_VOICE_ALIASES, categories: VOICE_PICKER_CATEGORIES, sample: SAMPLE_TEXT, audition: AUDITION_TEXT, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS, fish: fishPickerLabels() });
 });
 
 // RETIRED July 3 2026 (Kade's call): the standalone Voice Library page is

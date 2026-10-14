@@ -4,7 +4,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const source=fs.readFileSync(__dirname+'/server.js','utf8');
 const definitions=source.slice(source.indexOf('const OPENAI_ALIAS_MAP ='),source.indexOf('const MODEL_MAP ='));
 const picker=source.slice(source.indexOf('const VOICE_LIST ='),source.indexOf('const SAMPLE_TEXT ='));
-const ctx={FISH_VOICE_PREFIX:'fish:',process:{env:{}},console:{log(){},warn(){}},require:(p)=>require(p)};
+const ctx={selectedVoicePicker:null,FISH_VOICE_PREFIX:'fish:',process:{env:{}},console:{log(){},warn(){}},require:(p)=>require(p)};
 vm.runInNewContext(definitions+'\n'+picker+'\nthis.result={VOICE_LIST,VOICE_RENAMES,fish:fishPickerLabels()};',ctx);
 const r=ctx.result;
 assert.ok(r.fish.includes('Kade Murdock'));
