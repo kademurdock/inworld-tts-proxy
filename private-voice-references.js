@@ -120,6 +120,7 @@ function selectedPicker(rows, legacy) {
   }));
   return {
     voices, custom: voices, hidden, aliases: [...new Set([...legacy.aliases, ...rows.map(row => 'fish:' + row.id)])],
+    retainedFish: [...new Set(Object.entries(legacy.map).filter(([, target]) => typeof target === 'string' && target.startsWith('fish:')).flatMap(([label, target]) => [label, target]))],
     categories: [...sections].map(([name, labels]) => ({ name, voices: labels })),
     renames: legacy.renames, describe: { ...legacy.describe, ...Object.fromEntries(rows.map(row => [row.label, row.description])) },
     tags: { ...legacy.tags, ...Object.fromEntries(rows.map(row => [row.label, row.tag])) }, fish: voices,
