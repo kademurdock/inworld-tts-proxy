@@ -1,8 +1,9 @@
 const express = require("express");
 const crypto = require("crypto");
-const { createReferenceStore, fishBody, selectedPicker } = require("./private-voice-references");
+const { createReferenceStore, fishBody, selectedPicker, installSelectedBindings } = require("./private-voice-references");
 let selectedReferenceStore = null;
 let selectedVoicePicker = null;
+let selectedVoiceReport = null;
 const selectedAuditionVoices = new Map();
 const { pickScene } = require("./audition-scenes");
 const app = express();
@@ -5215,14 +5216,8 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
     map: VOICE_MAP, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS,
   });
   selectedReferenceStore = createReferenceStore(rows);
-  rows.forEach(row => {
-    const binding = FISH_VOICE_PREFIX + row.id;
-    if (VOICE_MAP[row.label] && VOICE_MAP[row.label] !== binding) throw new Error('Selected voice label collision.');
-    VOICE_MAP[row.label] = binding;
-    selectedAuditionVoices.set(row.label, row);
-    selectedAuditionVoices.set(binding, row);
-    VOICE_MAP[binding] = binding;
-  });
+  installSelectedBindings(rows, VOICE_MAP, selectedAuditionVoices);
+  selectedVoiceReport = require('./selected-voice-moves').createSelectedReportHandler(rows, selectedVoicePicker);
   console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);
 }
 
@@ -5325,7 +5320,7 @@ app.listen(PORT, () => {
    * open rows every few minutes. Pure half + tests in voice-moves.js. */
   try {
     require("./voice-moves").start({
-      state: { VOICE_MAP, VOICE_RENAMES, VOICE_DESCRIBE, VOICE_TAGS, HIDDEN_VOICE_ALIASES, VOICE_PICKER_CATEGORIES, VOICE_LIST },
+      state: { VOICE_MAP, VOICE_RENAMES, VOICE_DESCRIBE, VOICE_TAGS, HIDDEN_VOICE_ALIASES, VOICE_PICKER_CATEGORIES, VOICE_LIST, SELECTED_VOICE_REPORT: selectedVoiceReport },
       port: PORT,
       secret: process.env.LIBRECHAT_PROXY_SECRET,
     });

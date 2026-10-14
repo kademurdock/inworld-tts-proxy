@@ -125,6 +125,8 @@ function applyMove(state, oldLabel, newLabel, target, describe) {
 function applyReport(state, row) {
   const parsed = parseReport(row.detail);
   if (!parsed) return { ok: false, why: "detail did not parse" };
+  const selected = state.SELECTED_VOICE_REPORT?.(parsed, row);
+  if (selected) return selected;
   const target = targetFor(parsed.heard, parsed.label, parsed.heading, state.VOICE_PICKER_CATEGORIES);
   if (!target) return { ok: false, why: `no section for "${parsed.heard}"` };
   const newLabel = relabel(parsed.label, target, parsed.heard);
@@ -170,12 +172,14 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
     return r.json();
   }
   const isReport = (row) => row && SUBJECT_RE.test(String(row.subject || ""));
+  const chronological = rows => [...rows].sort((a, b) =>
+    `${a.createdAt || ''}|${a._id || ''}`.localeCompare(`${b.createdAt || ''}|${b._id || ''}`));
 
   async function replayResolved() {
     const rows = await get("/librechat/feedback?status=all");
     const list = Array.isArray(rows) ? rows : rows.rows || [];
     let n = 0;
-    for (const row of list) {
+    for (const row of chronological(list)) {
       if (!isReport(row) || row.status !== "resolved" || !/\[auto-move\]/.test(String(row.detail || ""))) continue;
       const res = applyReport(state, row);
       if (res.ok && !res.already) { n++; log(`[voice-moves] replayed ${res.oldLabel} -> ${res.target} as ${res.newLabel}`); }
@@ -193,7 +197,7 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
     const rows = await get("/librechat/feedback?status=open");
     const list = Array.isArray(rows) ? rows : rows.rows || [];
     let n = 0;
-    for (const row of list) {
+    for (const row of chronological(list)) {
       if (!isReport(row)) continue;
       /* Part 236: what the shadow needs is read BEFORE the move, because the
        * move deletes the old label's description. */
@@ -211,12 +215,14 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
       }
       warnedWhy.delete(String(row._id));
       /* Fire and forget: the regex has already decided and the move is done. */
-      if (parsed && !res.already) {
+      if (parsed && !res.already && !res.selected) {
         const input = { label: parsed.label, report: parsed.heard, filedUnder: parsed.heading };
         if (describedAs) input.description = describedAs;
         shadowAsk(jev, log, input, sections, res.target);
       }
-      const note = res.already
+      const note = res.superseded
+        ? `[auto-move] A newer report already placed ${res.newLabel} under ${res.target}; this older report did not override it.`
+        : res.already
         ? `[auto-move] ${res.oldLabel} was already under ${res.target}; nothing to move.`
         : `[auto-move] ${res.oldLabel} → ${res.target}, now listed as "${res.newLabel}" (live at once; a saved pick keeps working).`;
       try {
@@ -239,11 +245,12 @@ function start(opts) {
   const runner = makeRunner(opts);
   const every = Math.max(60_000, Number(process.env.VOICE_AUTO_MOVE_MS || 300_000));
   let busy = false;
+  let replayed = false;
   const tick = async (first) => {
     if (busy) return;
     busy = true;
     try {
-      if (first) { const n = await runner.replayResolved(); if (n) console.log(`[voice-moves] boot: ${n} earlier move(s) re-applied from the board`); }
+      if (!replayed) { const n = await runner.replayResolved(); replayed = true; if (n) console.log(`[voice-moves] boot: ${n} earlier move(s) re-applied from the board`); }
       const n = await runner.sweepOpen();
       if (n) console.log(`[voice-moves] ${n} report(s) applied`);
     } catch (e) {

@@ -97,6 +97,5 @@ test('every existing preview sentinel passes its voice into selection; normal sp
   const code=fs.readFileSync(require.resolve('./server'),'utf8');
   assert.equal((code.match(/pickAudition\(AUDITION_SCRIPTS, voice\)/g)||[]).length,2);
   assert.equal((code.match(/pickAudition\(AUDITION_QUICK_LINES, voice\)/g)||[]).length,1);
-  assert.match(code,/selectedAuditionVoices\.set\(row\.label, row\)/);
-  assert.match(code,/selectedAuditionVoices\.set\(binding, row\)/);
+  assert.match(code,/installSelectedBindings\(rows, VOICE_MAP, selectedAuditionVoices\)/);
 });

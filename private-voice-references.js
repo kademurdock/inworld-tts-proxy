@@ -38,6 +38,7 @@ function validateRows(rows) {
   if (!Array.isArray(rows) || !rows.length) throw new Error('The selected voice catalog is empty.');
   const ids = new Set();
   const labels = new Set();
+  const names = new Map();
   rows.forEach(row => {
     if (!row || !REFERENCE_ID.test(row.id) || !SHA256.test(row.sha256) || !SHA256.test(row.metadataSha256) ||
         typeof row.label !== 'string' || !row.label.trim() || row.label.length > 140 ||
@@ -48,6 +49,14 @@ function validateRows(rows) {
       throw new Error('Invalid selected voice catalog.');
     }
     ids.add(row.id); labels.add(row.label);
+    if (row.aliases !== undefined && (!Array.isArray(row.aliases) || row.aliases.some(a => typeof a !== 'string' || !a.trim() || a.length > 140))) {
+      throw new Error('Invalid selected voice aliases.');
+    }
+    for (const name of [row.label, row.tag, ...(row.aliases || [])].filter(Boolean)) {
+      const key = name.toLowerCase();
+      if (names.has(key) && names.get(key) !== row.id) throw new Error('Ambiguous selected voice alias.');
+      names.set(key, row.id);
+    }
   });
   return rows;
 }
@@ -110,8 +119,9 @@ async function fishBody(payload, id, store) {
 function selectedPicker(rows, legacy) {
   validateRows(rows);
   const voices = rows.map(row => row.label);
+  const oldNames = rows.flatMap(row => row.aliases || []);
   const hidden = [...new Set([...legacy.voices, ...legacy.hidden, ...legacy.aliases,
-    ...Object.keys(legacy.map), ...Object.values(legacy.map), ...Object.keys(legacy.renames), ...Object.values(legacy.renames)])]
+    ...Object.keys(legacy.map), ...Object.values(legacy.map), ...Object.keys(legacy.renames), ...Object.values(legacy.renames), ...oldNames])]
     .filter(label => typeof label === 'string' && !voices.includes(label));
   const sections = new Map();
   rows.forEach(row => row.categories.forEach(name => {
@@ -119,12 +129,35 @@ function selectedPicker(rows, legacy) {
     sections.get(name).push(row.label);
   }));
   return {
-    voices, custom: voices, hidden, aliases: [...new Set([...legacy.aliases, ...rows.map(row => 'fish:' + row.id)])],
+    voices, custom: voices, hidden, aliases: [...new Set([...legacy.aliases, ...oldNames, ...rows.map(row => 'fish:' + row.id)])],
     retainedFish: [...new Set(Object.entries(legacy.map).filter(([, target]) => typeof target === 'string' && target.startsWith('fish:')).flatMap(([label, target]) => [label, target]))],
     categories: [...sections].map(([name, labels]) => ({ name, voices: labels })),
-    renames: legacy.renames, describe: { ...legacy.describe, ...Object.fromEntries(rows.map(row => [row.label, row.description])) },
+    renames: { ...legacy.renames, ...Object.fromEntries(rows.flatMap(row => (row.aliases || []).map(name => [name, row.label]))) },
+    describe: { ...legacy.describe, ...Object.fromEntries(rows.map(row => [row.label, row.description])) },
     tags: { ...legacy.tags, ...Object.fromEntries(rows.map(row => [row.label, row.tag])) }, fish: voices,
   };
 }
 
-module.exports = { signedGet, validateRows, createReferenceStore, fishBody, selectedPicker };
+function installSelectedBindings(rows, voiceMap, auditionVoices) {
+  validateRows(rows);
+  const staged = new Map(Object.entries(voiceMap));
+  const folded = new Map(Object.entries(voiceMap).map(([name, id]) => [name.toLowerCase(), id]));
+  for (const row of rows) {
+    const binding = 'fish:' + row.id;
+    for (const name of [row.label, binding, ...(row.aliases || [])]) {
+      if ((staged.has(name) && staged.get(name) !== binding) ||
+          (folded.has(name.toLowerCase()) && folded.get(name.toLowerCase()) !== binding)) throw new Error('Selected voice label collision.');
+      staged.set(name, binding); folded.set(name.toLowerCase(), binding);
+    }
+  }
+  // Nothing changes until every new name and historical alias has passed.
+  for (const row of rows) {
+    const binding = 'fish:' + row.id;
+    for (const name of [row.label, binding, ...(row.aliases || [])]) {
+      voiceMap[name] = binding;
+      auditionVoices.set(name, row);
+    }
+  }
+}
+
+module.exports = { signedGet, validateRows, createReferenceStore, fishBody, selectedPicker, installSelectedBindings };
