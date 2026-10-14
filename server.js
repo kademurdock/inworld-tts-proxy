@@ -3,6 +3,8 @@ const crypto = require("crypto");
 const { createReferenceStore, fishBody, selectedPicker } = require("./private-voice-references");
 let selectedReferenceStore = null;
 let selectedVoicePicker = null;
+const selectedAuditionVoices = new Map();
+const { pickScene } = require("./audition-scenes");
 const app = express();
 // July 18 2026: raised from the 100kb default so /github/commit can carry
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
@@ -3336,7 +3338,7 @@ app.post("/v1/audio/speech", async (req, res) => {
   let isVoicePreview = false;
   if (typeof input === "string" && input.trim() === NATIVE_PREVIEW_SENTINEL) {
     isVoicePreview = true;
-    effectiveInput = pickAudition(AUDITION_SCRIPTS).split("{voice}").join(String(voice));
+    effectiveInput = pickAudition(AUDITION_SCRIPTS, voice).split("{voice}").join(String(voice));
     console.log(`[TTS] native preview sentinel swapped for audition script, label="${voice}"`);
   }
   /* PART 115 (Sep 1 2026) — THE PICKER STOPS SAYING THE SAME THING 700 TIMES.
@@ -3353,11 +3355,11 @@ app.post("/v1/audio/speech", async (req, res) => {
    * collapsing any of them to one paragraph restores the leak). */
   if (typeof input === "string" && input.trim() === NATIVE_QUICK_PREVIEW_LINE) {
     isVoicePreview = true;
-    effectiveInput = pickAudition(AUDITION_QUICK_LINES);
+    effectiveInput = pickAudition(AUDITION_QUICK_LINES, voice);
     console.log(`[TTS] native quick preview swapped for a pooled line, label="${voice}"`);
   } else if (typeof input === "string" && input.trim() === AUDITION_TEXT.trim()) {
     isVoicePreview = true;
-    effectiveInput = pickAudition(AUDITION_SCRIPTS).split("{voice}").join(String(voice));
+    effectiveInput = pickAudition(AUDITION_SCRIPTS, voice).split("{voice}").join(String(voice));
     console.log(`[TTS] web audition script swapped for a pooled script, label="${voice}"`);
   }
 
@@ -5025,7 +5027,9 @@ const NATIVE_QUICK_PREVIEW_LINE = "Hey \u2014 quick hello from this voice, right
 const AUDITION_POOL = require("./audition-pool");
 const AUDITION_SCRIPTS = [...AUDITION_POOL.LONG];
 const AUDITION_QUICK_LINES = AUDITION_POOL.QUICK;
-function pickAudition(pool) {
+function pickAudition(pool, voice) {
+  const selected = selectedAuditionVoices.get(voice);
+  if (selected) return pickScene(selected, pool === AUDITION_QUICK_LINES);
   if (!Array.isArray(pool) || pool.length === 0) return AUDITION_TEXT;
   return AUDITION_POOL.pickAudition(pool, pool === AUDITION_QUICK_LINES ? "quick" : "long");
 }
@@ -5215,6 +5219,8 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
     const binding = FISH_VOICE_PREFIX + row.id;
     if (VOICE_MAP[row.label] && VOICE_MAP[row.label] !== binding) throw new Error('Selected voice label collision.');
     VOICE_MAP[row.label] = binding;
+    selectedAuditionVoices.set(row.label, row);
+    selectedAuditionVoices.set(binding, row);
     VOICE_MAP[binding] = binding;
   });
   console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);

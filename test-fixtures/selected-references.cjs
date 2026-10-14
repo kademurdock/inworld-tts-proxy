@@ -10,6 +10,8 @@ const row = { id: 'ref_0123456789abcdef', label: 'Clear warm voice · cedarbrook
   description: 'A warm clear voice.', categories: ['Women, Warm & Soothing'], sha256: sha,
   metadataSha256: hash(metadata), referenceKey: `voice-references/20261014/${sha}.mp3`,
   metadataKey: `voice-references/20261014/${sha}.json`, testedModel: 'drama-3' };
+if (process.env.SELECTED_TEST_GROUP === 'kids') row.categories = ['Characters, Bright & Lively', 'Kids and teens, Bright & Lively'];
+if (process.env.SELECTED_TEST_GROUP === 'characters') row.categories = ['Characters, Clear & Neutral'];
 const originalLoad = Module._load;
 Module._load = function(request, parent, isMain) {
   if (request === './selected-voices.json') return { voices: [row] };
