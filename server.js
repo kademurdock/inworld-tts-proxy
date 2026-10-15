@@ -5242,7 +5242,11 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
   for (const [label, target] of classic.bindings) VOICE_MAP[label] = target;
   selectedReferenceStore = createReferenceStore(rows);
   installSelectedBindings(rows, VOICE_MAP, selectedAuditionVoices);
-  for (const [label, target] of Object.entries(VOICE_MAP)) selectedVoicePicker.providers[label] = target.startsWith(FISH_VOICE_PREFIX) ? 'fish' : 'inworld';
+  for (const [label, target] of Object.entries(VOICE_MAP)) {
+    const provider = target.startsWith(FISH_VOICE_PREFIX) ? 'fish' : 'inworld';
+    selectedVoicePicker.providers[label] = provider;
+    selectedVoicePicker.providers[target] = provider;
+  }
   selectedVoiceReport = require('./selected-voice-moves').createSelectedReportHandler(rows, selectedVoicePicker);
   console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);
 }

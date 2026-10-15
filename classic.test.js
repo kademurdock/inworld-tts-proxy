@@ -27,6 +27,7 @@ test('restores every registered legacy Inworld row without touching any saved bi
     const label = old + ' (Classic)';
     assert.equal(bindings.get(label), before[old]);
     assert.equal(picker.providers[label], 'inworld');
+    assert.equal(picker.providers[before[old]], 'inworld', 'saved raw provider IDs retain their speed policy');
     assert.match(picker.tags[label], /Classic/);
     assert.ok(picker.categories.some(c => c.voices.includes(label)));
   }
