@@ -1,3 +1,7 @@
+October 15 update: the picker contains the 601 current Fish voices plus all 421 registered legacy Inworld voices, labeled Classic. Classic entries reuse the same saved provider IDs; no voices were cloned or rebound. The `providers` catalog map covers stored aliases as well as visible choices.
+
+Listener speed uses Inworld's supported `audioConfig.speakingRate` range, 0.5–1.5. Fish receives an acting instruction (Unhurried, Easygoing, Natural, Brisk, Quick) after author-tempo filtering, while `prosody.speed` is always 1.0. Old clients' numeric settings map to these instructions. Emotion brackets and Drama3 paired word scopes remain intact. This avoids requesting Fish's numeric speed processing; it is not a claim of acoustically validated naturalness or an exact timing multiplier. Future-generation pace controls must never time-stretch current voice-message audio.
+
 # Voice delivery: provider behavior and platform decisions
 
 Reviewed against official documentation October 13, 2026 (Fish Drama3); Inworld review September 23, 2026. This file supersedes dated explanatory comments when they describe an older provider behavior. The implementation and request receipts remain the evidence for what actually runs.

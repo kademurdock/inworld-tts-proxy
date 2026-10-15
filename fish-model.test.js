@@ -9,7 +9,7 @@ const cut = (start, end) => source.slice(source.indexOf(start), source.indexOf(e
 function load(env = {}, response = { ok: true, arrayBuffer: async () => Uint8Array.from([0, 0, 1, 0, 2]).buffer }) {
   const calls = [];
   const context = {
-    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: null,
+    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: null, fishPacedText: require('./pace').fishPacedText,
     process: { env }, Buffer, AbortController, setTimeout, clearTimeout,
     FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000,
     FISH_SAMPLE_RATE: 24000, FISH_TTS_LATENCY: 'normal', FISH_TTS_SPEED: 1,
@@ -25,7 +25,7 @@ function load(env = {}, response = { ok: true, arrayBuffer: async () => Uint8Arr
   return { synthesize: context.synthesize, calls };
 }
 
-test('every Fish reference uses Drama3 by default and keeps text, PCM, speed and delivery', async () => {
+test('every Fish reference uses Drama3 by default and keeps text, PCM, instructional pace and delivery', async () => {
   const { synthesize, calls } = load();
   const definitions = cut('const OPENAI_ALIAS_MAP =', 'const MODEL_MAP =');
   const catalog = { FISH_VOICE_PREFIX: 'fish:', process: { env: {} }, console: { log() {}, warn() {} }, require };
@@ -38,9 +38,9 @@ test('every Fish reference uses Drama3 by default and keeps text, PCM, speed and
     assert.equal(url, 'https://api.fish.audio/v1/tts');
     assert.equal(request.headers.model, 'drama-3');
     assert.deepEqual(JSON.parse(request.body), {
-      text: '[warmly] A small test.', reference_id: ids[index].slice(5),
+      text: require('./pace').fishPacedText('[warmly] A small test.', 1.2), reference_id: ids[index].slice(5),
       format: 'pcm', sample_rate: 24000, latency: 'normal',
-      temperature: 1, top_p: 0.85, normalize: false, prosody: { speed: 1.2 },
+      temperature: 1, top_p: 0.85, normalize: false, prosody: { speed: 1 },
     });
   });
 });
