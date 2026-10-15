@@ -6,6 +6,7 @@ function classicPicker(selected, legacy) {
   const tags = { ...selected.tags };
   const describe = { ...selected.describe };
   const providers = Object.fromEntries(Object.entries(legacy.map).map(([label, id]) => [label, id.startsWith('fish:') ? 'fish' : 'inworld']));
+  for (const target of Object.values(legacy.map)) providers[target] = target.startsWith('fish:') ? 'fish' : 'inworld';
   for (const old of legacy.voices) {
     const target = legacy.map[old];
     if (!target || target.startsWith('fish:')) continue;
