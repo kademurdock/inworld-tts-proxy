@@ -41,8 +41,11 @@ test('real HTTP handler preserves delivery and speed in buffered, streamed, Fish
    }
   }
   const beforeFish=rows().length;
-  const f=await fetch('http://127.0.0.1:31860/v1/audio/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:'Plain words.',voice:'fish:fixture'})});
+  const f=await fetch('http://127.0.0.1:31860/v1/audio/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:'I *really* meant THAT, NASA.',voice:'fish:fixture'})});
   assert.equal(f.status,200);await f.arrayBuffer();
-  assert.equal(rows().slice(beforeFish)[0].body.temperature,.9,'fish default is 0.9');
+  const fishBody=rows().slice(beforeFish)[0].body;
+  assert.equal(fishBody.temperature,.9,'fish default is 0.9');
+  assert.match(fishBody.text,/<emphasis>REALLY<\/emphasis> meant <emphasis>THAT<\/emphasis>, NASA\./);
+  assert.doesNotMatch(fishBody.text,/\[emphasis\]|<emphasis>NASA/);
  }finally{child.kill();await new Promise(r=>child.once('exit',r));}
 });

@@ -2552,21 +2552,39 @@ function isDirectionTag(inner) {
 const FISH_NONVERBAL_DIALECT = { laugh: "laugh", sigh: "sigh", yawn: "yawning", breathe: "inhale" };
 const FISH_SEED_PER_SENTENCE = process.env.FISH_SEED_PER_SENTENCE === "1";
 const FISH_NORMALIZE = process.env.FISH_NORMALIZE === "1";
-// Aug 6 2026 (her fish-docs pointer: "they say emphasis on some words in the
-// fish api sample material"): fish's canonical stress = "[emphasis]" placed
-// RIGHT BEFORE the word — our house idiom is CAPITALIZING the word (native to
-// Inworld). Translate for the fish lane only: a mid-text ALL-CAPS word (3+
-// letters, not a common acronym) gains [emphasis] in front; the word itself
-// stays as written. Docs receipt: "This is [emphasis] really important."
+// House emphasis (including speech Markdown) arrives as CAPITALIZED words.
+// Drama3 documents paired <emphasis> scopes for individual words; use those
+// so stress ends with the intended word. An explicit S2 rollback retains its
+// original [emphasis] prefix. Existing authored directions/scopes stay intact.
 // Stoplist = acronyms/initialisms only. Deliberately NOT stopping words like
 // NOT/YOU/ALL — a model that capitalizes those MEANT the stress (the fish
 // docs' own example is "I told you NOT to open that door").
 const FISH_EMPHASIS_STOPLIST = new Set(["TTS","URL","USA","ASAP","LOL","OMG","FYI","DIY","CEO","GPS","FAQ","API","USB","GPT","LLM","FBI","NASA","DNA","PDF","HTML","WIFI"]);
-function fishEmphasisFromCaps(text) {
-  return text.replace(/(^|[\s"'(—-])([A-Z]{3,12})(?=$|[\s.,!?;:)"'—-])/g, (m, pre, word) => {
+function fishEmphasisFromCaps(text, paired = typeof FISH_TTS_MODEL === "string" && /^drama-3(?:-preview)?$/.test(FISH_TTS_MODEL)) {
+  const emphasize = part => part.replace(/(^|[\s"'(—-])([A-Z]{3,12})(?=$|[\s.,!?;:)"'—-])/g, (m, pre, word) => {
     if (FISH_EMPHASIS_STOPLIST.has(word)) return m;
-    return `${pre}[emphasis] ${word}`;
+    return paired ? `${pre}<emphasis>${word}</emphasis>` : `${pre}[emphasis] ${word}`;
   });
+  if (!paired) return emphasize(text);
+  // Scope the stress to its words on Drama3. Existing actor directions and
+  // explicit emphasis/stress spans already express intent and stay intact.
+  let stressed = 0;
+  let explicitPrefix = false;
+  return text.split(/(\[[^\]\n]*\]|<\/?(?:whisper|emphasis|soft|fast|slow|stress|forceful)>)/gi).map(part => {
+    if (/^\[[^\]\n]*\]$/.test(part)) {
+      explicitPrefix = /^\[emphasis\]$/i.test(part);
+      return part;
+    }
+    const scope = part.match(/^<(\/?)(emphasis|stress)>$/i);
+    if (scope) {
+      stressed = Math.max(0, stressed + (scope[1] ? -1 : 1));
+      return part;
+    }
+    if (/^<\/?(?:whisper|soft|fast|slow|forceful)>$/i.test(part)) return part;
+    const out = stressed || explicitPrefix ? part : emphasize(part);
+    if (part.trim()) explicitPrefix = false;
+    return out;
+  }).join("");
 }
 
 // Short interjections inherit the surrounding mood on their own; a tag longer
@@ -2602,7 +2620,7 @@ function seedFishSteering(chunk) {
    * there it is documented and load-bearing.) */
   chunk = chunk.replace(/\[([^\]]+)\]\s*/g, (m, inner) => (soundsIsResetTag(inner) ? "" : m));
   chunk = collapseAdjacentTags(chunk);
-  // CAPS->[emphasis] runs even when no [cues] exist — stressed words deserve
+  // CAPS->provider emphasis runs even when no [cues] exist — stressed words deserve
   // stress regardless of whether the reply carried steering tags.
   chunk = fishEmphasisFromCaps(chunk);
   if (chunk.indexOf("[") === -1) return chunk;
