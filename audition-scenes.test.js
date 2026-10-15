@@ -22,15 +22,15 @@ test('all published voices route by their actual catalog group, including bindin
   assert.equal(audienceFor(['Characters, Clear & Neutral','Kids and teens, Bright & Lively']),'kids');
   assert.equal(audienceFor(undefined),'kids');
 });
-test('1200 scripts cover 600 original scenes, evenly split by audience and use', () => {
-  assert.equal(SCENES.length,600);
-  assert.equal(new Set(SCENES.map(s=>s[3])).size,600);
-  assert.equal(new Set(SCENES.map(s=>s[4])).size,600);
+test('6000 scripts cover 3000 original scenes, evenly split by audience and use', () => {
+  assert.equal(SCENES.length,3000);
+  assert.equal(new Set(SCENES.map(s=>s[3])).size,3000);
+  assert.equal(new Set(SCENES.map(s=>s[4])).size,3000);
   for (const audience of Object.keys(POOLS)) {
-    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='conversation').length,100);
-    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='book').length,100);
-    assert.equal(new Set(POOLS[audience].long).size,200);
-    assert.equal(new Set(POOLS[audience].quick).size,200);
+    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='conversation').length,500);
+    assert.equal(SCENES.filter(s=>s[0]===audience&&s[1]==='book').length,500);
+    assert.equal(new Set(POOLS[audience].long).size,1000);
+    assert.equal(new Set(POOLS[audience].quick).size,1000);
   }
   for (const [audience,kind,feeling,long,quick] of SCENES) {
     assert.match(feeling,/^[a-z ]+$/);
@@ -62,7 +62,7 @@ test('browsing different voices exhausts a whole category before any repeat', ()
         let previous;
         for (let cycle = 0; cycle < 3; cycle++) {
           const seen = new Set();
-          for (let i = 0; i < 200; i++) {
+          for (let i = 0; i < 1000; i++) {
             const current = pick({ id: `voice-${i}`, categories }, quick, random);
             assert.notEqual(current, previous, 'including the cycle boundary');
             assert.ok(!seen.has(current), 'no repeats inside a category cycle');
@@ -79,7 +79,7 @@ test('browsing different voices exhausts a whole category before any repeat', ()
 test('category and preview-length rotations remain independent when interleaved', () => {
   const pick = createScenePicker();
   const seen = new Map();
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 1000; i++) {
     for (const [audience, category] of [['kids','Kids and teens'],['characters','Characters'],['adults','Women']]) {
       for (const quick of [false,true]) {
         const key = `${audience}:${quick}`;
@@ -91,7 +91,7 @@ test('category and preview-length rotations remain independent when interleaved'
       }
     }
   }
-  for (const values of seen.values()) assert.equal(values.size,200);
+  for (const values of seen.values()) assert.equal(values.size,1000);
 });
 test('every existing preview sentinel passes its voice into selection; normal speech is untouched',()=>{
   const code=fs.readFileSync(require.resolve('./server'),'utf8');

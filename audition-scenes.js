@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // October 14: curated, group-aware scripts. %%% cues use the existing Drama3
-// adapter (and retained Inworld adapter); no model call writes these scripts.
+// adapter (and retained Inworld adapter); fixed local text, with no generation during auditions.
 // Each tuple is [audience, use, feeling, monologue, quick preview].
 const SCENES = [
   ['kids','conversation','pleased',"I saved you the blue one. Everybody wanted blue, so I put it under my notebook before they came over. You can trade me if you'd rather have green.","I saved you the blue one. It's under my notebook so nobody takes it."],
@@ -62,7 +62,7 @@ for (const audience of ['kids', 'characters', 'adults']) {
   for (const kind of ['conversation', 'book']) {
     const file = `${audience}-${kind}.txt`;
     const lines = fs.readFileSync(path.join(__dirname, 'audition-library', file), 'utf8').trim().split(/\r?\n/);
-    if (lines.length !== 92) throw new Error(`Incomplete audition library: ${file}`);
+    if (lines.length !== 492) throw new Error(`Incomplete audition library: ${file}`);
     for (const line of lines) {
       const [feeling, monologue, extra] = line.split('|');
       if (extra !== undefined || !/^[a-z ]+$/.test(feeling) || !monologue) {

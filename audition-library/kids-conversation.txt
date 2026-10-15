@@ -90,3 +90,403 @@ amused|I made a list of things to remember and forgot the list. I remembered tha
 hopeful|Could we make pancakes tomorrow instead of today? I want my brother to help, and he isn't back yet. He does the funny-shaped ones better than I do.
 quietly excited|I heard the owls again last night. There were two different calls, one close and one farther away. I left a note by the window so I could tell you in the morning.
 warm|You can borrow my favorite book if you bring it back. There's a bookmark in the part I like best. You don't have to agree with me about that bit.
+annoyed|My brother borrowed my markers without asking, and the green one is almost dry. He says he'll buy me a new one, but he says that about everything. I'm hiding the rest in my sock drawer for safekeeping.
+curious|I'm wondering why the swing is moving on its own. There's nobody there, but the rope is swinging back and forth. Do you want to go check it out?
+worried|I think I lost your flashlight during the scavenger hunt. It might be under the porch steps, or it might be at the creek. I'm really sorry, and I'll look again after lunch.
+guilty|I think I was talking during the test, even though I didn't mean to be. I was counting under my breath because the numbers wouldn't stay in my head. If Mrs. Ali asks, can you tell her it wasn't on purpose?
+delighted|You saved me the seat by the window again. I found a feather wedged in the frame when I sat down. It must have blown in at the corner stop.
+amused|Your dog buried his own toy in the garden and then looked confused. He dug in three spots before giving up. We know where it is, but I think we should let him find it.
+pleased|We saw the elephants, the giraffes, and even the little warthogs on the way out. My feet are sore, but I got a stamp on my hand for the extra visit. Can we come back on a cooler day?
+curious|My cousin drew a map of her backyard, but the labels are words I've never heard. One says 'dragon rock' and another says 'quiet corner.' I want to ask her about it before we go play there.
+proud|I landed that kickflip on the third try today. My shoes are scuffed up now, but I don't care. The ledge by the fountain is my new spot.
+fond|You still do the thing where you wave at the fish. The little ones actually come over to the glass now. I think they recognize your blue jacket.
+relieved|We just finished clearing up the art room and I thought that paint would never come off the table. Turns out the custodian had special wipes under the sink. I'm ready to go home and not think about glitter again.
+intrigued|There's definitely something weird going on in the backyard. The garden gnome was facing the wrong way this morning, and now there are tiny footprints near the hose. What do you think happened?
+pleading|Can we visit cousins this weekend instead of next? The park near their house will still be open. I'll bring my own water bottle so nobody has to carry it.
+excited|I found a book about volcanoes in the library and it has pop-up pictures. When you open it, the whole page rises up. I want to show you at lunch.
+thoughtful|My shoes are by the door where I left them, but the laces are tied. I didn't tie them when I came in. Maybe you did it without saying anything.
+proud|You know that flat gray rock by the creek? I finally cracked it open with a hammer, and there were these tiny sparkly lines all through it. My hands are filthy but it was totally worth it.
+hopeful|The little bear at the zoo enclosure was napping on a branch. I want to go back after lunch because the keeper said they usually wake up then. Can we time our ice cream break so we finish before two?
+pleased|My group for the volcano project finally split up the jobs. Sam gets to pour the vinegar, Nina's painting the mountain, and I'm in charge of the baking soda timing. We practiced the handoff in the yard at lunch so nobody spills early.
+amused|Our dog carried his bowl over to the couch. He put it right on the blanket like he wants room service. Now Mom's laughing too hard to move it.
+eager|We haven't heard back about the class trip yet and I already packed my snack. The permission slip went in yesterday, so it should be soon. I check the folder each morning.
+excited|Guess what? You're invited to my club meeting this Saturday. It's secret, so I can't tell you everything, but bring a flashlight and your best whisper voice. My cousin is bringing snacks too, so don't be late.
+excited|Can you come to the playground at recess? I figured out how to get two swings going at the same time without anyone pushing us. We just have to kick at the right moment, and then it feels like we're almost flying.
+amused|We were camping by the lake when a squirrel dropped an acorn right on the tent zipper. It made the loudest little ping sound and scared all of us. Dad picked it up and said we should add it to breakfast somehow.
+surprised|I found this blue marble under the couch during vacuuming. I didn't know we had one this color. Did you drop it? We could start the game with it if you want.
+thoughtful|We were going to the park, but it started raining five minutes ago. I found an old umbrella in the closet, but one of the spokes is broken. Do you think we could still make it if we walk really close together?
+cheerful|Just got home from the park and my shoes are covered in mud. Mom said I have to clean them before dinner. It was totally worth it.
+thoughtful|I think we need a team captain who's good at climbing. It would make the relay race a lot faster. Who should we pick from our group?
+earnest|I really want to make the group poster before lunch. If we wait until after art, we'll run out of time and then one person will end up doing everything. I've already picked the colors, so we could just start right now.
+surprised|I accidentally played the right note at my lesson today. Mrs. Torres stopped the piano and handed me a sticker without saying anything. I'm keeping it in my pocket.
+curious|Someone tied a yellow ribbon on our club post. Nobody in our club owns yellow ribbon. Do you think it's a clue or just left over from something?
+proud|My painting sold at the art fair before lunch. A nice lady bought it for her hallway, and she asked how old I was. I still have the twenty-dollar bill in my pocket, and I'm not spending it yet.
+eager|Can I show you the drawing I made of our street? I added the crack in the sidewalk and the bush that always blocks the path. The mail carrier is carrying a tiny umbrella because I decided it might rain.
+curious|This rock has tiny white speckles all through it. I found it near the creek behind my house. It's different from anything else in my jar.
+sheepish|The rain ruined the picnic, but I still ate my sandwich under the blanket. Then I realized the blanket was on the wet grass, so I was just sitting in a puddle. You laughed so hard you couldn't open your juice.
+disappointed|My group project partner said he would bring the poster board and forgot again. We had to borrow a torn sheet from the art closet and tape two pieces together. It'll be fine, I guess, but I'm going to double-check everything myself now.
+nervous|Before we go to the treehouse, I have to admit something. I told them we'd bring the flashlight, but I left it charging in my room. Are you mad? I can run back and get it super quick.
+persistent|Can we call cousins after lunch, not before? Their homework time is in the morning. I don't want to interrupt them while they're still working.
+amused|The class gerbil escaped again and climbed into someone's backpack. We had to empty the whole bag on the floor to get him out. He was sitting on the homework.
+curious|The kitchen timer makes a different sound than the one on the microwave. The timer is a bell, and the microwave beeps four times. We never use the beeping one when Grandpa is visiting because it startles him.
+pleased|We biked to the lake and the chain guard fell off on the way. Dad zip-tied it back with a piece from his backpack. It rattles the whole ride now, but we made it before sunset.
+impatient|The train doesn't leave for another hour and I want to sit by the window on the left side. Right side gets the sun in my eyes after noon. Can we go to the platform now so nobody else takes that seat? I'll carry my own bag.
+curious|Our class gecko has two rocks in her tank and she only ever sits on the small one. The big rock stays empty no matter how warm the lamp makes it. I moved the small rock last week to clean the sand, and she just stared at the wall until I put it back.
+impressed|You sharpened my pencil without me asking. I noticed the point when I opened my binder. That's the nicest surprise I've had all day.
+amused|My sister put her sweater on backwards and didn't notice for an hour. She kept wondering why the tag felt weird. I finally told her when she was looking in the mirror.
+enthusiastic|I made up a new game where we have to hop on one foot while naming animals. If you say a bird twice, you lose a point. Want to try it? It's harder than it sounds once you get tired.
+eager|I want you to see the new section in the library, the one past the tall shelves. There are books with pop-up maps and one about a submarine that has a real compass inside. Come over before the bell; I saved the good chair for us.
+surprised|We were setting up the tent when I felt something hard under the sleeping bag. Turns out it was a smooth green stone with a white stripe right through the middle. Somebody must have left it there, so I'm keeping it for now.
+curious|There's a pinecone on the porch steps that wasn't there yesterday. It has a red thread tied around the middle. Did you put it there as a clue? What game are we playing?
+hopeful|Grandma said she'd teach me her pie crust recipe, but we don't have a rolling pin. I'm using a clean water bottle instead, and it's working better than expected. She's pretending not to notice, but I saw her smile.
+thoughtful|On the way home I keep thinking about the rule we made. Maybe it wasn't fair to let only the tallest people be the seekers. We should change it before the next game.
+apologetic|I didn't mean to break the sandcastle drawbridge. I stepped back without looking and it collapsed. I'll help you rebuild it before the tide comes in.
+sheepish|I used the blue paint for the background and now there's no blue left for the water. There's still green and a bit of yellow, but water is supposed to be blue. Do you think I could borrow some from the other table?
+puzzled|There's a small brass key on the music room floor. It doesn't fit the piano lid or the closet. Do you think it belongs to the instrument cases?
+curious|Somebody keeps leaving bottle caps near the mailbox but never in the same spot. Today there were four in a row. Last week it was just one.
+excited|My swimsuit is packed and the towel is right by the door. Mom says the pool might be crowded, but I don't mind if I get a lane. I just hope I can practice my flip turn without bumping the wall.
+nostalgic|Grandpa told the same story about the runaway kite three times at dinner. Every time, he changed where it landed. The last version ended in a neighbor's chimney, and we all let him keep it that way.
+relieved|The bike chain popped off again on the way home. Dad held the bike while I pushed it back onto the gear. We were only late for dinner by a few minutes.
+playful|I bet I can guess which rock you'll pick before you pick it. You always go for the one with a stripe on the side. Nope, wait, that one has two stripes, that counts as different.
+eager|Before the field trip bus leaves, I've packed my lunch, my permission slip, and the little notebook for sketching birds. We're supposed to meet by the big oak by the bike racks. Want to wait there with me and watch for the bus?
+defensive|I know I tripped during tag, but it's not fair that you called me out. The grass was super slippery, and you were pulling my sleeve. Can we just replay that round?
+playful|The cat keeps sitting in the laundry basket. Every time I take a shirt out, she climbs right back in. Can we just leave the basket there for now?
+frustrated|My violin lesson was a disaster. My fingers kept slipping and the bow wouldn't cooperate. Mrs. Chen said we'd try again next week, but I feel like quitting.
+surprised|There's a book on my shelf that I don't remember getting. It's about clouds, and there's a leaf pressed inside the front cover. I think it came from the library bag you brought up last week.
+winded|I bailed off my board on the third try. My elbow's fine, just scraped up, but the ground was wet so my grip kept slipping. We should probably stick to the flat part tomorrow.
+pleading|Please can we camp in the backyard instead of the woods this weekend? I want to try sleeping outside without being too far from the house. If I get scared, I can just walk in.
+fond|You know that hamster wheel in the corner of our classroom? It only squeaks on Tuesdays, and nobody knows why. I counted it just to be sure, and it's been Tuesdays for six weeks now. Maya thinks the floor tilts differently when the cart is moved.
+fond|Grandma slipped an extra napkin in my lunchbox. She drew a tiny flower on it with a pen. I'm keeping it in my folder instead of using it.
+sleepy|It's bedtime but I'm still thinking about tomorrow's soccer game. I already laid out my jersey and my good socks. One more glass of water and I'll try to close my eyes.
+unsure|You can borrow my sketchbook, but please be careful with the pages. There's a drawing on the third page that I'm not finished yet, and I don't want it to get crumpled. Do you promise you'll bring it back dry?
+playful|You said you don't like messy art, but I brought the glitter glue from home. One tiny dot on the corner can't hurt, and it'll make our group project look finished. I'll hold the bottle so you don't have to touch it.
+pleased|I was practicing the recorder after lunch when the neighbor kid knocked on the window. He held up a tiny toy saxophone and played along with me from outside. We finished the song together and he bowed.
+pleased|You left a drawing in my backpack this morning. I saw it when I reached for my math book. The cat looks exactly like ours. I'm going to keep it in my folder.
+defensive|I didn't mean to get toothpaste on the bathroom mirror. I was trying to reach the shelf behind it and slipped. It's actually kind of funny now, if you ignore the fingerprints.
+disappointed|I waited by the phone all afternoon, but no one called. Maybe they got busy with something else. I guess we can play tomorrow instead.
+frustrated|The sprinklers turned on right in the middle of our chalk drawing. Everything is smearing into a purple puddle. Should we try to save it, or just start over after it dries?
+worried|The bus is taking a different way today and I don't recognize any of the streets. I'm not lost or anything, I just want to make sure this is still going to our stop. Can you look out the window with me?
+pleased|Someone left a chalk drawing on the hopscotch square for us. It's a rocket with our names written on the sides. Can we keep it until after lunch?
+eager|I kept the wrapper from the candy we shared on Tuesday. It's blue and crinkly and it's in my jacket pocket. That way I can remember exactly which day it was.
+grateful|You showed me how to put the chain back on the gears, and now the bike rides smooth. I was so frustrated before you came out. Can you watch me ride down the driveway once to make sure it holds?
+reflective|I used to think thunder was furniture moving upstairs. My cousin laughed so hard when I told him. Now I think it's funny too, but I still check the ceiling before I say anything.
+tired|The train took six hours to reach Grandma's town. I watched fields and cows go by for most of it. My legs were stiff when we finally pulled in.
+focused|The back wheel needs a tiny adjustment, not a whole new tube. Hold the frame steady while I turn this part. Almost... okay, spin it again and see if the wobble is gone.
+tentative|I have to ask our group whether we can change the poster color before tomorrow. Purple might be easier to read from the back of the room. Can you help me think of how to say it without sounding bossy?
+pleading|Please let me be the one to hide the treasure this time. You always hide it behind the tire swing, and everyone finds it in two minutes. I've got a much trickier spot this time, I promise.
+earnest|The gift isn't done yet, but it will be by Saturday. I need the red paper from the top drawer. Please don't peek while I'm gluing it, okay?
+suspicious|The substitute wrote our homework on the wrong page. She said page forty-two, but page forty-two is all blank. I think she meant the worksheet in the front.
+delighted|My little brother drew a picture of our house. He gave the dog a tiny hat and made the mailbox green. He signed it with a squiggle, but we know it's his.
+sheepish|We tried roasting marshmallows and the stick caught fire. Mine fell in the dirt, so I scraped the burnt part off and ate the middle. Dad's didn't make it at all, so we ate graham crackers for dinner.
+excited|There's an art fair on Saturday and I'm showing three drawings. One is the blue jay from our feeder, one is Grandpa's greenhouse, and one is just a study of shadows. I need somebody to help me carry the frames to the table.
+amused|The map on the wall by Room 12 has a hand-drawn ghost taped over the state line. Nobody remembers who put it there or why. Two of the teachers have mentioned it during announcements, and the ghost has stayed put. It's been up so long that it looks official now.
+pleased|My kite string is fixed. I didn't know you were watching me struggle with the tangle. Now I can fly it after school like I promised.
+curious|The dog has been staring at the empty hallway for about five minutes. There is nothing there that I can see. Maybe he hears something I don't.
+confused|Why do you only eat the crusts first and leave the middle for last? It seems like backwards eating to me, but you seem really happy about it. Are you saving the best part for the end or something?
+proud|Our science display won the blue ribbon, but that wasn't even the part I liked. The judges asked why our model tree leaned to the left, and I actually knew the answer about sunlight. I got to explain it without reading from our poster.
+proud|Dad was helping me fix the chain on my bike when I spotted a note tucked in the spokes. It said 'nice handlebar tape' in wobbly handwriting. I don't know who wrote it, but I kept the note in my pocket.
+relieved|I thought I lost my library book, but it was under my bed with a banana peel on top. I don't remember putting either of those there. I'm returning it tomorrow morning before anyone asks about the fruit.
+hopeful|I drew up the rules for our new game and taped them to the tree. There are four teams and a tie-breaker if nobody wins. I can't wait to see what they think.
+amused|The new kid joined our club and immediately declared himself the official hat-polisher. He only has a napkin, but he takes the job very seriously. We have to come up with a ceremony for him.
+nervous|I accidentally wrote my facts on the back of the display board. Now the side everyone can see is blank, and the good side is facing the wall. Could you help me move it before anyone else comes over?
+thoughtful|The hopscotch squares were washed away by the rain, but someone drew them again in yellow chalk. The numbers are backwards now. Should we fix them?
+pleased|There's a crack in the sidewalk that looks like a diving board. Every time we pass it, we both slow down. We've never actually jumped.
+disappointed|The rain ruined the picnic before we even opened the basket. We ate the sandwiches under the shelter, but the cake got soggy. At least the ducks seemed to enjoy the crumbs.
+amused|You have to see how my dog reacts to the vacuum. He barks at it while backing up in a perfect straight line. Then he sits on his bed and pretends he never noticed it.
+content|Every Saturday we walk to the bakery before it opens. The man always saves us the corner cinnamon roll. We eat it on the bench by the bus stop.
+content|We have the whole afternoon free and nothing planned. I brought my sketchbook and the good markers. We can sit by the pond and draw whatever we want until it's time to go.
+tired|After the playground game, my socks are damp and my knees are covered in grass stains. We moved the bases three times because nobody could agree on fair. Let's just sit on the bus and not talk about the score.
+hesitant|I want to ask you something, but you're gonna think it's silly. Would you maybe carry my backpack for just one block? My shoulder really hurts from practice, and it's pretty heavy.
+uncertain|I'm not sure the shirt fits me anymore. The sleeves reach my knuckles when I lift my arms. Can we try the next size before school starts?
+pleased|The librarian let me check out three books instead of two. She said I looked like a serious reader. I'm going to start with the one about space.
+amused|My sister keeps moving the plant on the windowsill. She says it needs more sun, then less sun, then more again. The plant hasn't changed at all, but she adjusts the pot every day.
+determined|My guitar string broke during practice and the spare snapped too. I restrung it with one from the old acoustic, and it sounds a little weird. But I can still play the song all the way through.
+frustrated|My bike chain keeps slipping and I've oiled it twice. It makes a clacking noise when I pedal hard uphill. Will you hold the back wheel up while I turn the pedals so we can see where it's catching?
+thoughtful|The library has one chair that faces the window instead of the shelves. Nobody ever sits there unless the room is full, but I like it because you can watch the parking lot. Yesterday I saw a cat walk along the whole fence. It never once looked at the cars.
+amused|You arranged all the shoes by size by the door. Mine are at the end, tiny compared to yours. I know which ones are yours now, even with my eyes closed.
+proud|I finished the card for Mom's birthday and it's drying on the counter. The glitter glue took forever to stop being sticky. I wrote her name twice because the first time was crooked.
+eager|The sky looks like it's going to rain soon. If we go outside right now, we can smell the air before the drops start falling. It smells like wet dirt and green leaves, and I love that smell.
+curious|I know you said you prefer pencils, but I want you to try my purple marker once. It writes over our spelling mistakes, and it makes your handwriting look way better. You don't have to switch, just draw one word and see.
+amused|On the train, I was counting tunnels when the man across the aisle handed me a folded paper map. He said I should mark every tunnel we went through. Now my map is covered in little X marks and he's watching me draw.
+playful|The hallway light burned out, so I'm using the night-light from my room. It makes everything look purple and a little spooky. Want to see how the stairs look in the dark?
+thoughtful|While we're walking home I'm thinking about the mystery. We heard a sound by the old shed but never found the source. Maybe tomorrow we can look again in daylight.
+disappointed|I've got the plan all mapped out in my head. We just need two more cushions for the roof. Can you go check if the dryer is empty first?
+frustrated|I wrote the whole paragraph and then spilled water on it. The ink is everywhere now and you can't tell where the sentences end. Could I please start over on a fresh page without it counting as late?
+cheerful|The bus had a new route sign taped above the driver's seat today. It's got all the stops written in rainbow marker. I think a kid made it for him.
+pleased|I found a shortcut to the park that saves exactly one minute. You turn left at the mailbox with the chipmunk sticker. Now we can leave five minutes later.
+hopeful|I've been practicing the same three notes on my trumpet all afternoon. My lips are tired, but I can tell it sounds smoother than yesterday. I'm going to try the whole song tomorrow morning.
+hopeful|I saved a few cereal boxes from breakfast to make a marble run. The tubes are cut and the tape is ready. Can you hold this end while I test whether the marble makes it all the way down?
+amused|The baby goat at the petting zoo chewed on my sleeve. It didn't even bite, just held on and pulled. The keeper said that means it likes me.
+thoughtful|The art fair had a whole table of clay animals and none of them looked like real ones. That made me like them more. I'm going to make mine with too-big ears on purpose.
+anxious|The class pet needs to go home with somebody for the weekend, and my mom hasn't said yes yet. The sign-up sheet on the door has just one blank line left. Can you stand with me while I write our name down?
+annoyed|I lent you my sketchbook three days ago, and now the cover has a giant smudge on it. It's not a huge deal, but I kind of need it back for my art homework. Can you check your backpack?
+worried|I think I used too much flour in the dough. It's sticking to the bowl and to my hands. What happens if bread gets too heavy to rise?
+relieved|The music recital almost got canceled because the piano wouldn't tune. Mr. Davis borrowed an electric keyboard from the gym. It sounds different, but we can still play.
+excited|We're visiting the cousins on Saturday. Last time, we built a whole town out of shoeboxes in the living room. Do you think they still have it, or did somebody put it away?
+nervous|My fingers wouldn't make the right shape on the recorder today. Ms. Park let me borrow one of those little finger stickers from her drawer. It's bright green and looks ridiculous, but my E isn't squeaking anymore.
+sheepish|I left my skateboard in the driveway again. The neighbor called and said it was near the mailbox. I'm sorry, I got excited about landing the kickturn and just ran inside.
+wistful|My drawing of the lighthouse is gone. It was folded twice and tucked in the front pocket of my math folder, and now it's just not there. I checked under every desk in our row. The tape mark on the back is still on my folder, so at least I know it was mine.
+curious|There's a bright blue marble rolling around in the laundry basket. None of ours are blue, so where did it come from? I'm keeping it safe in my pocket for now.
+guilty|I made a small mess with the flour while helping make pancakes. It's not just on the counter, there's some on the floor too. I'm getting the broom before anyone sees it.
+surprised|You actually want to come to my house after school? Usually you're busy on Tuesdays. This is great, we can finally finish building the spaceship out of cardboard boxes.
+content|On the bus ride home, I got the window seat even though I didn't ask for it. The person beside me was reading and never looked up once. I just watched the houses go by and didn't feel like talking at all.
+curious|I was looking for a flat rock to skip across the pond. Instead I found a shiny silver bottle cap half buried in the mud. It has a tiny picture of a mountain printed inside, which is strange for a bottle cap.
+surprised|I found a birthday card under the couch that I thought I'd already mailed. It has my cousin's name on it and everything, just sitting there with some dust bunnies. I wonder if she thinks I forgot her birthday.
+nervous|I have to tell you that I lost your favorite kite. I was holding the string and the wind was too strong. I'm really sorry, and I'll help you fix it.
+pleased|I learned how to make a paper airplane that actually loops. It went all the way across the hallway and landed right on the table. Want me to show you how to fold it?
+sad|I didn't get picked for the reading circle and I really wanted to go. My book report is all ready and everything. I know there's always next week, but today feels kind of long.
+happy|Our class plant grew its first leaf overnight. I came in and found a little flag someone made from a paperclip and masking tape. It says 'day one.'
+curious|Somebody left a trail of bottle caps from the gate to the swings. They go in a spiral at the end. I didn't finish looking because my shoe came untied.
+excited|The train tickets are in my bag, and I already picked the window seat. Mom says the trip takes two hours, so I brought a book and some crackers. I hope we go over a really big bridge.
+uncertain|I know this shirt has a small paint stain on the sleeve. My sister says nobody will see it because the spot is near the seam. Should I wear this one or go with the striped shirt?
+proud|I fixed my bike chain by myself this morning. Dad watched from the porch but didn't help. It took four tries, but it held all the way to school.
+relieved|I thought the tent stakes were going to bend, but Dad showed me how to angle them into the dirt. It stayed up all night even when the wind picked up. I slept fine once I stopped checking every five minutes.
+nervous|Tomorrow is the first music lesson after the break and my fingers feel too short for the song. I practiced the chorus six times, but the high notes still squeak. Can I play it for you one more time before I go to bed?
+excited|You have to help me build the fort before it gets dark. We found that perfect spot behind the couch where the blankets don't slip off the sides. Plus, I brought snacks for the grand opening.
+nervous|I have to admit something about the cake. I tasted the frosting before it was ready. It still needs more sugar, and I couldn't tell without checking.
+doubtful|I'm not sure our volcano model will work at the science fair. The glue hasn't dried yet and the cone keeps leaning. We might have to prop it up with a pencil.
+pleased|We always make the same dinner on Thursdays. It's the one day nobody asks what we're having. I think that's why I like it more than the other days.
+worried|We were collecting shells and I stepped on a sand crab by accident. It scurried off, so I think it's okay. My sandal broke on the walk back, so I carried it and limped the whole way.
+anxious|The tent zipper is stuck and I don't want to pull too hard. Dad said never force it because the teeth will pop out. Can you come over and show me what to do?
+surprised|The substitute wrote her name on the board and then spelled it four different ways. Each time she passed the board, she'd pause and fix one letter. By fourth period she had settled on a version with two R's. We decided not to tell her about the first three.
+curious|I found something wedged behind the couch cushion. It's a little plastic dinosaur, and it's not one of mine. Do you think he's been living there all week?
+relieved|We finally heard back that the sleepover is on and I can go. I've had my bag ready for two days, which was maybe too much. Now I just need to remember my toothbrush.
+questioning|How come you always get to be the captain in our games? I think it's my turn to lead the team for once. We can flip a coin or play rock paper scissors to decide fairly.
+amused|Our substitute teacher said we were having a pop quiz, but he left the room and forgot to come back. We waited really politely for eleven minutes. Then Marcus checked the hallway and he was eating an orange by the lockers.
+happy|On the train, I was drawing the fields outside when the conductor stopped beside me. He stamped my drawing with the tiny train stamp he uses for tickets. Now my page looks like an official rail map.
+worried|I told my brother I'd help him find his lost mitten, and now I can't find mine either. We checked under every chair and behind the couch cushions. The search party has lost its own equipment.
+giggly|You should have seen their face when the ball bounced back. I threw it into the wall and it hit their backpack. They looked so surprised.
+amused|The piñata wouldn't break, so we just pulled the ribbon off. It turned out to be full of stickers instead of candy. Now everyone's got hearts and stars stuck to their shirts.
+relieved|My spelling test is done and I think I got them all. I was so nervous about the word 'beautiful' but I whispered it to myself three times and it stuck. Now I just have to wait for the results.
+surprised|You brought an extra glue stick for my group? We ran out this morning and I didn't want to ask anybody. I'll put it with the markers.
+pleased|You wrote our club name on the underside of the table so nobody would see it. I found it when I dropped my pencil. It's in your best handwriting.
+relieved|All the rocks are sorted into their boxes, and the table is clear again. That took longer than I expected, but everything has its place now. I even found the piece I thought I lost.
+proud|I made a card for Grandma using the dried flowers from the yard. The glue took forever to dry, so I had to hold the petals down with my fingers. Now there are tiny green marks all over my palms, but the card looks good.
+excited|The zoo lights stay on late on summer nights. We saw the lions pacing after the crowds left. It felt like a different place without so many people.
+determined|I'm going to stay on the board until I can push off without wobbling. The park is empty tomorrow morning so there won't be anyone watching me fall. Can you come early and count my tries?
+excited|On the bus ride back I kept checking if my science model was still in one piece. Every bump made the planets swing, and I counted them each time. We're not opening the box until we're in the kitchen.
+conspiratorial|Okay, don't freak out, but I found a blue feather under the big oak. It's not from any bird I know, and there's a tiny silver thread tied around the bottom. We should investigate before anyone else sees it.
+sheepish|There's a small paint mark on the hallway wall. I was practicing my name for the school sign. It wipes off easy, I just need the sponge from under the sink.
+cheerful|The bus broke down on the way home. We got to sit and talk for twenty minutes while the driver called for help. It was actually kind of fun.
+curious|I found a marble under the couch cushion. It's clear with a swirl of blue inside. None of our marbles look like this, so I'm keeping it in the jar by the window for now.
+excited|The train tracks were flooded so we're on a bus instead. I get to sit backwards and the bus driver let me hold the transfer tickets. It's taking longer but I can see way more this way.
+determined|My kickflip still isn't landing, but I know what I'm doing wrong now. My front foot keeps sliding too far. Can I stay at the park for twenty more minutes? I really want to get one clean one today.
+amused|Two kids at the blue bench made a whole game out of trading one sock at a time. You have to keep the other sock on, so everyone walks around limping. I joined in for a round and lost both my socks. They're in my backpack now and I'll put them back after lunch.
+grateful|You left the blanket folded on the armrest for me. I was cold after my bath and there it was. You didn't even say anything about it.
+eager|My cousin is coming over tomorrow and I already picked out all the games. Mom said we have to clean the living room first, which is fair. I put the blocks in the bin so we don't lose more pieces.
+amused|I can't believe we spent an hour trying to decide on a team name. Every time you said one, I found a reason to dislike it. The Rocket Pickles made me laugh so hard I had to sit down, but we never picked anything in the end.
+worried|The music teacher said my rhythm was fine, but she made a face when I missed the last note. I keep replaying it in my head and it sounds worse each time. Do you think I should practice just that part before our lesson?
+pleased|I was sorting my rock collection into piles when Mom set down a small paper envelope. Inside was a purple stone she found on her walk for me. It goes perfectly with the piece I've been missing.
+guilty|I was supposed to feed the hamster, but I forgot until just now. She's standing on her hind legs with her nose pressed against the cage. I'm giving her extra sunflower seeds and trying not to look her in the eye.
+content|The club meeting went better than I expected. We chose our team colors and made badges from bottle caps. Now I just want to draw and wait for next week.
+guilty|I ate the last of the snacks before the movie started. I didn't think anyone else would mind. Sorry, I'll share my fruit gummies with you.
+pleading|Can we use the big ball at recess instead of the small one? The small one bounces weird off the brick wall and it's making the game unfair. I've already asked Priya and she says either one works, so it's really just up to you.
+disappointed|I practiced the song all week and the music teacher skipped my turn. She did leave the sheet music open to my page though. Maybe I'll play it tomorrow.
+fond|Do you remember the pebble we painted silver? It's still under the third fence board. I stepped on it today and it didn't even crack.
+proud|I put the tent back in its bag without asking for help this time. It took three tries to get the folds right, but it finally fit. Dad can just check it when we get to the campsite.
+excited|You know that empty shelf in the hall? I'm turning it into a reading nook for the weekend. I've already brought down two pillows and the green blanket. Don't tell my sister, or she'll claim the top shelf.
+excited|We set up the tent before it got dark last night. Dad showed me how to peg the corners down tight. It didn't move at all when the wind picked up.
+happy|You picked the shell-shaped one and I got the flat one with the swirls. We can swap later if we want, but I already like mine. The lady at the stand said the blue ones came from a different beach.
+anxious|My presentation is in ten minutes and I keep losing my place in the index cards. The poster looks crooked because the tape stuck before I lined it up right. Just stand here with me until they call my name.
+proud|I finally landed the double jump on the trampoline! I missed like twenty times, but my feet actually stayed together that last try. You should see the video I took of it.
+determined|I'm going to make the surprise breakfast myself. Dad already showed me how to crack the eggs without shells. Just let me do the toast part too.
+hopeful|The bus is running late again. If it doesn't come soon, we'll miss the start of the talent show. Maybe we can walk the last few blocks.
+curious|I found a coin behind the radiator. It's not from any country I recognize, and the picture on it looks like a bird. Maybe Grandpa brought it back from one of his trips.
+excited|My skateboard wheel came loose on the way to the library. I sat on the curb and borrowed a tool from a gardener working nearby. He showed me how to tighten all four and now it rolls quieter.
+thoughtful|There's a smooth gray stone by the creek that I've been saving for. It fits perfectly in my palm when it's wet. Can we walk the long way home so I can pick it up before somebody else does?
+excited|There's a surprise in my backpack from this morning. I didn't put that extra cookie in there, so it must have been you. I'm saving it for the walk home.
+nervous|We're supposed to leave for grandma's in ten minutes and I still can't find my left shoe. I looked under my bed and in the hall closet twice. Dad is checking the car, but I don't think it's in there.
+mischievous|I told everyone you were a secret agent, and now they all believe me. They keep asking why you wear the same jacket every day, and you have to keep making up answers. It was supposed to be a joke, but now I think you're stuck with it.
+mildly annoyed|Our class hamster escaped during reading again, and everyone blamed the same person even though the door had been open. We spent twenty minutes searching the cubbies. He was asleep inside someone's empty backpack, which felt unfair to the backpack.
+content|I was lying in the grass after our picnic when something cold touched my ankle. It was a smooth blue marble half hidden in the clover. I closed my fist around it and watched the clouds instead of getting up.
+nervous|I tried to fix the wobbly chair leg with gum, and now it's stuck to the floor. Mom's going to ask why the chair is making that peeling sound when I move it. What if I just leave the gum there and hope it dries clear?
+hopeful|I left a note in their locker asking about the club. I'm waiting to see if they write back. If they say yes, we can start on Saturday.
+guilty|I thought the bucket was empty, but it was full of water. Your comic book is probably ruined by now. I'm going to dry it out, but I know it might be too late.
+pleading|Could I be the one to feed the class hamster today? I've watched Marcus do it four times and I've got the routine down. I promise I won't forget to lock the cage door again, I've been thinking about that all morning.
+concerned|Our group still hasn't decided on a poster color. You drew a whole border in green and Maya started filling everything with blue. What do we do now?
+thoughtful|I kept the ticket stub from the day we rode the bus to the end. It's folded into eighths. When I press it flat, I can still see the date.
+disappointed|The lion was sleeping behind the glass the whole time we were there. We waited a while, but he never even lifted his head. At least the otters were awake and splashing around.
+worried|My brother said he'd help me build the cardboard castle, but he's been in his room for a while. The tape is on the table and the boxes are still flat. Should I start without him?
+nervous|The flute squeaked three times during my lesson today. My teacher said that happens to everyone at the start. I got one clear note by the end.
+hopeful|My fingers are sore from the guitar, but I can finally make three chords sound like an actual song. Can I play it for you when you come over? It's not fast, but it's real music, I promise.
+curious|The substitute teacher wrote our homework on the board sideways, so I'm not sure which subject it belongs to. There's a chemistry symbol and a reading page number in the same line. Want to check your notebook and see if yours makes sense?
+curious|Someone rang the doorbell and left this weird envelope on the mat. There's no name on it, just a drawing of a tree and a time for tomorrow. Did you invite anyone from class?
+apologetic|I left the milk out, I'm sorry. I was going to pour some cereal and then the phone rang. It's probably a little warm now, but I didn't drink any of it.
+annoyed|Somebody took our swing spot again. We were here first and they just walked up like they owned it. Should we ask the teacher or just pick a different game?
+sleepy|I was going to tell you the rest of the dream, but now I can't remember the middle. There was a door and a lot of keys, and then the cat was in the kitchen. Never mind, I think it's gone.
+grateful|My bike chain popped off on the way to school. You showed me how to put it back on the gears, and I did the last bit myself. There's grease all over my jacket now, but I made it.
+embarrassed|I used the wrong glue on the art fair project and now the paper is wrinkled. The dry glue is holding it together, but it looks funny. I don't think I have time to make a new one.
+pleased|I went to get my crayons and they were already in color order. They were a huge pile last night, so thanks. I can find the green one now.
+impatient|Ava hasn't answered my message about the sleepover yet and it's been a while. Maybe she's at dinner or her phone died. I keep checking anyway.
+embarrassed|So I brought my favorite collectible card to show you, and then I dropped it in the puddle. The whole thing got soaked, and now the edges are all fuzzy. Can you please just pretend I didn't do that in front of everyone?
+impatient|Can we please finish this science display before lunch? I've been holding the cardboard steady for so long that my arm is starting to shake. You only need to glue the last leaf, and then I'll let go.
+happy|During art fair, I was showing my clay bird when a girl from the next table handed me a feather. She said it matched the color I used on the beak. I pinned it right onto the cardboard display.
+touched|Cousin left a drawing on my pillow before she went home. It's supposed to be the two of us riding a bicycle, but she drew three wheels and an extra arm. I'm putting it on the fridge even though it looks a little strange.
+grateful|Thanks for letting me borrow your compass all week. I found the trail marker you were looking for. I'll bring it back after school.
+relieved|I found my missing piece under the couch. I was ready to quit the whole puzzle for the day. Now we just need to find the corner pieces.
+apologetic|I think I checked out the wrong library book. Mine was supposed to be about volcanoes and this one is about knight tournaments, which is fun but not the assignment. Will you come help me take it back before the librarian notices?
+suspicious|There's a note folded inside my library book that says 'check the atlas.' I don't remember putting it there. Does this look like anyone's handwriting?
+surprised|The new kid asked if I wanted to trade cards at recess. He didn't ask to join our game, just to trade. We traded the same card twice and it was still fun.
+thankful|You held the bike steady while I fixed the chain, and now it works perfectly. I couldn't get the little clip on by myself, no matter how hard I tried. Thanks for staying out here with me in the garage.
+curious|There's a package on the kitchen table with no name on it. My mom says it's for the cousins who are visiting tomorrow. I'm trying to guess what's inside without shaking it too much.
+quiet|The picnic blanket had a small tear in one corner. Mom stitched it up while we waited for the sandwiches. It's been in the family longer than I have.
+curious|The flamingos were standing on one leg again. I asked the keeper why and she said they do it to stay warm. I tried it while waiting for you and almost fell into the railing.
+playful|After music lesson, I walked home humming the part I kept messing up until the whole block knew it. Now it sounds better outside than it did in the practice room. Let's try it together while we finish packing our bags.
+pleased|You actually remembered my secret handshake! I made it up last week, and usually everyone forgets the double clap at the end. Let's do it one more time before the bell rings.
+quiet|I found something behind the couch. It's one of the buttons from your old coat. I left it on the kitchen counter in case you wanted it back.
+annoyed|The art supply cart rolled away and knocked over the water cups. There's paint water everywhere. I'm trying to clean it before the teacher sees.
+pleased|I found Grandma's old pin cushion in the sewing box. It's shaped like a tomato and has a little strawberry hanging off it. She said the strawberry is for sharpening needles, and now I get to use it.
+hopeful|The train stopped in the middle of nowhere and they said we'd be there another hour. A kid across the aisle dealt out cards and nobody knew the rules, so we made them up. I think our version is better.
+apologetic|I think I left your spare helmet at the skate park. It was the red one with the star sticker. I'm going to check the lost and found first thing tomorrow, I promise.
+thoughtful|I set my socks on the radiator to dry. When I came back, someone had folded them into a neat little square. I don't know who, but thank you.
+worried|I left my project in the classroom and I won't be back until Monday. It's probably fine, but what if the cleaning crew moves it? Maybe I should ask my teacher before I go home.
+proud|I taught myself how to do that whistle where you put your fingers in your mouth. It's really loud, so I can only do it outside, but the neighbor's dog comes running every time. He thinks I'm calling him for a walk.
+anxious|I forgot my library book again, and the librarian was holding out her hand like she already knew. So I confessed first, which somehow made her laugh. She said I could bring it tomorrow, but I still checked my bag three times just in case.
+surprised|I was trying to blow a bubble with my gum when the boy next to me held out a plastic ring. He said it helped him blow perfect circles every time. My very first bubble with it was bigger than my hand.
+determined|My backpack zipper got stuck halfway, so I'm using a paperclip as a pull. It works, but every time I open it, the clip falls on the floor. I've collected three already and put them in my pocket.
+determined|I'm going to find where the ball went. It rolled past the fence and then just disappeared. The game isn't over until we get it back.
+uncertain|I don't know if the new rules are better. Being the tagger seems way harder now. Maybe we should play one round with the old rules just to compare.
+curious|Did the substitute teacher say we could work in the hallway? I heard maybe, but the room got loud right then. If she said no, I want to know before we drag all the chairs out there.
+amused|You got a bookmark from the library again? I thought we were only supposed to borrow books. It's got a little pressed leaf on it, that's actually cool.
+amused|The squirrels have been stealing our game pieces one at a time. There are now three acorns where the blue marbles were. I think they're joining the game.
+anxious|We're about to leave for the pool, and I can't find my goggles anywhere. Mom is checking the car, and I'm looking under the couch again. I really don't want to swim with blurry eyes.
+pleased|I found the button that fell off my favorite jacket. It was hiding in the lining near the pocket. Now I just need to borrow the sewing kit and try not to make the thread too tight.
+relieved|I thought I lost my favorite rock at the park. Then I found it in the side pocket of my backpack. It rolled in there when I bent over.
+surprised|I did not think a piccolo would be this loud in a small room. My ears are still ringing from practice. Bring earplugs next time, seriously, I'm not joking.
+curious|The map we found in the library book has a pond marked where the football field is now. I've walked past it every day and never noticed the old fence line. Should we go look after school, just to see what's still there?
+enthusiastic|So the plan is: we sneak into the kitchen, grab the cookies, and build the spaceship bridge. If we don't get the snacks in the next five minutes, the mission is totally ruined. Ready?
+hopeful|Could we stop at the bakery on the way home? I only have enough for one muffin, but I'd share half with you. It's the blueberry kind they make on Fridays.
+worrying|Our class hamster got out during reading time. He is probably under the radiator because that is where he always hides when he's scared. Can you help me move the bookshelf so we can find him?
+thoughtful|The box of crayons has one missing, and it's the exact color of the sky before it gets dark. I checked all the drawers, and it's not in any of them. Maybe it rolled under the refrigerator.
+disappointed|Our tent pole snapped right when we got the rainfly on. Dad tried splinting it with a stick and duct tape, which mostly worked. We still had to sleep kind of squished together though.
+proud|I've been collecting rocks since the quarry trip, and there's one more spot I want to check. It's behind the old shed where we found the sparkly one. Please can we walk down after dinner? It'll only take a minute.
+curious|There's a single mitten in the hallway, and it's not ours. It has a little silver bell sewn to the cuff. I'm going to set it by the door for now.
+pleased|I finished the gift wrap and the bow stayed on this time. It took two tries, but the second one looks pretty good. I hid it in the hall closet so no one peeks.
+worried|Ryan was supposed to meet us here twenty minutes ago. He never forgets about the game unless something big happened at home. Do you think we should go knock on his door, or just wait a little longer?
+confused|The map for our scavenger hunt has an X by the gym, but we already looked there twice. Either the X is old, or we're reading the arrows upside down. Should we start from the fountain instead and see if anything matches?
+happy|While we were walking to the zoo exit, I saw a zookeeper leaving a note on the gate. It said the otters had a new baby and the sign hadn't been updated yet. We rushed back and saw the baby climbing on a rock.
+mildly frustrated|The cat knocked my homework off the table twice this morning. She keeps walking across the paper and leaving paw prints in the margins. I guess the teacher will know it was a group project with the pet.
+proud|I climbed all the way to the big branch without stopping. My arms are tired, but I did it. Nobody thought I could reach that high.
+confused|I thought we were building a fort with the big boxes. Now you've got the blankets out instead. Which plan are we doing today? I don't mind either one.
+apologetic|I think I ate your lunch by mistake. The sandwich looked exactly like mine and I wasn't paying attention. I'll trade you my chips and my apple if that helps, and I'll check my name on the bag next time.
+nervous|The substitute wrote our spelling words on the board in perfect cursive. We weren't sure if we were supposed to copy it or just read it. Has she written anything else?
+uncertain|I saved you the good marker, the one that still squeaks. I put it on the left side of my desk. Is that where you look first or should I move it?
+thoughtful|I put my favorite board away for the night, but I keep thinking about that wobbly landing. Tomorrow I'll try it again after school. Maybe starting a little lower will help.
+relieved|I thought I lost the little notebook where I draw my comic. Then I found it inside my winter boot, of all places. I must have tucked it there when my hands were full of laundry.
+happy|I sold two of my drawings at the art fair. A lady in a green hat bought the one with the purple bird. She asked if I had more like that.
+excited|The train goes through a tunnel right before the big bridge. I counted seven tunnel lights on the way there. I want to count them again on the way back and see if I get the same number.
+amused|The class hamster escaped during cleanup and we found him in the pencil jar. He'd eaten exactly one eraser and was sitting in the crumbs like a king. We spent the whole last period putting the supplies back in order.
+eager|Okay, so I've been thinking about the club name. 'The Backyard Bandits' is good, but maybe we should be 'The Cloud Watchers' instead. I just think we need to decide today because everyone's coming over after lunch.
+quiet|I asked Grandma for her cookie recipe, but I didn't write it down fast enough. I remember the butter and the sugar, then she started talking about the oven. Can we call her after dinner?
+embarrassed|I raised my hand to answer and realized I had no idea what the question was. The teacher waited and waited. I just said I'd forgotten and sat down.
+thoughtful|I'm picking out my clothes for tomorrow. The green shirt matches the blue pants, but the red socks are warmer. I think I'll wear the red socks anyway because my feet get cold in the morning.
+sheepish|I got water up my nose at swimming today. The plan was to practice the whole backstroke, but my goggles kept filling up. I used my shirt as a towel and just floated instead.
+earnest|Can we go to the pool again tomorrow? Today I finally floated without holding the wall, and I want to do it one more time so I know it wasn't luck. I'll pack my goggles by myself tonight.
+puzzled|The sandwich you packed has a smiley face drawn on the bag. I didn't ask you to do that, but I'm keeping it for after recess. Was that your idea?
+fond|My brother is in the next room practicing his lines for the school play. He keeps doing the same part over and over and getting louder each time. It's actually pretty funny.
+reflective|I used to think that treehouse belonged to someone else because of the drawings on the walls. Then I realized they were just pencil marks from years ago. Now it feels like our secret spot to hang out.
+embarrassed|I stood up during music to show the teacher my hand position and my chair slid backward. Then my shoelace caught on the leg and I ended up kind of hopping. Everyone was kind about it, but my face stayed hot for the rest of class.
+excited|We were feeding the ducks at the zoo pond when a peacock walked right past the bench. It dropped one long blue feather near my shoe before disappearing behind the bushes. I picked it up and Mom said I could keep it.
+curious|The dog keeps bringing me the same sock from under my bed. It's the one I lost last week, the blue one with the hole in the toe. I've put it in the laundry twice, and she finds it every time.
+eager|My bag is packed and my shoes are by the door. I've been waiting all week for the overnight campout. My stomach feels full of jumping beans just thinking about it.
+eager|I borrowed your marker for the map, but it ran out of ink. The trail lines are fading right in the middle of the forest part. Can I borrow the green one from your desk?
+hopeful|Could we sit near the front for the assembly? Last time I couldn't see anything over everyone's heads. I'll save you a spot if you save me one at recess tomorrow.
+curious|Did you see what was in our hamster cage this morning? There was a tiny paper star sitting next to Nutmeg. Nobody in our class uses stars like that.
+curious|There's a tiny door in the wall of the old shed. It's too small for anything we own. A blue feather keeps reappearing in front of it.
+hurried|Swim practice finished early, so we can grab a snack before we head back. My hair is still wet, and I forgot my comb in the locker. Do you think the corner store will still have the lemon ice?
+curious|There's a book under the couch I've never seen before. The cover has a drawing of a bird wearing a tiny hat. I'm going to read the first page before I decide whether to show my brother.
+curious|There's a mark scratched into the old wooden bridge near my house. It looks like someone carved initials a long time ago. I want to know who it was.
+pleased|I sold two paintings at the fair. The lady said the blue one reminded her of a lake she used to visit. I kept the third one because I like it too much to let it go.
+worried|The substitute never told us what page the math worksheet is on, and the bell is about to ring. My notes look complete except for a whole corner missing. Do you want to compare ours on the bus?
+curious|There's a note tucked inside my library book that isn't mine. It says, 'Meet at the usual place' and has a little star doodled in the corner. Do you know anybody who writes like that?
+proud|I've almost finished the gift for Mom. It's a little book of drawings from our walks. I need to add one more page about the tree with the swing.
+uncertain|I don't know what to do for the group skit. My idea was too silly and everyone said no. Do you think a story about a talking pencil would work?
+thoughtful|I'm making a card, but I can't decide if it should be a birthday card or a just-because card. If I put a dog on it, it could be either. I'll decide after I finish the ears.
+thoughtful|The penguin exhibit was closed for cleaning, so we watched the otters for a while instead. They kept stealing each other's rocks, which the keeper said they aren't even supposed to have. I liked them better than the penguins anyway.
+worried|The zebra almost didn't come out from the barn, and I want to wait a little longer. The zookeeper said they sometimes sleep during the hot part of the day. Can we sit on that bench near the fence for ten more minutes?
+pleased|I was just putting my plate in the sink when I saw it. You left my favorite spoon right at the edge for me to reach. I didn't even ask this time.
+thoughtful|Grandpa sent back the drawing I mailed him and it has a note on the back. He wrote that he put it on the fridge and that the colors are just right. I'm keeping the note in my folder.
+baffled|Somebody keeps moving the garden gnome to face the fence. Every morning I turn it back to face the yard, and by evening it's staring at the wood again. It's not me, and the dog can't reach it, so who is doing this?
+hopeful|I drew our classroom in art today, and I think I got the windows right for once. I'd like to show you, but it's still in my folder because the glue hasn't dried. If you stay after the bell, I'll pull it out very slowly.
+thoughtful|While I was packing for camp, I found an old friendship bracelet in the bottom of my drawer. It was made with the same string we used last summer. I tied it onto my backpack instead of leaving it there.
+disappointed|We were supposed to make paper airplanes, but the origami book is missing a page. I tried to fold one from memory, and it keeps nose-diving into the carpet. My brother says mine looks like a paper taco.
+excited|Someone left a note taped to the tire swing. It just says 'look under the flat rock' in blue crayon. I already checked, and there's a shiny bottle cap underneath.
+determined|I know I forgot my permission slip yesterday, but I brought it today. It's in my backpack with the signed part facing up so it's easy to find. Can you take it now before I lose it again?
+hopeful|I thought our group got the worst project, but then Mr. Patel handed us the box of colored tape. Now I think we might actually finish first.
+fond|I saved you the corner seat in the bus shelter. It's the only one where you can see the bakery sign. I got here early and pretended to tie my shoe.
+nervous|The tent is all folded up, but I keep checking the zipper. Dad says it's fine, and he's already loaded the car. Still, I want to make sure we didn't leave any stakes behind.
+excited|My cousin is bringing over the puzzle we never finished last summer. We hid the last four pieces in a zip-top bag so they wouldn't get lost. I think I know where the blue sky pieces go.
+surprised|The penguins at the zoo were louder than I expected. They kept sliding on their bellies into the water. One stopped right in front of the glass and stared at me.
+nostalgic|Remember the time you called the pool ladder a jungle gym? You climbed all the way to the top and then froze. The lifeguard had to talk you down while I pretended not to know you.
+frustrated|After group project practice, I came home with glitter on my elbow and one page of notes missing. We argued about the title for so long that we forgot to glue the pictures. I can finish the rest if you help me find the tape.
+disappointed|I was really counting on you coming to the clubhouse meeting. You said you'd bring the new game rules, and now nobody knows what to do next. It's kind of hard to practice without them.
+tired|I know I'm supposed to be asleep, but my sock came off. It rolled all the way to the door. Can I just grab it real quick before you turn the light out?
+determined|Our group can't agree on a color for the poster. One person wants blue, another wants green. I suggested we use both and split the background down the middle.
+surprised|There's a maroon sock under the couch. I know it's Dad's because it has that little dinosaur patch he sewed on. How do you think it got all the way under there without us noticing?
+pleased|At the art fair, my painting's corner got torn off the display board. The lady there gave me blue tape, and now it looks kind of intentional. She even wrote my name really fancy on the label.
+hopeful|The zoo map says there's a new baby giraffe, but we haven't found that building yet. I've checked the pond and the big cat area already. Can we try the path behind the picnic tables next?
+suspicious|Someone moved my dinosaur book to the top shelf. You said your hands were full, but I saw you carrying it earlier. What are you hiding?
+surprised|Something fell out from under the couch when I reached for the remote. It's one of my toy cars, missing since last spring. Now I'm checking the other side too.
+pleased|Look what I found in the garden bed this morning. It's a whole bunch of tiny green sprouts poking up through the dirt. You were right, the seeds actually grew, and I want to show you before the sprinklers cover them with mud.
+frustrated|Our group project poster is covered in three different colors of handwriting, and none of it matches. We each kept editing the same sentence, so now it says almost the same thing four times. Can we erase it and start with just one line?
+curious|At the art fair, I was looking at someone's painting of a boat when I noticed a shell glued to the corner. It was the same kind we found on our beach trip last month. I wondered if the artist had been there too.
+unsure|We were going to fly kites, but the string broke and the kite is stuck in the tree. I have some yarn in my pocket from my sewing kit, but I'm not sure it's strong enough. Should we try to climb up or wait for the wind?
+relieved|I finally figured out how to make the remote-control car go backward. It only works if you tap the top button twice. Now we can get it out from under the bed.
+hopeful|Can I please be the one to hand out the papers? I've been waiting all week for a job like that. I'll make sure everyone gets one and I won't skip anybody.
+amused|Our substitute teacher keeps calling the attendance list like it's a menu. She just said 'one Daniel, extra quiet.' Nobody knows whether to laugh.
+thoughtful|Our fort wall has a tiny hole shaped like a fish. When the sun hits it just right, there's a light fish swimming on the floor. We never noticed before.
+eager|My rock box is almost full, so I labeled the new ones before bed. There's one that looks like a tiny mountain, and I keep turning it over. I wonder if the field by the creek has more like it.
+pleased|I didn't expect Dad to take my brother to soccer practice today. That means I get the whole living room to myself for an hour. I'm going to finish this chapter without anyone asking whose turn it is.
+thoughtful|I forgot my library book was due today until lunch. It's still under my bed in a pile of comics. Maybe I can return it first thing tomorrow.
+brave|I got in on the third day, remember? The water felt cold for exactly one second and then it was fine. You can borrow my goggles if yours keep fogging up.
+confused|Wait, why did the referee blow the whistle? I definitely stepped on the line, but so did Jamie. We should probably check the rulebook again because nobody seems to agree.
+apologetic|I forgot to put the lid on the juice container. Some of it leaked onto the shelf. I already wiped it, but the shelf might be a little sticky.
+annoyed|Somebody scribbled on my spelling test before I turned it in. The teacher marked it wrong because she couldn't read my answers. I have to retake it at recess.
+amused|The cat is sitting in the laundry basket again. There are still clothes in there, but she pushed them all to one side to make a nest. Every time I try to move her, she just looks at me.
+amused|My kite got stuck in a tree near the soccer field. A kid I didn't know climbed up and tossed it down, and now it's got one bent spar. We flew it anyway and it just goes in circles.
+quiet|I got paint on the brand new shirt. It's the blue one I was going to wear to the fair tomorrow. I know I should have put an apron on, and I will next time.
+amused|The cat just walked past carrying Dad's slipper. She set it down next to her water bowl like it belongs there. Now she's sitting on it like a queen.
+hopeful|The cookies are in the oven for my sister's playdate and the house already smells good. I hope she remembers to tell her friend about the nut allergy. She usually does, but she's distracted today.
+relieved|I thought I lost the ring you gave me last week, but I found it in my coat pocket. I had searched my whole room and even checked under the bed twice. I'm so glad I can give it back to you now.
+curious|I was looking through my rock box when I noticed one stone felt heavier than the rest. It had a tiny fossil shell pressed into it that I had never seen before. I must have picked it up without realizing what it was.
+sleepy|I know it's bedtime, but I can't find my other slipper. It was right here by the stairs, and now it's gone. Can we look under the porch bench before we call it a night?
+pleased|We finally got the kite to catch a breeze. It flew for about ten seconds before landing in the big oak. But those were a really good ten seconds.
+pleading|I know I said I'd pick the book group book, but I changed my mind. The one I chose has a map in the front and I don't want to spend the whole week explaining it. Can we vote again tomorrow morning?
+restless|The train won't arrive for another twenty minutes, and my backpack already feels heavy. There's a pigeon on the platform that keeps hopping closer to my shoe. I wish it would hurry up so we could get moving.
+surprised|I came home early and found my brother teaching the cat to high-five. He had a whole routine with hand signals and everything. The cat did it twice, then walked away like nothing happened.
+amused|The rain ruined our picnic, so we ate under the big oak tree. Mom pulled out a deck of cards from the basket. We played Go Fish until it cleared up.
+grateful|Thanks for holding the bike steady while I fixed the chain. I couldn't get the lever on by myself and I was about to just walk it home. It rolls smooth now, listen to how quiet it is.
+reflective|Remember when we thought the sprinkler was a real monster? We hid behind the shed for an hour until Dad turned it off. It's kind of funny now, but I still check that corner sometimes.
+excited|I want to plan the picnic myself this time. I'll make the sandwiches and pack the fruit. We just have to save me a little space in the cooler.
+deflated|Our group project is due tomorrow and nobody has done their part. I made the poster and the model, but it's supposed to be a joint effort. Now I have to present it alone.
+excited|My cousin left her headlamp here last time. I just found it in the jacket pocket by the door. Do you want to go outside and test how bright it is before bed?
+sheepish|I brought my camera to the skate park and dropped it on the concrete. The lens cover cracked, but the pictures still work. There's one great shot of Marcus mid-air and half my thumb in the corner.
+hopeful|Can I try the trumpet at band sign-up day? My friend said the mouthpiece feels weird at first, but she got used to it in a week. If I don't like it after two lessons, I'll switch to the clarinet.
+excited|There's a wrapper under the stairs that says chocolate. I didn't open anything, I promise. Should we go investigate together before someone else finds it?
+thoughtful|The kitchen looks almost normal again after the big cooking day. There's one pan left to wash and the floor needs a quick mop. I'll finish it before my show starts.
+sheepish|Remember when I told you the park had a new pond? I feel pretty silly about that. It was just a big muddy puddle from the storm, and you brought your swimsuit for nothing. I'm really sorry I got your hopes up.
+excited|We were riding our bikes home when mine started making a clicking noise. Dad stopped and found a small metal star stuck in the tire tread. He pulled it out and said it was the fanciest flat tire we'd ever fixed.
+proud|I made a card for Mom using the old cereal box and some glitter. The glue didn't dry right, so the glitter keeps flaking off onto the table. I think she'll like it anyway, especially the part where I drew our dog.
+determined|My shoelace keeps coming undone every time I run. I'm going to double-knot it this time. If it trips me again, we might have to invent a slide-only game.
+excited|I figured out why our plant is leaning. It's not sick, it just likes the window better than the lamp. Could we turn the pot every day after lunch so both sides get a turn?
+tired|My legs are completely done after all that skate practice. I finally landed the small ollie, but my ankles feel wobbly. We should get home so I can soak my feet in cool water.
+excited|We found a trail behind the campground that nobody else was using. It led to a little waterfall about ten minutes in. I'm telling Sam we have to go there next time.
+relieved|I thought the tent poles were in the car, but they were under the table the whole time. We would have had to sleep without a roof. Your face when I found them was worth the panic.
+hopeful|Would you want to be my partner for the scavenger hunt tomorrow? I know you're usually with Sam, but I think we'd actually be a good team. You always notice the small stuff.
+sincere|I want to explain why the fort matters. My cousin and I started it last summer, and it's still my favorite spot. We can take it down after the weekend, not before.
+confused|The substitute teacher got our names mixed up. She called me by my brother's name twice. I corrected her nicely, but now everyone's giggling.
+calm|Every night you read the same two pages of that book. We skip the part about the boat because you already know it by heart. I like it when you get to the part where he finds the shell.
+excited|The zoo train broke down halfway up the hill. We walked the rest and spotted a baby zebra hiding behind a fence that wasn't open to visitors yet. The keeper said nobody else has seen it this week.
+determined|It's raining and the picnic is supposed to be at noon. I don't want to cancel it, though, because I made the sandwiches already. Can we move it to the gazebo by the pond? The cover will keep the bread dry.
+surprised|You put my clean shirt on the chair without being asked. I didn't notice until I was getting ready. That made my morning much easier.
+confused|My cat knocked the sock basket over and then sat on it like nothing happened. There are socks everywhere and she looks pleased. I don't know how she did it so fast.
+playful|I've decided we should play soccer with only our left feet. It sounds easy, but it's incredibly hard to run in a straight line. You go first and try to kick it past the bush without falling over.
+determined|I was at skate practice trying the same turn for the tenth time when my friend set her water bottle down as a marker. She said aim for the bottle and don't think about the rest. I cleared it on the eleventh try.
+pleased|I was going to wrap the gift in the blue paper, but it ripped right in the middle. So I cut out some comic strips and glued them over the tear. Now it looks like a present a superhero would send.
+thoughtful|The rules say you can't tag while standing on one foot. You asked me to make up a rule, so that's the one I chose. Do you want to vote against it, or are we starting?
+confident|Trust me on this part, I figured it out yesterday. If we sort the shells by shape first, the pattern is obvious. The chart will look way better and we won't have to redo it during lunch.
+nervous|My art piece is sitting on the table, and I keep noticing a spot I want to fix. The fair starts in an hour, and I don't have time to redo the whole thing. Maybe nobody will look that closely.
+amused|My flute case had a granola bar stuck inside it all week. I only found it when I opened it for practice. Good thing it was still wrapped.
+enthusiastic|Look at this one I found by the creek. The gray stripe goes all the way through when you break it, except this one wasn't broken, the stripe just ends. I polished it with my sleeve so you can really see it.
+relieved|You're here! I thought you forgot about the picnic. I saved the good juice boxes for you and everything, and I was starting to worry. Do you want the strawberry one or the apple?
+cheerful|I sorted the laundry into three piles by color. There's socks in the basket and shirts on the chair. The rest just needs folding whenever you have a minute.

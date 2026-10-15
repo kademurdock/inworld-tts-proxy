@@ -1,11 +1,20 @@
 'use strict';
 
+const GROUP_TONES = {
+  Women: ['Bright & Lively','Characters & Distinctive','Clear & Neutral','Deep & Resonant','Light & Youthful','Rough & Textured','Warm & Soothing'],
+  Men: ['Bright & Lively','Characters & Distinctive','Clear & Neutral','Deep & Resonant','Light & Youthful','Rough & Textured','Warm & Soothing'],
+  'Kids and teens': ['Bright & Lively','Characters & Distinctive','Light & Youthful'],
+  Characters: ['Bright & Lively','Characters & Distinctive','Clear & Neutral','Light & Youthful','Warm & Soothing'],
+};
+
 // The feedback board is the durable record. Replay by creation time, and keep
 // the newest report per voice even if an older open row is retried after it.
 function createSelectedReportHandler(rows, picker) {
   const lookup = new Map();
   for (const row of rows) {
-    for (const name of [row.label, row.tag, 'fish:' + row.id, ...(row.aliases || [])]) {
+    // A display tag is not necessarily a binding: "miss-a", for example,
+    // still names a retained Inworld voice. Only declared aliases may move us.
+    for (const name of [row.label, 'fish:' + row.id, ...(row.aliases || [])]) {
       if (!name) continue;
       const key = name.trim().toLowerCase();
       if (lookup.has(key) && lookup.get(key) !== row) throw new Error('Ambiguous selected voice name.');
@@ -25,7 +34,7 @@ function createSelectedReportHandler(rows, picker) {
     else if (/\bman\b/.test(heard)) group = 'Men';
     else if (/^(?:an? )?(?:older|younger) person$/.test(heard) && ['Women','Men'].includes(currentGroup)) group = currentGroup;
     if (!group) return { ok: false, why: 'That report needs a specific voice group.', selected: true };
-    const allowed = new Set(picker.categories.map(c => c.name));
+    const allowed = new Set(Object.entries(GROUP_TONES).flatMap(([name, tones]) => tones.map(tone => name + ', ' + tone)));
     const targets = [...new Set(row.categories.map(c => group + ', ' + c.split(', ').slice(1).join(', ')).filter(c => allowed.has(c)))];
     if (!targets.length) {
       const fallback = group + ', ' + (group === 'Kids and teens' ? 'Light & Youthful' : group === 'Characters' ? 'Characters & Distinctive' : 'Clear & Neutral');
@@ -40,6 +49,8 @@ function createSelectedReportHandler(rows, picker) {
     if (JSON.stringify(row.categories) === JSON.stringify(targets)) return { ...base, already: true };
     const from = row.categories.join('; ');
     row.categories.splice(0, row.categories.length, ...targets);
+    // A valid tone can become empty after corrections, then gain a voice later.
+    for (const target of targets) if (!picker.categories.some(c => c.name === target)) picker.categories.push({name: target, voices: []});
     // Remove every old membership, including multiple tone subcategories.
     for (const section of picker.categories) {
       section.voices = section.voices.filter(v => v !== row.label);
