@@ -46,6 +46,8 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
+const { fishPacedText, FISH_PACES } = require('./pace');
+const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
 const TTS_STREAM_ENABLED = process.env.KADE_TTS_STREAM !== "0";
@@ -66,8 +68,8 @@ const FISH_TTS_MODELS = new Set(["drama-3", "drama-3-preview", "s2.1-pro", "s2.1
 const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|balanced|low
 // Fish clones speak at their source sample's natural pace — do NOT inherit
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
-// like the people they were cloned from. Per-request `speed` still wins.
-const FISH_TTS_SPEED = parseFloat(process.env.FISH_TTS_SPEED || "1.0");
+// like the people they were cloned from. Listener pace is an actor instruction;
+// numeric Fish prosody speed stays at 1.0, including when an old client sends speed.
 /* Part 117.7 (Sep 2 2026), her ask once the hallucinations stopped: "is there a
  * way to turn the temp up now? They could be more expressive sometimes. It's
  * like some phrases are great and others are flat." Fish's range is 0–1
@@ -1509,10 +1511,10 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     throw new Error('Selected sample voices require Drama3.');
   }
   const payload = {
-    text, format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
+    text: fishPacedText(text, speakingRate), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
     temperature: (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE,
     top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
-    prosody: { speed: speakingRate != null ? speakingRate : FISH_TTS_SPEED },
+    prosody: { speed: 1.0 },
   };
   const encoded = await fishBody(payload, fishModelId, selectedReferenceStore);
   const ac = new AbortController();
@@ -4966,7 +4968,7 @@ if (VOICE_PICKER_V2 && VOICE_CATALOG_V2 && VOICE_CATALOG_V2.voices) {
  * the picker labels that speak through fish.audio, so the describer can say so next to them.
  * Labels only, never ids. */
 function fishPickerLabels() {
-  if (selectedVoicePicker) return selectedVoicePicker.voices;
+  if (selectedVoicePicker) return selectedVoicePicker.fish;
   return VOICE_LIST.filter((label) => String(VOICE_MAP[label] || "").startsWith(FISH_VOICE_PREFIX));
 }
 const SAMPLE_TEXT = "Hi there \u2014 thanks for stopping to listen. Here's a little of what I can do. I can keep things calm and clear, like I'm reading you a story at the end of a long day. I can lift it right up when there's good news, because honestly, that's exciting! And when something really matters, I can slow down and get serious, so you know I mean every word. So... what do you think? If you're looking for a voice to ride along with you, maybe pick me. I'd love the part.";
@@ -5229,12 +5231,18 @@ app.get("/healthz", (_req, res) =>
 // implicit scene voices. Only the public picker is replaced by the selected set.
 if (process.env.SELECTED_VOICES_ENABLED === '1') {
   const rows = require('./selected-voices.json').voices;
-  selectedVoicePicker = selectedPicker(rows, {
+  const legacy = {
     voices: VOICE_LIST, hidden: HIDDEN_VOICE_ALIASES, aliases: Object.keys(CUSTOM_VOICE_MAP),
     map: VOICE_MAP, renames: VOICE_RENAMES, describe: VOICE_DESCRIBE, tags: VOICE_TAGS,
-  });
+    categories: VOICE_PICKER_CATEGORIES,
+  };
+  const classic = classicPicker(selectedPicker(rows, legacy), legacy);
+  selectedVoicePicker = classic.picker;
+  selectedVoicePicker.pacing = { fish: FISH_PACES.map(({ value, name }) => ({ value, name })), inworld: { min: 0.5, max: 1.5, default: 1 } };
+  for (const [label, target] of classic.bindings) VOICE_MAP[label] = target;
   selectedReferenceStore = createReferenceStore(rows);
   installSelectedBindings(rows, VOICE_MAP, selectedAuditionVoices);
+  for (const [label, target] of Object.entries(VOICE_MAP)) selectedVoicePicker.providers[label] = target.startsWith(FISH_VOICE_PREFIX) ? 'fish' : 'inworld';
   selectedVoiceReport = require('./selected-voice-moves').createSelectedReportHandler(rows, selectedVoicePicker);
   console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);
 }

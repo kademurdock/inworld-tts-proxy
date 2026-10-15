@@ -26,8 +26,18 @@ global.fetch = async (url, options) => {
     const packed = options.headers['Content-Type'] === 'application/msgpack';
     const body = packed ? decode(options.body) : JSON.parse(options.body);
     fs.appendFileSync(process.env.PROVIDER_RECEIPT, JSON.stringify({ packed, model: options.headers.model,
-      reference_id: body.reference_id, references: body.references?.map(r => ({ audio: Buffer.from(r.audio).toString(), text: r.text })), text: body.text }) + '\n');
+      reference_id: body.reference_id, references: body.references?.map(r => ({ audio: Buffer.from(r.audio).toString(), text: r.text })), text: body.text, prosody: body.prosody }) + '\n');
     return new Response(pcm);
+  }
+  if (u === 'https://api.inworld.ai/tts/v1/voice') {
+    const body = JSON.parse(options.body);
+    fs.appendFileSync(process.env.PROVIDER_RECEIPT, JSON.stringify({ provider: 'inworld', ...body }) + '\n');
+    const wav = Buffer.alloc(44 + pcm.length);
+    wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8);
+    wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22);
+    wav.writeUInt32LE(24000, 24); wav.writeUInt32LE(48000, 28); wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34);
+    wav.write('data', 36); wav.writeUInt32LE(pcm.length, 40); pcm.copy(wav, 44);
+    return Response.json({ audioContent: wav.toString('base64') });
   }
   throw Error('Unexpected network destination');
 };
