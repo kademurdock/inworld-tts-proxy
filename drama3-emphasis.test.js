@@ -33,6 +33,28 @@ test('artificial request boundaries close and reopen an emphasized phrase withou
   const pieces = carryDrama3Scopes([f('<emphasis>One REALLY important'), f('word</emphasis> and NEXT.')]);
   assert.deepEqual(pieces, ['<emphasis>One REALLY important</emphasis>', '<emphasis>word</emphasis> and <emphasis>NEXT</emphasis>.']);
 });
+test('a stressed contraction or possessive is one word: the scope never closes inside it (finding 24)', () => {
+  const f = load('drama-3');
+  assert.equal(f("I DON'T want that."), "I <emphasis>DON'T</emphasis> want that.");
+  assert.equal(f("You CAN'T be serious."), "You <emphasis>CAN'T</emphasis> be serious.");
+  assert.equal(f("YOU'RE kidding."), "<emphasis>YOU'RE</emphasis> kidding.");
+  assert.equal(f("That's KADE'S chair."), "That's <emphasis>KADE'S</emphasis> chair.");
+  assert.equal(f("That's KADE's chair."), "That's <emphasis>KADE's</emphasis> chair.");
+  assert.equal(f("It WASN'T me, and THEY'VE gone."), "It <emphasis>WASN'T</emphasis> me, and <emphasis>THEY'VE</emphasis> gone.");
+  assert.equal(f('I DON’T care.'), 'I <emphasis>DON’T</emphasis> care.');
+  assert.equal(f("Y'ALL came, and I'm GOIN' home."), "<emphasis>Y'ALL</emphasis> came, and I'm <emphasis>GOIN'</emphasis> home.");
+  // A quoted word keeps its quotes outside the scope; a short contraction is never cut.
+  assert.equal(f("She said 'REALLY' twice."), "She said '<emphasis>REALLY</emphasis>' twice.");
+  assert.equal(f("I'M here, I'LL stay."), "I'M here, I'LL stay.");
+  // Acronyms with a possessive are still acronyms.
+  assert.equal(f("NASA'S launch."), "NASA'S launch.");
+  // No stressed word is ever split anywhere in the output.
+  for (const input of ["DON'T", "CAN'T", "YOU'RE", "KADE'S", "WASN'T", 'DON’T']) {
+    assert.doesNotMatch(f(`Well ${input} now.`), /<\/emphasis>['’]/);
+  }
+  // The S2 rollback keeps the word whole too.
+  assert.equal(load('s2.1-pro')("I DON'T want that."), "I [emphasis] DON'T want that.");
+});
 test('explicit S2 rollback retains its original prefix syntax; Drama3 preview uses paired syntax', () => {
   assert.equal(load('s2.1-pro')('I REALLY meant THAT.'), 'I [emphasis] REALLY meant [emphasis] THAT.');
   assert.equal(load('drama-3-preview')('REALLY.'), '<emphasis>REALLY</emphasis>.');

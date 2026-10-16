@@ -2562,10 +2562,18 @@ const FISH_NORMALIZE = process.env.FISH_NORMALIZE === "1";
 // NOT/YOU/ALL — a model that capitalizes those MEANT the stress (the fish
 // docs' own example is "I told you NOT to open that door").
 const FISH_EMPHASIS_STOPLIST = new Set(["TTS","URL","USA","ASAP","LOL","OMG","FYI","DIY","CEO","GPS","FAQ","API","USB","GPT","LLM","FBI","NASA","DNA","PDF","HTML","WIFI"]);
+// One stressed word, apostrophes included (Oct 16 2026): a contraction or
+// possessive (DON'T, CAN'T, YOU'RE, KADE'S, KADE's, Y'ALL, GOIN') is ONE word,
+// straight or curly apostrophe, so the scope never closes inside it. An
+// apostrophe ends a word only when no letter follows it (a closing quote);
+// one that opens a quote stays outside the scope.
 function fishEmphasisFromCaps(text, paired = typeof FISH_TTS_MODEL === "string" && /^drama-3(?:-preview)?$/.test(FISH_TTS_MODEL)) {
-  const emphasize = part => part.replace(/(^|[\s"'(—-])([A-Z]{3,12})(?=$|[\s.,!?;:)"'—-])/g, (m, pre, word) => {
-    if (FISH_EMPHASIS_STOPLIST.has(word)) return m;
-    return paired ? `${pre}<emphasis>${word}</emphasis>` : `${pre}[emphasis] ${word}`;
+  const emphasize = part => part.replace(/(^|[\s"(“‘—-]|(?<![A-Za-z])['’])((?:[A-Z]['’])?[A-Z]{3,12}(?:['’][A-Za-z]{1,3}|['’](?![A-Za-z]))?)(?=$|[\s.,!?;:)"”—-]|['’](?![A-Za-z]))/g, (m, pre, word) => {
+    if (FISH_EMPHASIS_STOPLIST.has(word.replace(/^[A-Z]['’]/, "").split(/['’]/)[0])) return m;
+    let close = "";
+    // 'REALLY' is a quoted word, not an elision: its closing quote stays outside.
+    if (/['’]$/.test(word) && /['‘’]/.test(pre)) { close = word.slice(-1); word = word.slice(0, -1); }
+    return paired ? `${pre}<emphasis>${word}</emphasis>${close}` : `${pre}[emphasis] ${word}${close}`;
   });
   if (!paired) return emphasize(text);
   // Scope the stress to its words on Drama3. Existing actor directions and
