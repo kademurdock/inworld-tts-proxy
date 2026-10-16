@@ -79,9 +79,21 @@ const STORAGE_TIMEOUT_MS = 15000;
 const STORAGE_BACKOFF_MS = 200;
 // /health exercises one small storage read (one row's metadata object, a few
 // hundred bytes), remembered for 5 minutes when it worked and 30 s when not.
+// Two tries of 3 s plus one backoff (at most 0.3 s) stay under the bridge's
+// 8 s /health timeout, so a slow B2 reads as "degraded", never as a proxy
+// that is not answering (Railway's own deploy check allows 30 s).
 const PROBE_OK_MS = 5 * 60 * 1000;
 const PROBE_FAILED_MS = 30 * 1000;
-const PROBE_TIMEOUT_MS = 5000;
+const PROBE_TRIES = 2;
+const PROBE_TIMEOUT_MS = 3000;
+// Only these are broken settings, the faults /health turns into a 503 so a
+// deploy carrying them never replaces a working one. Everything else (a
+// missing or changed object, a B2 cap, an outage) leaves the other voices
+// speaking and must not block an urgent deploy, so it reports "degraded".
+const SETTINGS_FAULTS = new Set(['not configured', 'denied']);
+// B2 answers 403 for an exceeded download or transaction cap as well as for
+// refused credentials; its error text names the cap.
+const CAP_EXCEEDED = /\bcaps?\b[^<]{0,60}\bexceeded|\bexceeded\b[^<]{0,60}\bcaps?\b/i;
 
 function storageError(reason, retry) {
   const error = new Error(reason);
@@ -90,10 +102,23 @@ function storageError(reason, retry) {
   return error;
 }
 
+// Reads at most `limit` bytes of a response body; a longer body is cut off there.
+async function readSome(response, limit) {
+  const chunks = [];
+  let size = 0;
+  for await (const part of response.body || []) {
+    chunks.push(Buffer.from(part));
+    size += part.length;
+    if (size >= limit) { await response.body.cancel?.().catch(() => {}); break; }
+  }
+  return Buffer.concat(chunks).subarray(0, limit);
+}
+
 function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheBytes = DEFAULT_REFERENCE_CACHE_BYTES,
   attempts = STORAGE_ATTEMPTS, timeoutMs = STORAGE_TIMEOUT_MS, backoffMs = STORAGE_BACKOFF_MS,
   sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now,
-  probeOkMs = PROBE_OK_MS, probeFailedMs = PROBE_FAILED_MS, probeTimeoutMs = PROBE_TIMEOUT_MS } = {}) {
+  timeoutSignal = ms => AbortSignal.timeout(ms),
+  probeOkMs = PROBE_OK_MS, probeFailedMs = PROBE_FAILED_MS, probeTries = PROBE_TRIES, probeTimeoutMs = PROBE_TIMEOUT_MS } = {}) {
   const byId = new Map(validateRows(rows).map(row => [row.id, row]));
   const probeRow = rows[0];
   const cache = new Map(); // id -> { reference, bytes }, least recently used first
@@ -121,14 +146,20 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheB
     }
     let response;
     try {
-      response = await fetcher(url, { signal: AbortSignal.timeout(perAttemptMs), redirect: 'error' });
+      response = await fetcher(url, { signal: timeoutSignal(perAttemptMs), redirect: 'error' });
     } catch (error) {
       throw storageError(error && (error.name === 'TimeoutError' || error.name === 'AbortError') ? 'timeout' : 'network', true);
     }
     if (!response.ok) {
       const status = Number(response.status);
+      if (status === 403) {
+        // A cap is not a credential fault: read the start of B2's short error text.
+        let text = '';
+        try { text = (await readSome(response, 4096)).toString('utf8'); } catch (_) {}
+        throw storageError(CAP_EXCEEDED.test(text) ? 'cap exceeded' : 'denied', false);
+      }
       await response.body?.cancel?.().catch(() => {});
-      if (status === 401 || status === 403) throw storageError('denied', false);
+      if (status === 401) throw storageError('denied', false);
       if (status === 404) throw storageError('missing', false);
       if (status === 429) throw storageError('rate limited', true);
       if (status === 408 || status >= 500) throw storageError('server', true);
@@ -194,22 +225,25 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheB
   const stats = () => ({ entries: cache.size, bytes: cachedBytes, limitBytes: cacheBytes });
   // Readiness: one small signed GET through the same path every voice uses
   // (credentials, bucket, signing, network), remembered for a few minutes.
-  // Never throws. `permanent` marks a fault that waiting cannot heal.
+  // Never throws. `permanent` marks a fault that waiting cannot heal;
+  // `settingsFault` marks the narrower set that means broken settings.
   async function probe() {
     const at = now();
     if (probeState && at - probeState.at < (probeState.ok ? probeOkMs : probeFailedMs)) return probeState;
     if (probing) return probing;
     probing = (async () => {
       const started = now();
+      const failed = (reason, permanent) => ({ ok: false, at: now(), ms: now() - started, reason, permanent,
+        settingsFault: SETTINGS_FAULTS.has(reason) });
       try {
-        const bytes = await read(probeRow.metadataKey, 65536, { tries: 2, perAttemptMs: probeTimeoutMs });
+        const bytes = await read(probeRow.metadataKey, 65536, { tries: probeTries, perAttemptMs: probeTimeoutMs });
         if (crypto.createHash('sha256').update(bytes).digest('hex') !== probeRow.metadataSha256) {
-          probeState = { ok: false, at: now(), ms: now() - started, reason: 'integrity', permanent: true };
+          probeState = failed('integrity', true);
         } else {
           probeState = { ok: true, at: now(), ms: now() - started };
         }
       } catch (error) {
-        probeState = { ok: false, at: now(), ms: now() - started, reason: error.reason || 'error', permanent: Boolean(error.permanent) };
+        probeState = failed(error.reason || 'error', Boolean(error.permanent));
       }
       return probeState;
     })();

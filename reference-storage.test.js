@@ -131,6 +131,44 @@ test('readiness reads one small object, remembers a good answer for minutes and 
   assert.equal(answer.ok, false);
   assert.equal(answer.reason, 'not configured');
   assert.equal(answer.permanent, true);
+  assert.equal(answer.settingsFault, true);
+});
+
+test('only broken settings count as a settings fault; a missing or changed object, a B2 cap or a refusal do not', async () => {
+  const body = text => ({ ok: false, status: 403, headers: new Headers(),
+    body: new ReadableStream({ start(controller) { controller.enqueue(Buffer.from(text)); controller.close(); } }) });
+  const cases = [
+    [async () => status(403), 'denied', true],
+    [async () => status(401), 'denied', true],
+    [async () => body('<Error><Code>InvalidAccessKeyId</Code><Message>Malformed Access Key Id</Message></Error>'), 'denied', true],
+    [async () => body('<Error><Code>AccessDenied</Code><Message>Cannot download file, download bandwidth or transaction (Class B) cap exceeded.</Message></Error>'), 'cap exceeded', false],
+    [async () => status(404), 'missing', false],
+    [async () => status(410), 'refused', false],
+    [async () => respond(Buffer.from('{"changed":true}')), 'integrity', false],
+  ];
+  for (const [fetcher, reason, settingsFault] of cases) {
+    const answer = await store(fetcher).made.probe();
+    assert.equal(answer.ok, false, reason);
+    assert.equal(answer.reason, reason);
+    assert.equal(answer.settingsFault, settingsFault, reason);
+  }
+  // A capped voice load is not retried either: waiting a moment cannot lift a cap.
+  const capped = store(async () => body('transaction cap exceeded'));
+  await assert.rejects(capped.made.load(row.id), error => error.reason === 'cap exceeded' && error.permanent === true);
+  assert.equal(capped.sleeps.length, 0);
+});
+
+test('a slow storage probe gives up well inside the bridge\'s 8 s /health wait', async () => {
+  const waits = [];
+  const { made, sleeps } = store(async () => { throw Object.assign(new Error('timed out'), { name: 'TimeoutError' }); },
+    { timeoutSignal: ms => { waits.push(ms); return AbortSignal.timeout(ms); } });
+  const answer = await made.probe();
+  assert.equal(answer.reason, 'timeout');
+  assert.equal(answer.settingsFault, false, 'a slow B2 is degraded, never a failed deploy');
+  assert.deepEqual(waits, [3000, 3000], 'two tries of 3 s');
+  const worst = waits.reduce((a, b) => a + b, 0) + 200 + 100; // plus the largest first backoff
+  assert.ok(sleeps.length === 1 && sleeps[0] <= 300, JSON.stringify(sleeps));
+  assert.ok(worst < 8000, `probe can take ${worst} ms`);
 });
 
 test('the reference loads before a Fish slot is taken, and a storage failure never takes a slot', async () => {
@@ -198,4 +236,27 @@ test('/health on the real server reports private storage, and broken storage set
     assert.equal(health.selectedStorage.status, 'error');
     assert.equal(health.selectedStorage.reason, 'not configured');
   } finally { await stop(missing.child); }
+  const keys = { AWS_ACCESS_KEY_ID: 'fake-access', AWS_SECRET_ACCESS_KEY: 'fake-secret', AWS_BUCKET_NAME: 'test-bucket' };
+  const denied = await bootProxy(31877, { ...keys, SELECTED_TEST_STORAGE: 'denied' });
+  try {
+    assert.ok(denied.response, denied.log());
+    assert.equal(denied.response.status, 503, 'refused credentials are broken settings');
+    assert.equal((await denied.response.json()).selectedStorage.reason, 'denied');
+  } finally { await stop(denied.child); }
+});
+
+test('/health on the real server stays 200 "degraded" for storage faults that are not broken settings', async () => {
+  const keys = { AWS_ACCESS_KEY_ID: 'fake-access', AWS_SECRET_ACCESS_KEY: 'fake-secret', AWS_BUCKET_NAME: 'test-bucket' };
+  for (const [fault, port, reason] of [['missing', 31878, 'missing'], ['cap', 31879, 'cap exceeded']]) {
+    const booted = await bootProxy(port, { ...keys, SELECTED_TEST_STORAGE: fault });
+    try {
+      assert.ok(booted.response, booted.log());
+      assert.equal(booted.response.status, 200, `${fault}: one object or a B2 cap never blocks a deploy`);
+      const health = await booted.response.json();
+      assert.equal(health.status, 'degraded');
+      assert.equal(health.selectedStorage.status, 'error');
+      assert.equal(health.selectedStorage.reason, reason);
+      assert.equal(health.selectedStorage.settingsFault, false);
+    } finally { await stop(booted.child); }
+  }
 });

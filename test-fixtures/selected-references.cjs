@@ -21,7 +21,13 @@ const pcm = Buffer.alloc(48000);
 for (let i = 0; i < 24000; i++) pcm.writeInt16LE(Math.round(Math.sin(i / 10) * 3000), i * 2);
 global.fetch = async (url, options) => {
   const u = String(url);
-  if (u.startsWith('https://s3.us-east-005.backblazeb2.com/test-bucket/voice-references/')) return new Response(u.includes('.mp3?') ? audio : metadata);
+  if (u.startsWith('https://s3.us-east-005.backblazeb2.com/test-bucket/voice-references/')) {
+    // SELECTED_TEST_STORAGE simulates a storage fault: the object gone, or B2's 403 for an exceeded cap.
+    if (process.env.SELECTED_TEST_STORAGE === 'missing') return new Response('<Error><Code>NoSuchKey</Code></Error>', { status: 404 });
+    if (process.env.SELECTED_TEST_STORAGE === 'cap') return new Response('<Error><Code>AccessDenied</Code><Message>Cannot download file, download bandwidth or transaction (Class B) cap exceeded.</Message></Error>', { status: 403 });
+    if (process.env.SELECTED_TEST_STORAGE === 'denied') return new Response('<Error><Code>InvalidAccessKeyId</Code><Message>Malformed Access Key Id</Message></Error>', { status: 403 });
+    return new Response(u.includes('.mp3?') ? audio : metadata);
+  }
   if (u === 'https://api.fish.audio/v1/tts') {
     const packed = options.headers['Content-Type'] === 'application/msgpack';
     const body = packed ? decode(options.body) : JSON.parse(options.body);

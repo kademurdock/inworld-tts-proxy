@@ -1625,23 +1625,26 @@ app.get("/health", async (req, res) => {
   const total = today.ok + today.failed;
   /* Oct 16 2026: every picker voice loads its sample from private B2 storage,
    * so readiness exercises one small storage read (cached 5 minutes when it
-   * worked, 30 s when not). A passing storage fault reports "degraded" and
-   * still answers 200; a fault waiting cannot heal (storage not configured,
-   * credentials refused, the catalog's object missing) answers 503, so a
-   * deploy with broken storage settings never replaces a working one. */
+   * worked, 30 s when not; at most about 6.3 s, under the bridge's 8 s wait).
+   * Only broken storage SETTINGS answer 503 (storage not configured, or
+   * credentials refused), so a deploy carrying them never replaces a working
+   * one. Every other storage fault (a passing blip, the probed row's object
+   * missing or changed, a B2 cap) reports "degraded" and still answers 200:
+   * the other picker voices and every Inworld voice keep speaking, and an
+   * urgent deploy must not be blocked by one object. */
   let storage = null;
   if (selectedReferenceStore) {
     try { storage = await selectedReferenceStore.probe(); } catch (_) { storage = { ok: false, at: Date.now(), reason: "error" }; }
   }
   const cached = storage && selectedReferenceStore.stats ? selectedReferenceStore.stats() : null;
-  res.status(storage && !storage.ok && storage.permanent ? 503 : 200).json({
+  res.status(storage && !storage.ok && storage.settingsFault ? 503 : 200).json({
     status: storage && !storage.ok ? "degraded" : "ok",
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
-      ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent) }),
+      ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent), settingsFault: Boolean(storage.settingsFault) }),
       checkedSecondsAgo: Math.max(0, Math.round((Date.now() - storage.at) / 1000)),
       ms: storage.ms,
       ...(cached ? { cachedVoices: cached.entries, cachedMB: Math.round(cached.bytes / 104857.6) / 10 } : {}),

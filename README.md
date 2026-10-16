@@ -61,3 +61,5 @@ Inworld uses TTS-2 with Lively (`CREATIVE`) as the default delivery. Fish voices
 ## Health check
 
 `GET /health` returns `{"status":"ok","service":"inworld-tts-proxy"}` — Railway uses this to confirm the app is up.
+
+With the selected picker on (`SELECTED_VOICES_ENABLED=1`) it also reads one small private-storage object (remembered 5 minutes, at most about 6.3 s, under the bridge's 8 s wait) and reports `selectedStorage`. It answers 503 only for broken storage settings (not configured, or credentials refused), so such a deploy never goes live. Any other storage fault (a passing blip, the probed object missing or changed, a B2 cap) answers 200 with `"status": "degraded"`, so one object never blocks an urgent deploy.
