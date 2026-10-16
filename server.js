@@ -2622,19 +2622,60 @@ const FISH_NORMALIZE = process.env.FISH_NORMALIZE === "1";
 // NOT/YOU/ALL — a model that capitalizes those MEANT the stress (the fish
 // docs' own example is "I told you NOT to open that door").
 const FISH_EMPHASIS_STOPLIST = new Set(["TTS","URL","USA","ASAP","LOL","OMG","FYI","DIY","CEO","GPS","FAQ","API","USB","GPT","LLM","FBI","NASA","DNA","PDF","HTML","WIFI"]);
+// What a single quote mark at `i` does: "open" before a letter and after no
+// letter or digit ('I said, ‘I said), "close" before no letter and after
+// something other than a space (NEVER', NEVER’, home,'), and nothing between
+// two letters (DON'T, Y'ALL) or standing alone.
+function fishQuoteKind(text, i) {
+  const ch = text[i];
+  if (ch !== "'" && ch !== "‘" && ch !== "’") return null;
+  const prev = i ? text[i - 1] : "";
+  const letterNext = /[A-Za-z]/.test(text[i + 1] || "");
+  if (ch === "‘" || (letterNext && !/[A-Za-z0-9]/.test(prev))) return "open";
+  if (!letterNext && prev !== "" && !/\s/.test(prev)) return "close";
+  return null;
+}
+// For one text, answers: a stressed word starting at `start` ends in an
+// apostrophe at `at`; is that the closing quote? Yes when a single quote is
+// open before the word and no later mark closes it instead ('I said NEVER'
+// vs 'We're GOIN' home,' she said). One pass each way, so long text stays linear.
+function fishQuoteCloser(text) {
+  const openBefore = new Array(text.length + 1);
+  const nextKind = new Array(text.length + 2).fill(null);
+  let open = false;
+  for (let i = 0; i < text.length; i++) {
+    openBefore[i] = open;
+    const kind = fishQuoteKind(text, i);
+    if (kind) open = kind === "open";
+  }
+  openBefore[text.length] = open;
+  for (let i = text.length - 1; i >= 0; i--) nextKind[i] = fishQuoteKind(text, i) || nextKind[i + 1];
+  return (start, at) => openBefore[start] && nextKind[at + 1] !== "close";
+}
 // One stressed word, apostrophes included (Oct 16 2026): a contraction or
 // possessive (DON'T, CAN'T, YOU'RE, KADE'S, KADE's, Y'ALL, GOIN') is ONE word,
-// straight or curly apostrophe, so the scope never closes inside it. An
-// apostrophe ends a word only when no letter follows it (a closing quote);
-// one that opens a quote stays outside the scope.
+// straight or curly apostrophe, so the scope never closes inside it; so is a
+// double one (SHOULDN'T'VE, THEY'D'VE, ROCK'N'ROLL'S). An apostrophe ends a
+// word only when no letter follows it. When it closes an open single quote it
+// stays outside the scope ('REALLY', 'I said NEVER'); otherwise it is an
+// elision and stays inside (GOIN', 'We're GOIN' home,' she said).
+// An ellipsis character is a word boundary (DON'T…, …NEVER).
 function fishEmphasisFromCaps(text, paired = typeof FISH_TTS_MODEL === "string" && /^drama-3(?:-preview)?$/.test(FISH_TTS_MODEL)) {
-  const emphasize = part => part.replace(/(^|[\s"(“‘—-]|(?<![A-Za-z])['’])((?:[A-Z]['’])?[A-Z]{3,12}(?:['’][A-Za-z]{1,3}|['’](?![A-Za-z]))?)(?=$|[\s.,!?;:)"”—-]|['’](?![A-Za-z]))/g, (m, pre, word) => {
-    if (FISH_EMPHASIS_STOPLIST.has(word.replace(/^[A-Z]['’]/, "").split(/['’]/)[0])) return m;
-    let close = "";
-    // 'REALLY' is a quoted word, not an elision: its closing quote stays outside.
-    if (/['’]$/.test(word) && /['‘’]/.test(pre)) { close = word.slice(-1); word = word.slice(0, -1); }
-    return paired ? `${pre}<emphasis>${word}</emphasis>${close}` : `${pre}[emphasis] ${word}${close}`;
-  });
+  // After an apostrophe: a run of 4+ capitals, or 1-3 letters of any case, at
+  // most three times (ROCK'N'ROLL'S). The two never match the same run, so
+  // backtracking stays linear.
+  const emphasize = part => {
+    let closesQuote = null; // built only when a stressed word ends in an apostrophe
+    return part.replace(/(^|[\s"(“‘—…-]|(?<![A-Za-z])['’])((?:[A-Z]['’])?[A-Z]{3,12}(?:['’](?:[A-Z]{4,12}|[A-Za-z]{1,3})){0,3}(?:['’](?![A-Za-z]))?)(?=$|[\s.,!?;:)"”—…-]|['’](?![A-Za-z]))/g, (m, pre, word, offset, whole) => {
+      if (FISH_EMPHASIS_STOPLIST.has(word.replace(/^[A-Z]['’]/, "").split(/['’]/)[0])) return m;
+      let close = "";
+      const start = offset + pre.length;
+      if (/['’]$/.test(word) && (closesQuote ||= fishQuoteCloser(whole))(start, start + word.length - 1)) {
+        close = word.slice(-1); word = word.slice(0, -1);
+      }
+      return paired ? `${pre}<emphasis>${word}</emphasis>${close}` : `${pre}[emphasis] ${word}${close}`;
+    });
+  };
   if (!paired) return emphasize(text);
   // Scope the stress to its words on Drama3. Existing actor directions and
   // explicit emphasis/stress spans already express intent and stay intact.
