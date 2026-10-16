@@ -2842,6 +2842,16 @@ app.use("/v1/audio/speech", (req, res, next) => {
   next();
 });
 
+// ── Speech gate (Oct 16 2026) ──────────────────────────────────────────────────
+// Both paid routes used to answer anyone with this URL; CORS above only stops
+// browsers on other sites. Callers now prove KADE_SPEECH_SECRET (x-proxy-secret
+// header, or LibreChat's Bearer apiKey). SPEECH_GATE=off|log|enforce, default
+// log. The website's voice mode no longer calls here from the browser: it goes
+// through the fork's signed-in /api/files/speech/tts/manual. Rules, modes and
+// tests in speech-gate.js.
+const speechGate = require("./speech-gate").createSpeechGate();
+app.use(["/v1/audio/speech", "/v1/audio/transcriptions"], speechGate.middleware);
+
 
 // ── Loudness normalization (July 1 2026, Kade's ask: equal volume across voices) ──
 // Custom cloned voices synth at wildly different levels (quiet source sample =

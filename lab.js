@@ -86,6 +86,7 @@ ${buttons}
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ input: text, voice: voice, model: "tts-1", response_format: "wav" }),
         });
+        if (r.status === 401) { say("Clip " + letter + " was refused. Since October 16 the voice service only answers the Kade-AI platform, so this page cannot make clips on its own. Ask Claude to make the four clips for you."); btn.disabled = false; return; }
         if (!r.ok) { say("Clip " + letter + " failed: " + r.status + " " + r.statusText); btn.disabled = false; return; }
         const blob = await r.blob();
         if (audio.src) URL.revokeObjectURL(audio.src);
