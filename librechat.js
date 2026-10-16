@@ -484,6 +484,58 @@ router.post('/librechat/eval-cleanup', auth, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+// Oct 16 2026 -- SPEECH CHECKS ON A TEST SEAT. The voice proxy's speech gate
+// needs one real request per family surface that speaks through the site's
+// signed-in lane (chat read-aloud, web voice mode, iPhone voice messages,
+// Sound Booth auditions). This logs in as a TEST seat (never hers, the
+// /librechat/ask rule), posts one short line to the site's
+// /api/files/speech/tts/manual as JSON (the web) or as form fields (the
+// iPhone, `form:true`, with `stream:true` for its streaming player), and
+// reports status, type, size and time. The audio itself is never returned.
+router.post('/librechat/seat-speech', auth, async (req, res) => {
+  const { seat: name, input, voice, speed, stream, form } = req.body || {};
+  if (!['vischeck', 'evalclean', 'evalfixture'].includes(name)) {
+    return res.status(400).json({ error: 'A test seat is required (vischeck, evalclean or evalfixture)' });
+  }
+  const text = String(input || '').trim();
+  if (!text || text.length > 200) return res.status(400).json({ error: 'input is required, at most 200 characters' });
+  try {
+    const seat = seatByName(name);
+    const out = await paced(async () => {
+      const send = () => {
+        const headers = { 'User-Agent': UA, Authorization: `Bearer ${seatToken(seat)}` };
+        let body;
+        if (form) {
+          body = new FormData();
+          body.append('input', text);
+          if (voice) body.append('voice', String(voice));
+          if (typeof speed === 'number') body.append('speed', String(speed));
+          if (stream) body.append('stream', '1');
+        } else {
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify({ model: 'tts-1', input: text, ...(voice ? { voice: String(voice) } : {}), ...(typeof speed === 'number' ? { speed } : {}), ...(stream ? { stream: '1' } : {}) });
+        }
+        return fetch(`${BASE}/api/files/speech/tts/manual`, { method: 'POST', headers, body });
+      };
+      if (!seatToken(seat)) await seatLogin(seat);
+      let t0 = Date.now();
+      let r = await send();
+      if (r.status === 401) {
+        seatClear(seat);
+        await seatLogin(seat);
+        t0 = Date.now();
+        r = await send();
+      }
+      const buf = Buffer.from(await r.arrayBuffer());
+      const contentType = r.headers.get('content-type') || '';
+      const out = { status: r.status, contentType, bytes: buf.length, ms: Date.now() - t0 };
+      if (!r.ok || /json|text/.test(contentType)) out.said = buf.toString('utf8').slice(0, 200);
+      return out;
+    });
+    res.json({ seat: name, ...out });
+  } catch (e) { fail(res, e); }
+});
+
 // POST /librechat/agent -> create a NEW agent (created PRIVATE; publish separately).
 // body = { name, provider, model, description?, instructions?, category?, model_parameters?, tools?, ... }
 router.post("/librechat/agent", auth, async (req, res) => {
