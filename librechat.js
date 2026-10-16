@@ -492,8 +492,10 @@ router.post('/librechat/eval-cleanup', auth, async (req, res) => {
 // /api/files/speech/tts/manual as JSON (the web) or as form fields (the
 // iPhone, `form:true`, with `stream:true` for its streaming player), and
 // reports status, type, size and time. The audio itself is never returned.
+// `transcribe:true` then sends that clip to the site's /api/files/speech/stt
+// (the web mic and voice mode's ears) and returns what it heard.
 router.post('/librechat/seat-speech', auth, async (req, res) => {
-  const { seat: name, input, voice, speed, stream, form } = req.body || {};
+  const { seat: name, input, voice, speed, stream, form, transcribe } = req.body || {};
   if (!['vischeck', 'evalclean', 'evalfixture'].includes(name)) {
     return res.status(400).json({ error: 'A test seat is required (vischeck, evalclean or evalfixture)' });
   }
@@ -530,6 +532,17 @@ router.post('/librechat/seat-speech', auth, async (req, res) => {
       const contentType = r.headers.get('content-type') || '';
       const out = { status: r.status, contentType, bytes: buf.length, ms: Date.now() - t0 };
       if (!r.ok || /json|text/.test(contentType)) out.said = buf.toString('utf8').slice(0, 200);
+      if (transcribe && r.ok && buf.length) {
+        const fd = new FormData();
+        const type = contentType.split(';')[0] || 'audio/wav';
+        fd.append('audio', new Blob([buf], { type }), `audio.${/mpeg|mp3/.test(type) ? 'mp3' : 'wav'}`);
+        const s0 = Date.now();
+        const st = await fetch(`${BASE}/api/files/speech/stt`, { method: 'POST', headers: { 'User-Agent': UA, Authorization: `Bearer ${seatToken(seat)}` }, body: fd });
+        const said = await st.text();
+        let text = null;
+        try { text = JSON.parse(said).text; } catch (_) { /* not JSON */ }
+        out.stt = { status: st.status, ms: Date.now() - s0, text: text != null ? String(text).slice(0, 200) : said.slice(0, 200) };
+      }
       return out;
     });
     res.json({ seat: name, ...out });
