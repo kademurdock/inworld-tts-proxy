@@ -68,11 +68,39 @@ function validateRows(rows) {
 // every miss is two signed B2 GETs before Fish is even called.
 const DEFAULT_REFERENCE_CACHE_BYTES = 64 * 1024 * 1024;
 
-function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheBytes = DEFAULT_REFERENCE_CACHE_BYTES } = {}) {
+// Storage reads (Oct 16 2026): every picker voice depends on B2, so a passing
+// blip (a 5xx, a 429, a timeout, a dropped connection) is retried a bounded
+// number of times with growing waits. A configuration or credential problem
+// (not configured, 401/403, 404, oversized object) is not: it cannot heal by
+// waiting, and the caller gets the same sanitised error at once. The final
+// error carries only a short `reason` word, never a URL or transcript.
+const STORAGE_ATTEMPTS = 3;
+const STORAGE_TIMEOUT_MS = 15000;
+const STORAGE_BACKOFF_MS = 200;
+// /health exercises one small storage read (one row's metadata object, a few
+// hundred bytes), remembered for 5 minutes when it worked and 30 s when not.
+const PROBE_OK_MS = 5 * 60 * 1000;
+const PROBE_FAILED_MS = 30 * 1000;
+const PROBE_TIMEOUT_MS = 5000;
+
+function storageError(reason, retry) {
+  const error = new Error(reason);
+  error.reason = reason;
+  error.retry = retry;
+  return error;
+}
+
+function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheBytes = DEFAULT_REFERENCE_CACHE_BYTES,
+  attempts = STORAGE_ATTEMPTS, timeoutMs = STORAGE_TIMEOUT_MS, backoffMs = STORAGE_BACKOFF_MS,
+  sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now,
+  probeOkMs = PROBE_OK_MS, probeFailedMs = PROBE_FAILED_MS, probeTimeoutMs = PROBE_TIMEOUT_MS } = {}) {
   const byId = new Map(validateRows(rows).map(row => [row.id, row]));
+  const probeRow = rows[0];
   const cache = new Map(); // id -> { reference, bytes }, least recently used first
   let cachedBytes = 0;
   const inFlight = new Map();
+  let probeState = null;
+  let probing = null;
   function remember(id, reference) {
     const bytes = reference.audio.length + Buffer.byteLength(reference.text);
     if (!(bytes <= cacheBytes)) return;
@@ -86,22 +114,56 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheB
       cachedBytes -= entry.bytes;
     }
   }
-  async function read(key, limit) {
+  async function readOnce(key, limit, perAttemptMs) {
+    let url;
+    try { url = signedGet(key, env); } catch (error) {
+      throw storageError(/not configured/.test(error.message) ? 'not configured' : 'invalid object', false);
+    }
+    let response;
     try {
-      const response = await fetcher(signedGet(key, env), { signal: AbortSignal.timeout(20000), redirect: 'error' });
-      if (!response.ok) throw new Error('storage');
-      if (Number(response.headers.get('content-length')) > limit) throw new Error('size');
-      const chunks = [];
-      let size = 0;
+      response = await fetcher(url, { signal: AbortSignal.timeout(perAttemptMs), redirect: 'error' });
+    } catch (error) {
+      throw storageError(error && (error.name === 'TimeoutError' || error.name === 'AbortError') ? 'timeout' : 'network', true);
+    }
+    if (!response.ok) {
+      const status = Number(response.status);
+      await response.body?.cancel?.().catch(() => {});
+      if (status === 401 || status === 403) throw storageError('denied', false);
+      if (status === 404) throw storageError('missing', false);
+      if (status === 429) throw storageError('rate limited', true);
+      if (status === 408 || status >= 500) throw storageError('server', true);
+      throw storageError('refused', false);
+    }
+    if (Number(response.headers.get('content-length')) > limit) throw storageError('size', false);
+    const chunks = [];
+    let size = 0;
+    try {
       for await (const part of response.body) {
         size += part.length;
-        if (size > limit) { await response.body.cancel?.().catch(() => {}); throw new Error('size'); }
+        if (size > limit) { await response.body.cancel?.().catch(() => {}); throw storageError('size', false); }
         chunks.push(Buffer.from(part));
       }
-      return Buffer.concat(chunks);
-    } catch (_) {
-      // Never pass a signed storage URL or original sample transcript into public/logged errors.
-      throw new Error('The selected voice reference could not be loaded.');
+    } catch (error) {
+      if (error && error.reason) throw error;
+      throw storageError(error && error.name === 'TimeoutError' ? 'timeout' : 'network', true);
+    }
+    return Buffer.concat(chunks);
+  }
+  async function read(key, limit, { tries = attempts, perAttemptMs = timeoutMs } = {}) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await readOnce(key, limit, perAttemptMs);
+      } catch (error) {
+        const retry = Boolean(error && error.retry);
+        if (!retry || attempt >= tries) {
+          // Never pass a signed storage URL or original sample transcript into public/logged errors.
+          const failure = new Error('The selected voice reference could not be loaded.');
+          failure.reason = (error && error.reason) || 'error';
+          failure.permanent = !retry;
+          throw failure;
+        }
+        await sleep(backoffMs * 3 ** (attempt - 1) + Math.floor(Math.random() * backoffMs / 2));
+      }
     }
   }
   async function load(id) {
@@ -110,7 +172,10 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheB
     if (inFlight.has(id)) return inFlight.get(id);
     const row = byId.get(id);
     const promise = (async () => {
+      const started = now();
       const [audio, metadataBytes] = await Promise.all([read(row.referenceKey, 1024 * 1024), read(row.metadataKey, 65536)]);
+      // A real load that worked answers the readiness question as well as a probe would.
+      probeState = { ok: true, at: now(), ms: now() - started };
       const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
       if (hash(audio) !== row.sha256 || hash(metadataBytes) !== row.metadataSha256) throw new Error('The selected voice reference failed its integrity check.');
       let metadata;
@@ -127,7 +192,30 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheB
     try { return await promise; } finally { inFlight.delete(id); }
   }
   const stats = () => ({ entries: cache.size, bytes: cachedBytes, limitBytes: cacheBytes });
-  return { load, stats };
+  // Readiness: one small signed GET through the same path every voice uses
+  // (credentials, bucket, signing, network), remembered for a few minutes.
+  // Never throws. `permanent` marks a fault that waiting cannot heal.
+  async function probe() {
+    const at = now();
+    if (probeState && at - probeState.at < (probeState.ok ? probeOkMs : probeFailedMs)) return probeState;
+    if (probing) return probing;
+    probing = (async () => {
+      const started = now();
+      try {
+        const bytes = await read(probeRow.metadataKey, 65536, { tries: 2, perAttemptMs: probeTimeoutMs });
+        if (crypto.createHash('sha256').update(bytes).digest('hex') !== probeRow.metadataSha256) {
+          probeState = { ok: false, at: now(), ms: now() - started, reason: 'integrity', permanent: true };
+        } else {
+          probeState = { ok: true, at: now(), ms: now() - started };
+        }
+      } catch (error) {
+        probeState = { ok: false, at: now(), ms: now() - started, reason: error.reason || 'error', permanent: Boolean(error.permanent) };
+      }
+      return probeState;
+    })();
+    try { return await probing; } finally { probing = null; }
+  }
+  return { load, stats, probe };
 }
 
 async function fishBody(payload, id, store) {

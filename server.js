@@ -1563,6 +1563,19 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
 }
 
 async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
+  // Oct 16 2026: a selected voice's private reference is fetched (with its own
+  // bounded storage retries) BEFORE a Fish slot is taken, so a slow or failing
+  // B2 read never holds one of the provider slots; fishBody then reads it from
+  // memory. A storage failure is not retried again below: the store already did.
+  if (fishModelId.startsWith('ref_') && selectedReferenceStore) {
+    try {
+      await selectedReferenceStore.load(fishModelId);
+    } catch (err) {
+      noteChunk('failed');
+      console.warn(`[TTS] selected voice reference unavailable (${err.reason || 'error'}) -- this chunk fails`);
+      throw err;
+    }
+  }
   return fishLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
@@ -1584,7 +1597,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
   });
 }
 
-app.get("/health", (req, res) => {
+app.get("/health", async (req, res) => {
   /* The voice numbers ride /health because /health is the thing that already
    * gets read — by deploywatch every few minutes and by the platform snapshot
    * every sync. A counter nobody reads is the memory-health `warnings[]`
@@ -1592,10 +1605,31 @@ app.get("/health", (req, res) => {
    * while nobody consumed it. */
   const today = chunkStatsToday();
   const total = today.ok + today.failed;
-  res.json({
-    status: "ok",
+  /* Oct 16 2026: every picker voice loads its sample from private B2 storage,
+   * so readiness exercises one small storage read (cached 5 minutes when it
+   * worked, 30 s when not). A passing storage fault reports "degraded" and
+   * still answers 200; a fault waiting cannot heal (storage not configured,
+   * credentials refused, the catalog's object missing) answers 503, so a
+   * deploy with broken storage settings never replaces a working one. */
+  let storage = null;
+  if (selectedReferenceStore) {
+    try { storage = await selectedReferenceStore.probe(); } catch (_) { storage = { ok: false, at: Date.now(), reason: "error" }; }
+  }
+  const cached = storage && selectedReferenceStore.stats ? selectedReferenceStore.stats() : null;
+  res.status(storage && !storage.ok && storage.permanent ? 503 : 200).json({
+    status: storage && !storage.ok ? "degraded" : "ok",
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
+    ...(storage ? { selectedStorage: {
+      status: storage.ok ? "ok" : "error",
+      ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent) }),
+      checkedSecondsAgo: Math.max(0, Math.round((Date.now() - storage.at) / 1000)),
+      ms: storage.ms,
+      ...(cached ? { cachedVoices: cached.entries, cachedMB: Math.round(cached.bytes / 104857.6) / 10 } : {}),
+      spoken: storage.ok
+        ? `Private voice storage answered in ${storage.ms} ms.`
+        : `Private voice storage is failing (${storage.reason}); picker voices that are not already in memory cannot load their samples.`,
+    } } : {}),
     chunksToday: {
       ...today,
       day: centralDay(),
