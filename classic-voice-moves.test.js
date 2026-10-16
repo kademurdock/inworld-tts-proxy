@@ -135,6 +135,12 @@ test('Classic reports: a kid choice, case-insensitive labels, an older report ne
   const older = applyReport(state, open('f'.repeat(24), CLASSIC, heading, 'a man', '2026-10-15T19:00:00Z'));
   assert.equal(older.superseded, true);
   assert.deepEqual(sectionsHolding(picker, CLASSIC), ['Classic · Kids and teens'], 'the newer report stands');
+  assert.equal(older.target, 'Classic · Kids and teens', 'it names where the voice is now, not where the older report asked for');
+  // The board note on the older row tells the truth.
+  const { runner, posted } = board(state, [open('f'.repeat(24), CLASSIC, heading, 'a man', '2026-10-15T19:00:00Z')]);
+  assert.equal(await runner.sweepOpen(), 1);
+  assert.equal(posted[0].note, `[auto-move] A newer report already placed ${CLASSIC} under Classic · Kids and teens; this older report did not override it.`);
+  assert.deepEqual(sectionsHolding(picker, CLASSIC), ['Classic · Kids and teens']);
   const unknown = applyReport(state, open('g'.repeat(24), 'Not a real voice (Classic)', 'Classic · Women', 'a man', '2026-10-15T20:00:00Z'));
   assert.equal(unknown.ok, false);
   assert.equal(unknown.classic, undefined, 'only Classic entries this picker serves are handled here');

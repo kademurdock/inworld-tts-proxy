@@ -45,10 +45,11 @@ function createClassicVoiceMoves(picker, legacy) {
   function place(classicLabel, section, report) {
     const stamp = stampOf(report);
     const previous = latest.get(classicLabel);
-    if (previous !== undefined && stamp < previous) return { outcome: 'superseded' };
+    const holding = picker.categories.filter(c => c.voices.includes(classicLabel));
+    // A superseded report names where the newer one put the voice, not where it asked for.
+    if (previous !== undefined && stamp < previous) return { outcome: 'superseded', current: holding.map(c => c.name).join('; ') };
     latest.set(classicLabel, stamp);
     const name = CLASSIC_SECTION + section;
-    const holding = picker.categories.filter(c => c.voices.includes(classicLabel));
     if (holding.length === 1 && holding[0].name === name) return { outcome: 'already', from: name };
     let target = picker.categories.find(c => c.name === name);
     if (!target) {
@@ -104,7 +105,8 @@ function createClassicVoiceMoves(picker, legacy) {
     if (!section) return { ok: false, classic: true, why: `no section for "${parsed.heard}"` };
     const placed = place(classicLabel, section, report);
     const base = { ok: true, classic: true, oldLabel: classicLabel, newLabel: classicLabel, heard: parsed.heard, target: CLASSIC_SECTION + section };
-    if (placed.outcome === 'superseded') return { ...base, already: true, superseded: true };
+    // The board note reads "A newer report already placed <label> under <target>".
+    if (placed.outcome === 'superseded') return { ...base, already: true, superseded: true, target: placed.current || base.target };
     if (placed.outcome === 'already') return { ...base, already: true };
     return { ...base, from: placed.from };
   }
