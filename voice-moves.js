@@ -127,14 +127,25 @@ function applyReport(state, row) {
   if (!parsed) return { ok: false, why: "detail did not parse" };
   const selected = state.SELECTED_VOICE_REPORT?.(parsed, row);
   if (selected) return selected;
+  // Oct 16 2026: a "<label> (Classic)" entry of the selected picker (classic-voice-moves.js).
+  const classic = state.CLASSIC_VOICE_REPORT?.(parsed, row);
+  if (classic) return classic;
   const target = targetFor(parsed.heard, parsed.label, parsed.heading, state.VOICE_PICKER_CATEGORIES);
   if (!target) return { ok: false, why: `no section for "${parsed.heard}"` };
   const newLabel = relabel(parsed.label, target, parsed.heard);
   if (!newLabel) return { ok: false, why: "label has no tag" };
   const cur = state.VOICE_PICKER_CATEGORIES.find((c) => c.voices.includes(parsed.label));
-  if (cur && cur.name === target) return { ok: true, already: true, target, oldLabel: parsed.label, newLabel: parsed.label };
-  const res = applyMove(state, parsed.label, newLabel, target, `Filed under ${target} after a family member listened (sounds like ${parsed.heard}).`);
-  return { ...res, target, oldLabel: parsed.label, newLabel, heard: parsed.heard };
+  let out;
+  if (cur && cur.name === target) out = { ok: true, already: true, target, oldLabel: parsed.label, newLabel: parsed.label };
+  else {
+    const res = applyMove(state, parsed.label, newLabel, target, `Filed under ${target} after a family member listened (sounds like ${parsed.heard}).`);
+    out = { ...res, target, oldLabel: parsed.label, newLabel, heard: parsed.heard };
+  }
+  // Oct 16 2026: the served picker is a copy made at boot; re-apply the move into it.
+  if (out.ok) {
+    try { state.LEGACY_VOICE_MOVED?.(out, row); } catch (e) { console.warn(`[voice-moves] picker copy not updated for ${out.newLabel}: ${e.message}`); }
+  }
+  return out;
 }
 
 // ── the network half ────────────────────────────────────────────────────────
@@ -215,7 +226,7 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
       }
       warnedWhy.delete(String(row._id));
       /* Fire and forget: the regex has already decided and the move is done. */
-      if (parsed && !res.already && !res.selected) {
+      if (parsed && !res.already && !res.selected && !res.classic) {
         const input = { label: parsed.label, report: parsed.heard, filedUnder: parsed.heading };
         if (describedAs) input.description = describedAs;
         shadowAsk(jev, log, input, sections, res.target);
@@ -224,6 +235,8 @@ function makeRunner({ state, port, secret, log = console.log, warn = console.war
         ? `[auto-move] A newer report already placed ${res.newLabel} under ${res.target}; this older report did not override it.`
         : res.already
         ? `[auto-move] ${res.oldLabel} was already under ${res.target}; nothing to move.`
+        : res.classic
+        ? `[auto-move] ${res.oldLabel} → ${res.target} (live at once; its name and saved picks are unchanged).`
         : `[auto-move] ${res.oldLabel} → ${res.target}, now listed as "${res.newLabel}" (live at once; a saved pick keeps working).`;
       try {
         await post("/librechat/feedback-status", { id: row._id, status: "resolved", note });

@@ -4,6 +4,7 @@ const { createReferenceStore, fishBody, selectedPicker, installSelectedBindings 
 let selectedReferenceStore = null;
 let selectedVoicePicker = null;
 let selectedVoiceReport = null;
+let selectedClassicMoves = null; // classic-voice-moves.js: legacy and Classic moves re-applied into the served picker
 const selectedAuditionVoices = new Map();
 const { pickScene } = require("./audition-scenes");
 const app = express();
@@ -5315,6 +5316,10 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
     selectedVoicePicker.providers[target] = provider;
   }
   selectedVoiceReport = require('./selected-voice-moves').createSelectedReportHandler(rows, selectedVoicePicker);
+  // The picker above is a copy made now; the board's earlier moves replay ~15 s after
+  // listen. These hooks re-apply every legacy move into it and move Classic entries.
+  selectedClassicMoves = require('./classic-voice-moves').createClassicVoiceMoves(selectedVoicePicker,
+    { VOICE_MAP, VOICE_DESCRIBE, VOICE_TAGS, VOICE_PICKER_CATEGORIES });
   console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);
   if (FISH_REFERENCE_MODEL !== FISH_TTS_MODEL) {
     console.warn(`[voice-catalog] FISH_TTS_MODEL=${FISH_TTS_MODEL} applies to saved Fish reference IDs; the ${rows.length} selected picker voices stay on ${FISH_REFERENCE_MODEL}` +
@@ -5421,7 +5426,9 @@ app.listen(PORT, () => {
    * open rows every few minutes. Pure half + tests in voice-moves.js. */
   try {
     require("./voice-moves").start({
-      state: { VOICE_MAP, VOICE_RENAMES, VOICE_DESCRIBE, VOICE_TAGS, HIDDEN_VOICE_ALIASES, VOICE_PICKER_CATEGORIES, VOICE_LIST, SELECTED_VOICE_REPORT: selectedVoiceReport },
+      state: { VOICE_MAP, VOICE_RENAMES, VOICE_DESCRIBE, VOICE_TAGS, HIDDEN_VOICE_ALIASES, VOICE_PICKER_CATEGORIES, VOICE_LIST, SELECTED_VOICE_REPORT: selectedVoiceReport,
+        CLASSIC_VOICE_REPORT: selectedClassicMoves && selectedClassicMoves.applyClassicReport,
+        LEGACY_VOICE_MOVED: selectedClassicMoves && selectedClassicMoves.afterLegacyMove },
       port: PORT,
       secret: process.env.LIBRECHAT_PROXY_SECRET,
     });
