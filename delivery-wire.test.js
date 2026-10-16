@@ -17,14 +17,14 @@ test('real HTTP handler preserves delivery and speed in buffered, streamed, Fish
    // Tempo words leave directions entirely since Sep 20 (AUTHOR_TEMPO_STRIP); the feeling stays.
    assert.match(direction,/warm/);assert.doesNotMatch(direction,/unhurried/);
    assert.match(b.text,/\[laugh\]/);
-   if(voice.startsWith('fish')){assert.equal(b.temperature,delivery==='STABLE'?.5:.9);assert.equal(b.prosody.speed,1);assert.match(b.text,/^\[Speak briskly/);}
+   if(voice.startsWith('fish')){assert.equal(b.temperature,delivery==='STABLE'?.5:.9);assert.equal(b.prosody.speed,1);assert.match(b.text,/^\[speaking quickly/);}
    else {assert.equal(b.deliveryMode,delivery);assert.equal(b.audioConfig.speakingRate,1.2);assert.equal(url.endsWith(':stream'),stream);}
   }
   const count=rows().length;
   const r=await fetch('http://127.0.0.1:31860/v1/audio/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voice:'alloy',delivery:'BALANCED',speed:1.1,input:'[[Voice 327]] %%%quick and delighted%%% We won! [[Voice 1]] %%%warm and unhurried%%% I knew we could.'})});
   assert.equal(r.status,200);await r.arrayBuffer();const calls=rows().slice(count);assert.equal(calls.length,2);
   assert.ok(calls.some(r=>r.body.temperature===.9));assert.ok(calls.some(r=>r.body.deliveryMode==='BALANCED'));
-  for(const {body:b} of calls){assert.match(b.instruction||b.text,/delighted|warm/);assert.doesNotMatch(b.instruction||b.text,/unhurried|quick/);}
+  for(const {body:b} of calls){assert.match(b.instruction||b.text,/delighted|warm/);assert.doesNotMatch((b.instruction||b.text).replace(/^\[(?:speaking quickly|fast-talking)[^\]]*\]\s*/,''),/unhurried|quick/);}
   // Sep 23 2026: Balanced with no direction of its own gets the lively baseline; a direction
   // the character wrote always wins; Steady and Lively get none; no delivery means Lively.
   const {LIVELY_BASELINE}=require('./speech-prosody');

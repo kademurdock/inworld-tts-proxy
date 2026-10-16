@@ -9,7 +9,7 @@ const cut = (start, end) => source.slice(source.indexOf(start), source.indexOf(e
 function load(env = {}, response = { ok: true, arrayBuffer: async () => Uint8Array.from([0, 0, 1, 0, 2]).buffer }, store = null) {
   const calls = [];
   const context = {
-    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: store, fishPacedText: require('./pace').fishPacedText,
+    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: store, fishPacedText: require('./pace').fishPacedText, capFishPauses: require('./pace').capFishPauses,
     process: { env }, Buffer, AbortController, setTimeout, clearTimeout,
     FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000,
     FISH_SAMPLE_RATE: 24000, FISH_TTS_LATENCY: 'normal', FISH_TTS_SPEED: 1,

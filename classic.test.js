@@ -46,5 +46,5 @@ test('Fish pace is an instruction and preserves emotion, paired word scopes, and
     assert.ok(fishPacedText(text, rate).endsWith(text));
     assert.equal(fishPace(rate).value > 1, rate > 1);
   }
-  assert.match(fishPacedText(text, 1.2), /^\[Speak briskly/);
+  assert.match(fishPacedText(text, 1.2), /^\[speaking quickly/);
 });

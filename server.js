@@ -47,7 +47,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, FISH_PACES } = require('./pace');
+const { fishPacedText, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1576,6 +1576,8 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   let pcm = Buffer.from(await response.arrayBuffer());
   if (!pcm.length) throw new Error("Empty audio from Fish API");
   if (pcm.length % 2) pcm = pcm.slice(0, pcm.length - 1); // s16 alignment guard
+  // Oct 16 2026: Brisk and Quick shorten silences inside the clip (pace.js); words untouched.
+  pcm = capFishPauses(pcm, speakingRate, FISH_SAMPLE_RATE);
   const fmt = { numChannels: 1, sampleRate: FISH_SAMPLE_RATE, bitsPerSample: 16 };
   return Buffer.concat([buildWavHeader(pcm.length, fmt), pcm]);
 }
@@ -3325,7 +3327,7 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery)
   const steered = shapeDeliveryPace(applySteeringTags(seg.text), delivery || TTS_DELIVERY_MODE);
   const segPaired = segIsFish ? fishPairedEmphasis(fishModelFor(seg.voiceId.slice(FISH_VOICE_PREFIX.length))) : undefined;
   const chunks = (segIsFish
-    ? carryDrama3Scopes(carryChunkDirections(chunkText(steered)).map(c => seedFishSteering(c, segPaired)).flatMap(splitFishParagraphs).map(shapeFishPauses))
+    ? carryDrama3Scopes(carryChunkDirections(chunkText(steered)).map(c => seedFishSteering(c, segPaired)).flatMap(splitFishParagraphs).map(c => fishSentencePauses(speakingRate) ? shapeFishPauses(c) : c))
     : carryChunkDirections(chunkText(steered)).flatMap(shapeInworldSteering)
   ).filter(chunkHasSpeakableWords);
   if (!chunks.length) {
@@ -3585,7 +3587,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // redundant repeats and keep real authored changes; Fish sentence reseeding
     // is disabled by default. See VOICE_PROVIDER_GUIDE.md for current behavior.
     const chunks = (isFishVoice
-      ? carryDrama3Scopes(carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs).map(shapeFishPauses))
+      ? carryDrama3Scopes(carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs).map(c => fishSentencePauses(speakingRate) ? shapeFishPauses(c) : c))
       : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {
