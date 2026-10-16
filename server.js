@@ -47,7 +47,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishTalkDirection, fishTalkSeed, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
+const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -123,6 +123,15 @@ const TTS_ENHANCE = process.env.TTS_ENHANCE === "1";
 const DELIVERY_MODES = new Set(["STABLE", "BALANCED", "CREATIVE"]);
 // Balanced on fish is 0.9 since Sep 23 2026, the same as the default (was 0.75).
 const FISH_TEMPERATURE_BY_DELIVERY = { STABLE: 0.5, BALANCED: 0.9, CREATIVE: 1.0 };
+// Oct 16 2026: the listener's filler-word switch, fillers true/false in the body or the
+// x-kade-tts-fillers header. Anything else means "use the server default".
+function parseFillersSwitch(raw) {
+  if (typeof raw === "boolean") return raw;
+  const v = String(raw ?? "").trim().toLowerCase();
+  if (["1", "true", "on", "yes"].includes(v)) return true;
+  if (["0", "false", "off", "no"].includes(v)) return false;
+  return undefined;
+}
 function parseDelivery(raw) {
   if (typeof raw !== "string") return undefined;
   const d = raw.trim().toUpperCase();
@@ -1350,8 +1359,10 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * runs. The stream lane never retries on its own — retrying after flushed
  * bytes would double-speak the opening of a sentence.
  */
-async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery }) {
-  const { text: sayText, instruction: lifted } = splitChunkForInworld(chunk);
+async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null }) {
+  const { text: liftedText, instruction: lifted } = splitChunkForInworld(chunk);
+  // fillers: { turn, seed } when this chat request gets spoken filler words (pace.js).
+  const sayText = fillers ? talkFillersByParagraph(liftedText, fillers) : liftedText;
   if (!sayText || !sayText.trim()) return false;
   const instruction = inworldInstruction(lifted, delivery);
   return inworldLimiter(async () => {
@@ -1650,6 +1661,7 @@ app.get("/health", async (req, res) => {
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
+    inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1" },
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
@@ -3607,6 +3619,18 @@ app.post("/v1/audio/speech", async (req, res) => {
      * and the app lane's one-sentence-per-call requests are single-chunk in
      * practice. A false return means NOTHING was flushed and the buffered
      * path below runs exactly as it always has. */
+    // Oct 16 2026: only conversation gets the casual Fish brief and spoken filler words. Voice
+    // previews are scripts, lab presets are experiments, and the Library, family history and
+    // described video all ask for STABLE because they read text aloud (a Library reader may
+    // pick another delivery, so its reading: session is checked as well). Kade: "we definitely
+    // wouldn't want them while reading."
+    const talks = !isVoicePreview && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
+      !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
+    const fillersAsked = parseFillersSwitch(req.body.fillers ?? req.get("x-kade-tts-fillers"));
+    const talkSeed = talks ? fishTalkSeed(speakText) : 0;
+    const fishTalks = isFishVoice && talks;
+    const inworldFillers = !isFishVoice && talks && (fillersAsked ?? process.env.INWORLD_TALK_FILLERS === "1");
+
     const wantsStream =
       TTS_STREAM_ENABLED &&
       !isFishVoice &&
@@ -3623,6 +3647,7 @@ app.post("/v1/audio/speech", async (req, res) => {
         previousTexts: contextFor(chunks, 0, previousTexts),
         voiceLabel: voice,
         delivery,
+        fillers: inworldFillers ? { turn: 0, seed: talkSeed } : null,
       });
       if (handled) {
         rememberSpoken(ttsSessionKey, speakText, requestSequence);
@@ -3630,23 +3655,16 @@ app.post("/v1/audio/speech", async (req, res) => {
       }
     }
 
-    // Oct 16 2026: only conversation gets the casual Fish brief. Voice previews are scripts,
-    // lab presets are experiments, and the Library, family history and described video all
-    // ask for STABLE because they read text aloud (a Library reader may pick another delivery,
-    // so its reading: session is checked as well).
-    const fishTalks = isFishVoice && !isVoicePreview && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
-      !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
-    const fishReplySeed = fishTalks ? fishTalkSeed(speakText) : 0;
-
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
     const tSynth = Date.now();
     const wavBuffers = await Promise.all(
       chunks.map((chunk, ci) =>
         isFishVoice
-          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: fishReplySeed })
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: talkSeed, fillers: fillersAsked })
           : (() => {
-              const { text: sayText, instruction } = splitChunkForInworld(chunk);
+              const { text: liftedText, instruction } = splitChunkForInworld(chunk);
+              const sayText = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;
               return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery);
             })()
       )

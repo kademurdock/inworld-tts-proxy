@@ -43,7 +43,8 @@ function fishTalkDirection() {
  * At most one filler per request (one paragraph), at the start of a sentence that is not the
  * request's first, picked from the text itself so a replay sounds the same. Lists, sentences
  * that already open with a discourse word, and anything inside brackets are left alone.
- * FISH_TALK_FILLERS=1 turns it on, for chat speech only, like the brief. */
+ * FISH_TALK_FILLERS=1 turns it on for Fish chat speech, INWORLD_TALK_FILLERS=1 for Inworld; a
+ * request's own fillers: true/false (the listener's switch) wins over either. */
 const FILLERS = {
   question: ['So,', 'So, um,', 'Um,'],
   statement: ['I mean,', 'Um,', 'Uh,', 'Well,', 'You know,'],
@@ -69,18 +70,20 @@ function fishTalkSeed(text) {
 // turn: the paragraph's place in its reply; seed: fishTalkSeed of the whole reply.
 function fishTalkFillers(text, { turn = 0, seed } = {}) {
   const src = String(text);
-  if (/^\s*(?:[-*•]|\d+[.)])\s/m.test(src)) return src;
+  // Lists, and anything in quotation marks (a character reading a passage or quoting
+  // someone), are read, not chatted: Kade, "we definitely wouldn't want them while reading".
+  if (/^\s*(?:[-*•]|\d+[.)])\s/m.test(src) || /["“”]/.test(src)) return src;
   const tags = [];
   // Bracket cues may sit between sentences; a paired <scope> tag means the next words are
   // scoped, so a sentence that opens with one is not a filler spot.
   const masked = src.replace(/\[[^\]]*\]|<[^>]*>/g, tag =>
-    (tag[0] === '[' ? '' : '') + (tags.push(tag) - 1) + (tag[0] === '[' ? '' : ''));
-  const words = masked.replace(/[]\d+[]/g, ' ').split(/\s+/).filter(Boolean).length;
+    (tag[0] === '[' ? '\uE000' : '\uE002') + (tags.push(tag) - 1) + (tag[0] === '[' ? '\uE001' : '\uE003'));
+  const words = masked.replace(/[\uE000\uE002]\d+[\uE001\uE003]/g, ' ').split(/\s+/).filter(Boolean).length;
   const rng = seeded(src);
   if (words < 12 && rng() < 0.5) return src;
   // A sentence start: end punctuation, space, any tags (e.g. the added [short pause]), a word.
   const starts = [];
-  const re = /([.!?]["'”’)]*)([ \t]+(?:\d+[ \t]*)*)(?=([A-Z][^\s]*))/g;
+  const re = /([.!?]["'”’)]*)([ \t]+(?:\uE000\d+\uE001[ \t]*)*)(?=([A-Z][^\s]*))/g;
   for (let m; (m = re.exec(masked));) {
     const before = masked.slice(0, m.index);
     if (/\.$/.test(before) || NOT_A_SENTENCE_END.test(before)) continue;
@@ -97,17 +100,32 @@ function fishTalkFillers(text, { turn = 0, seed } = {}) {
   const filler = list[(base + turn) % list.length];
   const rest = masked.slice(pick.at).replace(/^([A-Z])([a-z'’]*\b)/, (w, first, tail) =>
     /^I(?:['’](?:m|ll|ve|d))?$/.test(w) ? w : first.toLowerCase() + tail);
-  return (masked.slice(0, pick.at) + filler + ' ' + rest).replace(/[](\d+)[]/g, (_, i) => tags[Number(i)]);
+  return (masked.slice(0, pick.at) + filler + ' ' + rest).replace(/[\uE000\uE002](\d+)[\uE001\uE003]/g, (_, i) => tags[Number(i)]);
+}
+
+// Inworld requests can hold several paragraphs (up to 500 characters); each paragraph takes
+// its own turn. INWORLD_TALK_FILLERS=1 turns fillers on for Inworld chat speech.
+function talkFillersByParagraph(text, { turn = 0, seed } = {}) {
+  let n = 0;
+  return String(text).split(/(\n\s*\n)/)
+    .map((part, i) => (i % 2 ? part : fishTalkFillers(part, { turn: turn + n++, seed }))).join('');
+}
+
+// The listener's own switch (a request's fillers: true/false) wins over the server default.
+function wantsFillers(talk, envName) {
+  if (talk && typeof talk === 'object' && typeof talk.fillers === 'boolean') return talk.fillers;
+  return process.env[envName] === '1';
 }
 
 // Runs at the provider boundary, after author-tempo cleanup and chunk shaping.
 // This changes the actor's instruction, never the audio's playback rate.
+// talk: true or { turn, seed, fillers } for chat speech; false for everything read aloud.
 function fishPacedText(text, rate, { talk = false } = {}) {
   const { direction } = fishPace(rate);
   const opening = String(text).match(/^\s*\[([^\]\n]+)\]/);
   const ownDirection = Boolean(opening && isDirectionTag(opening[1]));
   const casual = talk && !ownDirection ? fishTalkDirection() : '';
-  const spoken = talk && process.env.FISH_TALK_FILLERS === '1' ? fishTalkFillers(text, typeof talk === 'object' ? talk : {}) : text;
+  const spoken = talk && wantsFillers(talk, 'FISH_TALK_FILLERS') ? fishTalkFillers(text, typeof talk === 'object' ? talk : {}) : text;
   const briefs = [direction, casual].filter(Boolean);
   return briefs.length ? `${briefs.map(d => `[${d}]`).join(' ')} ${spoken}` : spoken;
 }
@@ -170,4 +188,4 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
   return Buffer.from(out.buffer);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fishTalkSeed, fishSentencePauses, capFishPauses };
+module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fishTalkSeed, talkFillersByParagraph, wantsFillers, fishSentencePauses, capFishPauses };

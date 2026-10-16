@@ -159,3 +159,28 @@ test('paragraphs of one reply take turns through the fillers instead of repeatin
   const picked = [0, 1, 2, 3].map(turn => fishTalkFillers(para, { turn, seed }).match(/night\. (\w+(?: \w+)?),/)[1]);
   for (let i = 1; i < picked.length; i++) assert.notEqual(picked[i], picked[i - 1], picked.join(' / '));
 });
+
+test('quoted passages are read, not chatted: no fillers in them', () => {
+  const quoted = 'She wrote back this morning. "I will be there by noon, so save me a seat near the front."';
+  assert.equal(fishTalkFillers(quoted), quoted);
+  assert.equal(fishTalkFillers('He said “wait for me” and then he ran off down the road toward the barn.'),
+    'He said “wait for me” and then he ran off down the road toward the barn.');
+});
+
+test('Inworld paragraphs each get a turn, and the listener switch wins over the defaults', () => {
+  const { talkFillersByParagraph, wantsFillers } = require('./pace');
+  const two = 'The game ran long last night. We got home after midnight and slept in.\n\nThe game ran long last night. We got home after midnight and slept in.';
+  const out = talkFillersByParagraph(two, { turn: 0, seed: 7 });
+  const [a, b] = out.split('\n\n').map(p => p.match(/night\. (\w+(?: \w+)?),/)[1]);
+  assert.notEqual(a, b);
+  withEnv({ INWORLD_TALK_FILLERS: undefined }, () => {
+    assert.equal(wantsFillers(true, 'INWORLD_TALK_FILLERS'), false);
+    assert.equal(wantsFillers({ fillers: true }, 'INWORLD_TALK_FILLERS'), true);
+  });
+  withEnv({ FISH_TALK_FILLERS: '1' }, () => {
+    assert.equal(wantsFillers({ turn: 0 }, 'FISH_TALK_FILLERS'), true);
+    assert.equal(wantsFillers({ fillers: false }, 'FISH_TALK_FILLERS'), false);
+    assert.equal(fishPacedText('I went to the store today. I bought eggs and milk and bread for the week.', 1, { talk: { fillers: false } }),
+      'I went to the store today. I bought eggs and milk and bread for the week.');
+  });
+});
