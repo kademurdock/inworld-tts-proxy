@@ -252,10 +252,13 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheB
   return { load, stats, probe };
 }
 
-async function fishBody(payload, id, store) {
+// `loaded` is the reference the caller already read for this id (before taking
+// a Fish slot); when given, storage is not read again here, so a small or
+// zero cache, or an eviction in between, never puts a B2 read inside the slot.
+async function fishBody(payload, id, store, loaded = null) {
   if (!id.startsWith('ref_')) return { contentType: 'application/json', body: JSON.stringify({ ...payload, reference_id: id }) };
-  if (!store) throw new Error('The selected voice catalog is unavailable.');
-  const reference = await store.load(id);
+  if (!loaded && !store) throw new Error('The selected voice catalog is unavailable.');
+  const reference = loaded || await store.load(id);
   return { contentType: 'application/msgpack', body: Buffer.from(encode({ ...payload, references: [reference] })) };
 }
 

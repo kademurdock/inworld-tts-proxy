@@ -182,21 +182,61 @@ test('the reference loads before a Fish slot is taken, and a storage failure nev
     noteChunk: kind => noted.push(kind),
     sleep: async () => {},
     fishLimiter: async fn => { events.push('slot'); return fn(); },
-    fishSynthesizeChunkOnce: async () => { events.push('fish'); return Buffer.alloc(46); },
-    selectedReferenceStore: { load: async id => { events.push('load ' + id); } },
+    fishSynthesizeChunkOnce: async (...args) => { events.push('fish'); passed.push(args[4]); return Buffer.alloc(46); },
+    selectedReferenceStore: { load: async id => { events.push('load ' + id); return loaded; } },
   };
+  const loaded = { audio: Buffer.from('a'), text: 'b' };
+  const passed = [];
   vm.runInNewContext(body + '\nthis.synthesize = fishSynthesizeChunk;', context);
   await context.synthesize('Hello.', 'ref_0123456789abcdef', 1);
   assert.deepEqual(events, ['load ref_0123456789abcdef', 'slot', 'fish']);
+  assert.equal(passed[0], loaded, 'the loaded reference itself is handed to the Fish attempt');
   events.length = 0;
   await context.synthesize('Hello.', 'legacy-id', 1);
   assert.deepEqual(events, ['slot', 'fish'], 'saved Fish IDs never touch storage');
+  assert.equal(passed[1], null);
   events.length = 0;
   context.selectedReferenceStore.load = async () => { throw Object.assign(new Error('The selected voice reference could not be loaded.'), { reason: 'server' }); };
   noted.length = 0;
   await assert.rejects(context.synthesize('Hello.', 'ref_0123456789abcdef', 1), /could not be loaded/);
   assert.deepEqual(events, [], 'no Fish slot and no Fish request');
   assert.deepEqual(noted, ['failed']);
+});
+
+test('with caching off, a chunk still reads storage once, outside the Fish slot, even when Fish retries', async () => {
+  // The real fishSynthesizeChunk -> fishSynthesizeChunkOnce -> fishBody -> store path, with fake fetches.
+  const source = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+  const cut = (from, to) => { const i = source.indexOf(from); return source.slice(i, source.indexOf(to, i)); };
+  let inSlot = false;
+  const reads = [];
+  const referenceStore = createReferenceStore([row], { env, cacheBytes: 0, sleep: async () => {},
+    fetcher: async url => { reads.push(inSlot ? 'inside' : 'outside'); return respond(isAudio(url) ? audio : metadata); } });
+  let fishCalls = 0;
+  const sent = [];
+  const context = {
+    console: { warn() {}, log() {} }, Buffer, Math, AbortController, setTimeout, clearTimeout, process: { env: {} },
+    noteChunk() {}, sleep: async () => {},
+    fishLimiter: async fn => { inSlot = true; try { return await fn(); } finally { inSlot = false; } },
+    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: referenceStore,
+    fishPacedText: require('./pace').fishPacedText,
+    FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000, FISH_SAMPLE_RATE: 24000, FISH_TTS_LATENCY: 'normal',
+    FISH_TEMPERATURE: 0.9, FISH_TOP_P: 0.85, FISH_NORMALIZE: false, FISH_TEMPERATURE_BY_DELIVERY: {},
+    fetch: async (url, request) => {
+      fishCalls++;
+      sent.push(require('@msgpack/msgpack').decode(request.body));
+      if (fishCalls <= 2) return { ok: false, status: 503, text: async () => 'busy' };
+      return { ok: true, arrayBuffer: async () => Uint8Array.from([0, 0, 1, 0]).buffer };
+    },
+  };
+  vm.runInNewContext(cut('const FISH_TTS_MODEL =', 'const FISH_TTS_LATENCY =') + '\n' +
+    cut('function buildWavHeader(', '// Aug 6 2026') + '\n' +
+    cut('async function fishSynthesizeChunkOnce(', 'app.get("/health"') + '\nthis.synthesize = fishSynthesizeChunk;', context);
+  const wav = await context.synthesize('Hello there.', row.id, 1);
+  assert.ok(wav.length > 44);
+  assert.equal(fishCalls, 3, 'Fish was retried twice');
+  assert.deepEqual(reads, ['outside', 'outside'], 'one load (audio + metadata) per chunk, none inside the slot');
+  for (const body of sent) assert.equal(Buffer.from(body.references[0].audio).toString(), audio.toString());
+  assert.equal(referenceStore.stats().entries, 0, 'nothing was cached');
 });
 
 async function bootProxy(port, extraEnv) {

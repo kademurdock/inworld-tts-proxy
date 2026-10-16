@@ -1517,7 +1517,7 @@ const MAX_CONCURRENT_FISH_CALLS = parseInt(process.env.FISH_MAX_CONCURRENT || "6
 const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
 const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
 
-async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery) {
+async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null) {
   // Fish silently falls back to S2.1 Pro for an unknown header. Refuse typos
   // before a paid request, while keeping Inworld and the explicit rollback usable.
   if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
@@ -1534,7 +1534,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
     prosody: { speed: 1.0 },
   };
-  const encoded = await fishBody(payload, fishModelId, selectedReferenceStore);
+  const encoded = await fishBody(payload, fishModelId, selectedReferenceStore, reference);
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
   let response;
@@ -1583,11 +1583,15 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
 async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
   // Oct 16 2026: a selected voice's private reference is fetched (with its own
   // bounded storage retries) BEFORE a Fish slot is taken, so a slow or failing
-  // B2 read never holds one of the provider slots; fishBody then reads it from
-  // memory. A storage failure is not retried again below: the store already did.
+  // B2 read never holds one of the provider slots. The loaded reference itself
+  // is handed to every Fish attempt below, so nothing inside the slot reads
+  // storage again, whatever the cache size (SELECTED_REFERENCE_CACHE_MB=0
+  // included) and even if the entry is evicted meanwhile. A storage failure is
+  // not retried again below: the store already did.
+  let reference = null;
   if (fishModelId.startsWith('ref_') && selectedReferenceStore) {
     try {
-      await selectedReferenceStore.load(fishModelId);
+      reference = await selectedReferenceStore.load(fishModelId);
     } catch (err) {
       noteChunk('failed');
       console.warn(`[TTS] selected voice reference unavailable (${err.reason || 'error'}) -- this chunk fails`);
@@ -1599,7 +1603,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery);
+        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
