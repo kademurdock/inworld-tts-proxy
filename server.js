@@ -5248,7 +5248,10 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
   selectedVoicePicker = classic.picker;
   selectedVoicePicker.pacing = { fish: FISH_PACES.map(({ value, name }) => ({ value, name })), inworld: { min: 0.5, max: 1.5, default: 1 } };
   for (const [label, target] of classic.bindings) VOICE_MAP[label] = target;
-  selectedReferenceStore = createReferenceStore(rows);
+  // Reference audio kept in memory, by bytes (default 64 MB; SELECTED_REFERENCE_CACHE_MB).
+  const cacheMb = Number(process.env.SELECTED_REFERENCE_CACHE_MB);
+  selectedReferenceStore = createReferenceStore(rows, Number.isFinite(cacheMb) && cacheMb >= 0 && process.env.SELECTED_REFERENCE_CACHE_MB !== ''
+    ? { cacheBytes: Math.round(cacheMb * 1024 * 1024) } : {});
   installSelectedBindings(rows, VOICE_MAP, selectedAuditionVoices);
   for (const [label, target] of Object.entries(VOICE_MAP)) {
     const provider = target.startsWith(FISH_VOICE_PREFIX) ? 'fish' : 'inworld';

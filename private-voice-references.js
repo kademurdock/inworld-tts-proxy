@@ -61,10 +61,31 @@ function validateRows(rows) {
   return rows;
 }
 
-function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheSize = 24 } = {}) {
+// Fish needs the reference audio inside every request for these voices (there
+// is no saved Fish model to point at), so what is cached here is only the B2
+// fetch. Sized by bytes, not count (Oct 16 2026): 24 entries meant browsing
+// two dozen auditions pushed out the voices people were chatting with, and
+// every miss is two signed B2 GETs before Fish is even called.
+const DEFAULT_REFERENCE_CACHE_BYTES = 64 * 1024 * 1024;
+
+function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheBytes = DEFAULT_REFERENCE_CACHE_BYTES } = {}) {
   const byId = new Map(validateRows(rows).map(row => [row.id, row]));
-  const cache = new Map();
+  const cache = new Map(); // id -> { reference, bytes }, least recently used first
+  let cachedBytes = 0;
   const inFlight = new Map();
+  function remember(id, reference) {
+    const bytes = reference.audio.length + Buffer.byteLength(reference.text);
+    if (!(bytes <= cacheBytes)) return;
+    if (cache.has(id)) cachedBytes -= cache.get(id).bytes;
+    cache.delete(id);
+    cache.set(id, { reference, bytes });
+    cachedBytes += bytes;
+    while (cachedBytes > cacheBytes) {
+      const [oldest, entry] = cache.entries().next().value;
+      cache.delete(oldest);
+      cachedBytes -= entry.bytes;
+    }
+  }
   async function read(key, limit) {
     try {
       const response = await fetcher(signedGet(key, env), { signal: AbortSignal.timeout(20000), redirect: 'error' });
@@ -85,7 +106,7 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheS
   }
   async function load(id) {
     if (!REFERENCE_ID.test(id) || !byId.has(id)) throw new Error('That selected voice is unavailable.');
-    if (cache.has(id)) { const hit = cache.get(id); cache.delete(id); cache.set(id, hit); return hit; }
+    if (cache.has(id)) { const hit = cache.get(id); cache.delete(id); cache.set(id, hit); return hit.reference; }
     if (inFlight.has(id)) return inFlight.get(id);
     const row = byId.get(id);
     const promise = (async () => {
@@ -99,14 +120,14 @@ function createReferenceStore(rows, { env = process.env, fetcher = fetch, cacheS
         throw new Error('Invalid selected voice metadata.');
       }
       const reference = { audio, text: metadata.transcript };
-      cache.set(id, reference);
-      while (cache.size > cacheSize) cache.delete(cache.keys().next().value);
+      remember(id, reference);
       return reference;
     })();
     inFlight.set(id, promise);
     try { return await promise; } finally { inFlight.delete(id); }
   }
-  return { load };
+  const stats = () => ({ entries: cache.size, bytes: cachedBytes, limitBytes: cacheBytes });
+  return { load, stats };
 }
 
 async function fishBody(payload, id, store) {
@@ -163,4 +184,4 @@ function installSelectedBindings(rows, voiceMap, auditionVoices) {
   }
 }
 
-module.exports = { signedGet, validateRows, createReferenceStore, fishBody, selectedPicker, installSelectedBindings };
+module.exports = { signedGet, validateRows, createReferenceStore, fishBody, selectedPicker, installSelectedBindings, DEFAULT_REFERENCE_CACHE_BYTES };
