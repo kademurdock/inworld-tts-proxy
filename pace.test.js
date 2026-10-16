@@ -53,3 +53,48 @@ test('Natural and slower paces, and silent or tiny clips, are returned as they a
   assert.equal(capFishPauses(silent, 1.5, RATE).length, silent.length);
   assert.equal(capFishPauses(Buffer.alloc(2), 1.5, RATE).length, 2);
 });
+
+// Oct 16 2026: the casual Fish brief (FISH_DEFAULT_DIRECTION) and the two pause switches.
+function withEnv(vars, fn) {
+  const before = {};
+  for (const k of Object.keys(vars)) { before[k] = process.env[k]; if (vars[k] === undefined) delete process.env[k]; else process.env[k] = vars[k]; }
+  try { return fn(); } finally { for (const k of Object.keys(vars)) { if (before[k] === undefined) delete process.env[k]; else process.env[k] = before[k]; } }
+}
+
+test('the casual brief is off unless set, and only chat speech asks for it', () => {
+  withEnv({ FISH_DEFAULT_DIRECTION: undefined }, () => {
+    assert.equal(fishPacedText('Hi.', 1, { talk: true }), 'Hi.');
+  });
+  withEnv({ FISH_DEFAULT_DIRECTION: 'talking off the cuff with a friend' }, () => {
+    assert.equal(fishPacedText('Hi.', 1, { talk: true }), '[talking off the cuff with a friend] Hi.');
+    assert.equal(fishPacedText('Hi.', 1), 'Hi.', 'books, previews and scenes do not pass talk');
+    assert.equal(fishPacedText('Hi.', 1.2, { talk: true }),
+      '[speaking quickly, letting the sentences flow together with short pauses] [talking off the cuff with a friend] Hi.');
+  });
+});
+
+test("a character's own opening direction wins over the casual brief; an opening sound does not", () => {
+  withEnv({ FISH_DEFAULT_DIRECTION: '[talking off the cuff with a friend]' }, () => {
+    assert.equal(fishPacedText('[sad, quiet] I know.', 1, { talk: true }), '[sad, quiet] I know.');
+    assert.equal(fishPacedText('[laughs] Okay.', 1, { talk: true }), '[talking off the cuff with a friend] [laughs] Okay.',
+      'brackets typed into the setting are not doubled');
+  });
+});
+
+test('FISH_SENTENCE_PAUSES=0 drops the added pause at every pace', () => {
+  withEnv({ FISH_SENTENCE_PAUSES: '0' }, () => {
+    for (const rate of [0.75, 0.9, 1, 1.2, 1.5]) assert.equal(fishSentencePauses(rate), false);
+  });
+  withEnv({ FISH_SENTENCE_PAUSES: undefined }, () => assert.equal(fishSentencePauses(1), true));
+});
+
+test('FISH_NATURAL_PAUSE_CAP_MS caps Natural only; slower paces keep their gaps', () => {
+  const src = clip([['tone', 300], ['gap', 900], ['tone', 300]]);
+  withEnv({ FISH_NATURAL_PAUSE_CAP_MS: '450' }, () => {
+    const natural = capFishPauses(src, 1, RATE);
+    assert.ok(Math.abs(ms(src) - ms(natural) - 450) <= 10, `natural removed ${ms(src) - ms(natural)} ms`);
+    for (const rate of [0.9, 0.75]) assert.equal(capFishPauses(src, rate, RATE), src);
+    const brisk = capFishPauses(src, 1.2, RATE);
+    assert.ok(Math.abs(ms(src) - ms(brisk) - 600) <= 10, 'Brisk keeps its own 300 ms cap');
+  });
+});

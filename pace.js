@@ -1,5 +1,7 @@
 'use strict';
 
+const { isDirectionTag } = require('./sounds');
+
 /* Oct 16 2026, Kade: Fish "still talking slow regardless" of Brisk and Fast, and Fish's
  * numeric prosody.speed "starts sounding robotic like when you change the formant", so it
  * stays at 1.0 (it is a time-stretch; Inworld renders its rate natively and sounds fine).
@@ -23,15 +25,32 @@ function fishPace(rate) {
   return FISH_PACES.reduce((best, pace) => Math.abs(pace.value - value) < Math.abs(best.value - value) ? pace : best);
 }
 
+/* Oct 16 2026, a friend of Kade's: Fish voices "sound like they're reading a script", Inworld
+ * voices like someone "talking naturally to whoever's on the other end of the phone". Drama3
+ * takes a voice-actor brief in brackets, including who the character is talking to, and Fish
+ * never got one, so untagged text rides each cloned reference's own habitual read. Inworld
+ * gets an instruction field; this is Fish's equivalent. FISH_DEFAULT_DIRECTION holds the
+ * brief (empty = off). It goes only on chat speech (the caller passes talk: true) and only
+ * when the request does not already open with the character's own direction. */
+function fishTalkDirection() {
+  return String(process.env.FISH_DEFAULT_DIRECTION || '').replace(/[\[\]]/g, '').trim();
+}
+
 // Runs at the provider boundary, after author-tempo cleanup and chunk shaping.
 // This changes the actor's instruction, never the audio's playback rate.
-function fishPacedText(text, rate) {
+function fishPacedText(text, rate, { talk = false } = {}) {
   const { direction } = fishPace(rate);
-  return direction ? `[${direction}] ${text}` : text;
+  const opening = String(text).match(/^\s*\[([^\]\n]+)\]/);
+  const ownDirection = Boolean(opening && isDirectionTag(opening[1]));
+  const casual = talk && !ownDirection ? fishTalkDirection() : '';
+  const briefs = [direction, casual].filter(Boolean);
+  return briefs.length ? `${briefs.map(d => `[${d}]`).join(' ')} ${text}` : text;
 }
 
 // Whether the proxy adds its [short pause] after sentences for this pace.
+// FISH_SENTENCE_PAUSES=0 turns the added pause off at every pace.
 function fishSentencePauses(rate) {
+  if (process.env.FISH_SENTENCE_PAUSES === '0') return false;
   return fishPace(rate).sentencePauses !== false;
 }
 
@@ -41,7 +60,9 @@ function fishSentencePauses(rate) {
  * the middle is dropped, and 5 ms fades meet at the join. Leading and trailing silence
  * stay as they are. Returns the same buffer when there is nothing to do. */
 function capFishPauses(pcm, rate, sampleRate = 24000) {
-  const cap = fishPace(rate).pauseCapMs;
+  // FISH_NATURAL_PAUSE_CAP_MS (empty = off) gives Natural a cap too; slower paces keep their gaps.
+  const pace = fishPace(rate);
+  const cap = pace.pauseCapMs || (pace.value === 1 ? Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 : 0);
   if (!cap || !pcm || pcm.length < 4) return pcm;
   const s = new Int16Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + (pcm.length & ~1)));
   const win = Math.max(1, Math.round(sampleRate * 0.01));
@@ -84,4 +105,4 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
   return Buffer.from(out.buffer);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishSentencePauses, capFishPauses };
+module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishSentencePauses, capFishPauses };

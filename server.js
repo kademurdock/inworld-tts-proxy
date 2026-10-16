@@ -47,7 +47,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
+const { fishPacedText, fishTalkDirection, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1517,7 +1517,7 @@ const MAX_CONCURRENT_FISH_CALLS = parseInt(process.env.FISH_MAX_CONCURRENT || "6
 const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
 const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
 
-async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null) {
+async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null, talk = false) {
   // Fish silently falls back to S2.1 Pro for an unknown header. Refuse typos
   // before a paid request, while keeping Inworld and the explicit rollback usable.
   if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
@@ -1529,7 +1529,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     throw new Error("Unsupported FISH_REFERENCE_MODEL; choose an exact Fish API model name.");
   }
   const payload = {
-    text: fishPacedText(text, speakingRate), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
+    text: fishPacedText(text, speakingRate, { talk }), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
     temperature: (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE,
     top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
     prosody: { speed: 1.0 },
@@ -1582,7 +1582,8 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   return Buffer.concat([buildWavHeader(pcm.length, fmt), pcm]);
 }
 
-async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
+// talk: chat speech, which may get the casual Fish brief (pace.js fishTalkDirection).
+async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, talk = false) {
   // Oct 16 2026: a selected voice's private reference is fetched (with its own
   // bounded storage retries) BEFORE a Fish slot is taken, so a slow or failing
   // B2 read never holds one of the provider slots. The loaded reference itself
@@ -1605,7 +1606,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery) {
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference);
+        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
@@ -1648,6 +1649,7 @@ app.get("/health", async (req, res) => {
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
+    fishTalk: { direction: Boolean(fishTalkDirection()), sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
       ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent), settingsFault: Boolean(storage.settingsFault) }),
@@ -3627,13 +3629,20 @@ app.post("/v1/audio/speech", async (req, res) => {
       }
     }
 
+    // Oct 16 2026: only conversation gets the casual Fish brief. Voice previews are scripts,
+    // lab presets are experiments, and the Library, family history and described video all
+    // ask for STABLE because they read text aloud (a Library reader may pick another delivery,
+    // so its reading: session is checked as well).
+    const fishTalks = isFishVoice && !isVoicePreview && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
+      !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
+
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
     const tSynth = Date.now();
     const wavBuffers = await Promise.all(
       chunks.map((chunk, ci) =>
         isFishVoice
-          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery)
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks)
           : (() => {
               const { text: sayText, instruction } = splitChunkForInworld(chunk);
               return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery);
