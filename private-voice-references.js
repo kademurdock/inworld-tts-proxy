@@ -129,7 +129,10 @@ function selectedPicker(rows, legacy) {
     sections.get(name).push(row.label);
   }));
   return {
-    voices, custom: voices, hidden, aliases: [...new Set([...legacy.aliases, ...oldNames, ...rows.map(row => 'fish:' + row.id)])],
+    // Retired row names stay resolvable through hidden + renames, but are not served as
+    // aliases: the fork's call-lane name match is a substring search over aliases, and a
+    // retired name such as "Holly Hawkins" must never be matched to a character named Holly.
+    voices, custom: voices, hidden, aliases: [...new Set([...legacy.aliases, ...rows.map(row => 'fish:' + row.id)])],
     retainedFish: [...new Set(Object.entries(legacy.map).filter(([, target]) => typeof target === 'string' && target.startsWith('fish:')).flatMap(([label, target]) => [label, target]))],
     categories: [...sections].map(([name, labels]) => ({ name, voices: labels })),
     renames: { ...legacy.renames, ...Object.fromEntries(rows.flatMap(row => (row.aliases || []).map(name => [name, row.label]))) },
