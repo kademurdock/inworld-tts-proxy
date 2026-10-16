@@ -40,7 +40,7 @@ test('the real picker restores Classic Inworld and preserves both saved old and 
     const calls = fs.readFileSync(receipt, 'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(calls.length, 4);
     assert.ok(calls.every(c => c.model === 'drama-3' && /relieved/.test(c.text) && !c.text.includes('%%%')));
-    assert.ok(calls.every(c => c.prosody.speed === 1 && c.text.startsWith('[brisk pace] ') && c.text.includes('<emphasis>found</emphasis>')));
+    assert.ok(calls.every(c => c.prosody.speed === 1 && c.text.startsWith('[Speak briskly') && c.text.includes('<emphasis>found</emphasis>')));
     assert.equal(calls[2].reference_id, 'legacy-id'); assert.equal(calls[2].packed, false);
     [calls[0], calls[1], calls[3]].forEach(call => {
       assert.equal(call.packed, true); assert.equal(call.reference_id, undefined);
@@ -56,7 +56,7 @@ test('the real picker restores Classic Inworld and preserves both saved old and 
     assert.equal(inworld.provider, 'inworld');
     assert.equal(inworld.audioConfig.speakingRate, 1.2);
     assert.match(inworld.text + (inworld.instruction || ''), /relieved/);
-    assert.doesNotMatch(inworld.text, /brisk pace/);
+    assert.doesNotMatch(inworld.text, /Speak briskly/);
   } finally {
     child.kill(); if (child.exitCode === null) await new Promise(resolve => child.once('exit', resolve));
   }
