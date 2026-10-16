@@ -17,7 +17,7 @@ test('real HTTP handler preserves delivery and speed in buffered, streamed, Fish
    // Tempo words leave directions entirely since Sep 20 (AUTHOR_TEMPO_STRIP); the feeling stays.
    assert.match(direction,/warm/);assert.doesNotMatch(direction,/unhurried/);
    assert.match(b.text,/\[laugh\]/);
-   if(voice.startsWith('fish')){assert.equal(b.temperature,delivery==='STABLE'?.5:.9);assert.equal(b.prosody.speed,1);assert.match(b.text,/^\[Speak briskly/);}
+   if(voice.startsWith('fish')){assert.equal(b.temperature,delivery==='STABLE'?.5:.9);assert.equal(b.prosody.speed,1);assert.match(b.text,/^\[brisk pace\] /);}
    else {assert.equal(b.deliveryMode,delivery);assert.equal(b.audioConfig.speakingRate,1.2);assert.equal(url.endsWith(':stream'),stream);}
   }
   const count=rows().length;
