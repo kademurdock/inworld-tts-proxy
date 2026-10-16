@@ -111,9 +111,105 @@ function talkFillersByParagraph(text, { turn = 0, seed } = {}) {
     .map((part, i) => (i % 2 ? part : fishTalkFillers(part, { turn: turn + n++, seed }))).join('');
 }
 
+/* Oct 16 2026, Kade: "maybe even some throat clearing or just, whatever, human things ... These
+ * are meant to be voice messages from a synthetic soul character to you, so they should sound
+ * human. When reading books, they shouldn't." Spoken only, like the fillers, and only where the
+ * fillers may go. Placement follows how people talk and avoids what sounds like a glitch:
+ * - at most one sound per paragraph request, chosen from the words, seeded so a replay matches;
+ * - a small laugh only right after a line that is plainly funny;
+ * - a sigh only before a line about being tired, fed up or relieved;
+ * - a breath at a paragraph's opening, or before a long sentence;
+ * - a throat clear rarely, only at the opening of a reply's first paragraph;
+ * - never in lists or quotes, never beside a sound the character already wrote.
+ * Spellings are each engine's own: Inworld has a fixed sound list (anything else becomes a
+ * lasting instruction there), Drama3 reads plain words. FISH_TALK_SOUNDS=1 and
+ * INWORLD_TALK_SOUNDS=1 turn them on; the listener's switch (fillers false) turns them off. */
+// Drama3 reads plain words, so its cues can be reworded without a deploy (FISH_SOUND_*). Paired
+// judging Oct 16: "[clear throat]" came out as a cough and lost 2-4; "[quietly clears throat]" won 5-1;
+// "[small laugh]" after a funny line won 5-1 both times.
+// Inworld's must stay exact words from its sound list.
+function soundSpelling(engine) {
+  if (engine === 'inworld') return { breath: '[breathe]', laugh: '[chuckle]', sigh: '[sigh]', throat: '[clear throat]' };
+  const env = process.env;
+  return { breath: env.FISH_SOUND_BREATH || '[inhale]', laugh: env.FISH_SOUND_LAUGH || '[small laugh]', sigh: env.FISH_SOUND_SIGH || '[sigh]', throat: env.FISH_SOUND_THROAT || '[quietly clears throat]' };
+}
+const FUNNY = /\b(?:ha(?:ha)+|lol|hilarious|funny|joking|kidding|ridiculous|silly|goofy|cracks? me up|cracking up|can't stop laughing)\b/i;
+const NOT_FUNNY = /\bnot (?:funny|joking|kidding)\b/i;
+// Not "finally": it is mostly good news ("the tomatoes finally came in"), not a sigh.
+const WEARY = /\b(?:ugh|tired|exhausted|exhausting|drained|long day|rough day|worn out|phew|whew|relieved|what a relief|so done)\b/i;
+const SOUNDISH = /laugh|chuckl|giggl|sigh|breath|inhale|exhale|throat|cough|gasp|snicker|snort|scoff|yawn/i;
+
+function sentencesOf(masked) {
+  const out = [];
+  const push = (from, to) => {
+    const lead = masked.slice(from, to).match(/^(?:\s|\uE000\d+\uE001)*/)[0].length;
+    const text = masked.slice(from + lead, to);
+    if (text.trim()) out.push({ start: from + lead, end: to, text, words: text.replace(/[\uE000\uE002]\d+[\uE001\uE003]/g, ' ').split(/\s+/).filter(Boolean).length });
+  };
+  const re = /[.!?]+["'”’)]*(?=\s|$)/g;
+  let from = 0;
+  for (let m; (m = re.exec(masked));) {
+    if (/\.$/.test(m[0]) && NOT_A_SENTENCE_END.test(masked.slice(0, m.index))) continue;
+    push(from, m.index + m[0].length);
+    from = m.index + m[0].length;
+  }
+  push(from, masked.length);
+  return out;
+}
+
+function talkSounds(text, { engine = 'fish', turn = 0 } = {}) {
+  const src = String(text);
+  if (/^\s*(?:[-*•]|\d+[.)])\s/m.test(src) || /["“”]/.test(src)) return src;
+  const spell = soundSpelling(engine);
+  const tags = [];
+  const masked = src.replace(/\[[^\]]*\]|<[^>]*>/g, tag =>
+    (tag[0] === '[' ? '\uE000' : '\uE002') + (tags.push(tag) - 1) + (tag[0] === '[' ? '\uE001' : '\uE003'));
+  const sentences = sentencesOf(masked);
+  const words = sentences.reduce((n, s) => n + s.words, 0);
+  if (!sentences.length || words < 6) return src;
+  // A spot is taken when a sound tag already sits beside it (the character wrote one).
+  const soundNear = (at, after) => {
+    const near = after ? masked.slice(at).match(/^\s*(?:\uE000(\d+)\uE001\s*)+/) : masked.slice(0, at).match(/(?:\uE000(\d+)\uE001\s*)+$/);
+    return Boolean(near && [...near[0].matchAll(/\uE000(\d+)\uE001/g)].some(m => SOUNDISH.test(tags[Number(m[1])])));
+  };
+  const rng = seeded(src + '|sounds');
+  const roll = rng();
+  let place = null;
+  const funny = sentences.find(s => FUNNY.test(s.text) && !NOT_FUNNY.test(s.text) && /[.!?]["'”’)]*$/.test(s.text));
+  // A line that opens with its own sigh word (phew, ugh) already sighs; a tag on top doubles it.
+  const weary = sentences.find(s => WEARY.test(s.text) && !/^(?:phew|whew|ugh)\b/i.test(s.text));
+  const long = sentences.slice(1).find(s => s.words >= 20);
+  if (funny && roll < 0.6 && !soundNear(funny.end, true)) place = { at: funny.end, sound: spell.laugh, before: false };
+  else if (weary && roll < 0.5 && !soundNear(weary.start, false)) place = { at: weary.start, sound: spell.sigh, before: true };
+  else if (turn === 0 && words >= 15 && roll < 0.04 && !soundNear(sentences[0].start, false)) place = { at: sentences[0].start, sound: spell.throat, before: true };
+  else if (words >= 12 && roll < 0.22 && !soundNear(sentences[0].start, false)) place = { at: sentences[0].start, sound: spell.breath, before: true };
+  else if (long && roll < 0.45 && !soundNear(long.start, false)) place = { at: long.start, sound: spell.breath, before: true };
+  if (!place) return src;
+  const out = place.before
+    ? masked.slice(0, place.at) + place.sound + ' ' + masked.slice(place.at)
+    : masked.slice(0, place.at) + ' ' + place.sound + masked.slice(place.at);
+  return out.replace(/[\uE000\uE002](\d+)[\uE001\uE003]/g, (_, i) => tags[Number(i)]);
+}
+
+function talkSoundsByParagraph(text, { engine = 'fish', turn = 0 } = {}) {
+  let n = 0;
+  return String(text).split(/(\n\s*\n)/)
+    .map((part, i) => (i % 2 ? part : talkSounds(part, { engine, turn: turn + n++ }))).join('');
+}
+
 // The listener's own switch (a request's fillers: true/false) wins over the server default.
 function wantsFillers(talk, envName) {
   if (talk && typeof talk === 'object' && typeof talk.fillers === 'boolean') return talk.fillers;
+  return process.env[envName] === '1';
+}
+
+// Little sounds ride the same listener switch: fillers false turns both off. A request's own
+// sounds: true/false wins over that.
+function wantsSounds(talk, envName) {
+  if (talk && typeof talk === 'object') {
+    if (typeof talk.sounds === 'boolean') return talk.sounds;
+    if (talk.fillers === false) return false;
+  }
   return process.env[envName] === '1';
 }
 
@@ -122,10 +218,13 @@ function wantsFillers(talk, envName) {
 // talk: true or { turn, seed, fillers } for chat speech; false for everything read aloud.
 function fishPacedText(text, rate, { talk = false } = {}) {
   const { direction } = fishPace(rate);
-  const opening = String(text).match(/^\s*\[([^\]\n]+)\]/);
-  const ownDirection = Boolean(opening && isDirectionTag(opening[1]));
+  // The character's own direction may sit behind an opening sound ("[laughs] [amused] Hey").
+  const opening = String(text).match(/^\s*(?:\[[^\]\n]+\]\s*)+/);
+  const ownDirection = Boolean(opening && [...opening[0].matchAll(/\[([^\]\n]+)\]/g)].some(m => isDirectionTag(m[1])));
   const casual = talk && !ownDirection ? fishTalkDirection() : '';
-  const spoken = talk && wantsFillers(talk, 'FISH_TALK_FILLERS') ? fishTalkFillers(text, typeof talk === 'object' ? talk : {}) : text;
+  const opts = typeof talk === 'object' ? talk : {};
+  const filled = talk && wantsFillers(talk, 'FISH_TALK_FILLERS') ? fishTalkFillers(text, opts) : text;
+  const spoken = talk && wantsSounds(talk, 'FISH_TALK_SOUNDS') ? talkSounds(filled, { engine: 'fish', turn: opts.turn || 0 }) : filled;
   const briefs = [direction, casual].filter(Boolean);
   return briefs.length ? `${briefs.map(d => `[${d}]`).join(' ')} ${spoken}` : spoken;
 }
@@ -188,4 +287,4 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
   return Buffer.from(out.buffer);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fishTalkSeed, talkFillersByParagraph, wantsFillers, fishSentencePauses, capFishPauses };
+module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses };

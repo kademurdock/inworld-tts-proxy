@@ -85,6 +85,10 @@ const POOLS = Object.fromEntries(['kids','characters','adults'].map(audience => 
   quick: SCENES.filter(s => s[0] === audience).map(s => `%%%${s[2]}%%% ${s[4]}`),
 }]));
 
+// Oct 16 2026, Kade: auditions should sound like a character's voice message, "when reading
+// books, they shouldn't". Every script string knows whether it is a conversation or a book scene.
+const KIND_BY_SCRIPT = new Map(SCENES.flatMap(s => [[`%%%${s[2]}%%% ${s[3]}`, s[1]], [`%%%${s[2]}%%% ${s[4]}`, s[1]]]));
+
 function audienceFor(categories) {
   const groups = (Array.isArray(categories) ? categories : []).map(c => String(c).split(',')[0].trim());
   if (groups.includes('Kids and teens')) return 'kids';
@@ -122,4 +126,4 @@ function createScenePicker() {
 }
 
 const pickScene = createScenePicker();
-module.exports = { SCENES, POOLS, audienceFor, pickScene, createScenePicker };
+module.exports = { SCENES, POOLS, KIND_BY_SCRIPT, audienceFor, pickScene, createScenePicker };

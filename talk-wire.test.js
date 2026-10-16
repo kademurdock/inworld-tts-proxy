@@ -83,3 +83,62 @@ test('chat speech gets the brief and fillers; reading never does; the switch win
     await new Promise(r => child.once('exit', r));
   }
 });
+
+// Oct 16 2026, Kade: auditions "should sound human" like the voice messages they preview, but
+// "when reading books, they shouldn't". Book scenes stay word for word; conversation scenes may
+// gain a filler or a little sound.
+test('conversation auditions get the voice-message treatment; book auditions stay plain', async () => {
+  const { POOLS, KIND_BY_SCRIPT } = require('./audition-scenes');
+  const AUD_PORT = '31882';
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tts-talk-aud-'));
+  const receipt = path.join(dir, 'requests.jsonl');
+  fs.writeFileSync(receipt, '');
+  const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/selected-references.cjs'), 'server.js'], {
+    cwd: __dirname, env: { ...process.env, PORT: AUD_PORT, SELECTED_VOICES_ENABLED: '1', SELECTED_TEST_GROUP: 'adults',
+      FISH_API_KEY: 'offline', FISH_TTS_MODEL: 'drama-3', AWS_ACCESS_KEY_ID: 'fake-access', AWS_SECRET_ACCESS_KEY: 'fake-secret',
+      AWS_BUCKET_NAME: 'test-bucket', PROVIDER_RECEIPT: receipt, FISH_TALK_FILLERS: '1', FISH_TALK_SOUNDS: '1', FISH_DEFAULT_DIRECTION: BRIEF },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let log = '';
+  child.stdout.on('data', v => { log += v; });
+  child.stderr.on('data', v => { log += v; });
+  const plain = s => s.replace(/%%%[^%]+%%%|\[[^\]]*\]|<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const book = new Set(), talk = new Set();
+  for (const script of [...POOLS.adults.long, ...POOLS.adults.quick]) (KIND_BY_SCRIPT.get(script) === 'book' ? book : talk).add(plain(script));
+  const ADDED = /\[(?:inhale|small laugh|sigh|clear throat|quietly clears throat)\]/;
+  const FILLER = /\b(?:So, um,|So,|Um,|Uh,|I mean,|Well,|You know,) /;
+  try {
+    let ready = false;
+    for (let i = 0; i < 100 && !ready; i++) {
+      try { ready = (await fetch(`http://127.0.0.1:${AUD_PORT}/health`)).ok; } catch {}
+      if (!ready) await new Promise(r => setTimeout(r, 40));
+    }
+    assert.ok(ready, log);
+    const catalog = await (await fetch(`http://127.0.0.1:${AUD_PORT}/voices.json`)).json();
+    for (let i = 0; i < 40; i++) {
+      const input = i % 2 ? 'Hi there. This is how I sound.' : 'Hey — quick hello from this voice, right here with you.';
+      const r = await fetch(`http://127.0.0.1:${AUD_PORT}/v1/audio/speech`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voice: catalog.voices[0], input }) });
+      assert.equal(r.status, 200, log.slice(-1500));
+      await r.arrayBuffer();
+    }
+    const calls = fs.readFileSync(receipt, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+    let books = 0, touched = 0;
+    for (const call of calls) {
+      const spoken = plain(call.text);
+      if (book.has(spoken)) {
+        books++;
+        assert.doesNotMatch(call.text, ADDED, `a book audition got a sound: ${call.text}`);
+        assert.doesNotMatch(call.text, /off the cuff/);
+        continue;
+      }
+      const unfilled = spoken.replace(FILLER, '');
+      assert.ok([...talk].some(t => t.toLowerCase() === unfilled.toLowerCase()), `not a conversation scene plus a filler: ${call.text}`);
+      if (FILLER.test(call.text) || ADDED.test(call.text)) touched++;
+    }
+    assert.ok(books > 0 && touched > 0, `books ${books}, touched conversation ${touched} of ${calls.length}`);
+  } finally {
+    child.kill();
+    await new Promise(r => child.once('exit', r));
+  }
+});

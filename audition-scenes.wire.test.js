@@ -14,7 +14,8 @@ test('actual preview requests use category-matched scripts for labels and saved 
     const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/selected-references.cjs'), 'server.js'], {
       cwd: __dirname, env: { ...process.env, PORT: '31869', SELECTED_VOICES_ENABLED: '1', SELECTED_TEST_GROUP: group,
         FISH_API_KEY: 'offline', FISH_TTS_MODEL: 'drama-3', AWS_ACCESS_KEY_ID: 'fake-access',
-        AWS_SECRET_ACCESS_KEY: 'fake-secret', AWS_BUCKET_NAME: 'test-bucket', PROVIDER_RECEIPT: receipt },
+        AWS_SECRET_ACCESS_KEY: 'fake-secret', AWS_BUCKET_NAME: 'test-bucket', PROVIDER_RECEIPT: receipt,
+        FISH_TALK_FILLERS: '0', FISH_TALK_SOUNDS: '0', FISH_DEFAULT_DIRECTION: '' },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let log = ''; child.stdout.on('data', v => log += v); child.stderr.on('data', v => log += v);

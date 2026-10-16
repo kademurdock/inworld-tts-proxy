@@ -6,7 +6,7 @@ let selectedVoicePicker = null;
 let selectedVoiceReport = null;
 let selectedClassicMoves = null; // classic-voice-moves.js: legacy and Classic moves re-applied into the served picker
 const selectedAuditionVoices = new Map();
-const { pickScene } = require("./audition-scenes");
+const { pickScene, KIND_BY_SCRIPT } = require("./audition-scenes");
 const app = express();
 // July 18 2026: raised from the 100kb default so /github/commit can carry
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
@@ -47,7 +47,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
+const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1359,10 +1359,11 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * runs. The stream lane never retries on its own — retrying after flushed
  * bytes would double-speak the opening of a sentence.
  */
-async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null }) {
+async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null }) {
   const { text: liftedText, instruction: lifted } = splitChunkForInworld(chunk);
   // fillers: { turn, seed } when this chat request gets spoken filler words (pace.js).
-  const sayText = fillers ? talkFillersByParagraph(liftedText, fillers) : liftedText;
+  const filled = fillers ? talkFillersByParagraph(liftedText, fillers) : liftedText;
+  const sayText = sounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: sounds.turn }) : filled;
   if (!sayText || !sayText.trim()) return false;
   const instruction = inworldInstruction(lifted, delivery);
   return inworldLimiter(async () => {
@@ -1661,8 +1662,8 @@ app.get("/health", async (req, res) => {
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
-    inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1" },
-    fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
+    inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
+    fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
       ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent), settingsFault: Boolean(storage.settingsFault) }),
@@ -3496,9 +3497,13 @@ app.post("/v1/audio/speech", async (req, res) => {
   const NATIVE_PREVIEW_SENTINEL = "Hi there. This is how I sound.";
   let effectiveInput = input;
   let isVoicePreview = false;
+  // Oct 16 2026: "conversation" or "book" for an audition, so a conversation audition sounds
+  // like that character's voice message and a book scene sounds like reading.
+  let auditionKind = null;
   if (typeof input === "string" && input.trim() === NATIVE_PREVIEW_SENTINEL) {
     isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_SCRIPTS, voice).split("{voice}").join(String(voice));
+    auditionKind = KIND_BY_SCRIPT.get(effectiveInput) || "conversation";
     console.log(`[TTS] native preview sentinel swapped for audition script, label="${voice}"`);
   }
   /* PART 115 (Sep 1 2026) — THE PICKER STOPS SAYING THE SAME THING 700 TIMES.
@@ -3516,10 +3521,12 @@ app.post("/v1/audio/speech", async (req, res) => {
   if (typeof input === "string" && input.trim() === NATIVE_QUICK_PREVIEW_LINE) {
     isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_QUICK_LINES, voice);
+    auditionKind = KIND_BY_SCRIPT.get(effectiveInput) || "conversation";
     console.log(`[TTS] native quick preview swapped for a pooled line, label="${voice}"`);
   } else if (typeof input === "string" && input.trim() === AUDITION_TEXT.trim()) {
     isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_SCRIPTS, voice).split("{voice}").join(String(voice));
+    auditionKind = KIND_BY_SCRIPT.get(effectiveInput) || "conversation";
     console.log(`[TTS] web audition script swapped for a pooled script, label="${voice}"`);
   }
 
@@ -3624,12 +3631,17 @@ app.post("/v1/audio/speech", async (req, res) => {
     // described video all ask for STABLE because they read text aloud (a Library reader may
     // pick another delivery, so its reading: session is checked as well). Kade: "we definitely
     // wouldn't want them while reading."
-    const talks = !isVoicePreview && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
+    // Kade, Oct 16: auditions should sound like the voice messages they preview, so a
+    // conversation audition counts as talk; a book scene does not.
+    const talks = (!isVoicePreview || auditionKind === "conversation") && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
       !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
     const fillersAsked = parseFillersSwitch(req.body.fillers ?? req.get("x-kade-tts-fillers"));
     const talkSeed = talks ? fishTalkSeed(speakText) : 0;
     const fishTalks = isFishVoice && talks;
     const inworldFillers = !isFishVoice && talks && (fillersAsked ?? process.env.INWORLD_TALK_FILLERS === "1");
+    // Little human sounds ride the listener's filler switch; sounds true/false overrides it.
+    const soundsAsked = parseFillersSwitch(req.body.sounds ?? req.get("x-kade-tts-sounds"));
+    const inworldSounds = !isFishVoice && talks && (soundsAsked ?? (fillersAsked === false ? false : process.env.INWORLD_TALK_SOUNDS === "1"));
 
     const wantsStream =
       TTS_STREAM_ENABLED &&
@@ -3648,6 +3660,7 @@ app.post("/v1/audio/speech", async (req, res) => {
         voiceLabel: voice,
         delivery,
         fillers: inworldFillers ? { turn: 0, seed: talkSeed } : null,
+        sounds: inworldSounds ? { turn: 0 } : null,
       });
       if (handled) {
         rememberSpoken(ttsSessionKey, speakText, requestSequence);
@@ -3661,10 +3674,11 @@ app.post("/v1/audio/speech", async (req, res) => {
     const wavBuffers = await Promise.all(
       chunks.map((chunk, ci) =>
         isFishVoice
-          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: talkSeed, fillers: fillersAsked })
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: talkSeed, fillers: fillersAsked, sounds: soundsAsked })
           : (() => {
               const { text: liftedText, instruction } = splitChunkForInworld(chunk);
-              const sayText = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;
+              const filled = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;
+              const sayText = inworldSounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: ci * 3 }) : filled;
               return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery);
             })()
       )

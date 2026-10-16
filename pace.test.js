@@ -184,3 +184,58 @@ test('Inworld paragraphs each get a turn, and the listener switch wins over the 
       'I went to the store today. I bought eggs and milk and bread for the week.');
   });
 });
+
+// Oct 16 2026: little human sounds (FISH_TALK_SOUNDS / INWORLD_TALK_SOUNDS), spoken only.
+const { talkSounds, wantsSounds } = require('./pace');
+const SOUND_TAG = /\[(?:inhale|breathe|small laugh|chuckle|sigh|clear throat|quietly clears throat)\]/g;
+
+test('a sound is spelled for its engine, placed by the words, at most one, and only adds a tag', () => {
+  // Lines whose seeded roll places a laugh, a breath and a throat clear (Oct 16 listening clips).
+  const funny = 'Wait, that is actually hilarious. I cannot believe the cat did that to your cake. Was anybody home when it happened, or did you just walk in and find it all over the floor?';
+  const samples = [funny,
+    'So here is what I was thinking about for the trip. If we leave early on Saturday morning and split the driving between the three of us, nobody has to be behind the wheel for more than a couple of hours at a time. Let me know if that works for you.',
+    'Hmm, I wanted to tell you something about the garden this year. The tomatoes came in, and there are way more than we can eat by ourselves.',
+    'Phew, I am so tired just hearing about it. Your boss called three meetings in a row and none of them needed to happen.'];
+  let placed = 0;
+  for (const s of samples) {
+    for (const engine of ['fish', 'inworld']) {
+      const out = talkSounds(s, { engine });
+      assert.equal(talkSounds(s, { engine }), out, 'deterministic');
+      const added = out.match(SOUND_TAG) || [];
+      assert.ok(added.length <= 1, out);
+      assert.equal(out.replace(SOUND_TAG, '').replace(/\s+/g, ' ').trim(), s, 'only a tag was added');
+      if (added.length) placed++;
+      if (engine === 'inworld') assert.doesNotMatch(out, /\[(?:inhale|small laugh)\]/, 'Inworld only gets its own sound words');
+      if (engine === 'fish') assert.doesNotMatch(out, /\[(?:breathe|chuckle)\]/);
+    }
+  }
+  assert.ok(placed >= 4, `placed ${placed}`);
+  assert.match(talkSounds(funny, { engine: 'fish' }), /hilarious\. \[small laugh\] I cannot/, 'a laugh follows the funny line');
+  assert.match(talkSounds(funny, { engine: 'inworld' }), /hilarious\. \[chuckle\] I cannot/);
+  assert.match(talkSounds(samples[1], { engine: 'fish' }), /^\[inhale\] So here/);
+  const { soundSpelling } = require('./pace');
+  withEnv({ FISH_SOUND_THROAT: undefined }, () => assert.equal(soundSpelling('fish').throat, '[quietly clears throat]'));
+  assert.equal(soundSpelling('inworld').throat, '[clear throat]', "Inworld's own sound word");
+  assert.doesNotMatch(talkSounds(samples[3], { engine: 'fish' }), /\[sigh\] Phew/, 'a line that already sighs gets no sigh tag');
+});
+
+test('sounds stay out of lists, quotes, short lines and spots where the character already wrote one', () => {
+  for (const s of ['- Eggs and milk for the week.\n- Bread from the corner bakery on Main.',
+    'She wrote back this morning. "That is hilarious, I am so tired of this, honestly."', 'Ha, okay.']) {
+    assert.equal(talkSounds(s), s);
+  }
+  for (let i = 0; i < 30; i++) {
+    const s = `Okay that is honestly hilarious number ${i}. [laughs] I cannot believe the cat did that to your cake today.`;
+    assert.doesNotMatch(talkSounds(s), /\[small laugh\] \[laughs\]|\[laughs\] \[small laugh\]/);
+  }
+});
+
+test('the listener switch turns sounds off with fillers; sounds true/false wins; env is the default', () => {
+  withEnv({ FISH_TALK_SOUNDS: '1' }, () => {
+    assert.equal(wantsSounds(true, 'FISH_TALK_SOUNDS'), true);
+    assert.equal(wantsSounds({ fillers: false }, 'FISH_TALK_SOUNDS'), false);
+    assert.equal(wantsSounds({ fillers: false, sounds: true }, 'FISH_TALK_SOUNDS'), true);
+    assert.equal(wantsSounds({ sounds: false }, 'FISH_TALK_SOUNDS'), false);
+  });
+  withEnv({ FISH_TALK_SOUNDS: undefined }, () => assert.equal(wantsSounds({ fillers: true }, 'FISH_TALK_SOUNDS'), false));
+});
