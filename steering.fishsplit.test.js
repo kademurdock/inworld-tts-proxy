@@ -33,6 +33,7 @@ test('a blank-line paragraph break splits too, and a single paragraph passes thr
 });
 
 test('both fish call sites split after seeding (audition/chat funnel and the scene lane)', () => {
-  const hits = src.match(/\.map\(seedFishSteering\)\.flatMap\(splitFishParagraphs\)/g) || [];
+  // Oct 16 2026: each lane seeds with the emphasis form of the model its voice is sent to.
+  const hits = src.match(/\.map\(c => seedFishSteering\(c, [\w(]+\)+\.flatMap\(splitFishParagraphs\)/g) || [];
   assert.equal(hits.length, 2, 'both fish lanes split per paragraph');
 });

@@ -6,10 +6,10 @@ const vm = require('node:vm');
 const source = fs.readFileSync(__dirname + '/server.js', 'utf8');
 const cut = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
 
-function load(env = {}, response = { ok: true, arrayBuffer: async () => Uint8Array.from([0, 0, 1, 0, 2]).buffer }) {
+function load(env = {}, response = { ok: true, arrayBuffer: async () => Uint8Array.from([0, 0, 1, 0, 2]).buffer }, store = null) {
   const calls = [];
   const context = {
-    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: null, fishPacedText: require('./pace').fishPacedText,
+    fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: store, fishPacedText: require('./pace').fishPacedText,
     process: { env }, Buffer, AbortController, setTimeout, clearTimeout,
     FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000,
     FISH_SAMPLE_RATE: 24000, FISH_TTS_LATENCY: 'normal', FISH_TTS_SPEED: 1,
@@ -83,4 +83,82 @@ test('health reports the selected Fish model without an API key', () => {
   const health = cut('app.get("/health"', '// Remove web-search citation');
   assert.match(health, /fishModel: FISH_TTS_MODEL/);
   assert.doesNotMatch(health, /FISH_API_KEY/);
+});
+
+// Finding 28 (Oct 16 2026): the documented rollback (FISH_TTS_MODEL=s2.1-pro or
+// drama-3-preview) must not break the picker voices, whose private references go
+// inline and were checked on drama-3 only.
+const referenceStore = { load: async () => ({ audio: Buffer.from('offline reference audio'), text: 'Offline reference words.' }) };
+const okAudio = { ok: true, arrayBuffer: async () => Uint8Array.from([0, 0, 1, 0]).buffer };
+
+test('the rollback moves saved Fish IDs, and picker voices stay on the model their references were checked on', async () => {
+  const { decode } = require('@msgpack/msgpack');
+  for (const model of ['s2.1-pro', 'drama-3-preview', 's2.1-pro-free', 's2-pro', 's1']) {
+    const { synthesize, calls } = load({ FISH_TTS_MODEL: model }, okAudio, referenceStore);
+    await synthesize('Hello.', 'ref_0123456789abcdef');
+    await synthesize('Hello.', 'existing-reference');
+    assert.equal(calls.length, 2, model);
+    assert.equal(calls[0].request.headers.model, 'drama-3', `${model}: picker voice keeps drama-3`);
+    assert.equal(calls[0].request.headers['Content-Type'], 'application/msgpack');
+    const packed = decode(calls[0].request.body);
+    assert.equal(packed.references[0].text, 'Offline reference words.');
+    assert.equal(packed.reference_id, undefined);
+    assert.equal(calls[1].request.headers.model, model, `${model}: saved Fish IDs follow the rollback`);
+    assert.equal(JSON.parse(calls[1].request.body).reference_id, 'existing-reference');
+  }
+});
+
+test('FISH_REFERENCE_MODEL moves the picker voices as well; a misspelling is refused before a paid request', async () => {
+  const moved = load({ FISH_TTS_MODEL: 's2.1-pro', FISH_REFERENCE_MODEL: 's2.1-pro' }, okAudio, referenceStore);
+  await moved.synthesize('Hello.', 'ref_0123456789abcdef');
+  assert.equal(moved.calls[0].request.headers.model, 's2.1-pro');
+  const typo = load({ FISH_REFERENCE_MODEL: 'drama3' }, okAudio, referenceStore);
+  await assert.rejects(typo.synthesize('Hello.', 'ref_0123456789abcdef'), /Unsupported FISH_REFERENCE_MODEL/);
+  assert.equal(typo.calls.length, 0);
+  await typo.synthesize('Hello.', 'existing-reference');
+  assert.equal(typo.calls[0].request.headers.model, 'drama-3', 'a reference-model typo never breaks saved Fish IDs');
+  // The default is unchanged: everything on drama-3.
+  const plain = load({}, okAudio, referenceStore);
+  await plain.synthesize('Hello.', 'ref_0123456789abcdef');
+  assert.equal(plain.calls[0].request.headers.model, 'drama-3');
+});
+
+test('on the real server under the rollback, a picker voice speaks on drama-3 with Drama3 emphasis and the boot log says so', async () => {
+  const fs2 = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { spawn } = require('node:child_process');
+  const folder = fs2.mkdtempSync(path.join(os.tmpdir(), 'fish-rollback-'));
+  const receipt = path.join(folder, 'requests.jsonl'); fs2.writeFileSync(receipt, '');
+  const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/selected-references.cjs'), 'server.js'], {
+    cwd: __dirname, env: { ...process.env, PORT: '31874', SELECTED_VOICES_ENABLED: '1', FISH_API_KEY: 'offline', INWORLD_API_KEY: 'offline',
+      FISH_TTS_MODEL: 's2.1-pro', FISH_REFERENCE_MODEL: '', AWS_ACCESS_KEY_ID: 'fake-access', AWS_SECRET_ACCESS_KEY: 'fake-secret',
+      AWS_BUCKET_NAME: 'test-bucket', PROVIDER_RECEIPT: receipt },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let log = ''; child.stdout.on('data', v => log += v); child.stderr.on('data', v => log += v);
+  try {
+    let health = null;
+    for (let i = 0; i < 100 && !health; i++) {
+      try { health = await (await fetch('http://127.0.0.1:31874/health')).json(); } catch (_) { await new Promise(r => setTimeout(r, 40)); }
+    }
+    assert.ok(health, log);
+    assert.equal(health.fishModel, 's2.1-pro');
+    assert.equal(health.fishReferenceModel, 'drama-3');
+    const catalog = await (await fetch('http://127.0.0.1:31874/voices.json')).json();
+    for (const voice of [catalog.fish[0], 'fish:legacy-id']) {
+      const response = await fetch('http://127.0.0.1:31874/v1/audio/speech', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voice, input: 'We FOUND it today.' }) });
+      assert.equal(response.status, 200, log);
+      await response.arrayBuffer();
+    }
+    const [picker, saved] = fs2.readFileSync(receipt, 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(picker.model, 'drama-3'); assert.equal(picker.packed, true);
+    assert.match(picker.text, /<emphasis>FOUND<\/emphasis>/);
+    assert.equal(saved.model, 's2.1-pro'); assert.equal(saved.packed, false);
+    assert.match(saved.text, /\[emphasis\] FOUND/);
+    assert.match(log, /selected picker voices stay on drama-3/);
+  } finally {
+    child.kill(); if (child.exitCode === null) await new Promise(resolve => child.once('exit', resolve));
+  }
 });

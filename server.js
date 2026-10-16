@@ -65,6 +65,21 @@ const INWORLD_API_KEY = process.env.INWORLD_API_KEY;
 const FISH_API_KEY = process.env.FISH_API_KEY;
 const FISH_TTS_MODEL = process.env.FISH_TTS_MODEL || "drama-3";
 const FISH_TTS_MODELS = new Set(["drama-3", "drama-3-preview", "s2.1-pro", "s2.1-pro-free", "s2-pro", "s1"]);
+/* Oct 16 2026 — the rollback must not break the picker. The selected picker
+ * voices (fish:ref_…) have no saved Fish model: each request carries its
+ * private reference inline as MessagePack `references`, and every row was
+ * checked on drama-3 only (selected-voices.json testedModel). Nothing here
+ * shows the other models handling those inline references the same way, so
+ * FISH_TTS_MODEL (the documented rollback) moves only the saved Fish
+ * reference IDs, and the picker voices stay on the model they were checked on
+ * (logged at boot, shown on /health). FISH_REFERENCE_MODEL moves them too,
+ * for an operator who has checked that model, e.g. in a full Drama3 outage. */
+const FISH_REFERENCE_MODEL = process.env.FISH_REFERENCE_MODEL || "drama-3";
+function fishModelFor(fishModelId) {
+  return String(fishModelId).startsWith("ref_") ? FISH_REFERENCE_MODEL : FISH_TTS_MODEL;
+}
+// Drama3 takes paired word scopes; the S-series rollback keeps its prefix form.
+const fishPairedEmphasis = model => /^drama-3(?:-preview)?$/.test(model);
 const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|balanced|low
 // Fish clones speak at their source sample's natural pace — do NOT inherit
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
@@ -1507,8 +1522,10 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
     throw new Error("Unsupported FISH_TTS_MODEL; choose an exact Fish API model name.");
   }
-  if (fishModelId.startsWith('ref_') && FISH_TTS_MODEL !== 'drama-3') {
-    throw new Error('Selected sample voices require Drama3.');
+  // A rollback model applies to saved Fish IDs; picker voices keep the model their references were checked on.
+  const fishModel = fishModelFor(fishModelId);
+  if (!FISH_TTS_MODELS.has(fishModel)) {
+    throw new Error("Unsupported FISH_REFERENCE_MODEL; choose an exact Fish API model name.");
   }
   const payload = {
     text: fishPacedText(text, speakingRate), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
@@ -1527,7 +1544,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
       headers: {
         Authorization: `Bearer ${FISH_API_KEY}`,
         "Content-Type": encoded.contentType,
-        model: FISH_TTS_MODEL, // tier lives in a HEADER on fish's API, not the body
+        model: fishModel, // tier lives in a HEADER on fish's API, not the body
       },
       body: encoded.body,
     });
@@ -1620,6 +1637,7 @@ app.get("/health", async (req, res) => {
     status: storage && !storage.ok ? "degraded" : "ok",
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
+    ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
       ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent) }),
@@ -2651,7 +2669,9 @@ function collapseAdjacentTags(text) {
   return out.replace(/[ \t]{2,}/g, " ");
 }
 
-function seedFishSteering(chunk) {
+// `paired` follows the model this voice is actually sent to (fishModelFor);
+// left out, the global FISH_TTS_MODEL decides as before.
+function seedFishSteering(chunk, paired) {
   if (!chunk) return chunk;
   /* KADE Aug 29 2026 — [reset] IS INWORLD'S WORD, AND FISH WAS BEING MADE TO
    * SAY IT ON REPEAT. isDirectionTag('reset') is true (reset is deliberately
@@ -2666,7 +2686,7 @@ function seedFishSteering(chunk) {
   chunk = collapseAdjacentTags(chunk);
   // CAPS->provider emphasis runs even when no [cues] exist — stressed words deserve
   // stress regardless of whether the reply carried steering tags.
-  chunk = fishEmphasisFromCaps(chunk);
+  chunk = fishEmphasisFromCaps(chunk, paired);
   if (chunk.indexOf("[") === -1) return chunk;
   let text = chunk.replace(/\[(laugh|sigh|yawn|breathe)\]/gi, (_, w) => {
     const d = FISH_NONVERBAL_DIALECT[w.toLowerCase()];
@@ -3244,8 +3264,9 @@ async function resolveSceneVoiceId(label) {
 async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery) {
   const segIsFish = typeof seg.voiceId === "string" && seg.voiceId.startsWith(FISH_VOICE_PREFIX);
   const steered = shapeDeliveryPace(applySteeringTags(seg.text), delivery || TTS_DELIVERY_MODE);
+  const segPaired = segIsFish ? fishPairedEmphasis(fishModelFor(seg.voiceId.slice(FISH_VOICE_PREFIX.length))) : undefined;
   const chunks = (segIsFish
-    ? carryDrama3Scopes(carryChunkDirections(chunkText(steered)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses))
+    ? carryDrama3Scopes(carryChunkDirections(chunkText(steered)).map(c => seedFishSteering(c, segPaired)).flatMap(splitFishParagraphs).map(shapeFishPauses))
     : carryChunkDirections(chunkText(steered)).flatMap(shapeInworldSteering)
   ).filter(chunkHasSpeakableWords);
   if (!chunks.length) {
@@ -3446,7 +3467,8 @@ app.post("/v1/audio/speech", async (req, res) => {
   // exact request can be found in Railway logs by timestamp instead of
   // guessed at after the fact.
   console.log(`[TTS] voice request: label="${voice}" -> resolved="${inworldVoice}"`);
-  console.log(`[TTS] performance: provider=${isFishVoice ? 'fish' : 'inworld'} model=${isFishVoice ? FISH_TTS_MODEL : inworldModel} delivery=${isFishVoice ? (delivery || 'DEFAULT') : (delivery || TTS_DELIVERY_MODE)} preview=${isVoicePreview}`);
+  const fishModel = isFishVoice ? fishModelFor(inworldVoice.slice(FISH_VOICE_PREFIX.length)) : null;
+  console.log(`[TTS] performance: provider=${isFishVoice ? 'fish' : 'inworld'} model=${isFishVoice ? fishModel : inworldModel} delivery=${isFishVoice ? (delivery || 'DEFAULT') : (delivery || TTS_DELIVERY_MODE)} preview=${isVoicePreview}`);
 
   // Strip web-search citation markers before speaking. The search-augmented
   // model embeds inline citation tokens (a private-use char U+E200-U+E20F
@@ -3504,7 +3526,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // redundant repeats and keep real authored changes; Fish sentence reseeding
     // is disabled by default. See VOICE_PROVIDER_GUIDE.md for current behavior.
     const chunks = (isFishVoice
-      ? carryDrama3Scopes(carryChunkDirections(chunkText(speakText)).map(seedFishSteering).flatMap(splitFishParagraphs).map(shapeFishPauses))
+      ? carryDrama3Scopes(carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs).map(shapeFishPauses))
       : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {
@@ -5294,6 +5316,10 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
   }
   selectedVoiceReport = require('./selected-voice-moves').createSelectedReportHandler(rows, selectedVoicePicker);
   console.log(`[voice-catalog] ${rows.length} selected Drama3 voices; legacy selections retained.`);
+  if (FISH_REFERENCE_MODEL !== FISH_TTS_MODEL) {
+    console.warn(`[voice-catalog] FISH_TTS_MODEL=${FISH_TTS_MODEL} applies to saved Fish reference IDs; the ${rows.length} selected picker voices stay on ${FISH_REFERENCE_MODEL}` +
+      `${FISH_REFERENCE_MODEL === "drama-3" ? " (the model each reference was checked on)" : " (FISH_REFERENCE_MODEL)"}. Set FISH_REFERENCE_MODEL to move them as well.`);
+  }
 }
 
 // Consumed by the fork's in-app voice pickers (agent-builder audition picker,
