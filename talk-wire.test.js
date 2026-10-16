@@ -19,8 +19,10 @@ test('chat speech gets the brief and fillers; reading never does; the switch win
   const receipt = path.join(dir, 'requests.jsonl');
   fs.writeFileSync(receipt, '');
   const env = { ...process.env, PORT, INWORLD_API_KEY: 'offline', FISH_API_KEY: 'offline', PROVIDER_RECEIPT: receipt,
-    FISH_DEFAULT_DIRECTION: BRIEF, FISH_TALK_FILLERS: '1' };
+    FISH_DEFAULT_DIRECTION: BRIEF, FISH_TALK_FILLERS: '1', FISH_TEMPERATURE_MAX: '0.4' };
   delete env.INWORLD_TALK_FILLERS;
+  delete env.INWORLD_TALK_SOUNDS;
+  delete env.FISH_TALK_SOUNDS;
   const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/provider.cjs'), 'server.js'],
     { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '';
@@ -76,8 +78,19 @@ test('chat speech gets the brief and fillers; reading never does; the switch win
       assert.doesNotMatch(await say({ voice: 'alloy', stream, fillers: true, delivery: 'STABLE' }), FILLED);
     }
 
+    // Kade, Oct 16: "turned the temp way down on the fish voices": the ceiling covers every delivery.
+    for (const delivery of [undefined, 'BALANCED', 'CREATIVE', 'STABLE']) {
+      const before = rows().length;
+      const r = await fetch(`http://127.0.0.1:${PORT}/v1/audio/speech`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: INPUT, voice: 'fish:fixture', ...(delivery ? { delivery } : {}) }) });
+      assert.equal(r.status, 200);
+      await r.arrayBuffer();
+      assert.equal(rows().slice(before)[0].body.temperature, 0.4, String(delivery));
+    }
+
     const health = await (await fetch(`http://127.0.0.1:${PORT}/health`)).json();
     assert.deepEqual([health.fishTalk.direction, health.fishTalk.fillers, health.inworldTalk.fillers], [true, true, false]);
+    assert.deepEqual(health.fishTemperature, { default: 0.9, max: 0.4 });
   } finally {
     child.kill();
     await new Promise(r => child.once('exit', r));

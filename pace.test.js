@@ -239,3 +239,13 @@ test('the listener switch turns sounds off with fillers; sounds true/false wins;
   });
   withEnv({ FISH_TALK_SOUNDS: undefined }, () => assert.equal(wantsSounds({ fillers: true }, 'FISH_TALK_SOUNDS'), false));
 });
+
+test('fillers are only hesitation sounds (um, uh), never placed discourse words', () => {
+  const texts = ['I went to the store today. I bought eggs and milk and bread for the whole week.',
+    'Did you call Kade back? I think she was waiting on you all day long.',
+    'The game ran long last night. We got home after midnight and slept in.'];
+  for (const t of texts) for (let turn = 0; turn < 4; turn++) {
+    const out = fishTalkFillers(t, { turn, seed: 11 });
+    assert.doesNotMatch(out, /\b(?:Well|You know|I mean|So),/i, out);
+  }
+});

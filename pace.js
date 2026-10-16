@@ -45,9 +45,12 @@ function fishTalkDirection() {
  * that already open with a discourse word, and anything inside brackets are left alone.
  * FISH_TALK_FILLERS=1 turns it on for Fish chat speech, INWORLD_TALK_FILLERS=1 for Inworld; a
  * request's own fillers: true/false (the listener's switch) wins over either. */
+// Kade, judging auditions on her iPhone the same night: "Well", "you know", "I mean" came out
+// "weirdly stiff and robotic ... like they aren't a slip of the tongue", while um and the
+// laughing were fine. Only hesitation sounds stay; a placed discourse word reads as scripted.
 const FILLERS = {
-  question: ['So,', 'So, um,', 'Um,'],
-  statement: ['I mean,', 'Um,', 'Uh,', 'Well,', 'You know,'],
+  question: ['Um,', 'Uh,'],
+  statement: ['Um,', 'Uh,'],
 };
 const OPENS_WITH_DISCOURSE = /^(?:oh|ah|well|so|anyway|but|and|or|okay|ok|yeah|yep|yes|no|nope|um+|uh+|hmm+|wait|honestly|actually|like|also|plus|because|then|hey|hi|hello|i mean|you know|right|sure)\b/i;
 const NOT_A_SENTENCE_END = /(?:^|\s)(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Mt|vs|etc|e\.g|i\.e|[A-Z]|\d+)$/i;

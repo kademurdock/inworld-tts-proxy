@@ -13,7 +13,7 @@ function load(env = {}, response = { ok: true, arrayBuffer: async () => Uint8Arr
     process: { env }, Buffer, AbortController, setTimeout, clearTimeout,
     FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000,
     FISH_SAMPLE_RATE: 24000, FISH_TTS_LATENCY: 'normal', FISH_TTS_SPEED: 1,
-    FISH_TEMPERATURE: 0.9, FISH_TOP_P: 0.85, FISH_NORMALIZE: false,
+    FISH_TEMPERATURE: 0.9, FISH_TEMPERATURE_MAX: 1, FISH_TOP_P: 0.85, FISH_NORMALIZE: false,
     FISH_TEMPERATURE_BY_DELIVERY: { STABLE: 0.5, BALANCED: 0.9, CREATIVE: 1 },
     fetch: async (url, request) => { calls.push({ url, request }); return response; },
   };

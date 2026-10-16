@@ -97,6 +97,10 @@ const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|bal
 // Sep 23 2026 (Kade: fish "could be more creative ... prob have a temp of like 90 percent").
 const FISH_TEMPERATURE = parseFloat(process.env.FISH_TEMPERATURE || "0.9");
 const FISH_TOP_P = parseFloat(process.env.FISH_TOP_P || "0.85");
+/* Oct 16 2026, Kade: "I wonder what it would be like if you turned the temp way down on the
+ * fish voices." A ceiling over every delivery (Steady/Balanced/Lively map to 0.5/0.9/1.0
+ * below), so a character with a saved delivery is turned down too. Unset = no ceiling. */
+const FISH_TEMPERATURE_MAX = Math.min(1, parseFloat(process.env.FISH_TEMPERATURE_MAX || "1") || 1);
 const FISH_VOICE_PREFIX = "fish:";
 
 // Voice performance tuning for inworld-tts-2. Note: this model IGNORES the
@@ -1542,7 +1546,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   }
   const payload = {
     text: fishPacedText(text, speakingRate, { talk }), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
-    temperature: (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE,
+    temperature: Math.min(FISH_TEMPERATURE_MAX, (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE),
     top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
     prosody: { speed: 1.0 },
   };
@@ -1661,6 +1665,7 @@ app.get("/health", async (req, res) => {
     status: storage && !storage.ok ? "degraded" : "ok",
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
+    fishTemperature: { default: FISH_TEMPERATURE, max: FISH_TEMPERATURE_MAX },
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },

@@ -220,7 +220,7 @@ test('with caching off, a chunk still reads storage once, outside the Fish slot,
     fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: referenceStore,
     fishPacedText: require('./pace').fishPacedText, capFishPauses: require('./pace').capFishPauses,
     FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000, FISH_SAMPLE_RATE: 24000, FISH_TTS_LATENCY: 'normal',
-    FISH_TEMPERATURE: 0.9, FISH_TOP_P: 0.85, FISH_NORMALIZE: false, FISH_TEMPERATURE_BY_DELIVERY: {},
+    FISH_TEMPERATURE: 0.9, FISH_TEMPERATURE_MAX: 1, FISH_TOP_P: 0.85, FISH_NORMALIZE: false, FISH_TEMPERATURE_BY_DELIVERY: {},
     fetch: async (url, request) => {
       fishCalls++;
       sent.push(require('@msgpack/msgpack').decode(request.body));
