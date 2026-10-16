@@ -98,3 +98,64 @@ test('FISH_NATURAL_PAUSE_CAP_MS caps Natural only; slower paces keep their gaps'
     assert.ok(Math.abs(ms(src) - ms(brisk) - 600) <= 10, 'Brisk keeps its own 300 ms cap');
   });
 });
+
+// Oct 16 2026: spoken-only filler words (FISH_TALK_FILLERS=1), chat speech only.
+const { fishTalkFillers } = require('./pace');
+const strip = s => s.replace(/\b(?:So, um,|So,|Um,|Uh,|I mean,|Well,|You know,) /, '').toLowerCase();
+
+test('fillers are off unless switched on, and only chat speech gets them', () => {
+  const text = 'I went to the store today. I bought eggs and milk and bread for the whole week.';
+  withEnv({ FISH_TALK_FILLERS: undefined, FISH_DEFAULT_DIRECTION: undefined }, () => {
+    assert.equal(fishPacedText(text, 1, { talk: true }), text);
+  });
+  withEnv({ FISH_TALK_FILLERS: '1', FISH_DEFAULT_DIRECTION: undefined }, () => {
+    assert.equal(fishPacedText(text, 1), text, 'books, previews and scenes do not pass talk');
+    assert.notEqual(fishPacedText(text, 1, { talk: true }), text);
+  });
+});
+
+test('a filler only adds words: never the first sentence, never more than one, same every time', () => {
+  const samples = [
+    'Oh, that\'s so good to hear! I was honestly a little worried about you after yesterday. Did you ever call your sister back, or are you still waiting on her?',
+    'The starter is basically flour and water. You feed it every day for about a week. Then it is ready to bake with.',
+    'Did you call Kade back? I think she was waiting on you all day long.',
+  ];
+  for (const s of samples) {
+    const out = fishTalkFillers(s);
+    assert.equal(fishTalkFillers(s), out, 'deterministic');
+    assert.equal(strip(out), s.toLowerCase(), `only a filler was added: ${out}`);
+    const firstSentence = s.split(/(?<=[.!?])\s/)[0];
+    assert.ok(out.startsWith(firstSentence), 'the first sentence is untouched');
+    assert.ok((out.match(/\b(?:Um|Uh|I mean|Well|You know|So),/g) || []).length <= 1);
+  }
+  assert.match(fishTalkFillers(samples[2]), /\? (?:Uh|Um|I mean|Well|You know), I think/, '"I" keeps its capital');
+});
+
+test('lists, abbreviations, discourse openers and bracket tags are left alone', () => {
+  for (const s of ['1. Preheat the oven to four hundred.\n2. Mix the flour and the water together.',
+    '- Eggs and milk for the week.\n- Bread from the corner bakery.',
+    'Mr. Smith came by today with the mail.',
+    'That was fun. Anyway, I hope you got home safe and sound tonight. But tell me how the drive went later.']) {
+    assert.equal(fishTalkFillers(s), s);
+  }
+  const tagged = 'That was a long day at work. [short pause] <emphasis>You</emphasis> deserve a break tonight. [sighs] I made you some soup to warm up with.';
+  const out = fishTalkFillers(tagged);
+  assert.ok(out.includes('[short pause]') && out.includes('<emphasis>You</emphasis>') && out.includes('[sighs]'));
+  assert.doesNotMatch(out, /\[[^\]]*(?:Um|Uh|I mean|Well|You know|So),/, 'never inside a tag');
+});
+
+test('with the brief and fillers both on, the brief leads and the words follow', () => {
+  withEnv({ FISH_TALK_FILLERS: '1', FISH_DEFAULT_DIRECTION: 'talking off the cuff with a friend' }, () => {
+    const out = fishPacedText('I went to the store today. I bought eggs and milk and bread for the whole week.', 1, { talk: true });
+    assert.match(out, /^\[talking off the cuff with a friend\] I went to the store today\. (?:Um|Uh|I mean|Well|You know), I bought/);
+  });
+});
+
+test('paragraphs of one reply take turns through the fillers instead of repeating one', () => {
+  const { fishTalkSeed } = require('./pace');
+  const reply = 'First paragraph. Second paragraph.';
+  const seed = fishTalkSeed(reply);
+  const para = 'The game ran long last night. We got home after midnight and slept in.';
+  const picked = [0, 1, 2, 3].map(turn => fishTalkFillers(para, { turn, seed }).match(/night\. (\w+(?: \w+)?),/)[1]);
+  for (let i = 1; i < picked.length; i++) assert.notEqual(picked[i], picked[i - 1], picked.join(' / '));
+});

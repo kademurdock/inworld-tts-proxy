@@ -36,6 +36,70 @@ function fishTalkDirection() {
   return String(process.env.FISH_DEFAULT_DIRECTION || '').replace(/[\[\]]/g, '').trim();
 }
 
+/* Oct 16 2026, Kade: "add the filler words for sure. But make little filler words like uh and
+ * whatnot, not show up in the text output." Spoken only: this rewrites the words sent to Fish,
+ * never the reply anyone reads (the proxy returns audio and nothing else). In the blind paired
+ * test, the brief plus a filler or two beat today's delivery 26 to 3 (the brief alone 18 to 7).
+ * At most one filler per request (one paragraph), at the start of a sentence that is not the
+ * request's first, picked from the text itself so a replay sounds the same. Lists, sentences
+ * that already open with a discourse word, and anything inside brackets are left alone.
+ * FISH_TALK_FILLERS=1 turns it on, for chat speech only, like the brief. */
+const FILLERS = {
+  question: ['So,', 'So, um,', 'Um,'],
+  statement: ['I mean,', 'Um,', 'Uh,', 'Well,', 'You know,'],
+};
+const OPENS_WITH_DISCOURSE = /^(?:oh|ah|well|so|anyway|but|and|or|okay|ok|yeah|yep|yes|no|nope|um+|uh+|hmm+|wait|honestly|actually|like|also|plus|because|then|hey|hi|hello|i mean|you know|right|sure)\b/i;
+const NOT_A_SENTENCE_END = /(?:^|\s)(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Mt|vs|etc|e\.g|i\.e|[A-Z]|\d+)$/i;
+
+function seeded(text) {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+// One number per reply, so the paragraphs of one reply take turns through the filler list
+// instead of each picking on its own (a three-paragraph test said "I mean" twice).
+function fishTalkSeed(text) {
+  return Math.floor(seeded(String(text))() * 1e6);
+}
+
+// turn: the paragraph's place in its reply; seed: fishTalkSeed of the whole reply.
+function fishTalkFillers(text, { turn = 0, seed } = {}) {
+  const src = String(text);
+  if (/^\s*(?:[-*•]|\d+[.)])\s/m.test(src)) return src;
+  const tags = [];
+  // Bracket cues may sit between sentences; a paired <scope> tag means the next words are
+  // scoped, so a sentence that opens with one is not a filler spot.
+  const masked = src.replace(/\[[^\]]*\]|<[^>]*>/g, tag =>
+    (tag[0] === '[' ? '' : '') + (tags.push(tag) - 1) + (tag[0] === '[' ? '' : ''));
+  const words = masked.replace(/[]\d+[]/g, ' ').split(/\s+/).filter(Boolean).length;
+  const rng = seeded(src);
+  if (words < 12 && rng() < 0.5) return src;
+  // A sentence start: end punctuation, space, any tags (e.g. the added [short pause]), a word.
+  const starts = [];
+  const re = /([.!?]["'”’)]*)([ \t]+(?:\d+[ \t]*)*)(?=([A-Z][^\s]*))/g;
+  for (let m; (m = re.exec(masked));) {
+    const before = masked.slice(0, m.index);
+    if (/\.$/.test(before) || NOT_A_SENTENCE_END.test(before)) continue;
+    const at = m.index + m[0].length;
+    const rest = masked.slice(at);
+    const sentence = rest.split(/(?<=[.!?])\s/)[0];
+    if (OPENS_WITH_DISCOURSE.test(rest) || sentence.split(/\s+/).length < 4) continue;
+    starts.push({ at, question: /\?["'”’)]*$/.test(sentence.trim()) });
+  }
+  if (!starts.length) return src;
+  const pick = starts[Math.floor(rng() * starts.length)];
+  const list = pick.question ? FILLERS.question : FILLERS.statement;
+  const base = Number.isInteger(seed) ? seed : Math.floor(rng() * 1e6);
+  const filler = list[(base + turn) % list.length];
+  const rest = masked.slice(pick.at).replace(/^([A-Z])([a-z'’]*\b)/, (w, first, tail) =>
+    /^I(?:['’](?:m|ll|ve|d))?$/.test(w) ? w : first.toLowerCase() + tail);
+  return (masked.slice(0, pick.at) + filler + ' ' + rest).replace(/[](\d+)[]/g, (_, i) => tags[Number(i)]);
+}
+
 // Runs at the provider boundary, after author-tempo cleanup and chunk shaping.
 // This changes the actor's instruction, never the audio's playback rate.
 function fishPacedText(text, rate, { talk = false } = {}) {
@@ -43,8 +107,9 @@ function fishPacedText(text, rate, { talk = false } = {}) {
   const opening = String(text).match(/^\s*\[([^\]\n]+)\]/);
   const ownDirection = Boolean(opening && isDirectionTag(opening[1]));
   const casual = talk && !ownDirection ? fishTalkDirection() : '';
+  const spoken = talk && process.env.FISH_TALK_FILLERS === '1' ? fishTalkFillers(text, typeof talk === 'object' ? talk : {}) : text;
   const briefs = [direction, casual].filter(Boolean);
-  return briefs.length ? `${briefs.map(d => `[${d}]`).join(' ')} ${text}` : text;
+  return briefs.length ? `${briefs.map(d => `[${d}]`).join(' ')} ${spoken}` : spoken;
 }
 
 // Whether the proxy adds its [short pause] after sentences for this pace.
@@ -105,4 +170,4 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
   return Buffer.from(out.buffer);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishSentencePauses, capFishPauses };
+module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fishTalkSeed, fishSentencePauses, capFishPauses };

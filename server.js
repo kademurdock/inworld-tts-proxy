@@ -47,7 +47,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishTalkDirection, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
+const { fishPacedText, fishTalkDirection, fishTalkSeed, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1582,7 +1582,8 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   return Buffer.concat([buildWavHeader(pcm.length, fmt), pcm]);
 }
 
-// talk: chat speech, which may get the casual Fish brief (pace.js fishTalkDirection).
+// talk: chat speech, which may get the casual Fish brief and spoken fillers (pace.js); an object
+// { turn, seed } lets the paragraphs of one reply take turns through the filler list.
 async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, talk = false) {
   // Oct 16 2026: a selected voice's private reference is fetched (with its own
   // bounded storage retries) BEFORE a Fish slot is taken, so a slow or failing
@@ -1649,7 +1650,7 @@ app.get("/health", async (req, res) => {
     service: "inworld-tts-proxy",
     fishModel: FISH_TTS_MODEL,
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
-    fishTalk: { direction: Boolean(fishTalkDirection()), sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
+    fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
       ...(storage.ok ? {} : { reason: storage.reason, permanent: Boolean(storage.permanent), settingsFault: Boolean(storage.settingsFault) }),
@@ -3635,6 +3636,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     // so its reading: session is checked as well).
     const fishTalks = isFishVoice && !isVoicePreview && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
       !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
+    const fishReplySeed = fishTalks ? fishTalkSeed(speakText) : 0;
 
     // Fire every chunk at Inworld in parallel instead of waiting on one
     // giant request -- this is the actual latency fix.
@@ -3642,7 +3644,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     const wavBuffers = await Promise.all(
       chunks.map((chunk, ci) =>
         isFishVoice
-          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks)
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: fishReplySeed })
           : (() => {
               const { text: sayText, instruction } = splitChunkForInworld(chunk);
               return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery);
