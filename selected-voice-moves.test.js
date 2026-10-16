@@ -23,9 +23,9 @@ function fresh(){
 function report(label,heard,day=1,status='open'){
  return {_id:String(day).padStart(24,'0'),createdAt:`2026-10-${String(day).padStart(2,'0')}T00:00:00Z`,status,subject:'Voice in the wrong section: '+label,detail:`Voice: ${label}. Filed under "Women" — sounds like: ${heard}.`+(status==='resolved'?'\n[auto-move] applied':'')};
 }
-test('all 601 identities and historical bindings coexist with memorable picker names',()=>{
+test('all retained and newly checked identities coexist with historical bindings',()=>{
  const {rows,state,picker,auditions}=fresh();
- assert.equal(rows.length,601);assert.equal(new Set(rows.map(r=>r.tag)).size,601);
+ assert.equal(rows.length,1121);assert.equal(new Set(rows.map(r=>r.tag)).size,1121);
  for(const row of rows){
   for(const alias of [row.label,'fish:'+row.id,...(row.aliases||[])]){
    assert.equal(state.VOICE_MAP[alias],'fish:'+row.id);assert.strictEqual(auditions.get(alias),row);

@@ -34,8 +34,8 @@ test('restores every registered legacy Inworld row without touching any saved bi
   for (const [label, target] of bindings) legacy.map[label] = target;
   installSelectedBindings(rows, legacy.map, new Map());
   for (const [label, target] of Object.entries(before)) assert.equal(legacy.map[label], target, label);
-  assert.equal(picker.fish.length, 601);
-  console.log(`${bindings.size} Classic entries, ${new Set(bindings.values()).size} distinct Inworld IDs; 601 Fish entries preserved.`);
+  assert.equal(picker.fish.length, 1121);
+  console.log(`${bindings.size} Classic entries, ${new Set(bindings.values()).size} distinct Inworld IDs; 601 retained Fish entries plus 520 checked additions.`);
 });
 
 test('Fish pace is an instruction and preserves emotion, paired word scopes, and spoken words', () => {
