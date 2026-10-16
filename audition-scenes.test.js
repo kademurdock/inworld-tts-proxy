@@ -6,7 +6,7 @@ const { SCENES, POOLS, audienceFor, pickScene, createScenePicker } = require('./
 
 test('all published voices route by their actual catalog group, including binding aliases', () => {
   const rows = require('./selected-voices.json').voices;
-  assert.equal(rows.length,601);
+  assert.equal(rows.length,1121);
   for (const label of ['Miss-A (Amber A)', 'Kadiana (Expressive)', 'Kade (HQ)']) {
     const row = rows.find(value => value.label === label);
     assert.ok(row, `Missing family voice: ${label}`);
