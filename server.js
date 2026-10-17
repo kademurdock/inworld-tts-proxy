@@ -4964,6 +4964,38 @@ for (const [label, info] of Object.entries(VOICE_ADDITIONS_2026_09_14)) {
   CUSTOM_VOICE_NUMBERS.add(label);
 }
 
+// Oct 17 2026: Kade added new voices to her Inworld workspace ("Just the most recent ones").
+// Workspace diff: 308 customs, 20 unregistered, 10 of them her personal hold-outs (Kade*, Amber*,
+// Podcast Keighty fast); the Sep 11 pass had registered every other voice then on the account, so
+// these ten are the new ones. The workspace names stay in comments only (voices are not people).
+const VOICE_ADDITIONS_2026_10_17 = {
+  "Voice 654": "default-e-m11vgtr9l-m7afw4kmnw__craigia", // Craigia
+  "Voice 655": "default-e-m11vgtr9l-m7afw4kmnw__dennesha", // Dennesha
+  "Voice 656": "default-e-m11vgtr9l-m7afw4kmnw__holisha", // Holisha
+  "Voice 657": "default-e-m11vgtr9l-m7afw4kmnw__janique", // janique
+  "Voice 658": "default-e-m11vgtr9l-m7afw4kmnw__karakano", // Karakano
+  "Voice 659": "default-e-m11vgtr9l-m7afw4kmnw__karika", // Karika
+  "Voice 660": "default-e-m11vgtr9l-m7afw4kmnw__marklisha", // Marklisha
+  "Voice 661": "default-e-m11vgtr9l-m7afw4kmnw__niki", // Niki
+  "Voice 662": "default-e-m11vgtr9l-m7afw4kmnw__shavailah", // Shavailah
+  "Voice 663": "default-e-m11vgtr9l-m7afw4kmnw__shiara", // Shiara
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_10_17);
+  if (entries.length !== 10) throw new Error(`additions 10-17: expected 10, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${654 + idx}`) throw new Error(`additions 10-17: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 10-17: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 10-17: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
