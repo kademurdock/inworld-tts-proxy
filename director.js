@@ -12,8 +12,14 @@
  * Only Fish chat speech (the caller decides: never reading, books, previews of scripts). Pieces
  * shorter than FISH_DIRECTOR_MIN_CHARS are spoken plain: the iPhone's opening piece is short and
  * nobody hears a later piece's extra second, because it is prepared while the one before plays.
- * Sounds stay with pace.js talkSounds (the director never adds one). FISH_DIRECTOR=1 turns it on;
- * FISH_DIRECTOR_KEY is a Gemini API key. */
+ * Sounds stay with pace.js talkSounds (the director never adds one). FISH_DIRECTOR=1 turns it on.
+ *
+ * The model is MiMo 2.6 Pro on OpenRouter (Kade, the same night: "any time you feel like using a
+ * flash model from google, you should consider using a pro or flash model from Mimo to match the
+ * rest of the setup"). Measured as the director, thinking off, DeepInfra: Pro median ~1.1 s, 6/6
+ * and 5/6 words intact (the miss repeated a sentence and was caught); Flash was slower there
+ * (median 3.3 s, up to 8.4 s). Zero retention like every fleet adapter: zdr + data_collection deny.
+ * FISH_DIRECTOR_MODEL=gemini-... with FISH_DIRECTOR_KEY rolls back to Google. */
 
 const crypto = require('crypto');
 
@@ -21,7 +27,7 @@ const SYSTEM = `You are a voice director preparing a friend's spoken voice messa
 
 Markup you may add (Drama 3 syntax):
 - A mid-line direction in square brackets, placed right before the words where the feeling turns, e.g. [voice catching, relieved] or [grinning, can barely keep it in]. A short two-part brief: the feeling, plus how it shows. One or two per message, only where the mood actually changes. Never at the very start of the message; it already has an opening brief. Never about speed or pace.
-- One paired scope around the payoff: <emphasis>word</emphasis> for the single word a friend would lean on, or <stress>word</stress> for a contrasting pronoun. Wrap one word or a very short phrase. At most one per two sentences, and only where a person would really lean in.
+- One paired scope around the payoff: <emphasis>word</emphasis> for the single word a friend would lean on, or <stress>word</stress> for a contrasting pronoun. Wrap one word or a very short phrase. Most messages have one word a friend would lean on: mark it. At most one per two sentences.
 - [pause] between two sentences where a beat lands right before a short payoff sentence. At most one per message.
 - <soft>...</soft> around a whole closing sentence when it should be said gently. At most one.
 Do not add sounds such as laughs, sighs or breaths; another step handles those.
@@ -37,12 +43,14 @@ function env(name, fallback, source = process.env) {
   const v = source[name];
   return v === undefined || v === '' ? fallback : v;
 }
+const model = (source) => env('FISH_DIRECTOR_MODEL', 'xiaomi/mimo-v2.6-pro', source);
+const viaGoogle = (source) => /^gemini-/.test(model(source));
+const keyFor = (source) => (viaGoogle(source) ? source.FISH_DIRECTOR_KEY : source.OPENROUTER_KEY);
 function directorOn(source = process.env) {
-  return source.FISH_DIRECTOR === '1' && Boolean(source.FISH_DIRECTOR_KEY);
+  return source.FISH_DIRECTOR === '1' && Boolean(keyFor(source));
 }
 const minChars = (source) => Number(env('FISH_DIRECTOR_MIN_CHARS', 140, source));
-const timeoutMs = (source) => Number(env('FISH_DIRECTOR_TIMEOUT_MS', 2500, source));
-const model = (source) => env('FISH_DIRECTOR_MODEL', 'gemini-3.5-flash', source);
+const timeoutMs = (source) => Number(env('FISH_DIRECTOR_TIMEOUT_MS', 3000, source));
 
 // The words and punctuation, without tags or spacing: what must never change.
 const bare = (t) => String(t).replace(TAG, '').replace(/\s+/g, '');
@@ -105,30 +113,49 @@ function createDirector({ fetcher = (...a) => fetch(...a), source = process.env,
 
   async function ask(text, previous) {
     const context = previous && previous.length ? `Said just before (context only, do not return it): ${previous.slice(-2).join(' ').slice(-400)}\n\n` : '';
-    const body = {
+    const user = `${context}Message:\n${text}`;
+    const google = viaGoogle(source);
+    const url = google
+      ? `https://generativelanguage.googleapis.com/v1beta/models/${model(source)}:generateContent`
+      : 'https://openrouter.ai/api/v1/chat/completions';
+    const body = google ? {
       systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents: [{ role: 'user', parts: [{ text: `${context}Message:\n${text}` }] }],
+      contents: [{ role: 'user', parts: [{ text: user }] }],
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: { type: 'OBJECT', properties: { marked: { type: 'STRING' } }, required: ['marked'] },
         temperature: 0.3, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 },
       },
+    } : {
+      model: model(source),
+      messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }],
+      temperature: 0.3, max_tokens: 800,
+      // MiMo's thinking must be switched off explicitly; its 'low' effort is not short.
+      reasoning: { enabled: false },
+      // Novita rejects a strict json_schema; json_object works on every MiMo host.
+      response_format: { type: 'json_object' },
+      provider: { zdr: true, data_collection: 'deny', order: ['DeepInfra'], allow_fallbacks: true },
     };
+    const headers = google
+      ? { 'Content-Type': 'application/json', 'x-goog-api-key': source.FISH_DIRECTOR_KEY }
+      : { 'Content-Type': 'application/json', Authorization: `Bearer ${source.OPENROUTER_KEY}`, 'X-Title': 'Kade voice director' };
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), timeoutMs(source));
     try {
-      const r = await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${model(source)}:generateContent`, {
-        method: 'POST', signal: ac.signal,
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': source.FISH_DIRECTOR_KEY },
-        body: JSON.stringify(body),
-      });
+      const r = await fetcher(url, { method: 'POST', signal: ac.signal, headers, body: JSON.stringify(body) });
       if (!r.ok) {
         const e = new Error(`director HTTP ${r.status}`);
         e.status = r.status;
         throw e;
       }
       const j = await r.json();
-      return JSON.parse(j.candidates[0].content.parts[0].text).marked;
+      if (google) return JSON.parse(j.candidates[0].content.parts[0].text).marked;
+      const choice = j.choices && j.choices[0];
+      // A host refusal (Novita answers 200 with content_filter) is no answer, never markup.
+      if (!choice || choice.finish_reason === 'content_filter' || !choice.message || !choice.message.content) {
+        throw new Error('director: no answer');
+      }
+      return JSON.parse(choice.message.content).marked;
     } finally {
       clearTimeout(timer);
     }

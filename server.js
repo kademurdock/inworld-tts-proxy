@@ -1672,7 +1672,7 @@ app.get("/health", async (req, res) => {
     fishTemperature: { default: FISH_TEMPERATURE, max: FISH_TEMPERATURE_MAX },
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
-    fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "gemini-3.5-flash", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
+    fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
@@ -3634,8 +3634,8 @@ app.post("/v1/audio/speech", async (req, res) => {
     let fishPieces = isFishVoice
       ? carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs)
       : null;
-    // Picker previews stay plain: they play as she lands on each row, and a second there is felt.
-    if (fishTalks && !isVoicePreview && directorOn()) fishPieces = await fishDirector.directPieces(fishPieces, { previous: previousTexts });
+    // Conversation auditions too (Kade: "I also think the directer should work on auditions").
+    if (fishTalks && directorOn()) fishPieces = await fishDirector.directPieces(fishPieces, { previous: previousTexts });
     const chunks = (isFishVoice
       ? carryDrama3Scopes(fishPieces.map(c => fishSentencePauses(speakingRate) ? shapeFishPauses(c) : c))
       : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)

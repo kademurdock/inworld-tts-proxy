@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { createDirector, vet, directorOn } = require('./director');
 
 const PIECE = 'They want me to keep him off the stairs for a week, which is going to be a whole thing. Anyway, how did your appointment go? I keep thinking about it.';
-const ON = { FISH_DIRECTOR: '1', FISH_DIRECTOR_KEY: 'test-key' };
+const ON = { FISH_DIRECTOR: '1', OPENROUTER_KEY: 'test-key' };
 
 function stub(replies) {
   const calls = [];
@@ -15,22 +15,44 @@ function stub(replies) {
     const next = replies.shift();
     if (next instanceof Error) throw next;
     if (typeof next === 'number') return { ok: false, status: next, json: async () => ({}) };
-    return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ marked: next }) }] } }] }) };
+    if (next && next.google) return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ marked: next.google }) }] } }] }) };
+    if (next && next.refused) return { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: 'content_filter', message: { content: 'The request was rejected because it was considered high risk' } }] }) };
+    return { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ marked: next }) } }] }) };
   };
   return { fetcher, calls };
 }
 const quiet = () => {};
 
-test('a good markup is kept; the request asks for no thinking and a JSON answer', async () => {
+test('a good markup is kept; MiMo Pro is asked with zero retention, thinking off and a JSON answer', async () => {
   const marked = 'They want me to keep him off the stairs for a week, which is going to be a <emphasis>whole</emphasis> thing. [pause] Anyway, how did your appointment go? [softer, a little worried] I keep thinking about it.';
   const { fetcher, calls } = stub([marked]);
   const d = createDirector({ fetcher, source: ON, log: quiet });
   const r = await d.directPiece(PIECE);
   assert.equal(r.status, 'directed');
   assert.equal(r.text, marked);
-  assert.equal(calls[0].body.generationConfig.thinkingConfig.thinkingBudget, 0);
-  assert.equal(calls[0].headers['x-goog-api-key'], 'test-key');
-  assert.match(calls[0].url, /gemini-3\.5-flash:generateContent$/);
+  const body = calls[0].body;
+  assert.equal(calls[0].url, 'https://openrouter.ai/api/v1/chat/completions');
+  assert.equal(calls[0].headers.Authorization, 'Bearer test-key');
+  assert.equal(body.model, 'xiaomi/mimo-v2.6-pro');
+  assert.deepEqual(body.reasoning, { enabled: false });
+  assert.equal(body.provider.zdr, true);
+  assert.equal(body.provider.data_collection, 'deny');
+  assert.deepEqual(body.response_format, { type: 'json_object' });
+});
+
+test('a host refusal is no answer; the Google route stays as a rollback', async () => {
+  const refused = stub([{ refused: true }]);
+  const r = await createDirector({ fetcher: refused.fetcher, source: ON, log: quiet }).directPiece(PIECE);
+  assert.equal(r.text, PIECE);
+  assert.match(r.status, /^kept plain/);
+  const marked = PIECE.replace('whole', '<emphasis>whole</emphasis>');
+  const g = stub([{ google: marked }]);
+  const source = { FISH_DIRECTOR: '1', FISH_DIRECTOR_MODEL: 'gemini-3.5-flash', FISH_DIRECTOR_KEY: 'g-key' };
+  assert.equal(directorOn({ FISH_DIRECTOR: '1', FISH_DIRECTOR_MODEL: 'gemini-3.5-flash', OPENROUTER_KEY: 'k' }), false, 'Google needs its own key');
+  const out = await createDirector({ fetcher: g.fetcher, source, log: quiet }).directPiece(PIECE);
+  assert.equal(out.text, marked);
+  assert.match(g.calls[0].url, /gemini-3\.5-flash:generateContent$/);
+  assert.equal(g.calls[0].body.generationConfig.thinkingConfig.thinkingBudget, 0);
 });
 
 test('a changed word, a lost tag, a broken scope or too much markup speaks the piece plain', async () => {
@@ -66,7 +88,7 @@ test('short pieces, quotes and lists are never sent; off means off', async () =>
   assert.equal((await d.directPiece(`She said "${PIECE}" to me and then left.`)).status, 'read');
   assert.equal(calls.length, 0);
   assert.equal(directorOn({ FISH_DIRECTOR: '1' }), false, 'no key, no director');
-  const off = createDirector({ fetcher, source: { FISH_DIRECTOR_KEY: 'k' }, log: quiet });
+  const off = createDirector({ fetcher, source: { OPENROUTER_KEY: 'k' }, log: quiet });
   assert.deepEqual(await off.directPieces([PIECE]), [PIECE]);
   assert.equal(calls.length, 0);
 });
