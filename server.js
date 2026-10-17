@@ -52,6 +52,8 @@ const { fitContextBudget } = require("./tts-context");
 const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
 const { createDirector, directorOn } = require('./director');
 const fishDirector = createDirector();
+const { createWriter: createInworldWriter, writerOn: inworldWriterOn } = require('./inworld-writer');
+const inworldWriter = createInworldWriter();
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1367,11 +1369,12 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * runs. The stream lane never retries on its own — retrying after flushed
  * bytes would double-speak the opening of a sentence.
  */
-async function tryStreamSingleChunk(res, { chunk, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null }) {
-  const { text: liftedText, instruction: lifted } = splitChunkForInworld(chunk);
+async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null }) {
+  // written: the piece as the Inworld writer left it (inworld-writer.js), already lifted.
+  const { text: liftedText, instruction: lifted } = written || splitChunkForInworld(chunk);
   // fillers: { turn, seed } when this chat request gets spoken filler words (pace.js).
   const filled = fillers ? talkFillersByParagraph(liftedText, fillers) : liftedText;
-  const sayText = sounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: sounds.turn }) : filled;
+  const sayText = sounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: sounds.turn, seedText: sounds.seedText }) : filled;
   if (!sayText || !sayText.trim()) return false;
   const instruction = inworldInstruction(lifted, delivery);
   return inworldLimiter(async () => {
@@ -1673,6 +1676,7 @@ app.get("/health", async (req, res) => {
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
     fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
+    inworldWriter: { on: inworldWriterOn(), model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) },
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
@@ -3645,6 +3649,16 @@ app.post("/v1/audio/speech", async (req, res) => {
       res.set({ 'Content-Type': 'audio/wav', 'Content-Length': '0' });
       return res.status(200).end();
     }
+    // Oct 17 2026 (Kade: "we should have a writer that does the same thing for inworld, like turns
+    // text into the documented inworld style"): Inworld chat pieces get Inworld's own markup
+    // (inworld-writer.js) before fillers and sounds are added. Conversation auditions too; never
+    // the phone, where a live call cannot wait for it.
+    const inworldPlain = isFishVoice ? null : chunks.map(splitChunkForInworld);
+    const inworldWritten = Boolean(inworldPlain) && talks && req.query.telephony !== "1" && inworldWriterOn();
+    const inworldLifted = inworldWritten ? await inworldWriter.writePieces(inworldPlain, { previous: previousTexts }) : inworldPlain;
+    // A written piece gets the sound its plain words would have got (pace.js talkSounds seedText).
+    const soundSeed = (i) => (inworldWritten ? inworldPlain[i].text : null);
+
 
     /* Part 98 — the streamed lane. Opt-in per request (the native app's new
      * player sends the flag; web and telephony never do), Inworld only for
@@ -3671,6 +3685,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     if (wantsStream) {
       const handled = await tryStreamSingleChunk(res, {
         chunk: chunks[0],
+        written: inworldLifted[0],
         inworldVoice,
         inworldModel,
         speakingRate,
@@ -3678,7 +3693,7 @@ app.post("/v1/audio/speech", async (req, res) => {
         voiceLabel: voice,
         delivery,
         fillers: inworldFillers ? { turn: 0, seed: talkSeed } : null,
-        sounds: inworldSounds ? { turn: 0 } : null,
+        sounds: inworldSounds ? { turn: 0, seedText: soundSeed(0) } : null,
       });
       if (handled) {
         rememberSpoken(ttsSessionKey, speakText, requestSequence);
@@ -3694,9 +3709,9 @@ app.post("/v1/audio/speech", async (req, res) => {
         isFishVoice
           ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: talkSeed, fillers: fillersAsked, sounds: soundsAsked })
           : (() => {
-              const { text: liftedText, instruction } = splitChunkForInworld(chunk);
+              const { text: liftedText, instruction } = inworldLifted[ci];
               const filled = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;
-              const sayText = inworldSounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: ci * 3 }) : filled;
+              const sayText = inworldSounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: ci * 3, seedText: soundSeed(ci) }) : filled;
               return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery);
             })()
       )

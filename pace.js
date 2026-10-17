@@ -224,7 +224,9 @@ function sentencesOf(masked) {
   return out;
 }
 
-function talkSounds(text, { engine = 'fish', turn = 0 } = {}) {
+// seedText: the words before the Inworld writer marked them up (inworld-writer.js), so its
+// capitals and direction never change which sound a piece gets, or where.
+function talkSounds(text, { engine = 'fish', turn = 0, seedText = null } = {}) {
   const src = String(text);
   if (/^\s*(?:[-*•]|\d+[.)])\s/m.test(src) || /["“”]/.test(src)) return src;
   const spell = soundSpelling(engine);
@@ -239,7 +241,7 @@ function talkSounds(text, { engine = 'fish', turn = 0 } = {}) {
     const near = after ? masked.slice(at).match(/^\s*(?:\uE000(\d+)\uE001\s*)+/) : masked.slice(0, at).match(/(?:\uE000(\d+)\uE001\s*)+$/);
     return Boolean(near && [...near[0].matchAll(/\uE000(\d+)\uE001/g)].some(m => SOUNDISH.test(tags[Number(m[1])])));
   };
-  const rng = seeded(src + '|sounds');
+  const rng = seeded((seedText == null ? src : String(seedText)) + '|sounds');
   const roll = rng();
   let place = null;
   const funny = sentences.find(s => FUNNY.test(s.text) && !NOT_FUNNY.test(s.text) && /[.!?]["'”’)]*$/.test(s.text));
@@ -258,10 +260,11 @@ function talkSounds(text, { engine = 'fish', turn = 0 } = {}) {
   return out.replace(/[\uE000\uE002](\d+)[\uE001\uE003]/g, (_, i) => tags[Number(i)]);
 }
 
-function talkSoundsByParagraph(text, { engine = 'fish', turn = 0 } = {}) {
+function talkSoundsByParagraph(text, { engine = 'fish', turn = 0, seedText = null } = {}) {
   let n = 0;
+  const seeds = seedText == null ? null : String(seedText).split(/(\n\s*\n)/);
   return String(text).split(/(\n\s*\n)/)
-    .map((part, i) => (i % 2 ? part : talkSounds(part, { engine, turn: turn + n++ }))).join('');
+    .map((part, i) => (i % 2 ? part : talkSounds(part, { engine, turn: turn + n++, seedText: seeds ? seeds[i] : null }))).join('');
 }
 
 // The listener's own switch (a request's fillers: true/false) wins over the server default.
