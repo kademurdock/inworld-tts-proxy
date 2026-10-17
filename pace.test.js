@@ -37,9 +37,9 @@ test('long silences inside a clip are shortened to the pace cap; speech is untou
   const src = clip([['gap', 200], ['tone', 500], ['gap', 900], ['tone', 400], ['gap', 150], ['tone', 300], ['gap', 300]]);
   const brisk = capFishPauses(src, 1.2, RATE);
   const quick = capFishPauses(src, 1.5, RATE);
-  // 900 ms gap -> 300 (Brisk) / 200 (Quick); 150 ms gap stays; edges stay.
-  assert.ok(Math.abs(ms(src) - ms(brisk) - 600) <= 10, `brisk removed ${ms(src) - ms(brisk)} ms`);
-  assert.ok(Math.abs(ms(src) - ms(quick) - 700) <= 10, `quick removed ${ms(src) - ms(quick)} ms`);
+  // 900 ms gap -> 600 (Brisk) / 400 (Quick) since Oct 17; 150 ms gap stays; edges stay.
+  assert.ok(Math.abs(ms(src) - ms(brisk) - 300) <= 10, `brisk removed ${ms(src) - ms(brisk)} ms`);
+  assert.ok(Math.abs(ms(src) - ms(quick) - 500) <= 10, `quick removed ${ms(src) - ms(quick)} ms`);
   // The loud samples survive byte for byte: count samples above the tone threshold.
   const loud = buf => new Int16Array(buf.buffer, buf.byteOffset, buf.length / 2).filter(v => Math.abs(v) > 1000).length;
   assert.equal(loud(brisk), loud(src));
@@ -95,7 +95,7 @@ test('FISH_NATURAL_PAUSE_CAP_MS caps Natural only; slower paces keep their gaps'
     assert.ok(Math.abs(ms(src) - ms(natural) - 450) <= 10, `natural removed ${ms(src) - ms(natural)} ms`);
     for (const rate of [0.9, 0.75]) assert.equal(capFishPauses(src, rate, RATE), src);
     const brisk = capFishPauses(src, 1.2, RATE);
-    assert.ok(Math.abs(ms(src) - ms(brisk) - 600) <= 10, 'Brisk keeps its own 300 ms cap');
+    assert.ok(Math.abs(ms(src) - ms(brisk) - 300) <= 10, 'Brisk keeps its own 600 ms cap');
   });
 });
 

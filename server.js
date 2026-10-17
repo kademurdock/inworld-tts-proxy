@@ -49,7 +49,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, FISH_PACES } = require('./pace');
+const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -3705,7 +3705,10 @@ app.post("/v1/audio/speech", async (req, res) => {
       bitsPerSample: parsed[0].bitsPerSample,
     };
 
-    const silence = chunks.length > 1 ? buildSilence(GAP_MS, format) : Buffer.alloc(0);
+    // Oct 17 2026 (Kade: Fish has "pauses, but not silences" after thoughts): a Fish chat
+    // paragraph ends on a real stop, sized to the listener's pace (pace.js fishThoughtGapMs).
+    const seamMs = (fishTalks && fishThoughtGapMs(speakingRate)) || GAP_MS;
+    const silence = chunks.length > 1 ? buildSilence(seamMs, format) : Buffer.alloc(0);
 
     // July 23 2026 (Kade: "some of them kinda pop and click"): each chunk is a
     // separate synth response and can start/end at a non-zero sample (fish's
@@ -3729,12 +3732,17 @@ app.post("/v1/audio/speech", async (req, res) => {
       if (i < parsed.length - 1) pieces.push(silence);
     });
     if (parsed.length > 1) {
-      console.log(`[TTS] seams: ${parsed.length - 1} @ ${GAP_MS}ms (trimmed ${trimmedMs}ms of provider dead air, trim=${TRIM_SEAMS ? "on" : "off"})`);
+      console.log(`[TTS] seams: ${parsed.length - 1} @ ${seamMs}ms (trimmed ${trimmedMs}ms of provider dead air, trim=${TRIM_SEAMS ? "on" : "off"})`);
     }
 
-    const combinedData = Buffer.concat(pieces);
+    const leveled = Buffer.concat(pieces);
     const labPreset = typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab] ? req.query.lab : undefined;
-    normalizeLoudness(combinedData, format.sampleRate, inworldVoice, labPreset ? { lab: labPreset } : {});
+    normalizeLoudness(leveled, format.sampleRate, inworldVoice, labPreset ? { lab: labPreset } : {});
+    // The apps play one clip per piece of a reply, back to back: the stop after this piece is
+    // the silence at its end. Added after leveling, so it never changes the measured level.
+    const combinedData = fishTalks && format.numChannels === 1 && format.bitsPerSample === 16
+      ? padFishTail(leveled, speakingRate, format.sampleRate)
+      : leveled;
     const header = buildWavHeader(combinedData.length, format);
     const finalAudio = Buffer.concat([header, combinedData]);
 

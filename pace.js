@@ -12,12 +12,21 @@ const { isDirectionTag } = require('./sounds');
  * faster, (2) skip the added sentence pauses, and (3) shorten any silence inside the clip
  * to a cap. The words themselves are never sped up: Brisk averaged about +11% (+19% on the
  * slowest voice) and Quick about +19% (+25%). */
+/* Oct 17 2026, Kade: on Fish "there aren't really pauses after thoughts or sentences ... there are
+ * pauses, but not silences, just inflectional ones." Measured on the live proxy (Kiana's voice and
+ * Molasses Dusk): inside one request Drama3 leaves 0.75-1.15 s between sentences, but a request
+ * ends with only 0.07-0.35 s of tail and starts with 0.03-0.2 s of head. The iPhone plays one clip
+ * per 160-320-character piece and the proxy joined paragraphs with its 340 ms Inworld seam, so the
+ * places where a thought ended got the SHORTEST stop. Brisk and Quick also cut every silence to
+ * 0.3 / 0.2 s, which measured as their whole speed gain (the words themselves were not faster).
+ * thoughtGapMs: the silence after a chat clip and at a paragraph seam, per pace. pauseCapMs now
+ * keeps a real, shorter stop at Brisk and Quick instead of an inflection. */
 const FISH_PACES = [
-  { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.' },
-  { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.' },
-  { value: 1, name: 'Natural', direction: '' },
-  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 300 },
-  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 200 },
+  { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.', thoughtGapMs: 1100 },
+  { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.', thoughtGapMs: 1000 },
+  { value: 1, name: 'Natural', direction: '', thoughtGapMs: 900 },
+  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 600, thoughtGapMs: 700 },
+  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 400, thoughtGapMs: 500 },
 ];
 
 function fishPace(rate) {
@@ -342,4 +351,37 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
   return Buffer.from(out.buffer);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses };
+// The silence after a Fish chat clip and between its paragraphs. FISH_THOUGHT_GAPS=0 turns it
+// off (the 340 ms seam and the bare clip tail come back).
+function fishThoughtGapMs(rate) {
+  if (process.env.FISH_THOUGHT_GAPS === '0') return 0;
+  return fishPace(rate).thoughtGapMs || 0;
+}
+
+/* Let a Fish chat clip (16-bit mono PCM) end on a real stop: append silence until the quiet at its
+ * end reaches the pace's thought gap, less the head the next clip brings (~80 ms). Speech and any
+ * silence already there are untouched; a clip that already ends long enough is returned as is. */
+function padFishTail(pcm, rate, sampleRate = 24000) {
+  const target = fishThoughtGapMs(rate) - 80;
+  if (target <= 0 || !pcm || pcm.length < 4) return pcm;
+  const s = new Int16Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + (pcm.length & ~1)));
+  const win = Math.max(1, Math.round(sampleRate * 0.01));
+  const windows = Math.floor(s.length / win);
+  if (windows < 3) return pcm;
+  const rms = new Array(windows);
+  for (let w = 0; w < windows; w++) {
+    let acc = 0;
+    for (let i = w * win; i < (w + 1) * win; i++) acc += s[i] * s[i];
+    rms[w] = Math.sqrt(acc / win);
+  }
+  const loud = [...rms].sort((a, b) => a - b)[Math.floor(windows * 0.95)] || 0;
+  if (loud < 200) return pcm; // no speech in it: nothing to end
+  let quietEnd = 0;
+  for (let w = windows - 1; w >= 0 && rms[w] < loud * 0.04; w--) quietEnd++;
+  const haveMs = quietEnd * 10 + ((s.length - windows * win) / sampleRate) * 1000;
+  const addSamples = Math.round(((target - haveMs) / 1000) * sampleRate);
+  if (addSamples <= 0) return pcm;
+  return Buffer.concat([pcm.subarray(0, s.length * 2), Buffer.alloc(addSamples * 2)]);
+}
+
+module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail };
