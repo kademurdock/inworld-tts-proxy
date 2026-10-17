@@ -31,6 +31,8 @@ app.use(require("./railway"));
 
 // Forge's GitHub commit/read routes. See github.js.
 app.use(require("./github"));
+// Oct 16 2026: approvals for Forge's shipping actions (merges, live-branch commits, deploys, settings).
+app.use(require("./approvals").router);
 
 // LibreChat platform-management routes for Forge (agents API, usage)
 app.use(require("./librechat"));

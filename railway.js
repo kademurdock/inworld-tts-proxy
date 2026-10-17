@@ -27,6 +27,7 @@ const router = express.Router();
 const RW_TOKEN = process.env.RAILWAY_API_TOKEN;
 const SECRET = process.env.RAILWAY_PROXY_SECRET;
 const { railwayQuery } = require("./railway-client");
+const { requestApproval, registerExecutor, approvalsOn } = require("./approvals");
 
 function auth(req, res, next) {
   const h = req.get("authorization") || "";
@@ -131,9 +132,16 @@ router.post("/railway/deploy", auth, async (req, res) => {
     });
   }
   try {
-    const m = `mutation($e:String!,$s:String!,$c:String!){ serviceInstanceDeployV2(environmentId:$e, serviceId:$s, commitSha:$c) }`;
-    const d = await gql(m, { e: environmentId, s: serviceId, c: commitSha });
-    res.json({ deployed: d.serviceInstanceDeployV2 === true, commitSha });
+    /* Oct 16 2026: deploying a commit waits for Kade's yes (approvals.js). */
+    if (approvalsOn()) {
+      return res.json(await requestApproval({
+        kind: "railway-deploy",
+        params: { serviceId, environmentId, commitSha },
+        summary: `Deploy commit ${String(commitSha).slice(0, 12)} to the Railway service ${serviceId.slice(0, 8)}.`,
+        revert: "Deploy the previous commit again.",
+      }));
+    }
+    res.json(await deployCommit({ serviceId, environmentId, commitSha }));
   } catch (e) { res.status(502).json({ error: e.message }); }
 });
 
@@ -149,10 +157,31 @@ router.post("/railway/vars", auth, async (req, res) => {
     return res.status(400).json({ error: "projectId, environmentId, serviceId, name, and value are all required" });
   }
   try {
-    const m = `mutation($input: VariableUpsertInput!){ variableUpsert(input:$input) }`;
-    const d = await gql(m, { input: { projectId, environmentId, serviceId, name, value: String(value) } });
-    res.json({ set: d.variableUpsert === true, name });
+    /* Oct 16 2026: a setting change waits for Kade's yes; the value is never shown in the request. */
+    if (approvalsOn()) {
+      return res.json(await requestApproval({
+        kind: "railway-vars",
+        params: { projectId, environmentId, serviceId, name, value: String(value) },
+        summary: `Set the setting ${name} on the Railway service ${serviceId.slice(0, 8)} (value hidden, ${String(value).length} characters). Most services pick it up on their next restart.`,
+        revert: `Set ${name} back to its old value (Railway keeps the history of variables).`,
+      }));
+    }
+    res.json(await setVariable({ projectId, environmentId, serviceId, name, value }));
   } catch (e) { res.status(502).json({ error: e.message }); }
 });
+
+async function deployCommit({ serviceId, environmentId, commitSha }) {
+  const m = `mutation($e:String!,$s:String!,$c:String!){ serviceInstanceDeployV2(environmentId:$e, serviceId:$s, commitSha:$c) }`;
+  const d = await gql(m, { e: environmentId, s: serviceId, c: commitSha });
+  return { deployed: d.serviceInstanceDeployV2 === true, commitSha };
+}
+registerExecutor("railway-deploy", (p) => deployCommit(p));
+
+async function setVariable({ projectId, environmentId, serviceId, name, value }) {
+  const m = `mutation($input: VariableUpsertInput!){ variableUpsert(input:$input) }`;
+  const d = await gql(m, { input: { projectId, environmentId, serviceId, name, value: String(value) } });
+  return { set: d.variableUpsert === true, name };
+}
+registerExecutor("railway-vars", (p) => setVariable(p));
 
 module.exports = router;

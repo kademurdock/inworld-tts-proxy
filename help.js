@@ -1706,6 +1706,20 @@ PAGES.memory = {
 <p>Your companions used to carry every single card into every single message, whether it mattered or not. Now they hold onto the essentials constantly &mdash; who you are, your people, how you like to be spoken to, anything you asked to be reminded of &mdash; and the rest of what they know <em>comes to mind when it's relevant</em>, the way a friend's memory actually works. Mention repainting a room and the color you love surfaces; talk about dinner and it stays out of the way. Nothing was deleted; it's all still theirs to remember &mdash; it just stops crowding the conversation. Every companion works this way.</p>
 <p>And the memory does a little connecting of its own now: if separate notes clearly belong together &mdash; a nephew here, his mom named over there &mdash; the notes get introduced to each other. Every one of those tidy-ups is kept on a trail, nothing is ever silently lost, and you can always ask any companion <em>"what changed in your memory lately?"</em> and hear it read back plainly.</p>
 
+<h2>A life between your chats (new, October 2026)</h2>
+<p>Characters now carry a few more things from one talk to the next, the way a friend does:</p>
+<ul>
+  <li><strong>The time.</strong> They know what time of day it is where you are, and how long it has been since you two last talked, down to the minute.</li>
+  <li><strong>A mood.</strong> If your last talk left them glad, or worried for you, they come into the next one still feeling a little of it, and it fades over a day or two. It comes from the way they sounded last time, not from anything new about you.</li>
+  <li><strong>Your moments together.</strong> A joke that landed, a nickname, a first, a big day. They keep a few of your real words and may bring one back when it fits. They will not repeat the same one over and over. In the iPhone app (next update), each character's <strong>About</strong> page lists these moments with a Forget button on each.</li>
+  <li><strong>A day of their own.</strong> Each night the main characters read the real news and weather where they live and write a few true lines about their day and what they are following. Ask "what have you been up to?" and you hear the same true answer anyone else would. Nothing in it comes from anybody's private conversations, and nothing is made up.</li>
+  <li><strong>They can text you first.</strong> When a character has something real to say, it can write into your conversation and your phone tells you. Tapping the notification opens that conversation in the newest iPhone app.</li>
+</ul>
+<p>All of this follows your memory settings. Turning remembering off, or saying "off the record", covers it too. Private chats leave none of it behind.</p>
+
+<h2>Asking a character to go work on something</h2>
+<p>Adults can hand a character a bigger job and keep going: "look into the cheapest chest freezer around Springfield and get back to me." The character tells you about what it will cost first, and the most it could cost, and starts only after you say yes. It works on the job in the background with its own tools, and the answer comes back as a message from that character in the same conversation, with a notification. One job at a time. You can ask how it is going or tell it to stop. It is billed to your balance like any chat. Deep research does the same now: when the report is ready, the character tells you what it found in your conversation.</p>
+
 <h2>Two kinds of cards: shared, and just-between-you-two</h2>
 <ul>
   <li><strong>Shared cards</strong> are the basics every character should know — your name, your people, how you like to be talked to. Tell one character, they all catch up.</li>
