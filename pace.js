@@ -70,8 +70,58 @@ function fishTalkSeed(text) {
   return Math.floor(seeded(String(text))() * 1e6);
 }
 
+/* Oct 17 2026, Kade: the um and uh "don't sound natural ... like, um, pause, whatever they were
+ * saying ... It sounds like it's scripted." The filler sat at the START of a sentence with a comma
+ * ("Um, the store closed early"), so the voice said um, paused, then read on. People slip it in
+ * mid-thought ("I was, uh, gonna say") or just trail off. TALK_FILLER_STYLE picks how, for Fish
+ * and Inworld alike; the listener's switch still means "allowed", and the little sounds are not
+ * touched by it:
+ *   none   no filler words at all (sounds only)
+ *   lead   the Oct 16 version: "Um," opening a later sentence
+ *   mid    "uh" inside a sentence, after "and/but/so/because" or after "I was / it's / that's ..."
+ *   pause  the same mid-phrase spot, a trail-off ("...") and no word
+ * Unset = lead, exactly as before this change. */
+function fillerStyle() {
+  const s = String(process.env.TALK_FILLER_STYLE || 'lead').trim().toLowerCase();
+  return ['none', 'lead', 'mid', 'pause'].includes(s) ? s : 'lead';
+}
+
+// A spot inside a sentence where people hesitate: right after a joining word (and, but, so,
+// because) or right after an opening subject and its verb (I was, it's, that's, we were...).
+const JOIN_SPOT = /(?<=\S[ \t]+)(?:and|but|so|because|then)(?=[ \t]+[a-zA-Z])/g;
+const SUBJECT_SPOT = /^(?:I(?:['’]m|['’]ve|['’]d| was| think| guess| just| really| kind of)?|it(?:['’]s| was)|that(?:['’]s| was)|there(?:['’]s| was)|we(?:['’]re| were)?|you(?:['’]re| were)?|they(?:['’]re| were)?|he(?:['’]s| was)|she(?:['’]s| was))(?=[ \t]+[a-zA-Z])/i;
+
+function midFiller(src, { turn = 0, seed, style }) {
+  if (/^\s*(?:[-*•]|\d+[.)])\s/m.test(src) || /["“”]/.test(src)) return src;
+  const tags = [];
+  const masked = src.replace(/\[[^\]]*\]|<[^>]*>/g, tag =>
+    (tag[0] === '[' ? '' : '') + (tags.push(tag) - 1) + (tag[0] === '[' ? '' : ''));
+  const rng = seeded(src + '|mid');
+  const words = masked.replace(/[]\d+[]/g, ' ').split(/\s+/).filter(Boolean).length;
+  if (words < 12 && rng() < 0.5) return src;
+  const spots = [];
+  for (const s of sentencesOf(masked)) {
+    if (s.words < 6 || /[]/.test(s.text.slice(0, 12))) continue;
+    const subject = s.text.match(SUBJECT_SPOT);
+    if (subject) spots.push(s.start + subject[0].length);
+    for (const m of s.text.matchAll(JOIN_SPOT)) {
+      const before = s.text.slice(0, m.index).split(/\s+/).filter(Boolean).length;
+      if (before >= 3 && s.words - before >= 3) spots.push(s.start + m.index + m[0].length);
+    }
+  }
+  if (!spots.length) return src;
+  const at = spots[Math.floor(rng() * spots.length)];
+  const base = Number.isInteger(seed) ? seed : Math.floor(rng() * 1e6);
+  const word = ['uh', 'um'][(base + turn) % 2];
+  const insert = style === 'pause' ? '...' : `, ${word},`;
+  return (masked.slice(0, at) + insert + masked.slice(at)).replace(/[](\d+)[]/g, (_, i) => tags[Number(i)]);
+}
+
 // turn: the paragraph's place in its reply; seed: fishTalkSeed of the whole reply.
 function fishTalkFillers(text, { turn = 0, seed } = {}) {
+  const style = fillerStyle();
+  if (style === 'none') return String(text);
+  if (style === 'mid' || style === 'pause') return midFiller(String(text), { turn, seed, style });
   const src = String(text);
   // Lists, and anything in quotation marks (a character reading a passage or quoting
   // someone), are read, not chatted: Kade, "we definitely wouldn't want them while reading".
@@ -290,4 +340,4 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
   return Buffer.from(out.buffer);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses };
+module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses };
