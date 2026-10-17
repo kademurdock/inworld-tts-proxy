@@ -20,7 +20,7 @@ const ms = (buf) => (buf.length / 2 / RATE) * 1000;
 test('every pace has a thought gap, slower paces longer, and the switch turns it off', () => {
   const gaps = FISH_PACES.map((p) => fishThoughtGapMs(p.value));
   assert.deepEqual(gaps, [...gaps].sort((a, b) => b - a));
-  assert.ok(gaps.every((g) => g >= 500));
+  assert.ok(gaps.every((g) => g >= 300 && g <= 500), 'Kade: "between .3 and .5 seconds at most"');
   assert.equal(fishThoughtGapMs(undefined), fishThoughtGapMs(1));
   process.env.FISH_THOUGHT_GAPS = '0';
   try {

@@ -37,18 +37,20 @@ test('long silences inside a clip are shortened to the pace cap; speech is untou
   const src = clip([['gap', 200], ['tone', 500], ['gap', 900], ['tone', 400], ['gap', 150], ['tone', 300], ['gap', 300]]);
   const brisk = capFishPauses(src, 1.2, RATE);
   const quick = capFishPauses(src, 1.5, RATE);
-  // 900 ms gap -> 600 (Brisk) / 400 (Quick) since Oct 17; 150 ms gap stays; edges stay.
-  assert.ok(Math.abs(ms(src) - ms(brisk) - 300) <= 10, `brisk removed ${ms(src) - ms(brisk)} ms`);
-  assert.ok(Math.abs(ms(src) - ms(quick) - 500) <= 10, `quick removed ${ms(src) - ms(quick)} ms`);
+  // 900 ms gap -> 450 (Brisk) / 350 (Quick) since Oct 17; 150 ms gap stays; edges stay.
+  assert.ok(Math.abs(ms(src) - ms(brisk) - 450) <= 10, `brisk removed ${ms(src) - ms(brisk)} ms`);
+  assert.ok(Math.abs(ms(src) - ms(quick) - 550) <= 10, `quick removed ${ms(src) - ms(quick)} ms`);
   // The loud samples survive byte for byte: count samples above the tone threshold.
   const loud = buf => new Int16Array(buf.buffer, buf.byteOffset, buf.length / 2).filter(v => Math.abs(v) > 1000).length;
   assert.equal(loud(brisk), loud(src));
   assert.equal(loud(quick), loud(src));
 });
 
-test('Natural and slower paces, and silent or tiny clips, are returned as they are', () => {
+test('Natural and slower paces cap silences at half a second (Kade, Oct 17: ".3 and .5 seconds at most"); silent or tiny clips are returned as they are', () => {
   const src = clip([['tone', 300], ['gap', 900], ['tone', 300]]);
-  for (const rate of [1, 0.9, 0.75, undefined]) assert.equal(capFishPauses(src, rate, RATE), src);
+  for (const rate of [1, 0.9, 0.75, undefined]) assert.ok(Math.abs(ms(src) - ms(capFishPauses(src, rate, RATE)) - 400) <= 10, `rate ${rate}`);
+  const short = clip([['tone', 300], ['gap', 450], ['tone', 300]]);
+  for (const rate of [1, 0.9, 0.75]) assert.equal(capFishPauses(short, rate, RATE), short);
   const silent = clip([['gap', 500]]);
   assert.equal(capFishPauses(silent, 1.5, RATE).length, silent.length);
   assert.equal(capFishPauses(Buffer.alloc(2), 1.5, RATE).length, 2);
@@ -88,15 +90,16 @@ test('FISH_SENTENCE_PAUSES=0 drops the added pause at every pace', () => {
   withEnv({ FISH_SENTENCE_PAUSES: undefined }, () => assert.equal(fishSentencePauses(1), true));
 });
 
-test('FISH_NATURAL_PAUSE_CAP_MS caps Natural only; slower paces keep their gaps', () => {
+test('FISH_NATURAL_PAUSE_CAP_MS overrides Natural only; other paces keep their own caps', () => {
   const src = clip([['tone', 300], ['gap', 900], ['tone', 300]]);
-  withEnv({ FISH_NATURAL_PAUSE_CAP_MS: '450' }, () => {
+  withEnv({ FISH_NATURAL_PAUSE_CAP_MS: '300' }, () => {
     const natural = capFishPauses(src, 1, RATE);
-    assert.ok(Math.abs(ms(src) - ms(natural) - 450) <= 10, `natural removed ${ms(src) - ms(natural)} ms`);
-    for (const rate of [0.9, 0.75]) assert.equal(capFishPauses(src, rate, RATE), src);
+    assert.ok(Math.abs(ms(src) - ms(natural) - 600) <= 10, `natural removed ${ms(src) - ms(natural)} ms`);
+    for (const rate of [0.9, 0.75]) assert.ok(Math.abs(ms(src) - ms(capFishPauses(src, rate, RATE)) - 400) <= 10);
     const brisk = capFishPauses(src, 1.2, RATE);
-    assert.ok(Math.abs(ms(src) - ms(brisk) - 300) <= 10, 'Brisk keeps its own 600 ms cap');
+    assert.ok(Math.abs(ms(src) - ms(brisk) - 450) <= 10, 'Brisk keeps its own 450 ms cap');
   });
+  withEnv({ FISH_NATURAL_PAUSE_CAP_MS: '0' }, () => assert.equal(capFishPauses(src, 1, RATE), src));
 });
 
 // Oct 16 2026: spoken-only filler words (FISH_TALK_FILLERS=1), chat speech only.

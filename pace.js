@@ -21,12 +21,15 @@ const { isDirectionTag } = require('./sounds');
  * 0.3 / 0.2 s, which measured as their whole speed gain (the words themselves were not faster).
  * thoughtGapMs: the silence after a chat clip and at a paragraph seam, per pace. pauseCapMs now
  * keeps a real, shorter stop at Brisk and Quick instead of an inflection. */
+// Kade, the same night after hearing it: "the pauses should be just a tiiiiny bit shorter, like
+// between .3 and .5 seconds at most." Every pace now caps a silence inside a clip at 0.5 s or less
+// and ends a clip on 0.35-0.5 s.
 const FISH_PACES = [
-  { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.', thoughtGapMs: 1100 },
-  { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.', thoughtGapMs: 1000 },
-  { value: 1, name: 'Natural', direction: '', thoughtGapMs: 900 },
-  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 600, thoughtGapMs: 700 },
-  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 400, thoughtGapMs: 500 },
+  { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.', pauseCapMs: 500, thoughtGapMs: 500 },
+  { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.', pauseCapMs: 500, thoughtGapMs: 500 },
+  { value: 1, name: 'Natural', direction: '', pauseCapMs: 500, thoughtGapMs: 450 },
+  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 450, thoughtGapMs: 400 },
+  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 350, thoughtGapMs: 350 },
 ];
 
 function fishPace(rate) {
@@ -306,9 +309,10 @@ function fishSentencePauses(rate) {
  * the middle is dropped, and 5 ms fades meet at the join. Leading and trailing silence
  * stay as they are. Returns the same buffer when there is nothing to do. */
 function capFishPauses(pcm, rate, sampleRate = 24000) {
-  // FISH_NATURAL_PAUSE_CAP_MS (empty = off) gives Natural a cap too; slower paces keep their gaps.
+  // FISH_NATURAL_PAUSE_CAP_MS overrides Natural's cap ('0' = no cap at Natural).
   const pace = fishPace(rate);
-  const cap = pace.pauseCapMs || (pace.value === 1 ? Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 : 0);
+  const natural = process.env.FISH_NATURAL_PAUSE_CAP_MS;
+  const cap = pace.value === 1 && natural !== undefined && natural !== '' ? Number(natural) || 0 : pace.pauseCapMs || 0;
   if (!cap || !pcm || pcm.length < 4) return pcm;
   const s = new Int16Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + (pcm.length & ~1)));
   const win = Math.max(1, Math.round(sampleRate * 0.01));

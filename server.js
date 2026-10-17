@@ -50,6 +50,8 @@ const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, create
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
+const { createDirector, directorOn } = require('./director');
+const fishDirector = createDirector();
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1670,6 +1672,7 @@ app.get("/health", async (req, res) => {
     fishTemperature: { default: FISH_TEMPERATURE, max: FISH_TEMPERATURE_MAX },
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
+    fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "gemini-3.5-flash", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
@@ -3615,8 +3618,26 @@ app.post("/v1/audio/speech", async (req, res) => {
     // Preserve the active cue at request boundaries. Provider adapters remove
     // redundant repeats and keep real authored changes; Fish sentence reseeding
     // is disabled by default. See VOICE_PROVIDER_GUIDE.md for current behavior.
+    // Oct 16 2026: only conversation gets the casual Fish brief and spoken filler words. Voice
+    // previews are scripts, lab presets are experiments, and the Library, family history and
+    // described video all ask for STABLE because they read text aloud (a Library reader may
+    // pick another delivery, so its reading: session is checked as well). Kade: "we definitely
+    // wouldn't want them while reading."
+    // Kade, Oct 16: auditions should sound like the voice messages they preview, so a
+    // conversation audition counts as talk; a book scene does not.
+    const talks = (!isVoicePreview || auditionKind === "conversation") && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
+      !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
+    const fishTalks = isFishVoice && talks;
+    // Oct 17 2026 (Kade: "Build the voice director in for Fish voice messages"): Fish chat
+    // pieces are marked up the way Fish's own Drama3 examples are (director.js), before the
+    // sentence pauses are added, so a director [pause] stands in for the [short pause] there.
+    let fishPieces = isFishVoice
+      ? carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs)
+      : null;
+    // Picker previews stay plain: they play as she lands on each row, and a second there is felt.
+    if (fishTalks && !isVoicePreview && directorOn()) fishPieces = await fishDirector.directPieces(fishPieces, { previous: previousTexts });
     const chunks = (isFishVoice
-      ? carryDrama3Scopes(carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs).map(c => fishSentencePauses(speakingRate) ? shapeFishPauses(c) : c))
+      ? carryDrama3Scopes(fishPieces.map(c => fishSentencePauses(speakingRate) ? shapeFishPauses(c) : c))
       : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)
     ).filter(chunkHasSpeakableWords);
     if (!chunks.length) {
@@ -3633,18 +3654,8 @@ app.post("/v1/audio/speech", async (req, res) => {
      * and the app lane's one-sentence-per-call requests are single-chunk in
      * practice. A false return means NOTHING was flushed and the buffered
      * path below runs exactly as it always has. */
-    // Oct 16 2026: only conversation gets the casual Fish brief and spoken filler words. Voice
-    // previews are scripts, lab presets are experiments, and the Library, family history and
-    // described video all ask for STABLE because they read text aloud (a Library reader may
-    // pick another delivery, so its reading: session is checked as well). Kade: "we definitely
-    // wouldn't want them while reading."
-    // Kade, Oct 16: auditions should sound like the voice messages they preview, so a
-    // conversation audition counts as talk; a book scene does not.
-    const talks = (!isVoicePreview || auditionKind === "conversation") && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
-      !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
     const fillersAsked = parseFillersSwitch(req.body.fillers ?? req.get("x-kade-tts-fillers"));
     const talkSeed = talks ? fishTalkSeed(speakText) : 0;
-    const fishTalks = isFishVoice && talks;
     const inworldFillers = !isFishVoice && talks && (fillersAsked ?? process.env.INWORLD_TALK_FILLERS === "1");
     // Little human sounds ride the listener's filler switch; sounds true/false overrides it.
     const soundsAsked = parseFillersSwitch(req.body.sounds ?? req.get("x-kade-tts-sounds"));
