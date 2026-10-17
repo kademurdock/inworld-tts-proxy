@@ -6,7 +6,7 @@ let selectedVoicePicker = null;
 let selectedVoiceReport = null;
 let selectedClassicMoves = null; // classic-voice-moves.js: legacy and Classic moves re-applied into the served picker
 const selectedAuditionVoices = new Map();
-const { pickScene, KIND_BY_SCRIPT } = require("./audition-scenes");
+const { pickScene, KIND_BY_SCRIPT, audienceForSection } = require("./audition-scenes");
 const app = express();
 // July 18 2026: raised from the 100kb default so /github/commit can carry
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
@@ -5290,10 +5290,27 @@ const AUDITION_POOL = require("./audition-pool");
 const AUDITION_SCRIPTS = [...AUDITION_POOL.LONG];
 const AUDITION_QUICK_LINES = AUDITION_POOL.QUICK;
 function pickAudition(pool, voice) {
+  const quick = pool === AUDITION_QUICK_LINES;
   const selected = selectedAuditionVoices.get(voice);
-  if (selected) return pickScene(selected, pool === AUDITION_QUICK_LINES);
+  if (selected) return pickScene(selected, quick);
+  // Oct 17 2026 (Kade: "I want all the auditions from inworld to mix with fish, and fish with
+  // inworld"): an Inworld voice draws from the same mixed scene + general pool as a Fish voice,
+  // by the audience of the picker section it sits in now (kids stay on kids' scenes).
+  if (selectedVoicePicker) return pickScene.forAudience(inworldAudience(voice), quick);
   if (!Array.isArray(pool) || pool.length === 0) return AUDITION_TEXT;
-  return AUDITION_POOL.pickAudition(pool, pool === AUDITION_QUICK_LINES ? "quick" : "long");
+  return AUDITION_POOL.pickAudition(pool, quick ? "quick" : "long");
+}
+// The audience of the section an Inworld voice is shown in; a saved number or old spelling
+// follows `renames` to its shown label. Unknown voices get the grown-up pool, as before.
+function inworldAudience(voice) {
+  const sections = Array.isArray(selectedVoicePicker && selectedVoicePicker.categories) ? selectedVoicePicker.categories : [];
+  const renames = (selectedVoicePicker && selectedVoicePicker.renames) || {};
+  for (const label of [voice, renames[voice], renames[voice] && `${renames[voice]} (Classic)`, `${voice} (Classic)`]) {
+    if (!label) continue;
+    const section = sections.find(s => Array.isArray(s.voices) && s.voices.includes(label));
+    if (section) return audienceForSection(section.name) || "adults";
+  }
+  return "adults";
 }
 const VOICE_PAGE_HTML = `<!DOCTYPE html>
 <html lang="en">

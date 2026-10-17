@@ -80,14 +80,41 @@ for (const audience of ['kids', 'characters', 'adults']) {
   }
 }
 
+/* Oct 17 2026, Kade: "I want all the auditions from inworld to mix with fish, and fish with
+ * inworld. Not the voices, but the audition samples ... they should be combined for better
+ * variability across both providers." One scene library and one general pool now serve every
+ * voice. A feeling Inworld's tag rules ban (a pace, volume or vocal-style word re-times an
+ * Inworld read; audition-pool.test.js carries the list) becomes a plain feeling of the same size
+ * for both providers. */
+const FEELING_SWAPS = {
+  'quietly excited': 'excited but calm', 'quietly pleased': 'pleased', 'quietly proud': 'proud',
+  'quietly moved': 'moved', 'softly pleased': 'pleased', quiet: 'calm', soft: 'gentle',
+  sleepy: 'tired', hurried: 'flustered', unhurried: 'relaxed', dreamy: 'wistful',
+  deliberate: 'focused', urgent: 'anxious',
+};
+for (const scene of SCENES) scene[2] = FEELING_SWAPS[scene[2]] || scene[2];
+
 const POOLS = Object.fromEntries(['kids','characters','adults'].map(audience => [audience, {
   long: SCENES.filter(s => s[0] === audience).map(s => `%%%${s[2]}%%% ${s[3]}`),
   quick: SCENES.filter(s => s[0] === audience).map(s => `%%%${s[2]}%%% ${s[4]}`),
 }]));
 
+// The general pool (audition-pool.js, everyday talk anybody would say, written for grown-up
+// voices) joins the adult and character scenes. Kids keep kids' scenes only: the general lines
+// are about jobs, errands and grown-up days.
+const GENERAL = require('./audition-pool');
+const MIXED = {
+  kids: POOLS.kids,
+  characters: { long: [...POOLS.characters.long, ...GENERAL.LONG], quick: [...POOLS.characters.quick, ...GENERAL.QUICK] },
+  adults: { long: [...POOLS.adults.long, ...GENERAL.LONG], quick: [...POOLS.adults.quick, ...GENERAL.QUICK] },
+};
+
 // Oct 16 2026, Kade: auditions should sound like a character's voice message, "when reading
 // books, they shouldn't". Every script string knows whether it is a conversation or a book scene.
-const KIND_BY_SCRIPT = new Map(SCENES.flatMap(s => [[`%%%${s[2]}%%% ${s[3]}`, s[1]], [`%%%${s[2]}%%% ${s[4]}`, s[1]]]));
+const KIND_BY_SCRIPT = new Map([
+  ...SCENES.flatMap(s => [[`%%%${s[2]}%%% ${s[3]}`, s[1]], [`%%%${s[2]}%%% ${s[4]}`, s[1]]]),
+  ...[...GENERAL.LONG, ...GENERAL.QUICK].map(script => [script, 'conversation']),
+]);
 
 function audienceFor(categories) {
   const groups = (Array.isArray(categories) ? categories : []).map(c => String(c).split(',')[0].trim());
@@ -97,14 +124,23 @@ function audienceFor(categories) {
   return 'kids'; // Unknown metadata gets family-safe scenes, never the adult pool.
 }
 
-function createScenePicker() {
-  // Six process-local bags, shared across voices. Browsing a different voice
+// A picker section ("Classic · Kids and teens", "Women, smooth and warm, grown") to an audience,
+// for voices without catalog rows (the Inworld Classic voices). Null when it names none.
+function audienceForSection(name) {
+  const group = String(name || '').replace(/^Classic · /, '').split(',')[0].trim();
+  if (group === 'Kids and teens') return 'kids';
+  if (group === 'Characters' || group === 'Characters and cartoons') return 'characters';
+  if (group === 'Women' || group === 'Men') return 'adults';
+  return null;
+}
+
+function createScenePicker(pools = MIXED) {
+  // Six process-local bags, shared across voices and providers. Browsing a different voice
   // cannot reset the category's rotation; a service restart starts fresh bags.
   const rotations = new Map();
-  return function pickScene(row, quick = false, random = Math.random) {
-    const audience = audienceFor(row?.categories);
+  function pickFor(audience, quick = false, random = Math.random) {
     const length = quick ? 'quick' : 'long';
-    const pool = POOLS[audience][length];
+    const pool = pools[audience][length];
     const key = `${audience}:${length}`;
     const state = rotations.get(key) || { remaining: [], previous: undefined };
     if (!state.remaining.length) {
@@ -122,8 +158,11 @@ function createScenePicker() {
     state.previous = index;
     rotations.set(key, state);
     return pool[index];
-  };
+  }
+  const pickScene = (row, quick = false, random = Math.random) => pickFor(audienceFor(row?.categories), quick, random);
+  pickScene.forAudience = pickFor;
+  return pickScene;
 }
 
 const pickScene = createScenePicker();
-module.exports = { SCENES, POOLS, KIND_BY_SCRIPT, audienceFor, pickScene, createScenePicker };
+module.exports = { SCENES, POOLS, MIXED, FEELING_SWAPS, KIND_BY_SCRIPT, audienceFor, audienceForSection, pickScene, createScenePicker };

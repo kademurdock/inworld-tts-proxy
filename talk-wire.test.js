@@ -101,7 +101,7 @@ test('chat speech gets the brief and fillers; reading never does; the switch win
 // "when reading books, they shouldn't". Book scenes stay word for word; conversation scenes may
 // gain a filler or a little sound.
 test('conversation auditions get the voice-message treatment; book auditions stay plain', async () => {
-  const { POOLS, KIND_BY_SCRIPT } = require('./audition-scenes');
+  const { MIXED, KIND_BY_SCRIPT } = require('./audition-scenes');
   const AUD_PORT = '31882';
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tts-talk-aud-'));
   const receipt = path.join(dir, 'requests.jsonl');
@@ -117,7 +117,11 @@ test('conversation auditions get the voice-message treatment; book auditions sta
   child.stderr.on('data', v => { log += v; });
   const plain = s => s.replace(/%%%[^%]+%%%|\[[^\]]*\]|<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   const book = new Set(), talk = new Set();
-  for (const script of [...POOLS.adults.long, ...POOLS.adults.quick]) (KIND_BY_SCRIPT.get(script) === 'book' ? book : talk).add(plain(script));
+  // Oct 17 2026: the mixed pool (Fish scenes + the general lines); a general script may be several
+  // paragraphs, and each paragraph is its own Fish request.
+  for (const script of [...MIXED.adults.long, ...MIXED.adults.quick]) {
+    for (const paragraph of script.split(/\n\n+/)) (KIND_BY_SCRIPT.get(script) === 'book' ? book : talk).add(plain(paragraph));
+  }
   const ADDED = /\[(?:inhale|small laugh|sigh|clear throat|quietly clears throat)\]/;
   const FILLER = /\b(?:So, um,|So,|Um,|Uh,|I mean,|Well,|You know,) /;
   try {

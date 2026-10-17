@@ -2,7 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { SCENES, POOLS, audienceFor, pickScene, createScenePicker } = require('./audition-scenes');
+const { SCENES, POOLS, MIXED, FEELING_SWAPS, audienceFor, audienceForSection, pickScene, createScenePicker } = require('./audition-scenes');
+const GENERAL = require('./audition-pool');
 
 test('all published voices route by their actual catalog group, including binding aliases', () => {
   const rows = require('./selected-voices.json').voices;
@@ -17,7 +18,7 @@ test('all published voices route by their actual catalog group, including bindin
     const expected = row.categories.some(c => c.startsWith('Kids and teens,')) ? 'kids'
       : row.categories.some(c => c.startsWith('Characters,')) ? 'characters' : 'adults';
     assert.equal(audienceFor(row.categories), expected);
-    for (const quick of [false,true]) assert.ok(POOLS[expected][quick?'quick':'long'].includes(pickScene(row,quick)));
+    for (const quick of [false,true]) assert.ok(MIXED[expected][quick?'quick':'long'].includes(pickScene(row,quick)));
   }
   assert.equal(audienceFor(['Characters, Clear & Neutral','Kids and teens, Bright & Lively']),'kids');
   assert.equal(audienceFor(undefined),'kids');
@@ -60,16 +61,17 @@ test('browsing different voices exhausts a whole category before any repeat', ()
       const categories = [audience === 'kids' ? 'Kids and teens' : audience === 'characters' ? 'Characters' : 'Men'];
       for (const quick of [false, true]) {
         let previous;
+        const size = MIXED[audience][quick ? 'quick' : 'long'].length;
         for (let cycle = 0; cycle < 3; cycle++) {
           const seen = new Set();
-          for (let i = 0; i < 1000; i++) {
+          for (let i = 0; i < size; i++) {
             const current = pick({ id: `voice-${i}`, categories }, quick, random);
             assert.notEqual(current, previous, 'including the cycle boundary');
             assert.ok(!seen.has(current), 'no repeats inside a category cycle');
             seen.add(current);
             previous = current;
           }
-          assert.deepEqual(seen, new Set(POOLS[audience][quick ? 'quick' : 'long']));
+          assert.deepEqual(seen, new Set(MIXED[audience][quick ? 'quick' : 'long']));
         }
       }
     }
@@ -98,4 +100,40 @@ test('every existing preview sentinel passes its voice into selection; normal sp
   assert.equal((code.match(/pickAudition\(AUDITION_SCRIPTS, voice\)/g)||[]).length,2);
   assert.equal((code.match(/pickAudition\(AUDITION_QUICK_LINES, voice\)/g)||[]).length,1);
   assert.match(code,/installSelectedBindings\(rows, VOICE_MAP, selectedAuditionVoices\)/);
+});
+
+// Oct 17 2026, Kade: "I want all the auditions from inworld to mix with fish, and fish with
+// inworld ... combined for better variability across both providers."
+test('one mixed pool: grown-up and character voices hear the scenes and the general lines; kids only kids scenes', () => {
+  for (const audience of ['adults', 'characters']) {
+    assert.equal(MIXED[audience].long.length, POOLS[audience].long.length + GENERAL.LONG.length);
+    assert.equal(MIXED[audience].quick.length, POOLS[audience].quick.length + GENERAL.QUICK.length);
+    for (const line of [...GENERAL.LONG.slice(0, 5), ...GENERAL.QUICK.slice(0, 5)]) {
+      assert.ok(MIXED[audience].long.includes(line) || MIXED[audience].quick.includes(line));
+    }
+    assert.equal(new Set(MIXED[audience].long).size, MIXED[audience].long.length, 'no script twice');
+  }
+  assert.equal(MIXED.kids, POOLS.kids);
+  for (const line of [...GENERAL.LONG, ...GENERAL.QUICK]) {
+    assert.ok(!MIXED.kids.long.includes(line) && !MIXED.kids.quick.includes(line));
+  }
+});
+
+test('every scene feeling passes the Inworld tag rules now that Inworld voices read the scenes too', () => {
+  const src = fs.readFileSync(require.resolve('./audition-pool.test.js'), 'utf8');
+  const PACE_OR_STYLE = new Function(src.slice(src.indexOf('const PACE_OR_STYLE'), src.indexOf('const SLOP')) + '; return PACE_OR_STYLE;')();
+  for (const [, , feeling] of SCENES) assert.doesNotMatch(feeling, PACE_OR_STYLE, feeling);
+  for (const swapped of Object.values(FEELING_SWAPS)) assert.doesNotMatch(swapped, PACE_OR_STYLE);
+  assert.ok(SCENES.some(s => s[2] === 'calm') && !SCENES.some(s => s[2] === 'quiet'));
+});
+
+test('Inworld picker sections map to the same audiences', () => {
+  assert.equal(audienceForSection('Classic · Kids and teens'), 'kids');
+  assert.equal(audienceForSection('Classic · Characters and cartoons'), 'characters');
+  assert.equal(audienceForSection('Classic · Women, bright and high, young'), 'adults');
+  assert.equal(audienceForSection('Men, Southern'), 'adults');
+  assert.equal(audienceForSection('Classic · More Inworld voices'), null);
+  const pick = createScenePicker();
+  assert.ok(MIXED.kids.long.includes(pick.forAudience('kids')));
+  assert.ok(MIXED.adults.quick.includes(pick.forAudience('adults', true)));
 });

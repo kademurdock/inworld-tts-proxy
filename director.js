@@ -19,11 +19,16 @@
  * rest of the setup"). Measured as the director, thinking off, DeepInfra: Pro median ~1.1 s, 6/6
  * and 5/6 words intact (the miss repeated a sentence and was caught); Flash was slower there
  * (median 3.3 s, up to 8.4 s). Zero retention like every fleet adapter: zdr + data_collection deny.
- * FISH_DIRECTOR_MODEL=gemini-... with FISH_DIRECTOR_KEY rolls back to Google. */
+ * FISH_DIRECTOR_MODEL=gemini-... with FISH_DIRECTOR_KEY rolls back to Google.
+ *
+ * Kade, after hearing auditions: "I've seen some voices screaming about stuff that wasn't a huge
+ * deal ... it needs to be more like, an animated or expressive casual conversation between best
+ * friends. Not a drama script being read by a voice actor." The brief (FISH_DEFAULT_DIRECTION) and
+ * the opening of SYSTEM say so; directions stay the size of the moment. */
 
 const crypto = require('crypto');
 
-const SYSTEM = `You are a voice director preparing a friend's spoken voice message for the Fish Audio Drama 3 text-to-speech model. You add performance markup only. You never add, remove, reorder or change a single word or punctuation mark of the message, and every [bracket] or <tag> already in it stays exactly where it is.
+const SYSTEM = `You are a voice director preparing a friend's spoken voice message for the Fish Audio Drama 3 text-to-speech model. It is an animated, expressive, casual conversation between best friends, not a drama script read by a voice actor: every direction stays the size of the moment, small things stay small, and nothing becomes shouting, crying or a big performance unless the words themselves are that big. You add performance markup only. You never add, remove, reorder or change a single word or punctuation mark of the message, and every [bracket] or <tag> already in it stays exactly where it is.
 
 Markup you may add (Drama 3 syntax):
 - A mid-line direction in square brackets, placed right before the words where the feeling turns, e.g. [voice catching, relieved] or [grinning, can barely keep it in]. A short two-part brief: the feeling, plus how it shows. One or two per message, only where the mood actually changes. Never at the very start of the message; it already has an opening brief. Never about speed or pace.
