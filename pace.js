@@ -80,10 +80,12 @@ function fishTalkSeed(text) {
  *   lead   the Oct 16 version: "Um," opening a later sentence
  *   mid    "uh" inside a sentence, after "and/but/so/because" or after "I was / it's / that's ..."
  *   pause  the same mid-phrase spot, a trail-off ("...") and no word
+ *   run    the same mid-phrase spot, the word run together with no commas ("I was uh thinking");
+ *          Kade's pick after the listening set, on Fish and Inworld both (pause was runner-up)
  * Unset = lead, exactly as before this change. */
 function fillerStyle() {
   const s = String(process.env.TALK_FILLER_STYLE || 'lead').trim().toLowerCase();
-  return ['none', 'lead', 'mid', 'pause'].includes(s) ? s : 'lead';
+  return ['none', 'lead', 'mid', 'pause', 'run'].includes(s) ? s : 'lead';
 }
 
 // A spot inside a sentence where people hesitate: right after a joining word (and, but, so,
@@ -113,7 +115,7 @@ function midFiller(src, { turn = 0, seed, style }) {
   const at = spots[Math.floor(rng() * spots.length)];
   const base = Number.isInteger(seed) ? seed : Math.floor(rng() * 1e6);
   const word = ['uh', 'um'][(base + turn) % 2];
-  const insert = style === 'pause' ? '...' : `, ${word},`;
+  const insert = style === 'pause' ? '...' : style === 'run' ? ` ${word}` : `, ${word},`;
   return (masked.slice(0, at) + insert + masked.slice(at)).replace(/[](\d+)[]/g, (_, i) => tags[Number(i)]);
 }
 
@@ -121,7 +123,7 @@ function midFiller(src, { turn = 0, seed, style }) {
 function fishTalkFillers(text, { turn = 0, seed } = {}) {
   const style = fillerStyle();
   if (style === 'none') return String(text);
-  if (style === 'mid' || style === 'pause') return midFiller(String(text), { turn, seed, style });
+  if (style === 'mid' || style === 'pause' || style === 'run') return midFiller(String(text), { turn, seed, style });
   const src = String(text);
   // Lists, and anything in quotation marks (a character reading a passage or quoting
   // someone), are read, not chatted: Kade, "we definitely wouldn't want them while reading".

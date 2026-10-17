@@ -48,11 +48,25 @@ test('pause: the same kind of spot gets a trail-off and no word', () => {
   assert.equal(out.replace('...', ''), TEXT);
 });
 
-test('mid and pause still leave lists, quotes and short lines alone', () => {
-  withStyle('mid', () => {
-    assert.equal(fishTalkFillers('- milk\n- eggs and bread for the week'), '- milk\n- eggs and bread for the week');
-    assert.equal(fishTalkFillers('She said "I was there and it was fine" to me.'), 'She said "I was there and it was fine" to me.');
-  });
+test('run: the word sits mid-thought with no commas around it (Kade\'s pick)', () => {
+  assert.equal(withStyle('run', fillerStyle), 'run');
+  for (const seed of [1, 2, 3, 4, 5, 6]) {
+    const out = withStyle('run', () => fishTalkFillers(TEXT, { turn: 0, seed }));
+    assert.notEqual(out, TEXT, `seed ${seed} placed nothing`);
+    assert.match(out, /[a-z'’] (?:uh|um) [a-z]/, out);
+    assert.doesNotMatch(out, /,\s*(?:uh|um)\b|\b(?:uh|um),/i, out);
+    assert.doesNotMatch(out, /(?:^|[.!?] )(?:Um|Uh)\b/, out);
+    assert.equal(out.replace(/ (?:uh|um)(?= )/, ''), TEXT);
+  }
+});
+
+test('mid, pause and run still leave lists, quotes and short lines alone', () => {
+  for (const style of ['mid', 'pause', 'run']) {
+    withStyle(style, () => {
+      assert.equal(fishTalkFillers('- milk\n- eggs and bread for the week'), '- milk\n- eggs and bread for the week');
+      assert.equal(fishTalkFillers('She said "I was there and it was fine" to me.'), 'She said "I was there and it was fine" to me.');
+    });
+  }
 });
 
 test('the casual brief still rides Fish chat speech with words off', () => {
