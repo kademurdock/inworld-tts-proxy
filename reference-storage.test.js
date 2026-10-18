@@ -180,7 +180,7 @@ test('the reference loads before a Fish slot is taken, and a storage failure nev
   const context = {
     console: { warn() {}, log() {} }, Buffer, Math,
     noteChunk: kind => noted.push(kind),
-    sleep: async () => {},
+    sleep: async () => {}, fishRunaway: require('./fish-runaway'), FISH_SAMPLE_RATE: 24000,
     fishLimiter: async fn => { events.push('slot'); return fn(); },
     fishSynthesizeChunkOnce: async (...args) => { events.push('fish'); passed.push(args[4]); return Buffer.alloc(46); },
     selectedReferenceStore: { load: async id => { events.push('load ' + id); return loaded; } },
@@ -215,7 +215,7 @@ test('with caching off, a chunk still reads storage once, outside the Fish slot,
   const sent = [];
   const context = {
     console: { warn() {}, log() {} }, Buffer, Math, AbortController, setTimeout, clearTimeout, process: { env: {} },
-    noteChunk() {}, sleep: async () => {},
+    noteChunk() {}, sleep: async () => {}, fishRunaway: require('./fish-runaway'),
     fishLimiter: async fn => { inSlot = true; try { return await fn(); } finally { inSlot = false; } },
     fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: referenceStore,
     fishPacedText: require('./pace').fishPacedText, capFishPauses: require('./pace').capFishPauses,

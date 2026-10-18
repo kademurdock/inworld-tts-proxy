@@ -50,6 +50,7 @@ const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, create
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
+const fishRunaway = require('./fish-runaway');
 const { createDirector, directorOn } = require('./director');
 const fishDirector = createDirector();
 const { createWriter: createInworldWriter, writerOn: inworldWriterOn } = require('./inworld-writer');
@@ -1631,6 +1632,8 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk);
+        // Oct 17 2026: how long each Fish chunk runs for the words it was given (fish-runaway.js).
+        fishRunaway.checkTake(text, buf, { rate: speakingRate, talk, delivery, voice: fishModelId, sampleRate: FISH_SAMPLE_RATE });
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
