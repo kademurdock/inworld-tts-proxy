@@ -1629,13 +1629,32 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
   return fishLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
+    // Oct 18 2026: a take that ran far past its words (fish-runaway.js) is asked for once more
+    // with a fresh request; if that one runs on too, this chunk fails and says why.
+    let ranOn = null;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk);
         // Oct 17 2026: how long each Fish chunk runs for the words it was given (fish-runaway.js).
-        fishRunaway.checkTake(text, buf, { rate: speakingRate, talk, delivery, voice: fishModelId, sampleRate: FISH_SAMPLE_RATE });
+        const take = fishRunaway.checkTake(text, buf, { rate: speakingRate, talk, delivery, voice: fishModelId, sampleRate: FISH_SAMPLE_RATE });
+        if (take && take.ranOn) {
+          noteChunk('ranOn');
+          const said = `${take.seconds.toFixed(1)} s for ${take.chars} spoken characters, limit ${take.limit.toFixed(1)} s`;
+          if (!take.retry) console.warn(`[TTS] fish chunk ran on (${said}) -- kept, FISH_RUNAWAY_GUARD=log`);
+          else if (ranOn) throw fishRunaway.runawayError(ranOn, take);
+          else {
+            ranOn = take;
+            console.warn(`[TTS] fish chunk ran on (${said}) -- asking once more`);
+            attempt--; // the fresh take does not use up a retry meant for provider errors
+            continue;
+          }
+        }
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
+        if (ranOn) {
+          noteChunk('ranOnFixed');
+          console.log(`[TTS] fish chunk spoken again after a run-on: ${take ? `${take.seconds.toFixed(1)} s` : 'not measured'}`);
+        }
         return buf;
       } catch (err) {
         lastErr = err;
@@ -1680,6 +1699,7 @@ app.get("/health", async (req, res) => {
     inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
     fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
     inworldWriter: { on: inworldWriterOn(), model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) },
+    fishRunaway: fishRunaway.runawayHealth(),
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
@@ -1698,7 +1718,8 @@ app.get("/health", async (req, res) => {
       spoken: total === 0
         ? "No voice chunks synthesised yet today."
         : `${today.ok} voice chunks synthesised today, ${today.failed} failed outright` +
-          `${today.retried ? `, ${today.retried} needed a retry first` : ""}.`,
+          `${today.retried ? `, ${today.retried} needed a retry first` : ""}` +
+          `${today.ranOn ? `, ${today.ranOn} Fish takes ran on past their words (${today.ranOnFixed || 0} fixed by a fresh take)` : ""}.`,
     },
   });
 });
