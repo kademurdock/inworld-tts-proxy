@@ -5054,6 +5054,32 @@ const VOICE_ADDITIONS_2026_10_17 = {
   });
 }
 
+// ── 2026-10-19 VOICE 541 SPEAKS AGAIN (Kade: "my Kade voice for inworld professional is no
+// longer in the options for my platform voices. We still have Miss-a, but Dorry or whatever the
+// voice was that used to play it is just blank now."). "Dorry" is the tag "dory" of Voice 541's
+// label. Its Inworld clone keighty_pro left her workspace between Oct 1 02:58Z (last good synth)
+// and Oct 7 07:19Z (first 404 "Unknown voice ... not found"), so every play has been silent since.
+// Voice 541 keeps its NUMBER and now speaks as her Inworld professional clone "Kade Professional"
+// (kade_professional, in her workspace since August), so every stored spelling (bare number,
+// "Voice 541 Kade professional", the dory label, its Classic spelling, her describer default)
+// speaks again. Her own voice, so it is named like Miss-A (catalog v2 "Women, named voices");
+// the Kade brand, never her first name.
+const KADE_PRO_REPLACEMENT_2026_10_19 = {
+  "Voice 541": { target: "default-e-m11vgtr9l-m7afw4kmnw__kade_professional", was: "default-e-m11vgtr9l-m7afw4kmnw__keighty_pro" },
+};
+{
+  for (const [label, info] of Object.entries(KADE_PRO_REPLACEMENT_2026_10_19)) {
+    if (NUMBERED_VOICE_ALIASES[label] !== info.was) throw new Error(`kade pro replacement: ${label} is not keighty_pro any more (${NUMBERED_VOICE_ALIASES[label]})`);
+    if (Object.values(NUMBERED_VOICE_ALIASES).includes(info.target)) throw new Error(`kade pro replacement: ${info.target} already registered`);
+    let repointed = 0;
+    for (const [k, t] of Object.entries(VOICE_MAP)) if (t === info.was) { VOICE_MAP[k] = info.target; repointed++; }
+    for (const [k, t] of Object.entries(NUMBERED_VOICE_ALIASES)) if (t === info.was) NUMBERED_VOICE_ALIASES[k] = info.target;
+    if (repointed === 0) throw new Error(`kade pro replacement: nothing in VOICE_MAP pointed at keighty_pro`);
+    VOICE_MAP[info.was] = info.target; // a raw id saved somewhere speaks too
+    console.log(`[voices] Oct 19: ${label} now speaks as Kade Professional; ${repointed} stored spellings repointed off keighty_pro`);
+  }
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
@@ -5522,6 +5548,14 @@ if (process.env.SELECTED_VOICES_ENABLED === '1') {
   selectedVoicePicker = classic.picker;
   selectedVoicePicker.pacing = { fish: FISH_PACES.map(({ value, name }) => ({ value, name })), inworld: { min: 0.5, max: 1.5, default: 1 } };
   for (const [label, target] of classic.bindings) VOICE_MAP[label] = target;
+  // Oct 19 2026: a Classic spelling stored before a voice was renamed keeps speaking and moves to
+  // the new one (classic.js does not carry catalog formerLabels into "(Classic)").
+  for (const [was, now] of [['clear high-ish young woman · dory (Classic)', 'Kade Professional (Classic)']]) {
+    if (!classic.bindings.has(now) || classic.bindings.has(was)) throw new Error(`classic former spelling: ${was}`);
+    VOICE_MAP[was] = classic.bindings.get(now);
+    if (!selectedVoicePicker.hidden.includes(was)) selectedVoicePicker.hidden.push(was);
+    selectedVoicePicker.renames[was] = now;
+  }
   // Reference audio kept in memory, by bytes (default 64 MB; SELECTED_REFERENCE_CACHE_MB).
   const cacheMb = Number(process.env.SELECTED_REFERENCE_CACHE_MB);
   selectedReferenceStore = createReferenceStore(rows, Number.isFinite(cacheMb) && cacheMb >= 0 && process.env.SELECTED_REFERENCE_CACHE_MB !== ''

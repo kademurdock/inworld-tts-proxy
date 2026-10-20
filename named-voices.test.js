@@ -13,5 +13,15 @@ for(const [num,label] of [['Voice 652','Kade Murdock'],['Voice 653','Miss-A']]){
  assert.equal(r.VOICE_LIST.filter(v=>v===label).length,1);
  assert.equal(r.VOICE_PICKER_CATEGORIES.filter(c=>c.name.startsWith('Women')&&c.voices.includes(label)).length,1);
 }
+// Oct 19 2026: Voice 541 speaks as Kade Professional; every older spelling of it follows.
+const pro='default-e-m11vgtr9l-m7afw4kmnw__kade_professional';
+for(const name of ['Voice 541','Kade Professional','Voice 541 Kade professional','clear high-ish young woman · dory','default-e-m11vgtr9l-m7afw4kmnw__keighty_pro'])
+ assert.equal(r.VOICE_MAP[name],pro,name);
+assert.equal(r.VOICE_RENAMES['Voice 541'],'Kade Professional');
+assert.equal(r.VOICE_RENAMES['clear high-ish young woman · dory'],'Kade Professional');
+assert.equal(r.VOICE_LIST.filter(v=>v==='Kade Professional').length,1);
+assert.ok(!r.VOICE_LIST.includes('clear high-ish young woman · dory'));
+assert.equal(r.VOICE_PICKER_CATEGORIES.filter(c=>c.voices.includes('Kade Professional')).map(c=>c.name).join(),'Women, named voices');
+assert.ok(!Object.values(r.VOICE_MAP).includes('default-e-m11vgtr9l-m7afw4kmnw__keighty_pro'),'nothing still points at the deleted clone');
 console.log('Full voice catalog builds; named Women entries and numbered/saved aliases resolve correctly.');
 

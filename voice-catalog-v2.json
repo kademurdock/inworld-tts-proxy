@@ -6,7 +6,8 @@
    "name": "Women, named voices",
    "voices": [
     "Kade Murdock",
-    "Miss-A"
+    "Miss-A",
+    "Kade Professional"
    ]
   },
   {
@@ -36,7 +37,6 @@
     "clear high-ish young woman · cumin",
     "clear high-ish young woman · cushion",
     "clear high-ish young woman · dandelion",
-    "clear high-ish young woman · dory",
     "clear high-ish young woman · elm",
     "clear high-ish young woman · estuary",
     "clear high-ish young woman · fir",
@@ -1429,23 +1429,14 @@
    }
   },
   "Voice 541": {
-   "label": "clear high-ish young woman · dory",
-   "tag": "dory",
-   "category": "Women, bright and high, young",
-   "description": "A bright, clear, and youthful female voice with a natural tone, well-suited for friendly, everyday characters.",
-   "ear_label": "bright young woman, clear general American",
-   "fields": {
-    "gender": "woman",
-    "age": "young adult",
-    "pitch": "mid-high",
-    "weight": "light",
-    "brightness": "bright",
-    "texture": "clear",
-    "energy": "even",
-    "accent": "general American",
-    "kind": "natural",
-    "gender_confidence": 1.0
-   }
+   "label": "Kade Professional",
+   "tag": "Kade Professional",
+   "category": "Women, named voices",
+   "description": "Kade Professional. Kade’s own Inworld professional voice clone, named and filed with Women at her request.",
+   "formerLabels": [
+    "clear high-ish young woman · dory"
+   ],
+   "note": "Oct 19 2026: her personal voice, named like Miss-A; Voice 541 now speaks as kade_professional (keighty_pro was deleted from her Inworld workspace in early October)."
   },
   "Voice 6": {
    "label": "clear high-ish young woman · elm",
