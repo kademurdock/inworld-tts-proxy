@@ -7,7 +7,8 @@
    "voices": [
     "Kade Murdock",
     "Miss-A",
-    "Kade Professional"
+    "Kade Professional",
+    "Kade"
    ]
   },
   {
@@ -13526,6 +13527,14 @@
     "gender_confidence": 1.0
    },
    "note": "Oct 17 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 664": {
+   "label": "Kade",
+   "tag": "Kade",
+   "category": "Women, named voices",
+   "description": "Kade. Kade’s own second Inworld professional voice clone, named and filed with Women at her request.",
+   "formerLabels": [],
+   "note": "Oct 20 2026: her personal voice, named at her word (\"call that voice Kade\"); Inworld kade_murdock."
   },
   "Voice 663": {
    "label": "clear high-ish young woman · rosehip",

@@ -5080,6 +5080,27 @@ const KADE_PRO_REPLACEMENT_2026_10_19 = {
   }
 }
 
+// ── VOICE 664: KADE'S SECOND INWORLD PROFESSIONAL CLONE (Kade, Oct 20 2026: "You can just call
+// that voice Kade. Or Keighty it doesn't matter."). Workspace name in this comment only ("Kade
+// Murdock", a label that already belongs to Fish Voice 652). Her own voice, so it is named like
+// Miss-A and Kade Professional (catalog v2 "Women, named voices"). No label or alias "Kade"
+// existed; the Fish voice "Kade (HQ)" shares only its display tag. APPEND-ONLY.
+const KADE_ADDITION_2026_10_20 = {
+  "Voice 664": "default-e-m11vgtr9l-m7afw4kmnw__kade_murdock",
+};
+{
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  for (const [label, target] of Object.entries(KADE_ADDITION_2026_10_20)) {
+    if (label !== "Voice 664") throw new Error(`kade addition: unexpected ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`kade addition: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`kade addition: collision at ${label}`);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  }
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck

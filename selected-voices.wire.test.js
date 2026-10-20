@@ -25,8 +25,10 @@ test('the real picker restores Classic Inworld and preserves both saved old and 
     const catalog = await (await fetch('http://127.0.0.1:31868/voices.json')).json();
     assert.deepEqual(catalog.fish, ['Clear warm voice · cedarbrook']);
     // Oct 17 2026: 421 Classic Inworld voices plus the ten new ones (Voices 654-663).
-    assert.equal(catalog.voices.length, 432);
-    assert.equal(catalog.classic.length, 431);
+    // Oct 20 2026: plus Voice 664, her Inworld clone named "Kade".
+    assert.equal(catalog.voices.length, 433);
+    assert.equal(catalog.classic.length, 432);
+    assert.ok(catalog.classic.includes('Kade (Classic)'));
     assert.ok(catalog.classic.every(label => label.endsWith('(Classic)') && catalog.providers[label] === 'inworld'));
     assert.ok(catalog.hidden.includes('Voice 1'));
     assert.ok(catalog.hidden.includes('Kiana (Comedian)'));

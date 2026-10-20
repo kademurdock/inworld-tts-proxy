@@ -23,5 +23,11 @@ assert.equal(r.VOICE_LIST.filter(v=>v==='Kade Professional').length,1);
 assert.ok(!r.VOICE_LIST.includes('clear high-ish young woman · dory'));
 assert.equal(r.VOICE_PICKER_CATEGORIES.filter(c=>c.voices.includes('Kade Professional')).map(c=>c.name).join(),'Women, named voices');
 assert.ok(!Object.values(r.VOICE_MAP).includes('default-e-m11vgtr9l-m7afw4kmnw__keighty_pro'),'nothing still points at the deleted clone');
+// Oct 20 2026: Voice 664 is her second Inworld clone, named "Kade".
+assert.equal(r.VOICE_MAP['Voice 664'],'default-e-m11vgtr9l-m7afw4kmnw__kade_murdock');
+assert.equal(r.VOICE_MAP['Kade'],r.VOICE_MAP['Voice 664']);
+assert.equal(r.VOICE_RENAMES['Voice 664'],'Kade');
+assert.equal(r.VOICE_MAP['Kade Murdock'],'fish:a61737cbbea74c6ca3c112cf1f319d35','the Fish voice keeps its own name');
+assert.equal(r.VOICE_PICKER_CATEGORIES.filter(c=>c.voices.includes('Kade')).map(c=>c.name).join(),'Women, named voices');
 console.log('Full voice catalog builds; named Women entries and numbered/saved aliases resolve correctly.');
 
