@@ -40,6 +40,29 @@ test('everyday directions, hyphenated words, sounds and reset are left alone', (
   }
 });
 
+test('a calmed direction never becomes a sound or a one-shot tag that carried copies would repeat', () => {
+  for (const d of ['laughing excitedly', 'excited laugh', 'dramatic pause']) assert.equal(calmDirection(d), '', d);
+  for (const d of ['soft laugh', 'gentle sigh', 'quiet chuckle', 'whispered laugh', 'laughs softly', 'sighs softly']) {
+    assert.equal(calmDirection(d, { engine: 'inworld' }), '', d);
+  }
+});
+
+test('leftovers never invert or garble a direction', () => {
+  assert.equal(calmDirection('calm, not excited'), 'calm');
+  for (const d of ['not excited', 'trying not to sound excited', 'absolutely not', 'no longer shouting', 'too excited',
+    'full of excitement', 'a hint of excitement', 'teary eyed', 'pumped up', 'with a raw edge']) assert.equal(calmDirection(d), '', d);
+  for (const d of ['low energy', 'in a low voice', 'more softly now', 'a touch softer', 'speaking softly']) {
+    assert.equal(calmDirection(d, { engine: 'inworld' }), '', d);
+  }
+  assert.equal(calmDirection('warm; excited; fond'), 'warm; fond');
+  assert.equal(calmDirection('warm — excited'), 'warm');
+});
+
+test('a line break after a changed bracket stays', () => {
+  assert.equal(calmTags('line one [fond and emotional]\nline two'), 'line one [fond]\nline two');
+  assert.equal(calmTags('line one [excited]\nline two'), 'line one \nline two');
+});
+
 test('calmTags rewrites direction brackets, drops emptied ones, and never touches the words', () => {
   assert.equal(calmTags('[fond and a little emotional] Hey you. [laughs] That is so good. [excited] Wow.'),
     '[fond] Hey you. [laughs] That is so good. Wow.');
