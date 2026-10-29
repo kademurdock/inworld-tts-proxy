@@ -52,6 +52,7 @@ const { fitContextBudget } = require("./tts-context");
 const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
 const fishRunaway = require('./fish-runaway');
 const { createDirector, directorOn } = require('./director');
+const { calmOn: talkCalmOn, calmTags: calmTalkTags, calmDirection: calmTalkDirection } = require('./talk-calm');
 const fishDirector = createDirector();
 const { createWriter: createInworldWriter, writerOn: inworldWriterOn } = require('./inworld-writer');
 const inworldWriter = createInworldWriter();
@@ -3664,6 +3665,10 @@ app.post("/v1/audio/speech", async (req, res) => {
       : null;
     // Conversation auditions too (Kade: "I also think the directer should work on auditions").
     if (fishTalks && directorOn()) fishPieces = await fishDirector.directPieces(fishPieces, { previous: previousTexts });
+    // Oct 29 2026 (Kade: "a live conversation with someone, not auditioning for a drama"): talk
+    // directions keep their feeling and lose the size (talk-calm.js). TTS_TALK_CALM=1 turns it on.
+    const calmTalk = talks && talkCalmOn();
+    if (fishTalks && calmTalk) fishPieces = fishPieces.map(p => calmTalkTags(p, { engine: 'fish' }));
     const chunks = (isFishVoice
       ? carryDrama3Scopes(fishPieces.map(c => fishSentencePauses(speakingRate) ? shapeFishPauses(c) : c))
       : carryChunkDirections(chunkText(speakText)).flatMap(shapeInworldSteering)
@@ -3677,7 +3682,11 @@ app.post("/v1/audio/speech", async (req, res) => {
     // text into the documented inworld style"): Inworld chat pieces get Inworld's own markup
     // (inworld-writer.js) before fillers and sounds are added. Conversation auditions too; never
     // the phone, where a live call cannot wait for it.
-    const inworldPlain = isFishVoice ? null : chunks.map(splitChunkForInworld);
+    // A character's own hushed or big direction is cut down before the writer sees it, so an
+    // emptied one lets the writer's brief take over (talk-calm.js: hush words stretch Inworld's stops).
+    const inworldPlain = isFishVoice ? null : chunks.map(splitChunkForInworld).map(p => (calmTalk
+      ? { ...p, text: calmTalkTags(p.text, { engine: 'inworld' }), instruction: p.instruction ? calmTalkDirection(p.instruction, { engine: 'inworld' }) || null : p.instruction }
+      : p));
     const inworldWritten = Boolean(inworldPlain) && talks && req.query.telephony !== "1" && inworldWriterOn();
     const inworldLifted = inworldWritten ? await inworldWriter.writePieces(inworldPlain, { previous: previousTexts }) : inworldPlain;
     // A written piece gets the sound its plain words would have got (pace.js talkSounds seedText).
