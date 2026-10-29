@@ -5101,6 +5101,35 @@ const KADE_ADDITION_2026_10_20 = {
   }
 }
 
+// Oct 29 2026: Kade: "I added a few new inworld voices you can add to my platform." Workspace
+// diff: 315 customs, 19 unregistered: ten are her personal hold-outs (Kade*, Amber*, Podcast
+// Keighty fast), two (Dale, Sky) are voices she took off the platform on Jun 26, and these seven
+// are the new ones. The workspace names stay in comments only (voices are not people).
+const VOICE_ADDITIONS_2026_10_29 = {
+  "Voice 665": "default-e-m11vgtr9l-m7afw4kmnw__darain", // Darain
+  "Voice 666": "default-e-m11vgtr9l-m7afw4kmnw__maikolo", // Maikolo
+  "Voice 667": "default-e-m11vgtr9l-m7afw4kmnw__malra", // malra
+  "Voice 668": "default-e-m11vgtr9l-m7afw4kmnw__martellah", // Martellah
+  "Voice 669": "default-e-m11vgtr9l-m7afw4kmnw__secoyah", // Secoyah
+  "Voice 670": "default-e-m11vgtr9l-m7afw4kmnw__shabellvia", // Shabellvia
+  "Voice 671": "default-e-m11vgtr9l-m7afw4kmnw__vanarrolane", // Vanarrolane
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_10_29);
+  if (entries.length !== 7) throw new Error(`additions 10-29: expected 7, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${665 + idx}`) throw new Error(`additions 10-29: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 10-29: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 10-29: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck

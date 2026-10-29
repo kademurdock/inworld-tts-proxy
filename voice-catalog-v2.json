@@ -120,7 +120,9 @@
     "clear high-ish young woman · clove",
     "clear high-ish young woman · creekbed",
     "clear high-ish young woman · hailstone",
-    "clear high-ish young woman · rosehip"
+    "clear high-ish young woman · rosehip",
+    "crisp high-ish young woman · teasel",
+    "clear high-ish young woman · wheatfield"
    ]
   },
   {
@@ -159,7 +161,8 @@
     "smooth high-ish woman · windflower",
     "clear high-ish woman · cedarwood",
     "clear woman · ironwood",
-    "clear woman · flint"
+    "clear woman · flint",
+    "clear high-ish woman · tamarisk"
    ]
   },
   {
@@ -434,7 +437,8 @@
     "clear low-ish man · chicory",
     "clear man · rush",
     "nasal high-ish man · dune",
-    "nasal low-ish man · cardamom"
+    "nasal low-ish man · cardamom",
+    "clear low-ish man · birchbark"
    ]
   },
   {
@@ -544,7 +548,9 @@
     "warm low-ish man · signal",
     "warm low-ish man · turmeric",
     "warm low-ish man · whelk",
-    "warm low-ish man, Black American · truffle"
+    "warm low-ish man, Black American · truffle",
+    "smooth man · millstone",
+    "smooth low-ish man · hayloft"
    ]
   },
   {
@@ -760,7 +766,8 @@
     "smooth high-ish youthful voice · waffle",
     "clear high-ish youthful voice · quartzite",
     "clear high-ish youthful voice · shiitake",
-    "clear high-ish youthful voice · batten"
+    "clear high-ish youthful voice · batten",
+    "clear high boy · mudlark"
    ]
   },
   {
@@ -13555,6 +13562,146 @@
     "gender_confidence": 0.95
    },
    "note": "Oct 17 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 665": {
+   "label": "clear high-ish woman · tamarisk",
+   "tag": "tamarisk",
+   "category": "Women, bright and clear, grown",
+   "description": "A clear, articulate female voice with a mid-high pitch and crisp delivery, well-suited for assistant prompts and professional narration.",
+   "ear_label": "Clear and upbeat American female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 666": {
+   "label": "smooth man · millstone",
+   "tag": "millstone",
+   "category": "Men, smooth and warm, grown",
+   "description": "A clear and articulate male voice with a steady pace and mid-range pitch, ideal for user interface prompts and instructional recordings.",
+   "ear_label": "Clear Articulate Male Voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "smooth",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 667": {
+   "label": "clear low-ish man · birchbark",
+   "tag": "birchbark",
+   "category": "Men, bright and clear, grown",
+   "description": "A clear, balanced, and friendly male voice with an even tone, making it well-suited for narration, e-learning, and commercial announcements.",
+   "ear_label": "Clear and balanced male voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "low-mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 1.0
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 668": {
+   "label": "smooth low-ish man · hayloft",
+   "tag": "hayloft",
+   "category": "Men, smooth and warm, grown",
+   "description": "A clear, smooth, and composed male voice with a balanced tone, well-suited for corporate narration and professional announcements.",
+   "ear_label": "Smooth composed adult male voice",
+   "fields": {
+    "gender": "man",
+    "age": "adult",
+    "pitch": "low-mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "smooth",
+    "energy": "calm",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 669": {
+   "label": "crisp high-ish young woman · teasel",
+   "tag": "teasel",
+   "category": "Women, bright and high, young",
+   "description": "A clear, articulate female voice with a friendly and polished tone, ideal for virtual assistants, e-learning, and narration.",
+   "ear_label": "Clear and polished female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "crisp",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 670": {
+   "label": "clear high-ish young woman · wheatfield",
+   "tag": "wheatfield",
+   "category": "Women, bright and high, young",
+   "description": "A clear, well-articulated female voice with a balanced tone, ideal for virtual assistants and instructional content.",
+   "ear_label": "Clear female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 671": {
+   "label": "clear high boy · mudlark",
+   "tag": "mudlark",
+   "category": "Kids and teens",
+   "description": "A youthful boy's voice with a clear, light tone, ideal for children's stories, educational content, and animated media.",
+   "ear_label": "Youthful and clear boy's voice",
+   "fields": {
+    "gender": "man",
+    "age": "child",
+    "pitch": "high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "even",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.85
+   },
+   "note": "Oct 29 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
   }
  },
  "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving | Part 176 (Sep 11 2026): Voice 462 re-voiced Deej -> Zondi (formerLabels keeps the old pick resolving); Voices 640-651 added, Gemini 3.5 Flash ear pass on Inworld previews. | Part 182 (Sep 12 2026): Voice 433: Women, smooth and warm, young -> Kids and teens, Voice 431: Women, smooth and warm, grown -> Kids and teens, Voice 487: Women, soft and breathy -> Kids and teens, Voice 467: Women, soft and breathy -> Kids and teens, Voice 468: Women, bright and high, young -> Kids and teens, Voice 458: Women, bright and high, young -> Kids and teens, Voice 643: Women, bright and high, young -> Kids and teens, Voice 426: Women, bright and high, young -> Kids and teens, Voice 451: Women, soft and breathy -> Characters and cartoons, Voice 367: Women, bright and high, young -> Kids and teens, Voice 457: Women, bright and high, young -> Characters and cartoons"

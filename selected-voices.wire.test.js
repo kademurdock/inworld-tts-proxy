@@ -26,8 +26,9 @@ test('the real picker restores Classic Inworld and preserves both saved old and 
     assert.deepEqual(catalog.fish, ['Clear warm voice · cedarbrook']);
     // Oct 17 2026: 421 Classic Inworld voices plus the ten new ones (Voices 654-663).
     // Oct 20 2026: plus Voice 664, her Inworld clone named "Kade".
-    assert.equal(catalog.voices.length, 433);
-    assert.equal(catalog.classic.length, 432);
+    // Oct 29 2026: plus the seven new workspace voices (Voices 665-671).
+    assert.equal(catalog.voices.length, 440);
+    assert.equal(catalog.classic.length, 439);
     assert.ok(catalog.classic.includes('Kade (Classic)'));
     assert.ok(catalog.classic.every(label => label.endsWith('(Classic)') && catalog.providers[label] === 'inworld'));
     assert.ok(catalog.hidden.includes('Voice 1'));
