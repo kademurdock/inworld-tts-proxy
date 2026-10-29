@@ -10,10 +10,10 @@ const hash=value=>crypto.createHash('sha256').update(JSON.stringify(value)).dige
 const IDENTITY=['id','sha256','metadataSha256','referenceKey','metadataKey','testedModel','description','language','accent'];
 const identity=list=>list.map(r=>Object.fromEntries(IDENTITY.map(k=>[k,r[k]??null])));
 test('the catalog keeps every voice, its recording and its order',()=>{
- assert.equal(rows.length, 1121);
- assert.equal(hash(identity(rows)), 'cdc699b22325f80710caeac433de20ce5994934af576dbbe25d609331d9a9887');
- assert.equal(new Set(rows.map(r=>r.id)).size,1121);
- assert.equal(new Set(rows.map(r=>r.label.toLowerCase())).size,1121);
+ assert.equal(rows.length, 1166);
+ assert.equal(hash(identity(rows.slice(0,1121))), 'cdc699b22325f80710caeac433de20ce5994934af576dbbe25d609331d9a9887');
+ assert.equal(new Set(rows.map(r=>r.id)).size,1166);
+ assert.equal(new Set(rows.map(r=>r.label.toLowerCase())).size,1166);
  for(const name of ['Coco','Manayah','Snoley'])assert.equal(rows.filter(r=>r.label===name).length,1);
  for(const row of rows.slice(601)){
   assert.equal(row.testedModel,'drama-3');

@@ -25,7 +25,7 @@ function report(label,heard,day=1,status='open'){
 }
 test('all retained and newly checked identities coexist with historical bindings',()=>{
  const {rows,state,picker,auditions}=fresh();
- assert.equal(rows.length,1121);assert.equal(new Set(rows.map(r=>r.tag)).size,1121);
+ assert.equal(rows.length,1166);assert.equal(new Set(rows.map(r=>r.tag)).size,1166);
  for(const row of rows){
   for(const alias of [row.label,'fish:'+row.id,...(row.aliases||[])]){
    assert.equal(state.VOICE_MAP[alias],'fish:'+row.id);assert.strictEqual(auditions.get(alias),row);

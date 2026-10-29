@@ -24231,6 +24231,772 @@
       "aliases": [
         "Judith Wilson"
       ]
+    },
+    {
+      "id": "ref_a28aab5556735c8e",
+      "label": "Poised Lantern",
+      "tag": "Poised Lantern",
+      "description": "A clear, mid-to-high pitched feminine voice with a smooth texture and moderate brightness. The speaker delivers the narrative at a steady, measured pace with crisp articulation and a straightforward, conversational tone. A brief chuckle introduces a momentary shift to a lighter, amused expression before returning to the stable, composed quality of the surrounding speech.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "7ef50e64165b131606e3097923db28e3ffb616154ede2b1b0ea9b06b82601e0c",
+      "metadataSha256": "721367467adf4164bd45a0fb4f36e79fbff20affba432285ea3af54bc0c488ea",
+      "referenceKey": "voice-references/20261014/7ef50e64165b131606e3097923db28e3ffb616154ede2b1b0ea9b06b82601e0c.mp3",
+      "metadataKey": "voice-references/20261014/7ef50e64165b131606e3097923db28e3ffb616154ede2b1b0ea9b06b82601e0c.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_a9a26867d1d51ca8",
+      "label": "Wry Compass",
+      "tag": "Wry Compass",
+      "description": "A clear, moderately pitched feminine voice with smooth, resonant articulation and an even, bright clarity. The habitual delivery is relaxed and steady, while this sample carries an assertive, amused performance with an audible laugh and deliberate, expressive pacing. The voice presents as a young- to middle-adult speaking English with a General American accent.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "bf9eafab91f3c635911381dbae31f23c8cba559171376bc7a20f8bb4524f757a",
+      "metadataSha256": "9262ddd03a71c1f9560c2d9d42aa5c3074c3e77b160d9c1dab4c50c4de55e3fc",
+      "referenceKey": "voice-references/20261014/bf9eafab91f3c635911381dbae31f23c8cba559171376bc7a20f8bb4524f757a.mp3",
+      "metadataKey": "voice-references/20261014/bf9eafab91f3c635911381dbae31f23c8cba559171376bc7a20f8bb4524f757a.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_a4961621b2d52f76",
+      "label": "Bemused Bluebell",
+      "tag": "Bemused Bluebell",
+      "description": "A moderately pitched, feminine-presenting voice with clear articulation and a smooth, slightly bright resonance. The speaker sounds middle-adult with a North American accent. Habitually expressive and conversational, the delivery incorporates a brief, soft laugh and shifts from a mildly exasperated pace to a slower, reflective cadence with deliberate pauses. The overall texture remains consistent, showcasing a natural, storytelling quality.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Warm & Soothing"
+      ],
+      "language": "English",
+      "accent": "North American",
+      "sha256": "d76f97c5aa8872b9ccd926684be42e44cfe38f9256199b26543dece612969b5b",
+      "metadataSha256": "a08841e9979eb79143e0006858780854cd3af0787767aab0602a95986ea882f0",
+      "referenceKey": "voice-references/20261014/d76f97c5aa8872b9ccd926684be42e44cfe38f9256199b26543dece612969b5b.mp3",
+      "metadataKey": "voice-references/20261014/d76f97c5aa8872b9ccd926684be42e44cfe38f9256199b26543dece612969b5b.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_bc4779e5c3282a66",
+      "label": "Velvet Honeycomb",
+      "tag": "Velvet Honeycomb",
+      "description": "A warm, clear mid-to-high voice with a smooth, conversational texture and moderate brightness. The speaker delivers the anecdote with a gently amused, wry tone at a relaxed pace, using natural pauses for comedic timing. Habitually, the vocal quality remains even and articulate, while the performed emotion adds a light, humorous lilt. The voice presents with feminine resonance and a broad age impression of young-to-middle adult, speaking with a North American accent.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "North American",
+      "sha256": "13e9f4d6b2f2f8a72f91dc95326893a6c565f80d05e0c7ec2944e4d5703abf76",
+      "metadataSha256": "a7e3ab4be5265749052e65770b9913aadb79ab144b9abbd92d3820038ffcaf6a",
+      "referenceKey": "voice-references/20261014/13e9f4d6b2f2f8a72f91dc95326893a6c565f80d05e0c7ec2944e4d5703abf76.mp3",
+      "metadataKey": "voice-references/20261014/13e9f4d6b2f2f8a72f91dc95326893a6c565f80d05e0c7ec2944e4d5703abf76.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_13f6091e8e5c9791",
+      "label": "Theatrical Trumpet",
+      "tag": "Theatrical Trumpet",
+      "description": "A feminine, middle-adult sounding voice with moderate-to-high pitch and strong resonance. The texture is clear and bright, with sharp articulation. The delivery is highly expressive and theatrical, featuring deliberate pacing, emphatic pauses, and varying volume for dramatic effect. The speaker performs a mix of scolding exasperation and amusement, including laughter.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Characters & Distinctive"
+      ],
+      "language": "English",
+      "accent": "General American, with expressive and regional-sounding colloquial inflections",
+      "sha256": "68fbfb2092bff69db22c9c76b38145c627da149d40fe1699503681a5b6864631",
+      "metadataSha256": "d08c38172fba98077655dc3c81ac866f9cecc95620ab01fe8072c920beed34f4",
+      "referenceKey": "voice-references/20261014/68fbfb2092bff69db22c9c76b38145c627da149d40fe1699503681a5b6864631.mp3",
+      "metadataKey": "voice-references/20261014/68fbfb2092bff69db22c9c76b38145c627da149d40fe1699503681a5b6864631.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_48925792c55b92d3",
+      "label": "Firm Fiddlehead",
+      "tag": "Firm Fiddlehead",
+      "description": "A clear, mid-pitched female voice with moderate brightness and a smooth, direct texture. The habitual tone feels firm and expressive, while the excerpt's delivery shifts from measured warning to sharper emphasis before ending with a brief laugh and a steady, moderately paced cautionary remark. The language is clear English with no discernible accent or background interference.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Characters & Distinctive"
+      ],
+      "language": "English",
+      "accent": "unclear",
+      "sha256": "6149eaa19bdc1ede9e935882a3f214f9b228a5382c1bfde0af9d3548639bd897",
+      "metadataSha256": "034e5b936d22ffd46084b5312a2db9c8deec211590c1a4db8dd4059b908d50c7",
+      "referenceKey": "voice-references/20261014/6149eaa19bdc1ede9e935882a3f214f9b228a5382c1bfde0af9d3548639bd897.mp3",
+      "metadataKey": "voice-references/20261014/6149eaa19bdc1ede9e935882a3f214f9b228a5382c1bfde0af9d3548639bd897.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_c58fc8fe9b1585c5",
+      "label": "Snappy Whistle",
+      "tag": "Snappy Whistle",
+      "description": "A feminine, middle-adult voice with a bright, moderately high pitch and clear, forward resonance. The texture is smooth yet sharply articulated, with crisp consonants and a firm, scolding edge. The delivery in this excerpt is emphatic and deliberately paced, featuring dramatic pauses and stressed syllables to convey urgency; these are performed inflections rather than defining habits. English is spoken with broad American inflections, and the recording is highly intelligible.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "ba8359182d773357ce66a51f6393290623507f4c8159c0a14cbef5e55e624d09",
+      "metadataSha256": "62d6da8fbb648226c425a621095045ed842cc8edfc14a55fa3eff7d2c8f88464",
+      "referenceKey": "voice-references/20261014/ba8359182d773357ce66a51f6393290623507f4c8159c0a14cbef5e55e624d09.mp3",
+      "metadataKey": "voice-references/20261014/ba8359182d773357ce66a51f6393290623507f4c8159c0a14cbef5e55e624d09.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_8cdf6fc2f843139a",
+      "label": "Gruff Tailgate",
+      "tag": "Gruff Tailgate",
+      "description": "A masculine middle-adult voice with low pitch and slightly gravelly, rough-textured resonance, speaking American English with clear enunciation. The habitual tone is dry, firm, and practical. In this excerpt, the performed emotion is mild, dry humor or mild exasperation, delivered at a deliberate, measured pace with long intentional pauses. Background mechanical ticking is audible but not part of the voice.",
+      "categories": [
+        "Men, Rough & Textured",
+        "Men, Deep & Resonant"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "0f7f0a2b4af1c8dee282aba79688d9cc350f38616f26e2e12c5d0cde35d25bb8",
+      "metadataSha256": "b6bea5a152c9d98ff19d271f254a7c6f560f2ef2e72bbe9c2add22d7565e61dd",
+      "referenceKey": "voice-references/20261014/0f7f0a2b4af1c8dee282aba79688d9cc350f38616f26e2e12c5d0cde35d25bb8.mp3",
+      "metadataKey": "voice-references/20261014/0f7f0a2b4af1c8dee282aba79688d9cc350f38616f26e2e12c5d0cde35d25bb8.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_5ce8ff7d6461e64c",
+      "label": "Easygoing Boulder",
+      "tag": "Easygoing Boulder",
+      "description": "A broad, low-pitched voice with rich chest resonance and a slightly gravelly, warm texture. Brightness is low, while clarity remains high with steady articulation. Habitual delivery is unhurried and relaxed, contrasting with the excerpt's dryly exasperated, conversational tone. Audible speech is in English with a North American accent. Presented by a masculine, middle-adult impression in a single-speaker excerpt.",
+      "categories": [
+        "Men, Deep & Resonant",
+        "Men, Rough & Textured"
+      ],
+      "language": "English",
+      "accent": "North American",
+      "sha256": "d8b0102753321b1c6cee1a3e1b8ff2f4ba37fcb5ec775db56e2607e1fac9d2d4",
+      "metadataSha256": "4bddd76a24a5580c8af6062f78ef3b75db7457cb300ebe82370c888c45de2add",
+      "referenceKey": "voice-references/20261014/d8b0102753321b1c6cee1a3e1b8ff2f4ba37fcb5ec775db56e2607e1fac9d2d4.mp3",
+      "metadataKey": "voice-references/20261014/d8b0102753321b1c6cee1a3e1b8ff2f4ba37fcb5ec775db56e2607e1fac9d2d4.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_7c7abdcd436cf321",
+      "label": "Chipper Teacup",
+      "tag": "Chipper Teacup",
+      "description": "A feminine, mid-range voice with clear articulation and a slightly warm, smooth texture. Brightness and clarity remain consistent throughout, while the pitch varies naturally with the storytelling. The delivery is moderate in pace, featuring a brief pause and a short laugh mid-excerpt that adds amusement. Habitually, the voice sounds balanced and conversational, with an American accent. The performed emotion is lighthearted and anecdotal rather than a defining vocal trait.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "bc86157fdd40eb1827406d098e077d8fc0b973c9961388c71dc331d0c4e660d6",
+      "metadataSha256": "36ad54b4e015d8af8729e1faddb4849997d35c5080879e3f09c66bfe7f4cdebd",
+      "referenceKey": "voice-references/20261014/bc86157fdd40eb1827406d098e077d8fc0b973c9961388c71dc331d0c4e660d6.mp3",
+      "metadataKey": "voice-references/20261014/bc86157fdd40eb1827406d098e077d8fc0b973c9961388c71dc331d0c4e660d6.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_301c39f1354f8710",
+      "label": "Giddy Popcorn",
+      "tag": "Giddy Popcorn",
+      "description": "A clear, moderately pitched feminine voice with bright resonance and smooth texture. The delivery is highly expressive and conversational, featuring playful inflections and light laughter. This single excerpt shows a humorous, animated performance, which does not establish the speaker's habitual emotional range. The speech is distinct and easily intelligible throughout.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "f52528a1344a7a21ca4e2c2fd5bd39cc60bb57441367947b0902e38fade6a842",
+      "metadataSha256": "c9eecdb09a844854d07341e7049fec9c0ef00c11bb457294af8e7aea08036a7a",
+      "referenceKey": "voice-references/20261014/f52528a1344a7a21ca4e2c2fd5bd39cc60bb57441367947b0902e38fade6a842.mp3",
+      "metadataKey": "voice-references/20261014/f52528a1344a7a21ca4e2c2fd5bd39cc60bb57441367947b0902e38fade6a842.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_cb802ec56352b180",
+      "label": "Level Fencepost",
+      "tag": "Level Fencepost",
+      "description": "This is a clear, middle-pitched voice with a natural, even tone. The speaker's articulation is precise, and the pace is moderate and steady. The delivery is straightforward and easy to understand, with no notable distortion or heavy accent. The overall texture is smooth and pleasant, suitable for general narration or dialogue.",
+      "categories": [
+        "Characters, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "67f35b2fe384b9b870b67bf0064c9e0648da7078680be183424ef61aeebd8bd3",
+      "metadataSha256": "fae32294ff03db73340453882986bad2dfc0a967642cc6ac9137a56c165b23fd",
+      "referenceKey": "voice-references/20261014/67f35b2fe384b9b870b67bf0064c9e0648da7078680be183424ef61aeebd8bd3.mp3",
+      "metadataKey": "voice-references/20261014/67f35b2fe384b9b870b67bf0064c9e0648da7078680be183424ef61aeebd8bd3.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_401a83f941176e0c",
+      "label": "Steady Almanac",
+      "tag": "Steady Almanac",
+      "description": "A moderate-pitch voice with moderate resonance and smooth texture, maintaining steady clarity throughout. Perceived as feminine, with a broad age impression in the older-adult range, presenting a calm, even delivery in English with a neutral American accent. The performance conveys a measured, conversational tone without sharp shifts in brightness, keeping consistent pacing and articulation from start to finish.",
+      "categories": [
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "neutral American",
+      "sha256": "badfbc246b01f27dee0d30ba324fe8148f9cf426e543f04f240b68f5717b0d41",
+      "metadataSha256": "c63d9d6a5c6e98f0e01212baf7e7e12b4514af6c4d4317d1f1226fd5e0155e6f",
+      "referenceKey": "voice-references/20261014/badfbc246b01f27dee0d30ba324fe8148f9cf426e543f04f240b68f5717b0d41.mp3",
+      "metadataKey": "voice-references/20261014/badfbc246b01f27dee0d30ba324fe8148f9cf426e543f04f240b68f5717b0d41.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_f4e5638748dd2e3c",
+      "label": "Smoky Thistle",
+      "tag": "Smoky Thistle",
+      "description": "A mature female-presenting voice with a mid-to-low pitch and a noticeable raspy, textured quality. The speech is clear and expressive, delivered at a moderate pace with a slightly conversational and sarcastic tone. The resonance is warm and grounded, with a touch of breathiness and a chuckle that adds character. The delivery is relaxed and natural, with a moderate pace that allows the humorous undertones to come through. The speaker's accent is a standard American variety, and the voice carries a middle-aged to older impression.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Rough & Textured"
+      ],
+      "language": "English",
+      "accent": "American English",
+      "sha256": "525c072285104e028e63c2c1c153abe268d15c4ebc059704d5dee2c2113318e1",
+      "metadataSha256": "e496ede1392ce5cf6daf7ccd23a61a10fb4d9d553119a826f35f5eef0fa0ef96",
+      "referenceKey": "voice-references/20261014/525c072285104e028e63c2c1c153abe268d15c4ebc059704d5dee2c2113318e1.mp3",
+      "metadataKey": "voice-references/20261014/525c072285104e028e63c2c1c153abe268d15c4ebc059704d5dee2c2113318e1.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_bc1d182edbbab97b",
+      "label": "Weathered Riverbank",
+      "tag": "Weathered Riverbank",
+      "description": "A deep, low-pitched voice with a gravelly, textured resonance and low brightness. Habitually clear in articulation with a broad American accent. Perceived masculine, older-adult. The excerpt is delivered slowly, with reflective pauses and laughter, conveying a nostalgic, humorous mood. This single sample does not establish a full emotional range.",
+      "categories": [
+        "Men, Deep & Resonant",
+        "Men, Rough & Textured"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "5bd6ba86c38e3f2161323dbb39c8eaf339bce865478b529d5408b8615eb3850c",
+      "metadataSha256": "7a996c6b2f1b2af4ce36117dd622354d9bce037c972a3d93cd44d4c94371ca33",
+      "referenceKey": "voice-references/20261014/5bd6ba86c38e3f2161323dbb39c8eaf339bce865478b529d5408b8615eb3850c.mp3",
+      "metadataKey": "voice-references/20261014/5bd6ba86c38e3f2161323dbb39c8eaf339bce865478b529d5408b8615eb3850c.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_6491284d72d9ba9d",
+      "label": "Mellow Driftwood",
+      "tag": "Mellow Driftwood",
+      "description": "A deep-pitched masculine voice with warm chest resonance and a slightly gravelly texture. Perceived age is older-adult, characterized by a measured, nostalgic tone in this performance, though the underlying vocal quality remains resonant and steady. Speech is clear and intelligible with a general American accent, featuring deliberate pauses and a brief laugh during this reflective excerpt.",
+      "categories": [
+        "Men, Deep & Resonant",
+        "Men, Rough & Textured"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "5e8a552912c6d982b62c0c68b1c5f9c1d3584e6a1776edb04dc009a03eb72f40",
+      "metadataSha256": "08a9211da481101af7485454b73d11131853f38d3550f651c1c97684e300ec88",
+      "referenceKey": "voice-references/20261014/5e8a552912c6d982b62c0c68b1c5f9c1d3584e6a1776edb04dc009a03eb72f40.mp3",
+      "metadataKey": "voice-references/20261014/5e8a552912c6d982b62c0c68b1c5f9c1d3584e6a1776edb04dc009a03eb72f40.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_8bcfbd5cd601fb45",
+      "label": "Breezy Rowboat",
+      "tag": "Breezy Rowboat",
+      "description": "A mid-range voice with a clear, gently textured quality and moderate brightness. The pronunciation is crisp and articulate throughout, carrying a warm, conversational tone. The speaker delivers the anecdote with varied pacing, deliberate pauses, and audible breath sounds. The perceived vocal traits suggest a feminine presentation and a mature adult impression, while the delivery itself is relaxed and amused.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "American English",
+      "sha256": "8b80581fc918de43c24226b6bb8b9cf53fe62af2b260db61dc189a169063eee4",
+      "metadataSha256": "833a78c01b904179020efb95d9dd0a29a5a93f459fbcdd713ff3aa15206eca90",
+      "referenceKey": "voice-references/20261014/8b80581fc918de43c24226b6bb8b9cf53fe62af2b260db61dc189a169063eee4.mp3",
+      "metadataKey": "voice-references/20261014/8b80581fc918de43c24226b6bb8b9cf53fe62af2b260db61dc189a169063eee4.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_6e321b784c45b71d",
+      "label": "Fond Firefly",
+      "tag": "Fond Firefly",
+      "description": "A clear, mid-range feminine voice with moderate brightness and smooth articulation, presenting a young-to-middle adult impression. The recording carries a relaxed, conversational pace with gentle pauses and a lightly amused tone. The speaker uses natural, expressive inflection with subtle breathiness during the laugh, while maintaining steady clarity throughout. This is a single speaker delivering English speech with no background music.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "not-specified",
+      "sha256": "6bdeba665b56984a5cd15d832011015d09bb310c6d6848233aa75f66c64f1f0d",
+      "metadataSha256": "246523b6dd507bf955eab0a773cdba8fcae6063ccaddeffd140d4aa29765b94c",
+      "referenceKey": "voice-references/20261014/6bdeba665b56984a5cd15d832011015d09bb310c6d6848233aa75f66c64f1f0d.mp3",
+      "metadataKey": "voice-references/20261014/6bdeba665b56984a5cd15d832011015d09bb310c6d6848233aa75f66c64f1f0d.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_e3bb7a53699c6d1d",
+      "label": "Stern Mahogany",
+      "tag": "Stern Mahogany",
+      "description": "A deep, resonant baritone with a gravelly, textured quality and strong chest resonance. The voice sounds masculine, broad in age impression, and delivers measured, deliberate phrasing with moderate pace and dramatic pauses. The tone remains low-pitched and composed throughout, spoken in English with a standard American accent. This sample demonstrates a restrained, formal delivery style rather than establishing the speaker's full emotional range.",
+      "categories": [
+        "Men, Deep & Resonant",
+        "Men, Rough & Textured"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "7a33b0f126e28097f6f93350a2725545e97c100756105489e29fbde1a21ad7f8",
+      "metadataSha256": "5841e043bc20cfd590d16f5671ed2346a3bd1ea34797b586234054059ed70067",
+      "referenceKey": "voice-references/20261014/7a33b0f126e28097f6f93350a2725545e97c100756105489e29fbde1a21ad7f8.mp3",
+      "metadataKey": "voice-references/20261014/7a33b0f126e28097f6f93350a2725545e97c100756105489e29fbde1a21ad7f8.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_abca7ba5cbf4fa97",
+      "label": "Commanding Granite",
+      "tag": "Commanding Granite",
+      "description": "A low-pitched, resonant voice with a smooth yet firm texture. Clear, crisp articulation with steady, confident pacing and controlled pauses. Habitually neutral and authoritative in tone, with no strong emotional extremes. Presented in masculine register, with broad age impression of middle-adult or older-adult. Spoken with a clear North American accent and high clarity throughout.",
+      "categories": [
+        "Men, Deep & Resonant",
+        "Men, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "North American",
+      "sha256": "dcd85a27f0596fdb208e437fd4e5a1cea898026ab33be8bdfdcd045e992983f4",
+      "metadataSha256": "2d01d8678c1ba0e46388b88204589b4d61ad65833baade7ade151cc31515b314",
+      "referenceKey": "voice-references/20261014/dcd85a27f0596fdb208e437fd4e5a1cea898026ab33be8bdfdcd045e992983f4.mp3",
+      "metadataKey": "voice-references/20261014/dcd85a27f0596fdb208e437fd4e5a1cea898026ab33be8bdfdcd045e992983f4.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_7d96383ad892a08a",
+      "label": "Measured Gatepost",
+      "tag": "Measured Gatepost",
+      "description": "A clear, moderately low-pitched masculine voice with a smooth texture and grounded chest resonance. The speaker uses an American accent with precise articulation and a steady, measured pace. Habitually, the tone is dry and direct, featuring deliberate pauses and a brief chuckle. The overall impression suggests a middle-aged adult presenting a calm yet authoritative delivery.",
+      "categories": [
+        "Men, Clear & Neutral",
+        "Men, Deep & Resonant"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "62032118da3620d2ebae224a3b9c3de3fb6510dee3daafae11297295ba9441b0",
+      "metadataSha256": "2adb366db77881d7e2d7b13721d073694caf437b1646008d2666d149e222ae0a",
+      "referenceKey": "voice-references/20261014/62032118da3620d2ebae224a3b9c3de3fb6510dee3daafae11297295ba9441b0.mp3",
+      "metadataKey": "voice-references/20261014/62032118da3620d2ebae224a3b9c3de3fb6510dee3daafae11297295ba9441b0.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_02b195018194f573",
+      "label": "Chirpy Bookmark",
+      "tag": "Chirpy Bookmark",
+      "description": "A clear, medium-pitched voice with moderate resonance and a smooth, clean texture. Brightness and clarity remain consistent throughout. The performed delivery is conversational and amused, featuring a mid-pace with a natural pause for laughter. Habitually, the voice presents as feminine, with a young-adult to middle-adult age impression and a clear English accent.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "Clear English accent",
+      "sha256": "108b8aeed99b544cba14b0226ede74e520c4d470656ae3ed36d2440e63fff183",
+      "metadataSha256": "abdf8e1e638fdbc67f763eaa473aa390c95c88aa29a8a3bf76b6927eaae147c1",
+      "referenceKey": "voice-references/20261014/108b8aeed99b544cba14b0226ede74e520c4d470656ae3ed36d2440e63fff183.mp3",
+      "metadataKey": "voice-references/20261014/108b8aeed99b544cba14b0226ede74e520c4d470656ae3ed36d2440e63fff183.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_a65b3756495b0f47",
+      "label": "Eye-Rolling Marmalade",
+      "tag": "Eye-Rolling Marmalade",
+      "description": "A clear, moderately pitched feminine voice with a smooth texture and neutral-to-bright clarity. Habitual resonance sits in the mid-range without notable roughness. Delivery in this excerpt is measured with deliberate pauses for narrative effect, shifting to an amused, mildly sarcastic tone with laughter near the end. Broad age impression is young-to-middle adult, spoken in English with a standard American accent.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "cc3e5d57fed3a94e97f7276b10c6cb004843b7b9e662b9dacefce81410461634",
+      "metadataSha256": "bd103d8a4da24248da416be625899fdd0e75f572ff454c43dcc1768852165862",
+      "referenceKey": "voice-references/20261014/cc3e5d57fed3a94e97f7276b10c6cb004843b7b9e662b9dacefce81410461634.mp3",
+      "metadataKey": "voice-references/20261014/cc3e5d57fed3a94e97f7276b10c6cb004843b7b9e662b9dacefce81410461634.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_6543791bf58d043f",
+      "label": "Bright Bulletin",
+      "tag": "Bright Bulletin",
+      "description": "A bright and clear voice with a medium-high pitch and smooth, balanced resonance. The tone is articulate and engaging, presenting a feminine impression. Habitually steady, it takes on a playful, expressive quality with lively inflection and a slight chuckle in this excerpt, before settling into a moderately paced, conversational rhythm.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "f6d4bfce2ce5048b79889e038a6cc4ad06ec1beb4277a1502fe6824adb534e86",
+      "metadataSha256": "ecfce630769de909ac12b5b79b15722a10e00df9183d199f2a416bd5bfc1fdfa",
+      "referenceKey": "voice-references/20261014/f6d4bfce2ce5048b79889e038a6cc4ad06ec1beb4277a1502fe6824adb534e86.mp3",
+      "metadataKey": "voice-references/20261014/f6d4bfce2ce5048b79889e038a6cc4ad06ec1beb4277a1502fe6824adb534e86.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_a66e38d7b4b38cd7",
+      "label": "Afternoon Forecast",
+      "tag": "Afternoon Forecast",
+      "description": "A clear, medium-to-low pitched voice with moderate resonance and a smooth texture, maintaining consistent clarity throughout. The speaker presents with a feminine gender impression and a young-to-middle adult age range, using a General American accent. The sample includes both a formal broadcast-style delivery and a more informal, reactive tone with varied pacing and pauses; these reflect performed contexts rather than fixed habitual traits. No other speakers are heard.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Characters & Distinctive"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "a924fdb398ff186cbd8903c30163a92c5167297ce8ed2dd3e50a56b3df2603fc",
+      "metadataSha256": "bf5fc28613139da8ca9a38981b9912c55ee98ea70de3612611994dffede7171b",
+      "referenceKey": "voice-references/20261014/a924fdb398ff186cbd8903c30163a92c5167297ce8ed2dd3e50a56b3df2603fc.mp3",
+      "metadataKey": "voice-references/20261014/a924fdb398ff186cbd8903c30163a92c5167297ce8ed2dd3e50a56b3df2603fc.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_a5c695f57d901a92",
+      "label": "Cheery Dispatch",
+      "tag": "Cheery Dispatch",
+      "description": "A feminine, middle-adult voice with medium-high pitch and clear, bright resonance. The texture is smooth and lightly warm, with an informal conversational style and expressive inflection. Habitually brisk but relaxed pacing, shifting dynamically for emphasis. Performed tone moves from polished broadcast cheerfulness to amused, incredulous humor. Audible American English speech with a relaxed, colloquial cadence.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American English",
+      "sha256": "b5681a50d55c74037eb4d9b97aa171cd80e466d27d484c9ee54b3972f8a06da6",
+      "metadataSha256": "821fd23a6f89feca435ba5f321e707b50968da1991e0c2494207b09aaf3e662a",
+      "referenceKey": "voice-references/20261014/b5681a50d55c74037eb4d9b97aa171cd80e466d27d484c9ee54b3972f8a06da6.mp3",
+      "metadataKey": "voice-references/20261014/b5681a50d55c74037eb4d9b97aa171cd80e466d27d484c9ee54b3972f8a06da6.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_601aa1ab32005caa",
+      "label": "Porch-Swing Headline",
+      "tag": "Porch-Swing Headline",
+      "description": "A warm, medium-pitched feminine voice with clear articulation and smooth resonance. The habitual tone is relaxed and approachable, with a moderate pace and occasional playful emphasis through vowel elongation. Presenting as a young to middle adult with a Southern American accent, the delivery shifts naturally between structured broadcast phrasing and casual, amused commentary without losing vocal clarity.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "Southern American",
+      "sha256": "790f098afad7dddd298ef80bbc9f5aef29adb7fe404b687421b60e45bab09db5",
+      "metadataSha256": "88294092272b7bbbb307c7880d88d4d32e6c84e1188a456286a381158e7e9a83",
+      "referenceKey": "voice-references/20261014/790f098afad7dddd298ef80bbc9f5aef29adb7fe404b687421b60e45bab09db5.mp3",
+      "metadataKey": "voice-references/20261014/790f098afad7dddd298ef80bbc9f5aef29adb7fe404b687421b60e45bab09db5.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_f43a71acf57574cd",
+      "label": "Crisp Newsroom",
+      "tag": "Crisp Newsroom",
+      "description": "A clear mid-range female-presenting voice with a bright, balanced timbre and crisp articulation. The habitual tone is conversational and engaging, shifting from a professional broadcast delivery to an informal, expressive manner. The speaker uses varied intonation, expressive emphasis, and brief pauses. The delivery pace is moderate and natural, with occasional laughter. Broad age impression is middle-adult. An American English accent is audible.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American English",
+      "sha256": "ac66dec9a59aa7994ac3132686c79e4f01f61b32062383ca717e0068b405ed40",
+      "metadataSha256": "25bbced421a33376d9ac1e0f0843f6caf47e69a4358555bc0b585248a5a0ffb9",
+      "referenceKey": "voice-references/20261014/ac66dec9a59aa7994ac3132686c79e4f01f61b32062383ca717e0068b405ed40.mp3",
+      "metadataKey": "voice-references/20261014/ac66dec9a59aa7994ac3132686c79e4f01f61b32062383ca717e0068b405ed40.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_0f57f58365230ad7",
+      "label": "Polished Barometer",
+      "tag": "Polished Barometer",
+      "description": "A clear, mid-pitched feminine voice with warm, even resonance and crisp articulation. The texture is smooth with a bright, engaging quality suited to broadcast delivery. The speaker uses expressive pitch variation and an animated, conversational pace, shifting into a playful, humorous tone with a brief laugh. An American accent is audible. The overall presentation sounds youthful to middle-adult, with a lively, expressive delivery.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "229810bd48f89d1d6c9fdd2253ec9a5107ddbb2618927abfad4115a4d787fac1",
+      "metadataSha256": "7304e5c3ecc5de6ee2146d68ccc255574bc7ddf880ef23b4efcb425c52612093",
+      "referenceKey": "voice-references/20261014/229810bd48f89d1d6c9fdd2253ec9a5107ddbb2618927abfad4115a4d787fac1.mp3",
+      "metadataKey": "voice-references/20261014/229810bd48f89d1d6c9fdd2253ec9a5107ddbb2618927abfad4115a4d787fac1.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_d23c53225a0dd5d2",
+      "label": "Warm Weathervane",
+      "tag": "Warm Weathervane",
+      "description": "A feminine-presenting, middle-adult voice with a clear, bright, and conversational timbre. The delivery transitions from a polished, professional broadcast style to a lively, expressive tone with natural pauses and laughter. The pitch is mid-range with warm resonance, and the texture is smooth and clear. The speaker uses an American accent with casual conversational phrasing and occasional filler sounds.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively",
+        "Women, Warm & Soothing"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "b6eebb7b4fb9440f71c72ae23af44052047297f92297f9e76cef9b6ce354a830",
+      "metadataSha256": "6e1c646613041522494f214eac08d23ee5b480cc215406327cce2b4c2ec21bd2",
+      "referenceKey": "voice-references/20261014/b6eebb7b4fb9440f71c72ae23af44052047297f92297f9e76cef9b6ce354a830.mp3",
+      "metadataKey": "voice-references/20261014/b6eebb7b4fb9440f71c72ae23af44052047297f92297f9e76cef9b6ce354a830.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_ec96939204062128",
+      "label": "Sparkly Thermometer",
+      "tag": "Sparkly Thermometer",
+      "description": "A feminine, young-adult voice with a bright, clear, and warm resonance. The habitual tone is lively and highly expressive, shifting from a measured, moderately paced broadcast-style delivery into a faster, informal conversational rhythm. The pitch varies noticeably for emphasis, supported by clear articulation throughout the speech. This sample captures an animated and humorous performance rather than a single fixed emotional state, so the speaker's full habitual emotional range remains unestablished.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Warm & Soothing"
+      ],
+      "language": "English",
+      "accent": "General American English, with informal regional phrasing present in the later spoken portion",
+      "sha256": "51eb78b96e23695c5c80b157550f716a3d3a9ddf1b4f1a72f949d7ec52350fcc",
+      "metadataSha256": "60cfed41851b587301ac3a05de5740aa99627ff1f9f40335a5aa71d1824ebe8c",
+      "referenceKey": "voice-references/20261014/51eb78b96e23695c5c80b157550f716a3d3a9ddf1b4f1a72f949d7ec52350fcc.mp3",
+      "metadataKey": "voice-references/20261014/51eb78b96e23695c5c80b157550f716a3d3a9ddf1b4f1a72f949d7ec52350fcc.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_0bd66d669bf00430",
+      "label": "Peppy Satellite",
+      "tag": "Peppy Satellite",
+      "description": "A feminine, mid-to-high pitched voice with clear articulation and a bright, lively timbre. The speaker transitions from a professional broadcast delivery into a more animated, humorous, and conversational tone, showing expressive pitch variation and casual pacing. The accent sounds American, with some colloquial speech patterns. The voice maintains a consistent clarity throughout, shifting naturally between structured delivery and spontaneous reaction.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "b0f0fc51972f1761fd51c3df7ac7fa7c5317e9cf4194ce240c7ca2f33cbe78b0",
+      "metadataSha256": "98483684668f2058f4499358a928a2f21948ad63c7d7faa3f7e515a6a16768d0",
+      "referenceKey": "voice-references/20261014/b0f0fc51972f1761fd51c3df7ac7fa7c5317e9cf4194ce240c7ca2f33cbe78b0.mp3",
+      "metadataKey": "voice-references/20261014/b0f0fc51972f1761fd51c3df7ac7fa7c5317e9cf4194ce240c7ca2f33cbe78b0.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_84bddea024b10dc2",
+      "label": "Incredulous Sunbeam",
+      "tag": "Incredulous Sunbeam",
+      "description": "A clear, bright female-presenting voice with a mid-to-high pitch and smooth, articulate texture. The delivery is lively and conversational, shifting naturally between enthusiastic and incredulous tones with expressive emphasis. The voice maintains consistent clarity and moderate resonance throughout. This is a single speaker performing varied emotional expressions within a broadcast-style delivery.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "General American",
+      "sha256": "bef02c9973cd71b823d68cdd351e76e299b7d2046c990289b0f98c846c11074a",
+      "metadataSha256": "da0bd233c852dcc2f064c0f3c5729bd64907eaa42f0cfeba00482c81024a0360",
+      "referenceKey": "voice-references/20261014/bef02c9973cd71b823d68cdd351e76e299b7d2046c990289b0f98c846c11074a.mp3",
+      "metadataKey": "voice-references/20261014/bef02c9973cd71b823d68cdd351e76e299b7d2046c990289b0f98c846c11074a.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_91aba7743d37c3d1",
+      "label": "Breezy Antenna",
+      "tag": "Breezy Antenna",
+      "description": "A feminine mid-range voice with moderate resonance and clear, bright timbre. The habitual delivery is casual and animated, with informal articulation and a conversational rhythm. The sample's performed tone shifts from an upbeat broadcast-style opening to amused exasperation and then to a dry, knowing commentary, while the voice itself remains naturally clear and engaging throughout.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral",
+        "Women, Characters & Distinctive"
+      ],
+      "language": "English",
+      "accent": "General American with colloquial regional inflections",
+      "sha256": "5cc0d838f7a4cdf98ff3f7e8ee47444b0ff14d90a40e7cfabc393a085daf147d",
+      "metadataSha256": "3789a87c1885300794777ed5227a0f7d0106173fb3ac4c63e6482ecef14461de",
+      "referenceKey": "voice-references/20261014/5cc0d838f7a4cdf98ff3f7e8ee47444b0ff14d90a40e7cfabc393a085daf147d.mp3",
+      "metadataKey": "voice-references/20261014/5cc0d838f7a4cdf98ff3f7e8ee47444b0ff14d90a40e7cfabc393a085daf147d.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_8e8a3494af21bff2",
+      "label": "Glossy Microphone",
+      "tag": "Glossy Microphone",
+      "description": "A feminine, middle-adult voice with a bright, clear, mid-to-high pitch and crisp articulation. The habitual texture is smooth and resonant, suited to broadcast delivery, with a lively and expressive quality that shifts in performed tone across the excerpt. The reading pace varies from measured weather-report pacing to quicker, conversational rhythms. The overall presentation is expressive and animated, with clear pronunciation and a natural, engaging vocal presence.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "Not established",
+      "sha256": "112ff8dbf328faf8a425541945dffc85eb5ac39138e8e76dedc8d50430c9f553",
+      "metadataSha256": "0bed99eef0be8faaa55adaef95353353df67d5098bff7123f83adadf63193d99",
+      "referenceKey": "voice-references/20261014/112ff8dbf328faf8a425541945dffc85eb5ac39138e8e76dedc8d50430c9f553.mp3",
+      "metadataKey": "voice-references/20261014/112ff8dbf328faf8a425541945dffc85eb5ac39138e8e76dedc8d50430c9f553.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_80e4b285fd448f34",
+      "label": "Chatty Skyline",
+      "tag": "Chatty Skyline",
+      "description": "A feminine mid-range voice with clear articulation and moderate brightness. The delivery shifts naturally between performed news-anchor formality and relaxed, conversational commentary. Texture remains smooth with slight expressive rasp during emphatic moments. The habitual voice sounds confident and engaging, while the sample's emotion and pace reflect playful disbelief rather than defining the speaker's full range.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "General American with regional colloquial features",
+      "sha256": "f8cfcd03389fc670b4c4bc02791bf92619b751b9bbd6d813251f3006e42220d7",
+      "metadataSha256": "7924fde7c7b7ee12514f9f4dc872873cdbc899801bf3cc1fd8a4fcb094cb52e6",
+      "referenceKey": "voice-references/20261014/f8cfcd03389fc670b4c4bc02791bf92619b751b9bbd6d813251f3006e42220d7.mp3",
+      "metadataKey": "voice-references/20261014/f8cfcd03389fc670b4c4bc02791bf92619b751b9bbd6d813251f3006e42220d7.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_8d820b836c3a0e80",
+      "label": "Easy Teleprompter",
+      "tag": "Easy Teleprompter",
+      "description": "A clear, medium-pitched feminine voice with warm resonance and crisp articulation. The timbre is bright without being harsh, maintaining steady clarity throughout both formal broadcast phrasing and casual commentary. Habitual delivery is relaxed and conversational, while this excerpt adds an amused, skeptical tone with varied pacing for comedic effect. The speaker presents as a young to middle adult using an American English accent with informal regional speech patterns.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "cbed87916858d7abbd6b9e8917c8e8673a9ac466bc1c107b3ea338b01ab26eaf",
+      "metadataSha256": "9ec4fbe09552bcbe5aa6da713ae7dc6c1ffe6b36d0e12a96122a55c29e5bd21e",
+      "referenceKey": "voice-references/20261014/cbed87916858d7abbd6b9e8917c8e8673a9ac466bc1c107b3ea338b01ab26eaf.mp3",
+      "metadataKey": "voice-references/20261014/cbed87916858d7abbd6b9e8917c8e8673a9ac466bc1c107b3ea338b01ab26eaf.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_2b1598c3c75404de",
+      "label": "Zippy Highlight",
+      "tag": "Zippy Highlight",
+      "description": "A clear, mid-to-high-pitched feminine voice with a smooth, lively texture and moderate brightness. The speaker maintains sharp articulation throughout while shifting naturally between upbeat weather-report phrasing, casual commentary, and conversational aside. Habitually expressive and conversational, with dynamic pitch variations for emphasis. The excerpt displays energetic, amused, and mildly exasperated performed emotions delivered at a brisk, varied pace. An American English accent with regional colloquial phrasing is audible.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "American English with regional colloquial phrasing",
+      "sha256": "70a44eb1e1b44b2b1a5e68373ba72015c5932bdf7e1371421e6a1e07f902d215",
+      "metadataSha256": "811a698c18239027c62190f5f77efefbd74201d63e4b1eaa6c1c42496332c5df",
+      "referenceKey": "voice-references/20261014/70a44eb1e1b44b2b1a5e68373ba72015c5932bdf7e1371421e6a1e07f902d215.mp3",
+      "metadataKey": "voice-references/20261014/70a44eb1e1b44b2b1a5e68373ba72015c5932bdf7e1371421e6a1e07f902d215.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_a814a0e65dc0cd5a",
+      "label": "Tickled Sundial",
+      "tag": "Tickled Sundial",
+      "description": "A clear, mid-to-high pitched female voice with a bright, resonant timbre and strong articulation. The habitual texture is smooth and lively, conveying a casual and expressive quality. This excerpt includes shifts in performed emotion, from neutral broadcasting to amused exasperation, and an informal reading style. The pace varies naturally, with quicker animated moments alongside deliberate, emphatic pauses. An American accent is audible.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "e39b4de952b815cd46705a8964454e8e9abed23941877098b423727539350e9b",
+      "metadataSha256": "ba5cda34bdbbdf064a7eedf53ec8e4519c50d80920cd8d94c28aa6041efb8bd9",
+      "referenceKey": "voice-references/20261014/e39b4de952b815cd46705a8964454e8e9abed23941877098b423727539350e9b.mp3",
+      "metadataKey": "voice-references/20261014/e39b4de952b815cd46705a8964454e8e9abed23941877098b423727539350e9b.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_bc073e79a8829058",
+      "label": "Upbeat Pinwheel",
+      "tag": "Upbeat Pinwheel",
+      "description": "A bright and expressive feminine voice with a moderate pitch and clear, warm resonance. The habitual texture is smooth and lively, delivered with high clarity and an American English accent. The audio features a single speaker transitioning from a steady, upbeat broadcast style to a faster, conversational pace with animated exclamations and laughter, though these performed emotions do not define the voice's inherent qualities.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "67ab435476ae699150f72c1d785fd974276300ae8f57b80a9e1e4d6a4150ceab",
+      "metadataSha256": "5fa3889ea0f85b2747edd633b301f37e4fa27a70ecf47226772117194a6d65c9",
+      "referenceKey": "voice-references/20261014/67ab435476ae699150f72c1d785fd974276300ae8f57b80a9e1e4d6a4150ceab.mp3",
+      "metadataKey": "voice-references/20261014/67ab435476ae699150f72c1d785fd974276300ae8f57b80a9e1e4d6a4150ceab.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_7f3b468534e8755d",
+      "label": "Sassy Mittens",
+      "tag": "Sassy Mittens",
+      "description": "A moderately pitched feminine voice with bright, open resonance and a clear, conversational texture. The speaker delivers an amused, anecdotal performance at a moderate pace, incorporating deliberate pauses and a brief laugh. Habitually, the voice feels articulate and lightly animated, with a relaxed, informal cadence. The delivery maintains a warm, expressive quality throughout the excerpt.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "General American with informal conversational features",
+      "sha256": "a6e19169a6b0b34fda119315b1a9fd182137f78bfe21b58089d997bc50986788",
+      "metadataSha256": "e4f33c4ef9ec91d1390ae0c0aa4dc95a6c0272c6d11140d06509b8e5debd45e3",
+      "referenceKey": "voice-references/20261014/a6e19169a6b0b34fda119315b1a9fd182137f78bfe21b58089d997bc50986788.mp3",
+      "metadataKey": "voice-references/20261014/a6e19169a6b0b34fda119315b1a9fd182137f78bfe21b58089d997bc50986788.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_9674c28bb219a6b6",
+      "label": "Warm-Hearted Bonfire",
+      "tag": "Warm-Hearted Bonfire",
+      "description": "A feminine-presenting middle-adult voice with a moderate pitch, clear and resonant timbre, and a bright, expressive quality. The voice is highly articulate with a smooth texture. Habitually, the speaker uses an animated, engaging tone with varied pacing and emphatic pauses for storytelling. In this excerpt, she performs an amused, incredulous emotion with laughter and a teasing cadence. This delivery does not establish her full emotional range. She speaks English with a regional American accent, featuring colloquial grammar.",
+      "categories": [
+        "Women, Warm & Soothing",
+        "Women, Bright & Lively"
+      ],
+      "language": "English",
+      "accent": "American",
+      "sha256": "d7435105548b4e4e77e20fa63372db7def9f6ec9f90ab2d27368329f650384e5",
+      "metadataSha256": "4e6f3cb5df7ec84d78bdb9ea69c068dd8adcac8830b0dbd6a328fa46af49ff2f",
+      "referenceKey": "voice-references/20261014/d7435105548b4e4e77e20fa63372db7def9f6ec9f90ab2d27368329f650384e5.mp3",
+      "metadataKey": "voice-references/20261014/d7435105548b4e4e77e20fa63372db7def9f6ec9f90ab2d27368329f650384e5.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_aae7cb87db80ab2a",
+      "label": "Easy Breezeway",
+      "tag": "Easy Breezeway",
+      "description": "A mid-range feminine voice with clear resonance and a bright, smooth texture. The tone is conversational and expressive, with natural clarity and moderate brightness. In this excerpt, the delivery is amused and lightly incredulous, spoken at a relaxed, conversational pace with casual phrasing.",
+      "categories": [
+        "Women, Clear & Neutral",
+        "Women, Warm & Soothing"
+      ],
+      "language": "English",
+      "accent": "General American with casual colloquial phrasing",
+      "sha256": "b481314884e527b79ac2b34a5a42b0048cfb98d574523c913aae5a843b365863",
+      "metadataSha256": "86f1af72da3dd42eac5ecddd749b613e9ea01f7e8151485ce4e0833cd8b3674e",
+      "referenceKey": "voice-references/20261014/b481314884e527b79ac2b34a5a42b0048cfb98d574523c913aae5a843b365863.mp3",
+      "metadataKey": "voice-references/20261014/b481314884e527b79ac2b34a5a42b0048cfb98d574523c913aae5a843b365863.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_1a58fcdbf3b956cf",
+      "label": "Crisp Snickerdoodle",
+      "tag": "Crisp Snickerdoodle",
+      "description": "A clear, moderately pitched voice with a bright, crisp timbre and smooth resonance. The speaker uses lively pitch variations and playful emphasis, creating an expressive, conversational tone. Habitually bright and articulate, the delivery shifts naturally between amusement and casual observation. Perceived as a feminine, young-to-middle adult voice with an American English accent. The performed emotion and pace reflect a lighthearted, energetic moment rather than the speaker's complete emotional range.",
+      "categories": [
+        "Women, Bright & Lively",
+        "Women, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "American English",
+      "sha256": "1dcd020bb5bf606ba7dc96860637fb054db914da47562ae1f77c7319bb2667fe",
+      "metadataSha256": "276886af894c260c3568021b76fc2ae525711b6f5aeecaaae211de57fb894a41",
+      "referenceKey": "voice-references/20261014/1dcd020bb5bf606ba7dc96860637fb054db914da47562ae1f77c7319bb2667fe.mp3",
+      "metadataKey": "voice-references/20261014/1dcd020bb5bf606ba7dc96860637fb054db914da47562ae1f77c7319bb2667fe.json",
+      "testedModel": "drama-3"
+    },
+    {
+      "id": "ref_34ed53a7886fa1a5",
+      "label": "Calm Tradewind",
+      "tag": "Calm Tradewind",
+      "description": "A deep, moderately low-pitched voice with warm chest resonance and a smooth, slightly textured timbre. The delivery is clear and unhurried with deliberate pauses, conveying a calm, settled quality rather than an extreme emotional state. The voice presents as masculine with a middle-adult impression, speaking English with a distinct Caribbean accent.",
+      "categories": [
+        "Men, Deep & Resonant",
+        "Men, Warm & Soothing",
+        "Men, Clear & Neutral"
+      ],
+      "language": "English",
+      "accent": "Caribbean",
+      "sha256": "8d51a2f580dd4993c715eb2c73e5c3a406c71744f3140932e2541d12128bbb71",
+      "metadataSha256": "3a290a05efebe9e0369c5d1ba90642198a12392e92e5d078ca36dae937d18991",
+      "referenceKey": "voice-references/20261014/8d51a2f580dd4993c715eb2c73e5c3a406c71744f3140932e2541d12128bbb71.mp3",
+      "metadataKey": "voice-references/20261014/8d51a2f580dd4993c715eb2c73e5c3a406c71744f3140932e2541d12128bbb71.json",
+      "testedModel": "drama-3"
     }
   ]
 }
