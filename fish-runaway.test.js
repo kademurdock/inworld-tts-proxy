@@ -162,7 +162,7 @@ function loadChunk(answers) {
     console: { warn: (l) => warned.push(l), log: (l) => logged.push(l) }, Buffer, Math, AbortController, setTimeout, clearTimeout, process,
     noteChunk: (k) => noted.push(k), sleep: async () => {}, fishLimiter: async (fn) => fn(),
     fishBody: require('./private-voice-references').fishBody, selectedReferenceStore: null,
-    fishPacedText, fishApiSpeed: require('./pace').fishApiSpeed, capFishPauses,
+    fishPacedText, fishApiSpeed: require('./pace').fishApiSpeed, fishStretchRatio: require('./pace').fishStretchRatio, capFishPauses,
     fishRunaway: { ...runaway, checkTake: (text, wav, opts) => runaway.checkTake(text, wav, { ...opts, log: (l) => logged.push(l) }) },
     FISH_API_KEY: 'fake-test-key', FISH_TIMEOUT_MS: 1000, FISH_SAMPLE_RATE: RATE, FISH_TTS_LATENCY: 'normal',
     FISH_TEMPERATURE: 0.9, FISH_TEMPERATURE_MAX: 1, FISH_TOP_P: 0.85, FISH_NORMALIZE: false, FISH_TEMPERATURE_BY_DELIVERY: {},

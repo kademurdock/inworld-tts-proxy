@@ -49,8 +49,9 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishApiSpeed, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
+const { fishPacedText, fishApiSpeed, fishStretchOn, fishStretchRatio, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
 const fishRunaway = require('./fish-runaway');
+const { fishStretch } = require('./fish-stretch');
 const { createDirector, directorOn } = require('./director');
 const { calmOn: talkCalmOn, calmTags: calmTalkTags, calmDirection: calmTalkDirection } = require('./talk-calm');
 const fishDirector = createDirector();
@@ -94,7 +95,8 @@ const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|bal
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
 // like the people they were cloned from. Listener pace is an actor instruction;
 // numeric Fish prosody speed stays at 1.0, including when an old client sends speed,
-// except chat at Brisk and Quick when FISH_PACE_SPEED=1 (pace.js fishApiSpeed).
+// except chat at Brisk and Quick when FISH_PACE_SPEED=1 (pace.js fishApiSpeed). FISH_PACE_STRETCH=1
+// keeps it at 1.0 and speeds those up with Praat instead (fish-stretch.js).
 /* Part 117.7 (Sep 2 2026), her ask once the hallucinations stopped: "is there a
  * way to turn the temp up now? They could be more expressive sometimes. It's
  * like some phrases are great and others are flat." Fish's range is 0–1
@@ -1543,7 +1545,7 @@ const MAX_CONCURRENT_FISH_CALLS = parseInt(process.env.FISH_MAX_CONCURRENT || "6
 const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
 const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
 
-async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null, talk = false) {
+async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null, talk = false, keepTake = null) {
   // Fish silently falls back to S2.1 Pro for an unknown header. Refuse typos
   // before a paid request, while keeping Inworld and the explicit rollback usable.
   if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
@@ -1602,6 +1604,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   let pcm = Buffer.from(await response.arrayBuffer());
   if (!pcm.length) throw new Error("Empty audio from Fish API");
   if (pcm.length % 2) pcm = pcm.slice(0, pcm.length - 1); // s16 alignment guard
+  if (keepTake) keepTake.pcm = pcm; // before the cap below: see fishStretchTake
   // Oct 16 2026: Brisk and Quick shorten silences inside the clip (pace.js); words untouched.
   pcm = capFishPauses(pcm, speakingRate, FISH_SAMPLE_RATE);
   const fmt = { numChannels: 1, sampleRate: FISH_SAMPLE_RATE, bitsPerSample: 16 };
@@ -1628,7 +1631,9 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
       throw err;
     }
   }
-  return fishLimiter(async () => {
+  const ratio = fishStretchRatio(speakingRate, { talk: Boolean(talk) });
+  const uncapped = ratio !== 1 ? {} : null;
+  const wav = await fishLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     // Oct 18 2026: a take that ran far past its words (fish-runaway.js) is asked for once more
@@ -1636,7 +1641,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
     let ranOn = null;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk);
+        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk, uncapped);
         // Oct 17 2026: how long each Fish chunk runs for the words it was given (fish-runaway.js).
         const take = fishRunaway.checkTake(text, buf, { rate: speakingRate, talk, delivery, voice: fishModelId, sampleRate: FISH_SAMPLE_RATE });
         if (take && take.ranOn) {
@@ -1668,6 +1673,25 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
     }
     throw lastErr;
   });
+  return uncapped ? fishStretchTake(wav, uncapped.pcm, ratio, speakingRate) : wav;
+}
+
+/* Oct 30 2026, Kade: "Grat actually sounded really naturally" (fish-stretch.js). Where it sits in
+ * the chain, on purpose: the run-on guard above has already judged the clip at the length its limits
+ * were measured on (unstretched, pauses capped); the Fish slot has been given back, so Praat never
+ * holds a provider slot; and it works from the take before the pause cap, with the cap applied
+ * afterwards, so a capped silence in what she hears is the pace's cap and not the cap sped up. When
+ * the worker gives the clip back untouched, the clip is exactly what it would have been anyway. */
+async function fishStretchTake(wav, pcm, ratio, speakingRate) {
+  try {
+    const stretched = await fishStretch.stretch(pcm, ratio, FISH_SAMPLE_RATE);
+    if (stretched === pcm) return wav;
+    const capped = capFishPauses(stretched, speakingRate, FISH_SAMPLE_RATE);
+    return Buffer.concat([buildWavHeader(capped.length, { numChannels: 1, sampleRate: FISH_SAMPLE_RATE, bitsPerSample: 16 }), capped]);
+  } catch (err) {
+    console.warn(`[TTS] fish stretch: ${err.name} -- original audio kept`);
+    return wav;
+  }
 }
 
 app.get("/health", async (req, res) => {
@@ -1702,6 +1726,7 @@ app.get("/health", async (req, res) => {
     fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
     inworldWriter: { on: inworldWriterOn(), model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) },
     fishRunaway: fishRunaway.runawayHealth(),
+    fishStretch: { on: fishStretchOn(), ...fishStretch.health() },
     fishTalk: { direction: Boolean(fishTalkDirection()), fillers: process.env.FISH_TALK_FILLERS === "1", sounds: process.env.FISH_TALK_SOUNDS === "1", sentencePauses: process.env.FISH_SENTENCE_PAUSES !== "0", naturalPauseCapMs: Number(process.env.FISH_NATURAL_PAUSE_CAP_MS) || 0 },
     ...(storage ? { selectedStorage: {
       status: storage.ok ? "ok" : "error",
@@ -5732,6 +5757,7 @@ app.post("/v1/audio/transcriptions", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);
+  if (fishStretchOn()) fishStretch.warm();
   /* Part 180.5: listener reports move voices between picker sections on
    * their own — replay earlier moves from the board at boot, then sweep the
    * open rows every few minutes. Pure half + tests in voice-moves.js. */

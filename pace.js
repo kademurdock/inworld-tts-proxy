@@ -28,8 +28,8 @@ const FISH_PACES = [
   { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.', pauseCapMs: 500, thoughtGapMs: 500 },
   { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.', pauseCapMs: 500, thoughtGapMs: 500 },
   { value: 1, name: 'Natural', direction: '', pauseCapMs: 500, thoughtGapMs: 450 },
-  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 450, thoughtGapMs: 400, apiSpeed: 1.05 },
-  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 350, thoughtGapMs: 350, apiSpeed: 1.1 },
+  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 450, thoughtGapMs: 400, apiSpeed: 1.05, stretch: 1.05 },
+  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 350, thoughtGapMs: 350, apiSpeed: 1.1, stretch: 1.1 },
 ];
 
 function fishPace(rate) {
@@ -43,8 +43,22 @@ function fishPace(rate) {
  * Quick hears it, only on chat speech. Natural, the slower paces and every reading path stay at 1.0.
  * Switch: FISH_PACE_SPEED=1 turns it on; anything else leaves prosody.speed at 1.0. */
 function fishApiSpeed(rate, { talk = false, source = process.env } = {}) {
-  if (!talk || source.FISH_PACE_SPEED !== '1') return 1;
+  if (!talk || fishStretchOn(source) || source.FISH_PACE_SPEED !== '1') return 1; // never both stretches
   return fishPace(rate).apiSpeed || 1;
+}
+
+/* Oct 30 2026, Kade, later the same day, the same take through several methods: "Grat is my favorite
+ * ... Grat actually sounded really naturally." Praat's overlap-add (fish-stretch.js) replaces Fish's
+ * own speed, with the same reach and the amounts she has heard. The stretch column in FISH_PACES is
+ * the one line to change to widen them. Switch: FISH_PACE_STRETCH=1 turns it on; anything else leaves
+ * FISH_PACE_SPEED in charge, as before. */
+function fishStretchOn(source = process.env) {
+  return source.FISH_PACE_STRETCH === '1';
+}
+
+function fishStretchRatio(rate, { talk = false, source = process.env } = {}) {
+  if (!talk || !fishStretchOn(source)) return 1;
+  return fishPace(rate).stretch || 1;
 }
 
 /* Oct 16 2026, a friend of Kade's: Fish voices "sound like they're reading a script", Inworld
@@ -401,4 +415,4 @@ function padFishTail(pcm, rate, sampleRate = 24000) {
   return Buffer.concat([pcm.subarray(0, s.length * 2), Buffer.alloc(addSamples * 2)]);
 }
 
-module.exports = { FISH_PACES, fishPace, fishApiSpeed, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail };
+module.exports = { FISH_PACES, fishPace, fishApiSpeed, fishStretchOn, fishStretchRatio, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail };
