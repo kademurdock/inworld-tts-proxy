@@ -96,7 +96,7 @@ const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|bal
 // like the people they were cloned from. Listener pace is an actor instruction;
 // numeric Fish prosody speed stays at 1.0, including when an old client sends speed,
 // except chat at Brisk and Quick when FISH_PACE_SPEED=1 (pace.js fishApiSpeed). FISH_PACE_STRETCH=1
-// keeps it at 1.0 and speeds those up with Praat instead (fish-stretch.js).
+// keeps it at 1.0 and speeds those up with Praat instead (fish-stretch.js), live calls aside.
 /* Part 117.7 (Sep 2 2026), her ask once the hallucinations stopped: "is there a
  * way to turn the temp up now? They could be more expressive sometimes. It's
  * like some phrases are great and others are flat." Fish's range is 0–1
@@ -1560,7 +1560,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     text: fishPacedText(text, speakingRate, { talk }), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
     temperature: Math.min(FISH_TEMPERATURE_MAX, (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE),
     top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
-    prosody: { speed: fishApiSpeed(speakingRate, { talk: Boolean(talk) }) }, // pace.js: chat at Brisk and Quick only
+    prosody: { speed: fishApiSpeed(speakingRate, { talk: Boolean(talk), liveCall: talk.liveCall }) }, // pace.js: chat at Brisk and Quick only
   };
   const encoded = await fishBody(payload, fishModelId, selectedReferenceStore, reference);
   const ac = new AbortController();
@@ -1631,7 +1631,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
       throw err;
     }
   }
-  const ratio = fishStretchRatio(speakingRate, { talk: Boolean(talk) });
+  const ratio = fishStretchRatio(speakingRate, { talk: Boolean(talk), liveCall: talk.liveCall });
   const uncapped = ratio !== 1 ? {} : null;
   const wav = await fishLimiter(async () => {
     const maxAttempts = 4;
@@ -3683,6 +3683,9 @@ app.post("/v1/audio/speech", async (req, res) => {
     const talks = (!isVoicePreview || auditionKind === "conversation") && delivery !== "STABLE" && !ttsSeat.startsWith("reading:") &&
       !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]);
     const fishTalks = isFishVoice && talks;
+    // Oct 30 2026: a phone call says telephony=1; a web call only names itself, bridge-voice. Both
+    // stay out of Praat (pace.js fishStretchRatio), like the writer below: they cannot wait.
+    const liveCall = req.query.telephony === "1" || String(req.get("x-kade-caller") || "").startsWith("bridge-");
     // Oct 17 2026 (Kade: "Build the voice director in for Fish voice messages"): Fish chat
     // pieces are marked up the way Fish's own Drama3 examples are (director.js), before the
     // sentence pauses are added, so a director [pause] stands in for the [short pause] there.
@@ -3766,7 +3769,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     const wavBuffers = await Promise.all(
       chunks.map((chunk, ci) =>
         isFishVoice
-          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: talkSeed, fillers: fillersAsked, sounds: soundsAsked })
+          ? fishSynthesizeChunk(chunk, inworldVoice.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, fishTalks && { turn: ci, seed: talkSeed, fillers: fillersAsked, sounds: soundsAsked, liveCall })
           : (() => {
               const { text: liftedText, instruction } = inworldLifted[ci];
               const filled = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;

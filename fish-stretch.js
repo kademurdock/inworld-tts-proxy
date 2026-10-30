@@ -35,8 +35,10 @@ function intEnv(name, fallback, source = process.env) {
 
 /* python: the interpreter, FISH_STRETCH_PYTHON. timeoutMs: the longest any clip waits on this,
  * queue included; it is also how long one clip may run in the worker before the worker is replaced.
- * startWaitMs: how long a clip waits on a worker that is still importing. */
-function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1000, startLimitMs = 30000, backoffMs = 1000, backoffMaxMs = 300000, log = console.warn } = {}) {
+ * startWaitMs: how long a clip waits on a worker that is still importing. healthyClips, healthyMs:
+ * the good clips and time up it takes before the restart wait starts over. Both, because one good
+ * clip proves nothing about the next, and neither does an idle minute on a quiet server. */
+function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1000, startLimitMs = 30000, backoffMs = 1000, backoffMaxMs = 300000, healthyClips = 5, healthyMs = 60000, log = console.warn } = {}) {
   const limit = () => timeoutMs || intEnv('FISH_STRETCH_TIMEOUT_MS', 2000);
   let child = null;
   let ready = false;
@@ -107,6 +109,8 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
       workerDown(child, 'worker could not start');
       return;
     }
+    const startedAt = Date.now();
+    let goodClips = 0;
     let complaint = '';
     let head = Buffer.alloc(0);
     let body = null;
@@ -132,7 +136,7 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
         if (reply.status === OK) note('worker returned the wrong length');
         settle(job, job.pcm);
       } else {
-        delay = backoffMs;
+        if (++goodClips >= healthyClips && Date.now() - startedAt >= healthyMs) delay = backoffMs;
         settle(job, out);
       }
       pump();

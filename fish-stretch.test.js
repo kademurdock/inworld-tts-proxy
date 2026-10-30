@@ -90,6 +90,15 @@ test('never both stretches: FISH_PACE_STRETCH keeps prosody.speed at 1, FISH_PAC
   assert.equal(fishApiSpeed(1.5, { talk: true, source: { FISH_PACE_SPEED: '1', FISH_PACE_STRETCH: '0' } }), 1.1);
 });
 
+test('a live call is out of the worker\'s reach and keeps Fish\'s own speed, still never both', () => {
+  const both = { FISH_PACE_STRETCH: '1', FISH_PACE_SPEED: '1' };
+  for (const rate of [1.2, 1.5]) assert.equal(fishStretchRatio(rate, { talk: true, liveCall: true, source: ON }), 1);
+  assert.equal(fishApiSpeed(1.2, { talk: true, liveCall: true, source: both }), 1.05);
+  assert.equal(fishApiSpeed(1.5, { talk: true, liveCall: true, source: both }), 1.1);
+  assert.equal(fishApiSpeed(1.5, { talk: true, liveCall: true, source: ON }), 1, 'FISH_PACE_SPEED off stays off');
+  assert.equal(fishApiSpeed(1.5, { liveCall: true, source: both }), 1, 'not chat');
+});
+
 // ── the module with no Python behind it ────────────────────────────────────────────────────────
 test('what is not worth stretching never starts a worker and comes back as the same buffer', async () => {
   const logged = [];
@@ -272,6 +281,60 @@ test('a worker that never comes up delays one clip by the start wait, not every 
     assert.ok(await until(() => logged.some((l) => /too long to start/.test(l))), logged.join('\n'));
   }));
 
+// How long each worker in a row is gone for: from the old one going down to the new one being ready.
+async function restartGaps(s, rounds, { clips = 1, spacedMs = 0 } = {}) {
+  const pcm = voiced(1);
+  const gaps = [];
+  s.warm();
+  for (let i = 0; i < rounds; i++) {
+    assert.ok(await until(() => s.health().ready), 'a worker came up');
+    const pid = s.pid();
+    await sleep(spacedMs);
+    for (let c = 0; c < clips; c++) assert.notEqual(await s.stretch(pcm, 1.1, RATE), pcm, 'a good clip');
+    await s.stretch(pcm, 1.1, RATE); // the one it hangs on, or finds it gone
+    assert.ok(await until(() => s.pid() !== pid), 'the worker went down');
+    const down = Date.now();
+    assert.ok(await until(() => s.pid() && s.health().ready), 'a new worker came up');
+    gaps.push(Date.now() - down);
+  }
+  return gaps;
+}
+// Each wait doubles: 40, 80, 160, 320, 640 ms. Timers never fire early, the 15 ms poll can make a gap look short.
+function assertClimbing(gaps) {
+  gaps.forEach((gap, i) => assert.ok(gap >= 40 * 2 ** i - 20, `wait ${i} should be at least ${40 * 2 ** i} ms: ${gaps.join(', ')}`));
+}
+const GOOD_CLIP = '  send(n,0,pcm[:int(len(pcm)/ratio)//2*2])\n';
+const BACKOFF = { timeoutMs: 100, backoffMs: 40 };
+
+// Reviewers, on the first version: one good clip reset the wait, so a worker in a bad state cost a
+// 2 s stall again and again, or paid Python's imports every 1.4 s, and the climb never started.
+test('a worker that answers one clip and then hangs is replaced further and further apart', { skip: NEEDS_PYTHON },
+  fakeRun(`send(0,0)\n${FAKE_LOOP}${GOOD_CLIP}  time.sleep(60)\n`, BACKOFF, async (s) => {
+    assertClimbing(await restartGaps(s, 5));
+  }));
+
+test('a worker that answers one clip and then dies is replaced further and further apart', { skip: NEEDS_PYTHON },
+  fakeRun(`send(0,0)\n${FAKE_LOOP}${GOOD_CLIP}  sys.exit(1)\n`, BACKOFF, async (s) => {
+    assertClimbing(await restartGaps(s, 5));
+  }));
+
+test('time up alone is not health, on a quiet server one clip can come a minute after the start', { skip: NEEDS_PYTHON },
+  fakeRun(`send(0,0)\n${FAKE_LOOP}${GOOD_CLIP}  sys.exit(1)\n`, { ...BACKOFF, healthyMs: 1 }, async (s) => {
+    assertClimbing(await restartGaps(s, 5, { spacedMs: 5 }));
+  }));
+
+test('good clips alone are not health, a worker that dies every few clips still climbs', { skip: NEEDS_PYTHON },
+  fakeRun(`send(0,0)\nk=0\n${FAKE_LOOP}  k+=1\n${GOOD_CLIP}  if k==2: sys.exit(1)\n`, { ...BACKOFF, healthyClips: 1 }, async (s) => {
+    assertClimbing(await restartGaps(s, 5, { clips: 2 }));
+  }));
+
+test('a worker that has answered its clips and stayed up starts the wait over', { skip: NEEDS_PYTHON },
+  fakeRun(`send(0,0)\nk=0\n${FAKE_LOOP}  k+=1\n${GOOD_CLIP}  if k==3: sys.exit(1)\n`, { timeoutMs: 100, backoffMs: 400, healthyClips: 3, healthyMs: 60 }, async (s) => {
+    const gaps = await restartGaps(s, 3, { clips: 3, spacedMs: 80 });
+    // Climbing, the third wait would be 1600 ms.
+    assert.ok(gaps[2] >= 380 && gaps[2] < 1200, `${gaps.join(', ')}`);
+  }));
+
 // ── where it sits: the real fishSynthesizeChunk ────────────────────────────────────────────────
 const source = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
 const cut = (from, to) => { const i = source.indexOf(from); return source.slice(i, source.indexOf(to, i)); };
@@ -358,8 +421,8 @@ test('even a stretch that breaks its promise cannot lose the reply', async () =>
   assert.match(run.state.warned[0], /^\[TTS\] fish stretch: Error -- original audio kept$/);
 });
 
-test('Natural, the slower paces and anything not chat never reach the worker', async () => {
-  for (const [rate, talk] of [[1, TALK], [0.9, TALK], [0.75, TALK], [undefined, TALK], [1.5, false], [1.2, false]]) {
+test('Natural, the slower paces, anything not chat and a live call never reach the worker', async () => {
+  for (const [rate, talk] of [[1, TALK], [0.9, TALK], [0.75, TALK], [undefined, TALK], [1.5, false], [1.2, false], [1.5, { turn: 0, liveCall: true }]]) {
     const run = loadChunk({ takes: [voiced(2)], stretch: copy });
     await run.synthesize('Sure, that works for me.', 'legacy-id', rate, undefined, talk);
     assert.equal(run.state.asked.length, 0, `${rate} ${Boolean(talk)}`);
@@ -393,9 +456,9 @@ async function bootProxy(PORT, extra) {
   const url = `http://127.0.0.1:${PORT}`;
   const health = async () => (await (await fetch(`${url}/health`)).json()).fishStretch;
   const INPUT = 'I finally finished the quilt for my sister last night and it came out better than I hoped.';
-  async function say(extraBody, headers = {}) {
+  async function say(extraBody, headers = {}, query = '') {
     const before = rows().length;
-    const r = await fetch(`${url}/v1/audio/speech`, {
+    const r = await fetch(`${url}/v1/audio/speech${query}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ voice: 'fish:fixture', input: INPUT, ...extraBody }),
     });
     assert.equal(r.status, 200, log.slice(-2000));
@@ -459,6 +522,29 @@ test('real handler: with the worker broken, audio still returns, unstretched, so
     const lines = p.log().split('\n').filter((l) => l.includes('fish stretch:'));
     assert.equal(lines.length, 1);
     assert.doesNotMatch(lines[0], /quilt|sister/);
+  } finally { await p.stop(); }
+});
+
+// The bridge sends a call's rate as speed: a saved rate, the agent's own, or "talk faster". Phone
+// calls carry telephony=1; web calls do not, only the caller name bridge-voice.
+test('real handler: live calls never ask the worker and keep the speed they have today', async () => {
+  const p = await bootProxy('31898', { FISH_STRETCH_PYTHON: MISSING });
+  try {
+    const asked = async () => (await p.health()).asked;
+    const speedOf = ({ calls }) => { assert.equal(calls.length, 1); return calls[0].body.prosody.speed; };
+    assert.equal(speedOf(await p.say({ speed: 1.5 })), 1, 'chat is the worker\'s');
+    assert.equal(await asked(), 1, 'chat asks');
+    for (const [rate, speed, headers, query] of [
+      [1.5, 1.1, { 'x-kade-caller': 'bridge-phone' }, '?telephony=1'],
+      [1.25, 1.05, { 'x-kade-caller': 'bridge-phone' }, '?telephony=1'],
+      [1.5, 1.1, {}, '?telephony=1'],
+      [1.5, 1.1, { 'x-kade-caller': 'bridge-voice' }, ''],
+    ]) {
+      assert.equal(speedOf(await p.say({ speed: rate }, headers, query)), speed, `${rate} ${query} ${JSON.stringify(headers)}`);
+      assert.equal(await asked(), 1, `${rate} ${query} ${JSON.stringify(headers)}: no worker`);
+    }
+    assert.equal(speedOf(await p.say({ speed: 1.5 }, { 'x-kade-caller': 'fork-tts' })), 1, 'the platform\'s voice messages are chat');
+    assert.equal(await asked(), 2);
   } finally { await p.stop(); }
 });
 

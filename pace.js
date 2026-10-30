@@ -42,8 +42,8 @@ function fishPace(rate) {
  * so "we'll have to make due wit the lowest speed settings on api." Only someone who chose Brisk or
  * Quick hears it, only on chat speech. Natural, the slower paces and every reading path stay at 1.0.
  * Switch: FISH_PACE_SPEED=1 turns it on; anything else leaves prosody.speed at 1.0. */
-function fishApiSpeed(rate, { talk = false, source = process.env } = {}) {
-  if (!talk || fishStretchOn(source) || source.FISH_PACE_SPEED !== '1') return 1; // never both stretches
+function fishApiSpeed(rate, { talk = false, liveCall = false, source = process.env } = {}) {
+  if (!talk || (fishStretchOn(source) && !liveCall) || source.FISH_PACE_SPEED !== '1') return 1; // never both stretches
   return fishPace(rate).apiSpeed || 1;
 }
 
@@ -51,13 +51,14 @@ function fishApiSpeed(rate, { talk = false, source = process.env } = {}) {
  * ... Grat actually sounded really naturally." Praat's overlap-add (fish-stretch.js) replaces Fish's
  * own speed, with the same reach and the amounts she has heard. The stretch column in FISH_PACES is
  * the one line to change to widen them. Switch: FISH_PACE_STRETCH=1 turns it on; anything else leaves
- * FISH_PACE_SPEED in charge, as before. */
+ * FISH_PACE_SPEED in charge, as before. A live call stays out and sounds as it did with the switch off:
+ * the listener is on the line and a stuck worker costs up to 2 s. */
 function fishStretchOn(source = process.env) {
   return source.FISH_PACE_STRETCH === '1';
 }
 
-function fishStretchRatio(rate, { talk = false, source = process.env } = {}) {
-  if (!talk || !fishStretchOn(source)) return 1;
+function fishStretchRatio(rate, { talk = false, liveCall = false, source = process.env } = {}) {
+  if (!talk || liveCall || !fishStretchOn(source)) return 1;
   return fishPace(rate).stretch || 1;
 }
 
