@@ -422,9 +422,9 @@ test('even a stretch that breaks its promise cannot lose the reply', async () =>
 });
 
 test('Natural, the slower paces, anything not chat and a live call never reach the worker', async () => {
-  for (const [rate, talk] of [[1, TALK], [0.9, TALK], [0.75, TALK], [undefined, TALK], [1.5, false], [1.2, false], [1.5, { turn: 0, liveCall: true }]]) {
+  for (const [rate, talk, options] of [[1, TALK], [0.9, TALK], [0.75, TALK], [undefined, TALK], [1.5, false], [1.2, false], [1.5, TALK, { liveCall: true }]]) {
     const run = loadChunk({ takes: [voiced(2)], stretch: copy });
-    await run.synthesize('Sure, that works for me.', 'legacy-id', rate, undefined, talk);
+    await run.synthesize('Sure, that works for me.', 'legacy-id', rate, undefined, talk, options);
     assert.equal(run.state.asked.length, 0, `${rate} ${Boolean(talk)}`);
   }
 });

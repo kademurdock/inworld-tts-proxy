@@ -27,7 +27,7 @@
  * clips over 140 characters ran on). */
 const LIMIT = { base: 3, perChar: 0.16, perTag: 1.5 };
 
-const { fishPace, fishPacedText } = require('./pace');
+const { fishPace, fishExactRate, fishPacedText } = require('./pace');
 
 // Little sounds and pauses take time but carry no characters.
 const SOUND_TAG = /\[[^\]\n]*(?:laugh|chuckl|giggl|sigh|breath|inhale|exhale|throat|cough|gasp|snicker|snort|scoff|yawn)[^\]\n]*\]/gi;
@@ -103,13 +103,13 @@ function describeFishChunk(m, extra = {}) {
 // logged. text/rate/talk are fishSynthesizeChunkOnce's own arguments (the paced text is rebuilt
 // the same way; it is deterministic). Returns null when the switch is off; otherwise the
 // measurement plus its limit, whether it ran on, and whether the guard wants a fresh take.
-function checkTake(text, wav, { rate, talk = false, delivery, voice, sampleRate = 24000, log = console.log } = {}) {
+function checkTake(text, wav, { rate, talk = false, exact = false, delivery, voice, sampleRate = 24000, log = console.log } = {}) {
   const mode = runawayMode();
   if (mode === 'off') return null;
-  const m = measureFishChunk(fishPacedText(text, rate, { talk }), wav, sampleRate);
+  const m = measureFishChunk(fishPacedText(text, rate, { talk, exact }), wav, sampleRate);
   const limit = runawayLimitSeconds(m);
   const ranOn = m.seconds > limit;
-  log(describeFishChunk(m, { pace: fishPace(rate).name, talk: talk ? 'yes' : 'no', delivery: delivery || 'DEFAULT', voice,
+  log(describeFishChunk(m, { ...(exact ? { speed: fishExactRate(rate) } : { pace: fishPace(rate).name }), talk: talk ? 'yes' : 'no', delivery: delivery || 'DEFAULT', voice,
     limit: limit.toFixed(2), ...(ranOn ? { ranOn: 'yes' } : {}) }));
   return { ...m, limit, ranOn, retry: ranOn && mode === 'retry' };
 }

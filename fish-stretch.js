@@ -6,6 +6,18 @@
  * of work per second of speech, but 360 ms to import Python and Praat, hence one long-lived worker
  * and not a process per clip.
  *
+ * The same evening, after hearing a whole set of amounts: "we need Prat as the fish speed controler
+ * in all methods that use fish." With FISH_SPEED_EXACT=1 (pace.js) every Fish clip with a speed
+ * comes here, so each one says which lane it is in, and that sets how long its caller can wait:
+ *   call     someone on the line: about 600 ms, and first in the queue
+ *   chat     a voice message: 2 s, FISH_STRETCH_TIMEOUT_MS
+ *   reading  a book or a described video, nobody at the edge of their seat: 20 s, and the clip
+ *            lives through one worker restart, because a clip at the wrong speed costs more than
+ *            the wait
+ * A clip with no lane (FISH_PACE_STRETCH, the switch being off) behaves as it always did. How long a
+ * clip may hold the worker is a separate limit from any of these, so a patient clip can never leave a
+ * stuck worker hanging for its whole 20 s.
+ *
  * This file's one promise: stretch() never rejects and never loses a clip. If the worker is
  * missing, dead, slow or wrong, the caller gets the very same buffer back, inside timeoutMs, and
  * one short line goes to the log (never any spoken words; the worker only ever sees audio). The
@@ -27,31 +39,49 @@ const MAX_SECONDS = 90;
 const MAX_QUEUE = 32;
 const LENGTH_TOLERANCE = 0.1;
 const LOG_EVERY_MS = 30000;
+const BACKOFF_MAX_MS = 30000;
+// A long clip is allowed more of the worker: 47 s of speech is not stuck at 2 s on a busy server.
+const STUCK_MS_PER_SECOND = 100;
+const CALL_PATIENCE_MS = 600;
+const READING_PATIENCE_MS = 20000;
 
 function intEnv(name, fallback, source = process.env) {
   const value = parseInt(source[name], 10);
   return value > 0 ? value : fallback;
 }
 
-/* python: the interpreter, FISH_STRETCH_PYTHON. timeoutMs: the longest any clip waits on this,
- * queue included; it is also how long one clip may run in the worker before the worker is replaced.
- * startWaitMs: how long a clip waits on a worker that is still importing. healthyClips, healthyMs:
+/* python: the interpreter, FISH_STRETCH_PYTHON. timeoutMs: the longest a chat clip or one with no
+ * lane waits on this, queue included; it is also how long a clip with no lane may run in the worker
+ * before the worker is replaced. stuckMs (FISH_STRETCH_STUCK_MS, default timeoutMs): that same limit
+ * for a clip with a lane, scaled up for a long clip. callMs, readingMs (FISH_STRETCH_CALL_MS,
+ * FISH_STRETCH_READING_MS): the other lanes' patience. startWaitMs: how long a clip waits on a worker that is still importing. healthyClips, healthyMs:
  * the good clips and time up it takes before the restart wait starts over. Both, because one good
  * clip proves nothing about the next, and neither does an idle minute on a quiet server. */
-function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1000, startLimitMs = 30000, backoffMs = 1000, backoffMaxMs = 300000, healthyClips = 5, healthyMs = 60000, log = console.warn } = {}) {
+function createFishStretch({ python, script = WORKER, timeoutMs, stuckMs, callMs, readingMs, startWaitMs = 1000, startLimitMs = 30000, backoffMs = 1000, backoffMaxMs = BACKOFF_MAX_MS, healthyClips = 5, healthyMs = 60000, log = console.warn } = {}) {
   const limit = () => timeoutMs || intEnv('FISH_STRETCH_TIMEOUT_MS', 2000);
+  const stuckLimit = () => stuckMs || intEnv('FISH_STRETCH_STUCK_MS', limit());
+  const lanes = {
+    call: { patienceMs: () => callMs || intEnv('FISH_STRETCH_CALL_MS', CALL_PATIENCE_MS), first: true },
+    chat: { patienceMs: limit },
+    reading: { patienceMs: () => readingMs || intEnv('FISH_STRETCH_READING_MS', READING_PATIENCE_MS), patient: true },
+  };
   let child = null;
   let ready = false;
   let startWaitedOut = false;
   let stopped = false;
   let startTimer = null;
   let respawnTimer = null;
+  let respawnAt = 0;
+  // Workers lost since one last did its job. One loss is a blip worth waiting out; after a second,
+  // nobody waits (a broken install must not cost every clip of a book its 20 s).
+  let losses = 0;
   let stuckTimer = null;
   let delay = backoffMs;
   let nextId = 1;
   let current = null;
   const queue = [];
   const counts = { asked: 0, stretched: 0, kept: 0, restarts: 0 };
+  const slowest = { ms: 0, seconds: 0 };
   let lastProblem = null;
   let lastSaid = { problem: null, at: 0 };
 
@@ -79,11 +109,22 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
     clearTimeout(stuckTimer);
     try { proc.kill(); } catch {}
     if (!stopped) note(problem);
+    losses++;
     const waiting = queue.splice(0);
     if (current) waiting.unshift(current);
     current = null;
-    for (const job of waiting) settle(job, job.pcm);
+    // A patient clip, the one the worker went down on included, goes again on the next worker, if
+    // this is the first loss and that worker can be up in time. Only once per clip: one that takes
+    // down two workers is not going to stretch.
+    const now = Date.now();
+    for (const job of waiting) {
+      if (!stopped && !job.done && job.patient && !job.restarted && losses < 2 && job.deadline - now > delay) {
+        job.restarted = true;
+        queue.push(job);
+      } else settle(job, job.pcm);
+    }
     if (stopped) return;
+    respawnAt = now + delay;
     respawnTimer = setTimeout(() => { respawnTimer = null; counts.restarts++; start(); }, delay);
     respawnTimer.unref?.();
     delay = Math.min(delay * 2, backoffMaxMs);
@@ -137,6 +178,9 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
         settle(job, job.pcm);
       } else {
         if (++goodClips >= healthyClips && Date.now() - startedAt >= healthyMs) delay = backoffMs;
+        losses = 0;
+        const tookMs = Date.now() - job.sentAt;
+        if (tookMs > slowest.ms) { slowest.ms = tookMs; slowest.seconds = job.pcm.length / 2 / job.sampleRate; }
         settle(job, out);
       }
       pump();
@@ -193,26 +237,36 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
     head.writeDoubleLE(current.ratio, 4);
     head.writeUInt32LE(current.sampleRate, 12);
     head.writeUInt32LE(current.pcm.length, 16);
-    stuckTimer = setTimeout(() => workerDown(proc, 'worker took too long on a clip'), limit());
+    current.sentAt = Date.now();
+    stuckTimer = setTimeout(() => workerDown(proc, 'worker took too long on a clip'), current.lane
+      ? Math.max(stuckLimit(), (current.pcm.length / 2 / current.sampleRate) * STUCK_MS_PER_SECOND)
+      : limit());
     stuckTimer.unref?.();
     proc.stdin.write(head);
     proc.stdin.write(current.pcm);
   }
 
   // pcm: s16 mono. Resolves to the stretched PCM, or to this very buffer when nothing was done.
-  function stretch(pcm, ratio, sampleRate = 24000) {
+  // lane: 'call', 'chat' or 'reading' (top of this file); none is how FISH_PACE_STRETCH asks.
+  function stretch(pcm, ratio, sampleRate = 24000, { lane } = {}) {
     counts.asked++;
     const keep = () => { counts.kept++; return Promise.resolve(pcm); };
     if (!(ratio > 0) || ratio === 1 || !pcm || pcm.length % 2) return keep();
     const seconds = pcm.length / 2 / sampleRate;
     if (seconds < MIN_SECONDS || seconds > MAX_SECONDS) return keep();
-    if (stopped || respawnTimer) return keep(); // down: the backoff is running, nobody waits on it
-    if (!ready && startWaitedOut) return keep(); // one clip waited on this start; no others do
-    if (queue.length >= MAX_QUEUE) { note('worker queue is full'); return keep(); }
+    const rule = lanes[lane] || null;
+    const patienceMs = rule ? rule.patienceMs() : limit();
+    const patient = Boolean(rule && rule.patient) && losses < 2;
+    if (stopped) return keep();
+    // Down: the backoff is running. Only a patient clip waits on it, and only if it can outlast it.
+    if (respawnTimer && !(patient && respawnAt - Date.now() < patienceMs)) return keep();
+    if (!ready && startWaitedOut && !patient) return keep(); // one clip waited on this start; no others do
+    const first = Boolean(rule && rule.first);
+    if (queue.length >= MAX_QUEUE && !first) { note('worker queue is full'); return keep(); }
     start();
-    if (!child) return keep();
+    if (!child && !(patient && respawnTimer)) return keep();
     return new Promise((resolve) => {
-      const job = { id: nextId++, pcm, ratio, sampleRate, resolve, done: false, timer: null };
+      const job = { id: nextId++, pcm, ratio, sampleRate, resolve, done: false, timer: null, lane, first, patient, restarted: false, deadline: Date.now() + patienceMs, sentAt: 0 };
       if (nextId > 0xfffffff0) nextId = 1;
       job.timer = setTimeout(() => {
         // Waiting in line, or running long: this clip goes out as it is. A worker stuck on it is
@@ -222,8 +276,13 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
         if (!ready) startWaitedOut = true;
         note(ready ? 'worker was too slow for a clip' : 'worker was not ready in time');
         settle(job, pcm);
-      }, ready ? limit() : Math.min(limit(), startWaitMs));
-      queue.push(job);
+      }, ready || patient ? patienceMs : Math.min(patienceMs, startWaitMs));
+      // Live-call clips go ahead of everything but each other and the clip already in the worker.
+      if (first) {
+        let at = 0;
+        while (at < queue.length && queue[at].first) at++;
+        queue.splice(at, 0, job);
+      } else queue.push(job);
       pump();
     });
   }
@@ -239,7 +298,7 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
   }
 
   function health() {
-    return { ready, ...counts, ...(lastProblem ? { lastProblem } : {}) };
+    return { ready, ...counts, slowestClipMs: slowest.ms, slowestClipSeconds: Math.round(slowest.seconds * 10) / 10, ...(lastProblem ? { lastProblem } : {}) };
   }
 
   return { stretch, warm, stop, health, pid: () => (child && child.pid) || null };
@@ -247,4 +306,4 @@ function createFishStretch({ python, script = WORKER, timeoutMs, startWaitMs = 1
 
 const fishStretch = createFishStretch();
 
-module.exports = { createFishStretch, fishStretch };
+module.exports = { createFishStretch, fishStretch, BACKOFF_MAX_MS };

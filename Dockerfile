@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 # Same installer Nixpacks used (pnpm 9, frozen lockfile).
 RUN npm install -g pnpm@9.15.9 && pnpm install --frozen-lockfile
-# Fish chat speed at Brisk and Quick goes through Praat (fish-stretch.js, FISH_PACE_STRETCH=1). Exact
+# Fish speed goes through Praat (fish-stretch.js; FISH_SPEED_EXACT=1 everywhere, FISH_PACE_STRETCH=1 chat at Brisk and Quick). Exact
 # pins, wheels only, proven for cp311 manylinux x86_64 on Oct 30 2026 (numpy 2.5 has no Python 3.11
 # wheel). The import line fails the build, and so keeps the running deploy, if the install is broken.
 RUN apt-get update \

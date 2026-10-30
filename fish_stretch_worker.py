@@ -1,4 +1,4 @@
-"""Praat's overlap-add for Fish chat speech: one long-lived process, owned by fish-stretch.js.
+"""Praat's overlap-add for Fish speech: one long-lived process, owned by fish-stretch.js.
 
 Oct 30 2026, Kade, comparing one take through several methods: "Grat is my favorite ... Grat
 actually sounded really naturally." praat() below is the exact recipe she heard; do not improve it.

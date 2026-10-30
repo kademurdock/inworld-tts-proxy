@@ -24,7 +24,7 @@ function bootServer() {
   const context = vm.createContext({
     FISH_VOICE_PREFIX: 'fish:', process: { env: { SELECTED_VOICES_ENABLED: '1' } }, console: { log() {}, warn() {} }, require,
     ...require('./private-voice-references'), classicPicker: require('./classic').classicPicker,
-    FISH_PACES: require('./pace').FISH_PACES, FISH_TTS_MODEL: 'drama-3', FISH_REFERENCE_MODEL: 'drama-3',
+    FISH_PACES: require('./pace').FISH_PACES, fishExactOn: require('./pace').fishExactOn, FISH_TTS_MODEL: 'drama-3', FISH_REFERENCE_MODEL: 'drama-3',
   });
   vm.runInContext(cut('const OPENAI_ALIAS_MAP =', 'const MODEL_MAP =') + '\n' + cut('const VOICE_LIST =', 'const SAMPLE_TEXT ='), context);
   vm.runInContext('let selectedVoicePicker = null, selectedReferenceStore = null, selectedVoiceReport = null, selectedClassicMoves = null;\n' +

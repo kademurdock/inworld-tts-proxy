@@ -24,6 +24,14 @@ const { isDirectionTag } = require('./sounds');
 // Kade, the same night after hearing it: "the pauses should be just a tiiiiny bit shorter, like
 // between .3 and .5 seconds at most." Every pace now caps a silence inside a clip at 0.5 s or less
 // and ends a clip on 0.35-0.5 s.
+/* Oct 30 2026, Kade, after hearing the same take stretched by every amount: "All the prat clips
+ * sounded completely natural. Even the one going upwards of 150. So I'm thinking ... we need Prat as
+ * the fish speed controler in all methods that use fish ... The brisk and all that, that wasn't
+ * original, that was just because we couldn't get fish api to sound right." With FISH_SPEED_EXACT=1
+ * (fishExactOn) this table stops mattering: every request is the Natural take, Praat stretches it by
+ * the listener's own number, and the functions below take { exact: true } for it. The table and the
+ * rest of this file's pace rules remain for the switch being off and for a request that says
+ * fishSpeed: "legacy" (only the describer, for jobs it started before this change). */
 const FISH_PACES = [
   { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.', pauseCapMs: 500, thoughtGapMs: 500 },
   { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.', pauseCapMs: 500, thoughtGapMs: 500 },
@@ -42,7 +50,8 @@ function fishPace(rate) {
  * so "we'll have to make due wit the lowest speed settings on api." Only someone who chose Brisk or
  * Quick hears it, only on chat speech. Natural, the slower paces and every reading path stay at 1.0.
  * Switch: FISH_PACE_SPEED=1 turns it on; anything else leaves prosody.speed at 1.0. */
-function fishApiSpeed(rate, { talk = false, liveCall = false, source = process.env } = {}) {
+function fishApiSpeed(rate, { talk = false, liveCall = false, exact = false, source = process.env } = {}) {
+  if (exact) return 1; // a line is never sped up twice
   if (!talk || (fishStretchOn(source) && !liveCall) || source.FISH_PACE_SPEED !== '1') return 1; // never both stretches
   return fishPace(rate).apiSpeed || 1;
 }
@@ -57,7 +66,17 @@ function fishStretchOn(source = process.env) {
   return source.FISH_PACE_STRETCH === '1';
 }
 
-function fishStretchRatio(rate, { talk = false, liveCall = false, source = process.env } = {}) {
+function fishExactOn(source = process.env) {
+  return source.FISH_SPEED_EXACT === '1';
+}
+
+// The listener's number as it is; absent means 1, which never reaches the worker.
+function fishExactRate(rate) {
+  return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
+function fishStretchRatio(rate, { talk = false, liveCall = false, exact = false, source = process.env } = {}) {
+  if (exact) return fishExactRate(rate); // every path; a live call only waits less (fish-stretch.js)
   if (!talk || liveCall || !fishStretchOn(source)) return 1;
   return fishPace(rate).stretch || 1;
 }
@@ -309,10 +328,11 @@ function wantsSounds(talk, envName) {
 }
 
 // Runs at the provider boundary, after author-tempo cleanup and chunk shaping.
-// This changes the actor's instruction, never the audio's playback rate.
+// The pace direction changes the actor's instruction, never the audio's playback rate; with
+// exact there is none, so the text sent to Fish is the Natural text at every speed.
 // talk: true or { turn, seed, fillers } for chat speech; false for everything read aloud.
-function fishPacedText(text, rate, { talk = false } = {}) {
-  const { direction } = fishPace(rate);
+function fishPacedText(text, rate, { talk = false, exact = false } = {}) {
+  const direction = exact ? '' : fishPace(rate).direction;
   // The character's own direction may sit behind an opening sound ("[laughs] [amused] Hey").
   const opening = String(text).match(/^\s*(?:\[[^\]\n]+\]\s*)+/);
   const ownDirection = Boolean(opening && [...opening[0].matchAll(/\[([^\]\n]+)\]/g)].some(m => isDirectionTag(m[1])));
@@ -326,8 +346,9 @@ function fishPacedText(text, rate, { talk = false } = {}) {
 
 // Whether the proxy adds its [short pause] after sentences for this pace.
 // FISH_SENTENCE_PAUSES=0 turns the added pause off at every pace.
-function fishSentencePauses(rate) {
+function fishSentencePauses(rate, { exact = false } = {}) {
   if (process.env.FISH_SENTENCE_PAUSES === '0') return false;
+  if (exact) return true; // the Natural take, whatever the speed
   return fishPace(rate).sentencePauses !== false;
 }
 
@@ -336,11 +357,23 @@ function fishSentencePauses(rate) {
  * first and last half-cap of each long silent run are kept (word tails and breaths in),
  * the middle is dropped, and 5 ms fades meet at the join. Leading and trailing silence
  * stay as they are. Returns the same buffer when there is nothing to do. */
-function capFishPauses(pcm, rate, sampleRate = 24000) {
+function fishPauseCapMs(rate, { exact = false } = {}) {
   // FISH_NATURAL_PAUSE_CAP_MS overrides Natural's cap ('0' = no cap at Natural).
   const pace = fishPace(rate);
   const natural = process.env.FISH_NATURAL_PAUSE_CAP_MS;
-  const cap = pace.value === 1 && natural !== undefined && natural !== '' ? Number(natural) || 0 : pace.pauseCapMs || 0;
+  const set = natural !== undefined && natural !== '';
+  if (exact) {
+    // What she called natural was the whole clip scaled, stops included: 500 ms is 333 ms at 1.5x.
+    // Slower than 1x the cap holds still (Oct 17: "between .3 and .5 seconds at most").
+    const whole = set ? Number(natural) || 0 : fishPace(1).pauseCapMs;
+    const speed = fishExactRate(rate);
+    return speed >= 1 ? whole / speed : whole;
+  }
+  return pace.value === 1 && set ? Number(natural) || 0 : pace.pauseCapMs || 0;
+}
+
+function capFishPauses(pcm, rate, sampleRate = 24000, { exact = false } = {}) {
+  const cap = fishPauseCapMs(rate, { exact });
   if (!cap || !pcm || pcm.length < 4) return pcm;
   const s = new Int16Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + (pcm.length & ~1)));
   const win = Math.max(1, Math.round(sampleRate * 0.01));
@@ -385,16 +418,17 @@ function capFishPauses(pcm, rate, sampleRate = 24000) {
 
 // The silence after a Fish chat clip and between its paragraphs. FISH_THOUGHT_GAPS=0 turns it
 // off (the 340 ms seam and the bare clip tail come back).
-function fishThoughtGapMs(rate) {
+function fishThoughtGapMs(rate, { exact = false } = {}) {
   if (process.env.FISH_THOUGHT_GAPS === '0') return 0;
+  if (exact) return Math.min(500, Math.max(300, 450 / fishExactRate(rate))); // 500, 450, 375, 300 from 0.9x up
   return fishPace(rate).thoughtGapMs || 0;
 }
 
 /* Let a Fish chat clip (16-bit mono PCM) end on a real stop: append silence until the quiet at its
  * end reaches the pace's thought gap, less the head the next clip brings (~80 ms). Speech and any
  * silence already there are untouched; a clip that already ends long enough is returned as is. */
-function padFishTail(pcm, rate, sampleRate = 24000) {
-  const target = fishThoughtGapMs(rate) - 80;
+function padFishTail(pcm, rate, sampleRate = 24000, { exact = false } = {}) {
+  const target = fishThoughtGapMs(rate, { exact }) - 80;
   if (target <= 0 || !pcm || pcm.length < 4) return pcm;
   const s = new Int16Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + (pcm.length & ~1)));
   const win = Math.max(1, Math.round(sampleRate * 0.01));
@@ -416,4 +450,10 @@ function padFishTail(pcm, rate, sampleRate = 24000) {
   return Buffer.concat([pcm.subarray(0, s.length * 2), Buffer.alloc(addSamples * 2)]);
 }
 
-module.exports = { FISH_PACES, fishPace, fishApiSpeed, fishStretchOn, fishStretchRatio, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail };
+// The real overall speed of a response, from the audio bytes of its Fish chunks before and after
+// Praat (x-kade-tts-speed-applied): before / after to 3 decimals, 1 when nothing was stretched.
+function fishSpeedApplied({ before = 0, after = 0 } = {}) {
+  return before > 0 && after > 0 && before !== after ? (before / after).toFixed(3) : '1';
+}
+
+module.exports = { FISH_PACES, fishPace, fishApiSpeed, fishExactOn, fishExactRate, fishSpeedApplied, fishStretchOn, fishStretchRatio, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, fishPauseCapMs, capFishPauses, fishThoughtGapMs, padFishTail };
