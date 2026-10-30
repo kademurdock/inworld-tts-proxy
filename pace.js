@@ -28,13 +28,23 @@ const FISH_PACES = [
   { value: 0.75, name: 'Unhurried', direction: 'Speak unhurriedly, with relaxed phrasing and clear words.', pauseCapMs: 500, thoughtGapMs: 500 },
   { value: 0.9, name: 'Easygoing', direction: 'Speak at an easygoing conversational pace, with natural expressive phrasing.', pauseCapMs: 500, thoughtGapMs: 500 },
   { value: 1, name: 'Natural', direction: '', pauseCapMs: 500, thoughtGapMs: 450 },
-  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 450, thoughtGapMs: 400 },
-  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 350, thoughtGapMs: 350 },
+  { value: 1.2, name: 'Brisk', direction: 'speaking quickly, letting the sentences flow together with short pauses', sentencePauses: false, pauseCapMs: 450, thoughtGapMs: 400, apiSpeed: 1.05 },
+  { value: 1.5, name: 'Quick', direction: 'fast-talking, rapid delivery with almost no pauses', sentencePauses: false, pauseCapMs: 350, thoughtGapMs: 350, apiSpeed: 1.1 },
 ];
 
 function fishPace(rate) {
   const value = typeof rate === 'number' && Number.isFinite(rate) ? rate : 1;
   return FISH_PACES.reduce((best, pace) => Math.abs(pace.value - value) < Math.abs(best.value - value) ? pace : best);
+}
+
+/* Oct 30 2026, Kade, after hearing Fish's speed at 1.05-1.20 next to clones of sped-up references:
+ * the lowest setting "is still grossly not natural, but yes I think it's better than our stretch",
+ * so "we'll have to make due wit the lowest speed settings on api." Only someone who chose Brisk or
+ * Quick hears it, only on chat speech. Natural, the slower paces and every reading path stay at 1.0.
+ * Switch: FISH_PACE_SPEED=1 turns it on; anything else leaves prosody.speed at 1.0. */
+function fishApiSpeed(rate, { talk = false, source = process.env } = {}) {
+  if (!talk || source.FISH_PACE_SPEED !== '1') return 1;
+  return fishPace(rate).apiSpeed || 1;
 }
 
 /* Oct 16 2026, a friend of Kade's: Fish voices "sound like they're reading a script", Inworld
@@ -391,4 +401,4 @@ function padFishTail(pcm, rate, sampleRate = 24000) {
   return Buffer.concat([pcm.subarray(0, s.length * 2), Buffer.alloc(addSamples * 2)]);
 }
 
-module.exports = { FISH_PACES, fishPace, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail };
+module.exports = { FISH_PACES, fishPace, fishApiSpeed, fishPacedText, fishTalkDirection, fishTalkFillers, fillerStyle, fishTalkSeed, talkFillersByParagraph, talkSounds, talkSoundsByParagraph, soundSpelling, wantsFillers, wantsSounds, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail };

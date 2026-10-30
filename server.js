@@ -49,7 +49,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
-const { fishPacedText, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
+const { fishPacedText, fishApiSpeed, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
 const fishRunaway = require('./fish-runaway');
 const { createDirector, directorOn } = require('./director');
 const { calmOn: talkCalmOn, calmTags: calmTalkTags, calmDirection: calmTalkDirection } = require('./talk-calm');
@@ -93,7 +93,8 @@ const FISH_TTS_LATENCY = process.env.FISH_TTS_LATENCY || "normal"; // normal|bal
 // Fish clones speak at their source sample's natural pace — do NOT inherit
 // Inworld's global 1.1 speed-up default; 1.0 keeps Kade's clones sounding
 // like the people they were cloned from. Listener pace is an actor instruction;
-// numeric Fish prosody speed stays at 1.0, including when an old client sends speed.
+// numeric Fish prosody speed stays at 1.0, including when an old client sends speed,
+// except chat at Brisk and Quick when FISH_PACE_SPEED=1 (pace.js fishApiSpeed).
 /* Part 117.7 (Sep 2 2026), her ask once the hallucinations stopped: "is there a
  * way to turn the temp up now? They could be more expressive sometimes. It's
  * like some phrases are great and others are flat." Fish's range is 0–1
@@ -1557,7 +1558,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     text: fishPacedText(text, speakingRate, { talk }), format: 'pcm', sample_rate: FISH_SAMPLE_RATE, latency: FISH_TTS_LATENCY,
     temperature: Math.min(FISH_TEMPERATURE_MAX, (delivery && FISH_TEMPERATURE_BY_DELIVERY[delivery]) || FISH_TEMPERATURE),
     top_p: FISH_TOP_P, normalize: FISH_NORMALIZE,
-    prosody: { speed: 1.0 },
+    prosody: { speed: fishApiSpeed(speakingRate, { talk: Boolean(talk) }) }, // pace.js: chat at Brisk and Quick only
   };
   const encoded = await fishBody(payload, fishModelId, selectedReferenceStore, reference);
   const ac = new AbortController();
