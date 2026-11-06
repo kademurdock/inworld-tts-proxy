@@ -49,11 +49,26 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
   const winBytes = win * 2;
   const limit = Math.pow(32768 * Math.pow(10, thresholdDb / 20), 2); // compared with the window's mean square
   const target = (runMs) => (runMs <= kneeMs ? runMs : Math.min(maxMs, kneeMs + (runMs - kneeMs) * slope));
+  const fadeSamples = Math.min(win, Math.max(8, Math.round(sampleRate * 0.003))); // 3 ms
   let carry = Buffer.alloc(0);
   let run = 0; // ms of silence seen in the current silent run
   let kept = 0; // ms of that run already let through
   const stats = { silentMs: 0, droppedMs: 0, runsShortened: 0, longestRunMs: 0 };
   let shortened = false;
+  // A kept silent window waits one window to learn whether a cut follows it (then its tail fades out),
+  // and the first silent window kept after a cut fades in: a join never steps. Speech is never faded.
+  let held = null;
+  let afterCut = false;
+
+  const faded = (windowBuf, inward) => {
+    const copy = Buffer.from(windowBuf);
+    for (let i = 0; i < fadeSamples; i++) {
+      const g = (i + 1) / (fadeSamples + 1);
+      const at = (inward ? i : win - fadeSamples + i) * 2;
+      copy.writeInt16LE(Math.round(copy.readInt16LE(at) * (inward ? g : 1 - g)), at);
+    }
+    return copy;
+  };
 
   function push(bytes) {
     const data = carry.length ? Buffer.concat([carry, bytes]) : Buffer.from(bytes);
@@ -61,6 +76,7 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
     const out = [];
     for (let w = 0; w < windows; w++) {
       const at = w * winBytes;
+      const piece = data.subarray(at, at + winBytes);
       let sum = 0;
       for (let i = 0; i < win; i++) {
         const v = data.readInt16LE(at + i * 2);
@@ -71,17 +87,23 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
         stats.silentMs += WIN_MS;
         if (run > stats.longestRunMs) stats.longestRunMs = run;
         if (kept + WIN_MS <= target(run) + 1e-9) {
-          out.push(data.subarray(at, at + winBytes));
+          if (held) out.push(held);
+          held = afterCut ? faded(piece, true) : Buffer.from(piece);
+          afterCut = false;
           kept += WIN_MS;
         } else {
+          if (held) { out.push(faded(held, false)); held = null; }
+          afterCut = true;
           stats.droppedMs += WIN_MS;
           if (!shortened) { shortened = true; stats.runsShortened++; }
         }
       } else {
+        if (held) { out.push(held); held = null; }
+        afterCut = false;
         run = 0;
         kept = 0;
         shortened = false;
-        out.push(data.subarray(at, at + winBytes));
+        out.push(piece);
       }
     }
     carry = Buffer.from(data.subarray(windows * winBytes));
@@ -89,7 +111,8 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
   }
 
   function flush() {
-    const rest = carry;
+    const rest = held ? Buffer.concat([held, carry]) : carry;
+    held = null;
     carry = Buffer.alloc(0);
     return rest;
   }

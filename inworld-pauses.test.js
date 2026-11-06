@@ -86,6 +86,23 @@ test('pushed in odd little pieces gives exactly the bytes of one push', () => {
   }
 });
 
+test('a join never steps: the silence either side of a cut fades, speech never does', () => {
+  // 'silence' that is a 100 Hz hum at -51 dBFS: under the floor, but a careless cut would jump by its full swing
+  const hum = (n) => { const b = Buffer.alloc(ms(n) * 2); for (let i = 0; i < ms(n); i++) b.writeInt16LE(Math.round(90 * Math.sin((2 * Math.PI * 100 * i) / SR)), i * 2); return b; };
+  const input = Buffer.concat([pcm([speech(300)]), hum(1500), pcm([speech(300)])]);
+  const { pcm: out, stats } = limitPauses(input, SR, settings);
+  assert.ok(stats.droppedMs >= 900, 'the long hum was cut: ' + stats.droppedMs);
+  // largest step between neighbouring samples anywhere inside the thinned stretch
+  const from = ms(300) * 2 + 400;
+  const to = out.length - ms(300) * 2 - 400;
+  let step = 0;
+  for (let i = from + 2; i < to; i += 2) step = Math.max(step, Math.abs(out.readInt16LE(i) - out.readInt16LE(i - 2)));
+  assert.ok(step <= 20, 'no step at a join: ' + step + ' (the hum alone moves 4 per sample; an unfaded cut jumps up to 180)');
+  // speech comes through exactly as it went in
+  assert.ok(out.subarray(0, ms(300) * 2).equals(input.subarray(0, ms(300) * 2)));
+  assert.ok(out.subarray(out.length - ms(300) * 2).equals(input.subarray(input.length - ms(300) * 2)));
+});
+
 test('stats count what was cut, and a clip with nothing long is left alone', () => {
   const lim = createPauseLimiter({ sampleRate: SR });
   lim.push(pcm([speech(200), quiet(1000), speech(200), quiet(200), speech(100)]));
