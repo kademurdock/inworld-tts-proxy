@@ -74,6 +74,8 @@ function loadApplySteeringTags() {
     STEER_CARRY_MAX: 2,
     soundsIsDirectionTag: sounds.isDirectionTag,
     soundsIsResetTag: sounds.isResetTag,
+    // Nov 6 2026: applySteeringTags now decides which %% runs are tags first (the REAL module, not a stub).
+    balanceSteeringRuns: require('./steering-balance').balanceSteeringRuns,
     vocalizeDirection: (s) => s,
     sanitizeDirectionText: (s) => String(s).replace(/\s{2,}/g, ' ').trim(),
     module: {}, exports: {},
