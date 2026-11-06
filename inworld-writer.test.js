@@ -93,6 +93,13 @@ test('paragraphs and spacing come through exactly; the character\'s own directio
 });
 
 test('a written piece gets the same sound in the same place as its plain words', () => {
+  // Nov 5 2026: Inworld's automatic breath is off by default; this proves placement with it on.
+  const before = process.env.INWORLD_TALK_BREATH;
+  process.env.INWORLD_TALK_BREATH = '1';
+  try { writtenPieceSound(); } finally { if (before === undefined) delete process.env.INWORLD_TALK_BREATH; else process.env.INWORLD_TALK_BREATH = before; }
+});
+
+function writtenPieceSound() {
   const pieces = [
     ['Phew, what a relief. The test came back clean and I could finally breathe again after a whole week of waiting.', 'clean', 'I could', /^\[breathe\] Phew/],
     ['That was honestly hilarious. I cannot believe he wore the costume to the meeting, and nobody said a single word about it.', 'costume', 'I cannot', /hilarious\. \[chuckle\]/],
@@ -104,7 +111,7 @@ test('a written piece gets the same sound in the same place as its plain words',
     assert.match(a, sound);
     assert.equal(b.replace('[sound lighter] ', '').replace(word.toUpperCase(), word), a);
   }
-});
+}
 
 test('short pieces, quotes and lists are never sent; off means off', async () => {
   const { fetcher, calls } = stub([]);

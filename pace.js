@@ -292,11 +292,16 @@ function talkSounds(text, { engine = 'fish', turn = 0, seedText = null } = {}) {
   // A line that opens with its own sigh word (phew, ugh) already sighs; a tag on top doubles it.
   const weary = sentences.find(s => WEARY.test(s.text) && !/^(?:phew|whew|ugh)\b/i.test(s.text));
   const long = sentences.slice(1).find(s => s.words >= 20);
+  // Nov 5 2026 (Kade: Inworld "keeps pausing ... like stopping to read stuff on paper"): a breath before a
+  // piece's first line or a long sentence is dead air plus the sound of getting ready to read, and six
+  // of 24 production-shaped messages opened with one. Inworld gets none unless INWORLD_TALK_BREATH=1;
+  // its laugh, sigh and throat clear stay (they answer something in the words).
+  const breathOk = engine !== 'inworld' || process.env.INWORLD_TALK_BREATH === '1';
   if (funny && roll < 0.6 && !soundNear(funny.end, true)) place = { at: funny.end, sound: spell.laugh, before: false };
   else if (weary && roll < 0.5 && !soundNear(weary.start, false)) place = { at: weary.start, sound: spell.sigh, before: true };
   else if (turn === 0 && words >= 15 && roll < 0.04 && !soundNear(sentences[0].start, false)) place = { at: sentences[0].start, sound: spell.throat, before: true };
-  else if (words >= 12 && roll < 0.22 && !soundNear(sentences[0].start, false)) place = { at: sentences[0].start, sound: spell.breath, before: true };
-  else if (long && roll < 0.45 && !soundNear(long.start, false)) place = { at: long.start, sound: spell.breath, before: true };
+  else if (breathOk && words >= 12 && roll < 0.22 && !soundNear(sentences[0].start, false)) place = { at: sentences[0].start, sound: spell.breath, before: true };
+  else if (breathOk && long && roll < 0.45 && !soundNear(long.start, false)) place = { at: long.start, sound: spell.breath, before: true };
   if (!place) return src;
   const out = place.before
     ? masked.slice(0, place.at) + place.sound + ' ' + masked.slice(place.at)

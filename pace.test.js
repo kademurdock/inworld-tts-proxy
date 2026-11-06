@@ -192,8 +192,9 @@ test('Inworld paragraphs each get a turn, and the listener switch wins over the 
 const { talkSounds, wantsSounds } = require('./pace');
 const SOUND_TAG = /\[(?:inhale|breathe|small laugh|chuckle|sigh|clear throat|quietly clears throat)\]/g;
 
-test('a sound is spelled for its engine, placed by the words, at most one, and only adds a tag', () => {
+test('a sound is spelled for its engine, placed by the words, at most one, and only adds a tag', () => withEnv({ INWORLD_TALK_BREATH: '1' }, () => {
   // Lines whose seeded roll places a laugh, a breath and a throat clear (Oct 16 listening clips).
+  // INWORLD_TALK_BREATH=1: Inworld's breath is off by default since Nov 5 (test below).
   const funny = 'Wait, that is actually hilarious. I cannot believe the cat did that to your cake. Was anybody home when it happened, or did you just walk in and find it all over the floor?';
   const samples = [funny,
     'So here is what I was thinking about for the trip. If we leave early on Saturday morning and split the driving between the three of us, nobody has to be behind the wheel for more than a couple of hours at a time. Let me know if that works for you.',
@@ -220,6 +221,30 @@ test('a sound is spelled for its engine, placed by the words, at most one, and o
   withEnv({ FISH_SOUND_THROAT: undefined }, () => assert.equal(soundSpelling('fish').throat, '[quietly clears throat]'));
   assert.equal(soundSpelling('inworld').throat, '[clear throat]', "Inworld's own sound word");
   assert.doesNotMatch(talkSounds(samples[3], { engine: 'fish' }), /\[sigh\] Phew/, 'a line that already sighs gets no sigh tag');
+}));
+
+// Nov 5 2026 (Kade: Inworld "keeps pausing ... like they're stopping to read stuff on paper"): a breath
+// before a piece's first line or a long sentence is dead air plus the sound of getting ready to read.
+test('Inworld chat pieces get no automatic breath; its laugh and sigh stay; the switch brings the breath back; Fish is unchanged', () => {
+  const funny = 'Wait, that is actually hilarious. I cannot believe the cat did that to your cake. Was anybody home when it happened, or did you just walk in and find it all over the floor?';
+  const trip = 'So here is what I was thinking about for the trip. If we leave early on Saturday morning and split the driving between the three of us, nobody has to be behind the wheel for more than a couple of hours at a time. Let me know if that works for you.';
+  const garden = 'Hmm, I wanted to tell you something about the garden this year. The tomatoes came in, and there are way more than we can eat by ourselves.';
+  const tired = 'It has been a long day and I am so tired of all of it. Your boss called three meetings in a row and none of them needed to happen.';
+  const lines = [funny, trip, garden, tired, 'We should get the porch swing fixed before the weather turns. I kept meaning to look at it all summer and never did, so now it squeaks every time anyone sits down.'];
+  withEnv({ INWORLD_TALK_BREATH: undefined }, () => {
+    for (const s of lines) {
+      for (let turn = 0; turn < 12; turn++) {
+        assert.doesNotMatch(talkSounds(s, { engine: 'inworld', turn }), /\[breathe\]/, `no breath for Inworld: ${s.slice(0, 30)} turn ${turn}`);
+      }
+    }
+    assert.match(talkSounds(funny, { engine: 'inworld' }), /hilarious\. \[chuckle\] I cannot/, 'the laugh answers a funny line');
+    assert.match(talkSounds(tired, { engine: 'inworld' }), /\[sigh\] It has been a long day/, 'the sigh answers a tired one');
+    assert.match(talkSounds(trip, { engine: 'fish' }), /^\[inhale\] So here/, 'Fish keeps its breath');
+  });
+  withEnv({ INWORLD_TALK_BREATH: '1' }, () => {
+    const breaths = lines.flatMap(s => Array.from({ length: 12 }, (_, turn) => talkSounds(s, { engine: 'inworld', turn }))).filter(o => /\[breathe\]/.test(o));
+    assert.ok(breaths.length >= 3, 'with the switch on the breath is placed again: ' + breaths.length);
+  });
 });
 
 test('sounds stay out of lists, quotes, short lines and spots where the character already wrote one', () => {
