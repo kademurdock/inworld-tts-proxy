@@ -19,6 +19,22 @@ test('off unless INWORLD_STEER_RATE=1; the cap and the fallback move without a d
   assert.equal(steeredRate(1, 'hesitant', 'x', steerSettings({})), 1, 'off: the rate is the listener\'s');
 });
 
+test('INWORLD_TALK_RATE is the one dial for overall chat pace: 1 changes nothing, it multiplies, and it stays in range', () => {
+  assert.equal(ON.talkRate, 1);
+  const slower = steerSettings({ INWORLD_STEER_RATE: '1', INWORLD_TALK_RATE: '0.9' });
+  assert.equal(slower.talkRate, 0.9);
+  assert.equal(steeredRate(1, null, 'no steering here', slower), 0.9, 'an unsteered piece is slowed evenly');
+  assert.equal(steeredRate(1, 'amused', 'x', slower), Math.round(0.9 * WORDS.amused * 1000) / 1000, 'a steered one gets both');
+  assert.equal(steeredRate(1.2, 'hesitant', 'x', slower), Math.round(1.2 * 0.9 * 1.25 * 1000) / 1000);
+  assert.equal(steeredRate(1.4, 'hesitant', 'x', steerSettings({ INWORLD_STEER_RATE: '1', INWORLD_TALK_RATE: '1.3' })), 1.5, 'Inworld\'s limit');
+  assert.equal(steeredRate(0.5, null, 'x', steerSettings({ INWORLD_STEER_RATE: '1', INWORLD_TALK_RATE: '0.7' })), 0.5, 'and its floor');
+  // nonsense is held to what makes sense; off means off whatever the dial says
+  assert.equal(steerSettings({ INWORLD_TALK_RATE: '9' }).talkRate, 1.3);
+  assert.equal(steerSettings({ INWORLD_TALK_RATE: '0.1' }).talkRate, 0.7);
+  assert.equal(steerSettings({ INWORLD_TALK_RATE: 'fast' }).talkRate, 1);
+  assert.equal(steeredRate(1, null, 'x', steerSettings({ INWORLD_TALK_RATE: '0.8' })), 1, 'steering off: the dial does nothing');
+});
+
 test('the table is a measurement: upbeat words cost nothing, moody ones a lot, nothing under 1', () => {
   for (const [w, v] of [...Object.entries(WORDS), ...Object.entries(PHRASES)]) assert.ok(v >= 1 && v < 2.2, `${w}: ${v}`);
   for (const w of ['bright', 'upbeat', 'encouraging', 'excited', 'cheerful', 'eager', 'friendly']) assert.ok(WORDS[w] <= 1.05, w);

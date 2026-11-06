@@ -15,7 +15,7 @@ async function withServer(port, extraEnv, run) {
   const receipt = path.join(dir, 'requests.jsonl');
   fs.writeFileSync(receipt, '');
   const env = { ...process.env, PORT: String(port), INWORLD_API_KEY: 'offline', PROVIDER_RECEIPT: receipt, ...extraEnv };
-  for (const k of ['INWORLD_WRITER', 'INWORLD_TALK_FILLERS', 'INWORLD_TALK_SOUNDS', 'INWORLD_STEER_RATE', 'TTS_TALK_CALM', 'KADE_TTS_LIVELY_BASELINE']) if (!(k in extraEnv)) delete env[k];
+  for (const k of ['INWORLD_WRITER', 'INWORLD_TALK_FILLERS', 'INWORLD_TALK_SOUNDS', 'INWORLD_STEER_RATE', 'TTS_TALK_CALM', 'KADE_TTS_LIVELY_BASELINE', 'INWORLD_TALK_RATE']) if (!(k in extraEnv)) delete env[k];
   const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/provider.cjs'), 'server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '';
   child.stdout.on('data', (x) => { log += x; });
@@ -50,6 +50,19 @@ test('off, the rate is the listener\'s, steered or not', async () => {
     assert.equal(await rate(`%%%hesitant%%% ${BODY}`), 1);
     assert.equal(await rate(`%%%hesitant%%% ${BODY}`, { speed: 1.2, stream: true }), 1.2);
     assert.equal((await health()).inworldSteer.on, false);
+  });
+});
+
+test('INWORLD_TALK_RATE slows every chat piece evenly, steered or not, and reading never', async () => {
+  await withServer(31956, { INWORLD_STEER_RATE: '1', INWORLD_TALK_RATE: '0.9' }, async ({ rate, health }) => {
+    const { WORDS } = require('./inworld-steer');
+    for (const stream of [false, true]) {
+      assert.equal(await rate(BODY, { stream }), 0.9);
+      assert.equal(await rate(`%%%amused%%% ${BODY}`, { stream }), Math.round(0.9 * WORDS.amused * 1000) / 1000);
+      assert.equal(await rate(BODY, { stream, speed: 1.2 }), 1.08);
+    }
+    assert.equal(await rate(BODY, { delivery: 'STABLE' }), 1, 'reading is the listener\'s rate');
+    assert.equal((await health()).inworldSteer.talkRate, 0.9);
   });
 });
 

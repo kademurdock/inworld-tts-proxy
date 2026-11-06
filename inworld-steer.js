@@ -27,8 +27,12 @@
  * ignored. The listener's own speed is never touched when nothing is steered.
  *
  * Chat speech only (server.js decides). INWORLD_STEER_RATE=1 turns it on; INWORLD_STEER_MAX_BOOST and
- * INWORLD_STEER_DEFAULT move the cap and the fallback without a deploy. The table is a measurement:
- * to add a word, render it against none (survey method above) and add its ratio. */
+ * INWORLD_STEER_DEFAULT move the cap and the fallback without a deploy. INWORLD_TALK_RATE (default 1,
+ * each voice's own pace; 0.95 is 5% slower for every chat voice) is the one dial for overall pace: with
+ * the drag gone the voices run about a quarter faster than they did, and a blind judge called that
+ * natural in 23 of 24 clips and rushed in none, but "more rushed" than the slow delivery it replaced in
+ * 20 of 24 pairs, so the dial exists. The table is a measurement: to add a word, render it against
+ * none (survey method above) and add its ratio. */
 const { isDirectionTag, isResetTag } = require('./sounds');
 
 // Clip length with this one word as the direction / without any, BALANCED (Nov 5 2026 survey).
@@ -84,6 +88,9 @@ function steerSettings(source = process.env) {
     on: source.INWORLD_STEER_RATE === '1',
     maxBoost: Math.min(1.5, Math.max(1, num(source.INWORLD_STEER_MAX_BOOST, 1.25))),
     fallback: Math.min(1.5, Math.max(1, num(source.INWORLD_STEER_DEFAULT, 1.12))),
+    // The overall pace of chat speech while steering is on: 1 is each voice's own pace, 0.95 slows every
+    // chat voice 5% evenly. One variable for "too fast" or "too slow" that every client obeys.
+    talkRate: Math.min(1.3, Math.max(0.7, num(source.INWORLD_TALK_RATE, 1))),
   };
 }
 
@@ -119,11 +126,12 @@ function steerFactor(instruction, text, settings = steerSettings()) {
   return Math.min(settings.maxBoost, Math.max(1, ...dirs.map((d) => directionCost(d, settings))));
 }
 
-/** The speaking rate to send: the listener's, raised by what the steering costs. Inworld's limit is 1.5. */
+/** The speaking rate to send: the listener's, raised by what the steering costs and set by the overall
+ *  chat pace (INWORLD_TALK_RATE). Inworld accepts 0.5 to 1.5. */
 function steeredRate(rate, instruction, text, settings = steerSettings()) {
   if (!settings.on) return rate;
-  const f = steerFactor(instruction, text, settings);
-  return f > 1.005 ? Math.min(1.5, Math.round(rate * f * 1000) / 1000) : rate;
+  const f = steerFactor(instruction, text, settings) * settings.talkRate;
+  return Math.abs(f - 1) > 0.005 ? Math.min(1.5, Math.max(0.5, Math.round(rate * f * 1000) / 1000)) : rate;
 }
 
 module.exports = { steerSettings, directionCost, directionsOf, steerFactor, steeredRate, WORDS, PHRASES };
