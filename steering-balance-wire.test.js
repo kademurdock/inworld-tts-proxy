@@ -111,6 +111,10 @@ const SHAPES = [
   // the incident's stray line one character short, and a tag round nothing but a beat of dots
   ['a lone percent sign on a line of its own', 'Hello.\n\n%\n%%%warm%%% Hi there.', /\bwarm\b/i, /Hello\.\s+Hi there\./],
   ['a tag round no letters', 'Before it. %%%...%%% After it, with a few more words.', /\.\.\./, /Before it\.\s+After it, with a few more words\./],
+  // six signs after a tag: capitalised speech behind them is a long closer even with a stray inside the speech,
+  // while a lowercase direction behind them is a second tag (the two-stray differential caught the first)
+  ['a six-sign closer, speech after it, a stray inside the speech', '%%%warm and curious%%%%%% How far%%%%% back have you gotten?', /\bcurious\b/i, /How far back have you gotten\?/],
+  ['a six-sign junction and a padded second tag', '%%%sad%%%%%% curious %%% Yes, that is all of it.', /\bsad\b|\bcurious\b/i, /Yes, that is all of it\./],
 ];
 
 async function checkShapes(handed, body, label) {

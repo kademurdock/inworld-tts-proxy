@@ -51,44 +51,54 @@
  *      sentence or a dozen words, never counts as a believable direction. A loose span that is really
  *      `<a few lowercase words> <a capitalised sentence>.` (`%%%amused Thanks.`) is a forgotten closer with its
  *      speech. A run of exactly two percent signs pairs only the way the old typo normaliser did: on one line,
- *      within 160 characters, the opener hugging a first word that starts with an ASCII letter or digit, and an
- *      ASCII letter somewhere in it (`half%% of it, then %% some`, `Yes%%%. Yeah,%%` and two doubled strays far
- *      apart are prose).
+ *      within 160 characters, the opener hugging a first word that starts with a letter or digit, and a letter
+ *      somewhere in it (`half%% of it, then %% some`, `Yes%%%. Yeah,%%` and two doubled strays far apart are
+ *      prose; the old normaliser knew ASCII letters only, a word in any alphabet counts here).
  *   5. A run of six or more percent signs that no word touches on its right is an empty tag and is dropped
  *      whole, as the old pairing dropped it. One that a word touches on its right is strays glued to an
  *      opener. As a closer it closes with its first three and the rest is a new opener (two tags touching),
  *      unless the tag hugs its words and no word touches the run on its right: then the whole run is a long
- *      closer (`%%%happy%%%%%%% Yes.%%%` must not turn "Yes." into a tag).
- *      Two runs with nothing but blanks, line breaks or marks between them are an empty tag too when the second
- *      does not touch a word and a space and a capital letter, a digit or a quote follow it: the old pairing
- *      dropped that pair, and it is the iPhone's re-stamped bare newline (`%%%\n%%% See you soon.`), whose second
- *      run ends the stamp and must not open a padded tag around the sentence after it, so that a stray later in
- *      the piece closes it and swallows the sentence. A pair of three-sign runs round a short body with no letter
- *      in it (`%%%...%%%`, `%%%?!%%%`, `%%%3%%%`) is an empty tag too, as the old pairing had it.
+ *      closer (`%%%happy%%%%%%% Yes.%%%` must not turn "Yes." into a tag). Exactly six signs are also what two
+ *      touching tags make when the second is padded or fenced, so six stay closer + opener when a believable
+ *      lowercase direction follows (`%%%sad%%%%%% curious %%% Yes.`) and are a long closer when speech does or
+ *      when what follows starts with a capital (`%%%warm%%%%%% How far%%%%% back`: a stray inside the speech must
+ *      not turn "How far" into a tag).
+ *      Two runs with nothing but blanks, line breaks or marks (no letter or digit) between them are an empty tag
+ *      too when the second does not touch a word and a space and anything but a lowercase letter follows it: the
+ *      old pairing dropped that pair, and it is the iPhone's re-stamped bare newline (`%%%\n%%% See you soon.`),
+ *      whose second run ends the stamp and must not open a padded tag around the sentence after it, so that a
+ *      stray later in the piece closes it and swallows the sentence. (A lowercase start stays a padded direction:
+ *      `%%%\n%%% a little amused %%% Hello there.` is repaired.) A pair of three-sign runs round a short body with
+ *      no letter in it (`%%%...%%%`, `%%%?!%%%`, `%%%3%%%`) is an empty tag too, as the old pairing had it.
  *   6. A tag the model forgot to close is still a direction and is closed for it: at the start of a sentence with
  *      speech right after one to four lowercase words (`%%%warm Hello there.`; a comma, colon or lone % typed
  *      after the words goes with them, a full stop does not: that is a sentence; a line start is a sentence
- *      start only when the line before did not end in a letter or a comma), or alone on a short line
+ *      start only when the line before did not end in a letter or a comma, or a blank line came between), or alone
+ *      on a short line
  *      that is lowercase and hugged by its run (`%%%warm and curious` then a line break). The words must not
  *      start like speech (`yeah`, `okay`, `you`, `what`, `sorry`). A stray glued to speech looks the same, so a
  *      capitalised line is never taken for a direction, nor a line with a capital anywhere in it (the speech runs
  *      on after the words: `%%%fond and a little emotional She walked in`), nor a line the run does not hug
  *      (`%%% Talk soon`: the bare closer a chunker leaves at the start of a piece, or the iPhone's re-stamped
  *      `%%%\n%%%` in front of a piece), nor one that starts with a digit or punctuation. The whole-line rule takes
- *      plain lowercase words only (letters, digits, commas, apostrophes, hyphens: a dash, a bracket or an emoji
- *      means the speech runs on), nine words at most, and four when no line break follows the line, i.e. at the
- *      very end of the text: swallowing a line of speech loses all of it, while leaving a direction unclosed
- *      only speaks its words, as the old pairing did.
+ *      plain lowercase words only (ASCII letters, digits, commas, apostrophes, hyphens: a dash, a bracket, an
+ *      accent or an emoji means the speech runs on), ten words at most (the longest real direction): swallowing a line of speech
+ *      loses all of it, while leaving a direction unclosed only speaks its words, as the old pairing did. A line
+ *      that ends the text counts too: it is far more often the head of a tag a chunker cut off than speech.
  *   7. THE TAIL OF A CUT TAG. The apps send replies in pieces, and the website's auto-play chunker cuts inside a
  *      tag in 1.5 to 3 percent of tagged replies; the second request then starts `curious%%% So what is the
  *      shape of it?` and the direction would be spoken. A closer with no opener, at the very start of the text,
  *      after at most twelve lowercase words with no punctuation, and followed by a capital or a line break (the
  *      speech a tag leads into: `see you%%% soon.` is speech with a stray in it), is the end of a direction (or
  *      a forgotten opener, the same shape) and becomes a tag. Interjections (yeah, okay, hello ...) are not.
- *      A lone `%` that is the first or last thing in the text with no number (digits or words, one blank at most
- *      between) before it, or no digit after it at the start (a cut between the percent signs of a delimiter) is
- *      dropped first. applySteeringTags hands any text with a `%` in it to this function, which returns a text
- *      without a `%%` run right after that step.
+ *      A lone `%` that is the first or last thing in the text (a cut between the percent signs of a delimiter) is
+ *      dropped first. In a text that holds a `%%` run (the first piece of a reply starts with a tag) it goes unless a
+ *      number (digits, fractions or words, a blank or two between) stands before it at the end, or a digit follows
+ *      it at the start; a lone `%` alone on a line goes too. A text with no `%%` run is ordinary text and keeps its
+ *      `%` (`The percent sign is %`, `%PATH%`, `%d items left`) unless a cut delimiter's rest is the likelier
+ *      reading: at the start before a blank and a capital (`% So what is the shape of it?`), at the end after a
+ *      sentence end or a line break (`Two different problems.\n\n%`). applySteeringTags hands any text with a `%`
+ *      in it to this function, which returns a text without a `%%` run right after that step.
  * A dropped stray between two words leaves a space so the words do not fuse (`hope%%%you` -> `hope you`).
  * KILL SWITCH: KADE_STEERING_BALANCE=0 (a Railway variable and a redeploy) hands every text on untouched, which
  * is exactly the old left-to-right pairing. Texts over 150,000 characters are handed on untouched too.
@@ -97,18 +107,20 @@
  * are all tight, lowercase and at a paragraph start):
  *   - two independent strays on one line around one short sentence read as a padded tag and swallow it, in a
  *     reply that pads every tag, in a tight reply when the sentence is three words or fewer, in a reply with no
- *     tag at all (`Hello. %%% Yeah, you are right. %%% Bye.`), and for a lowercase one-word fragment; three or
- *     more strays in one reply, and strays of six or more percent signs glued to words, can swallow words too;
+ *     tag at all (`Hello. %%% Yeah, you are right. %%% Bye.`), and for a lowercase one-word fragment; so does a
+ *     lowercase sentence that holds an abbreviation (`%%% hello Mr. Smith, I said so today. %%%`, whose full
+ *     stop is not counted); three or more strays in one reply, and strays of six or more percent signs glued to
+ *     words, can swallow words too (the worst of them leaves a short reply silent: `%%%good natured%%%%%%%% %%% Oh. %%%`);
  *   - a forgotten closer followed by a direction of more than four words, or by lowercase speech, is left as it
  *     was (the direction words are spoken, no speech is lost) except where the whole line passes the line rule:
- *     plain lowercase words, nine at most (four at the very end of a text), nothing else on the line. Such a
- *     line is closed as a direction and not spoken, and a stray glued to a line of lowercase speech has the same
- *     shape (`%%%warm 5 more minutes` at the end of a text, `%%%oh and so then we went home` and a line break
- *     after it); a forgotten OPENER is repaired only at the very start of the text, not at a later paragraph;
+ *     plain lowercase words, ten at most, nothing else on the line. Such a line is closed as a direction and not
+ *     spoken, and a stray glued to a line of lowercase speech has the same shape (`%%%warm 5 more minutes`,
+ *     `%%%warm and so then we went home`); a forgotten OPENER is repaired only at the very start of the text,
+ *     not at a later paragraph;
  *   - a capitalised direction of three words or more, or in a reply with tight tags, alone in a fence reads as
  *     speech (`%%%\nWarm\n%%%` in a tight reply), and so does a lowercase question or exclamation of three words
- *     or more in a fence (`%%%\nreally excited now!\n%%%`); a tight direction past 70 words or 400 characters is
- *     not one;
+ *     or more in a fence or half fence, a line break on either side (`%%%\nreally excited now!\n%%%`,
+ *     `%%%warm and easy!\n%%% You made it.`); a tight direction past 70 words or 400 characters is not one;
  *   - a run that has a space before it and a word right after it opens a tag, so in a reply that pads its tags
  *     speech glued to a closer breaks the pairing (`%%% quietly %%%Not a chance.%%% thoughtful %%% Hello.`); and
  *     the other way round, a stray line, a lowercase unpunctuated speech line and then a tight tag whose closer
@@ -116,21 +128,31 @@
  *   - a padded or fenced direction of more than 24 words or 200 characters is not one (the old pairing took any
  *     length), so a long lowercase unpunctuated speech line of up to 24 words between two stray lines is read as
  *     a fenced direction; real directions are at most ten words;
- *   - a tag that touches the word in front of it (`there%%%reset%%% friend`) fuses the words on Fish (as the old
- *     pairing did), and a stray that sat alone on its line leaves a blank line, which moves the carry-forward
- *     cap of the paragraphs after it by one;
+ *   - a stray that sat alone on its line leaves a blank line, which moves the carry-forward cap of the
+ *     paragraphs after it by one;
+ *   - a text that starts or ends with a lone % that has no number before it (`x%`, `one third %`, `%s is the
+ *     placeholder`) loses the sign, and `In 2019 %` cut after the first sign of the next tag's opener still says
+ *     "percent" (normalizeForSpeech has already turned `2019 %` into `2019 percent`);
  *   - a lowercase phrase of up to twelve words at the very start of a text, a stray glued to its last word and a
  *     capital after it (`sounds good to me%%% Kade, I will do it.`) reads as the tail of a cut tag;
  *   - a piece cut off inside the first word of a direction (`%%%she` from "sheepish") is read as speech;
  *   - the tail of a cut tag is repaired only when it starts the text: behind the iPhone's re-stamp
  *     (`%%%pleased%%% curious%%% So what now?`) the direction word is spoken, and so is the head of a tag cut off
  *     in the middle of a paragraph (`I sat down, %%%wry`);
- *   - an iPhone re-stamp of 400 to 600 characters (its own carry limit; it takes a wrongly paired stray on the
- *     phone to carry a paragraph) is not a tag here, so it is spoken a second time; after the re-stamped
- *     bare newline a lowercase fragment that ends in a full stop and a later stray line still swallows the
- *     fragment (`%%%\n%%% and the rest were in the laundry.\n\n%%%\nThe reunion...`);
- *   - a padded lowercase direction of one or two words that ends in a full stop, followed by short unpunctuated
- *     speech and another tag (`%%% sigh. %%% Hello there %%%soft%%% x`), is read as speech; so is a line that
+ *   - an iPhone re-stamp the phone built from a wrongly paired stray (it then carries speech as the direction:
+ *     a paragraph of 400 to 600 characters, or a sentence inside a ragged `%%%% ... %%%` delimiter) is not a tag
+ *     here, so the speech is spoken a second time; after the re-stamped bare newline a fragment that starts
+ *     with a lowercase letter, an ellipsis or a dash, with a later stray in the piece, is swallowed as a padded
+ *     tag (`%%%\n%%% and then quietly she left %%%`, `%%%\n%%% and the rest were in the laundry.\n\n%%%\nThe
+ *     reunion...`); the phone should carry no direction that is longer than a few words, holds a sentence stop
+ *     or a %, or is only a line break;
+ *   - a padded lowercase direction that ends in a full stop (any length), followed by short unpunctuated speech
+ *     and another tag (`%%% soft and slow. %%% Hello there %%% dry. %%% Okay`), is read as speech, and in a reply
+ *     that also writes a tight tag so is a padded lowercase direction of four words or more that ends in . ! or ?;
+ *     a direction that names a person and ends in a full stop, padded on its right
+ *     (`%%%zqaa, like talking to Kade. %%% Hello`), has the shape of a forgotten closer plus its speech and is
+ *     cut at the name; in a reply that pads every tag a padded direction that starts with a capital, a quote or a
+ *     digit right behind the iPhone's re-stamp is dropped with it; and a line that
  *     starts with a symbol and ends in a full stop between two stray lines, and a line in a script without
  *     capitals (CJK, Arabic, Hebrew) there is read as a direction; a first word of 41 or more letters after a
  *     forgotten closer is not recognised;
@@ -138,6 +160,9 @@
  *     the padded words are spoken (the old pairing speaks them too);
  *   - glued tags with a 4- or 5-percent junction are one closer; a direction that wraps onto a second line with
  *     a space on only one side is not a tag;
+ *   - a doubled `%%` run pairs only the way the old typo normaliser paired it, on one line, so a direction closed
+ *     by `%%` alone on the next line (`%%%like she is sharing a secret\n%%`) is not a tag; the first version
+ *     paired it, and the strictness is what keeps `half%% of it, then %% some` prose;
  *   - a stray between two letters becomes a space, so a stray inside a word splits it (`hope%%%you` is `hope
  *     you`, and `No%%%t` is `No t`); next to an apostrophe or a hyphen inside a word it just vanishes
  *     (`you'%%%re`, `well-%%%known`). */
@@ -223,15 +248,16 @@ function tagBody(between) {
  *  The shape is the same as a stray glued to a line of lowercase speech, and swallowing a line of speech loses
  *  every word of it (the old pairing spoke it, with the stray swept), so the line has to look like a direction
  *  and nothing else: letters, digits, spaces, commas, apostrophes and hyphens (a capital, a dash, a bracket or an
- *  emoji means the speech runs on), nine words at most, and four when nothing follows the line at all, because a
- *  longer line at the very end of a text is more likely a direction with its speech glued on than a direction
- *  that was cut off (a direction alone on its line has a line break after it). */
+ *  emoji means the speech runs on), ten words at most (the longest of the 7,148 real directions). A line at the
+ *  very end of a text counts too, though it is as likely to be speech with a stray in front as a direction: it is far
+ *  more often the head of a tag that a chunker cut off (`%%%warm and a little teas`, the whole piece), and closing
+ *  that is silence, which is right. */
 function unclosedLine(between) {
   const nl = between.indexOf('\n');
   const line = (nl === -1 ? between : between.slice(0, nl)).trim();
   if (!line || line.length > LINE_MAX || !LETTER.test(line)) return null;
   if (!/^[a-z][a-z0-9 ,'’-]*$/.test(line)) return null;               // (so no sentence end either: no . ! ?)
-  if (wordCount(line) > (nl === -1 ? 4 : 9)) return null;
+  if (wordCount(line) > 10) return null;
   return line;
 }
 
@@ -248,8 +274,8 @@ const SPEECH_OPENERS = new Set(('yeah yes yep nope no okay ok oh ah hm hmm mm uh
   'dear bye goodbye hola gracias bueno buenas buenos bien oye vale pues claro adiós adios ' +
   // (none of these starts any of the 7,148 real directions; `good` does, four times, so it is not here)
   'goodness great nice exactly definitely just now absolutely totally true really seriously basically obviously ' +
-  'clearly fine cool awesome perfect wonderful lovely indeed certainly also then still yet gosh ugh whoa yikes ' +
-  'damn dang geez jeez man dude').split(' '));
+  'clearly fine cool awesome perfect wonderful lovely indeed certainly also then still yet ugh whoa yikes ' +
+  'damn dang jeez man dude nah yup mhm oof like yea uhh lol lmao yay').split(' '));
 const firstWord = (words) => words.split(/[\s,]/, 1)[0].replace(/’/g, "'").toLowerCase();   // any blank: a tab or a no-break space hides nothing
 const startsLikeSpeech = (words) => SPEECH_OPENERS.has(firstWord(words));
 /** { words, used }: the direction and how much of `between` it took (a comma, colon or lone % typed right after the
@@ -289,23 +315,34 @@ function cutTail(lead) {
  *  or in words and with at most a blank between (`50%`, `ninety %`), so a lone percent sign that is the first or
  *  last thing in the text and has none beside it is the rest of a delimiter. (applySteeringTags hands any text
  *  with a `%` in it to the balancer, which returns it right after this step when no `%%` run is left.) */
-const NUMBER_BEFORE = /(?:\d|\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|half|quarter))$/i;
+const NUMBER_BEFORE = /(?:[\d¼½¾⅓⅔⅛]|\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|half|quarter))$/i;
+const BLANK = /[ \t\u00a0\u2009\u202f]/;
 function trimLonePercent(s) {
   if (s.indexOf('%') === -1) return s;
+  // A text with no `%%` run in it is ordinary text unless a cut delimiter left its lone % where a delimiter's rest
+  // would be: before a blank and a capital at the start (`% So what is the shape of it?`), after a sentence end or
+  // a line break at the end (`Two different problems.\n\n%`). `The percent sign is %`, `%PATH%`, `%d items left`
+  // and a text that is only `%` stay as they are. Next to a `%%` run (the first chunk of a reply starts with a tag)
+  // any lone % at an end with no number beside it is the rest of a delimiter.
+  const plain = s.indexOf('%%') === -1;
   // a lone % on a line of its own is the incident's stray line one character short (`\n\n%\n%%%warm%%% Hi`)
-  s = s.replace(/(\n)[ \t]*%[ \t]*(?=\r?\n|$)/g, '$1');                 // (a first line is the start rule's)
+  if (!plain) s = s.replace(/(\n)[ \t]*%[ \t]*(?=\r?\n|$)/g, '$1');      // (a first line is the start rule's)
   let a = 0;
   while (a < s.length && /\s/.test(s[a])) a += 1;
-  if (s[a] === '%' && !/[%\d]/.test(s[a + 1] || '')) s = s.slice(0, a) + s.slice(a + 1);
+  if (s[a] === '%' && (plain ? /^[ \t]+["“‘'(¿¡]*\p{Lu}/u.test(s.slice(a + 1, a + 12)) : !/[%\d]/.test(s[a + 1] || ''))) {
+    s = s.slice(0, a) + s.slice(a + 1);
+  }
   let z = s.length - 1;
   while (z >= 0 && /\s/.test(s[z])) z -= 1;
   if (z >= 0 && s[z] === '%') {
     // (walk back over the blanks by hand and look at a dozen characters: a regex like /[ \t]+$/ on a text that
     // holds 100,000 blanks and then a letter takes minutes, and every text with a % in it comes through here)
     let b = z;
-    while (b > 0 && (s[b - 1] === ' ' || s[b - 1] === '\t')) b -= 1;
+    while (b > 0 && BLANK.test(s[b - 1])) b -= 1;
     const before = s.slice(Math.max(0, b - 12), b);
-    if (!/%$/.test(before) && !NUMBER_BEFORE.test(before)) s = s.slice(0, z) + s.slice(z + 1);
+    if (!/%$/.test(before) && !NUMBER_BEFORE.test(before) && (!plain || /(?:[.!?…:]["'”’)]*|\n)$/.test(before))) {
+      s = s.slice(0, z) + s.slice(z + 1);
+    }
   }
   return s;
 }
@@ -317,9 +354,9 @@ let repairLogger = null;
 function setRepairLogger(fn) { repairLogger = typeof fn === 'function' ? fn : null; }
 
 // Nobody speaks more than this in one request (the apps cap speech at 100,000 characters; the balancer needs
-// 0.15 to 0.25 ms per KB of real text and up to 1.6 ms per KB of nothing but runs), and the server accepts
+// 0.15 to 0.25 ms per KB of real text and up to about 3 ms per KB of nothing but runs), and the server accepts
 // bodies of 10 MB: past it the text goes on as it came, so a multi-megabyte reply of tiny runs can never hold up
-// every other listener (at the limit the worst case is about a quarter of a second).
+// every other listener (at the limit the worst case is about half a second).
 const MAX_CHARS = 150000;
 
 function balanceSteeringRuns(text) {
@@ -338,6 +375,7 @@ function balanceSteeringRuns(text) {
   let last = '';          // the last character written
   let lineBlank = true;   // nothing but whitespace written since the last line break
   let sigTail = '';       // the last few characters written that were not whitespace
+  let tailWs = '';        // the whitespace written after them (its last few characters)
   const put = (s) => {
     if (!s) return;
     parts.push(s);
@@ -345,11 +383,14 @@ function balanceSteeringRuns(text) {
     const nl = s.lastIndexOf('\n');
     lineBlank = nl === -1 ? lineBlank && /^\s*$/.test(s) : /^\s*$/.test(s.slice(nl + 1));
     const sig = s.trimEnd();
-    if (sig) sigTail = (sigTail + sig).slice(-3);
+    if (sig) { sigTail = (sigTail + sig).slice(-3); tailWs = s.slice(sig.length).slice(-20); }
+    else tailWs = (tailWs + s).slice(-20);
   };
-  // a new sentence starts here: the start of a line, after . ! ? … or a colon, or right after a tag. (A line
-  // that carries on a sentence the one before it left open, one that ends in a letter or a comma, is not one.)
-  const sentenceStart = () => (lineBlank && !/[\p{L},]$/u.test(sigTail)) || /(?:[.!?…:]["'”’)]*|%%%)$/.test(sigTail);
+  // a new sentence starts here: the start of a line, after . ! ? … or a colon, or right after a tag. (A line that
+  // carries on a sentence the one before it left open, one that ends in a letter or a comma, is not one, unless a
+  // blank line came between: a paragraph break ends whatever the paragraph before it was, `Dear Kade,\n\n%%%warm Hi`.)
+  const sentenceStart = () => (lineBlank && (!/[\p{L},]$/u.test(sigTail) || /\n[ \t]*\r?\n[ \t]*$/.test(tailWs)))
+    || /(?:[.!?…:]["'”’)]*|%%%)$/.test(sigTail);
   const hugsRight = (r) => !spaceAt(src, r.end);
   const hugsLeft = (r) => !spaceAt(src, r.start - 1);
   const size = (r) => r.end - r.start;
@@ -419,8 +460,8 @@ function balanceSteeringRuns(text) {
     // second run ends the stamp, it does not open a padded tag around the sentence after it, so a stray later in
     // the piece must not be allowed to close it and swallow the sentence. (A second run that hugs its words opens
     // a tag, and a run with a letter before the next one is judged below.)
-    if (next && size(run) < 6 && !LETTER.test(src.slice(run.end, next.start))
-        && /^[ \t]+[\p{Lu}\d"“‘'(¿¡]/u.test(src.slice(next.end, next.end + 12))) {
+    if (next && size(run) < 6 && !/[\p{L}\p{N}]/u.test(src.slice(run.end, next.start))
+        && /^[ \t]+[^\p{Ll}\s]/u.test(src.slice(next.end, next.end + 12))) {
       strays += 2;
       cursor = next.end;
       i += 2;
@@ -428,6 +469,7 @@ function balanceSteeringRuns(text) {
     }
     let body = null;
     let first = null;
+    let longCloser = false;   // the run after a tag is just a long closer: nothing is left over to open the next tag
     if (next) {
       const closerOpens = size(next) < 6 && spaceAt(src, next.start - 1) && hugsRight(next);
       first = judgeBody(src.slice(run.end, next.start), closerOpens, tightTags > 0);
@@ -439,15 +481,16 @@ function balanceSteeringRuns(text) {
       // letter somewhere in it. So a doubled percent sign in prose (`half%% of it, then %% some`), a `%%` and a
       // `%%%` on either side of a short sentence on different lines (`%%Okay.\n%%%`), two doubled strays that hug
       // words far apart (`%%there friend. ... you%% today`) and a stray glued to punctuation (`Yes%%%. Yeah,%%`)
-      // never made a tag.
+      // never made a tag. (The old normaliser knew ASCII letters only; a word in any alphabet does here.)
       if (body && (size(run) === 2 || size(next) === 2)) {
         const span = src.slice(run.end, next.start);
-        if (span.indexOf('\n') !== -1 || span.length > 160 || !/^[A-Za-z0-9]/.test(span) || !/[A-Za-z]/.test(span)) body = null;
+        if (span.indexOf('\n') !== -1 || span.length > 160 || !/^[\p{L}\p{N}]/u.test(span) || !LETTER.test(span)) body = null;
       }
       // `%%%amused Thanks.` followed by another run: an unclosed direction with its speech, not a direction. (Only
-      // when the opener hugs its words, the real forgotten-closer shape: `%%% warm, like talking to Kade. %%%`,
-      // padded, is an ordinary tag that happens to name someone.)
-      if (body && !first.tight && hugsRight(run) && headThenSentence(first.body)) body = null;
+      // when the opener hugs its words, the real forgotten-closer shape, or the reply writes tight tags, so that a
+      // padded direction cannot be there: `%%% warm, like talking to Kade. %%%` in a reply that pads every tag is an
+      // ordinary tag that happens to name someone.)
+      if (body && !first.tight && (hugsRight(run) || tightTags > 0) && headThenSentence(first.body)) body = null;
       const after = runs[i + 2];
       if (body && after) {
         const second = judgeBody(src.slice(next.end, after.start), false, tightTags > 0);
@@ -457,15 +500,28 @@ function balanceSteeringRuns(text) {
         // a span that reads like speech is a tag only if the pair after it is not a believable direction instead
         else if (first.speechy && second && !second.speechy && !second.proseLike) body = null;
       }
+      // A glued closer + opener: the first three close this tag, the rest start the next. But when this tag hugs
+      // its words and no word touches the run on its right, the rest may have nothing to open: it is a long closer,
+      // and re-queuing it as an opener would let the next stray close it around the speech after it
+      // (`%%%happy%%%%%%% Yes.%%%` would lose "Yes."). Exactly six signs are the one length that two touching tags
+      // also make, a padded or fenced second tag: those stay closer + opener when a believable direction follows,
+      // and a direction is lowercase (speech after a tag starts with a capital: `%%%warm%%%%%% How far%%%%% back`
+      // is a closer, a stray and a second stray, and must not turn "How far" into a tag).
+      if (body && size(next) >= 6 && first.tight && !hugsRight(next)) {
+        longCloser = true;
+        if (size(next) === 6 && after) {
+          const between6 = src.slice(next.end, after.start);
+          const j = judgeBody(between6, false, tightTags > 0);
+          if (j && !j.speechy && !j.proseLike && /^\s*\p{Ll}/u.test(between6)) longCloser = false;
+        }
+      }
     }
     if (body) {
       if (last === '%') put(' '); // two tags touching would be a six-percent run again, which nothing downstream can pair
+      else if (last && /[\p{L}\p{N}]/u.test(last)) put(' ');   // a tag glued to the word before it: a tag that is dropped later must not fuse the words
       put(`%%%${body}%%%`);
-      // A glued closer + opener: the first three close this tag, the rest start the next. But when this tag hugs
-      // its words and no word touches the run on its right, there is nothing for the rest to open: the run is a
-      // long closer, and re-queuing it as an opener would let the next stray close it around the speech after it
-      // (`%%%happy%%%%%%% Yes.%%%` would lose "Yes.").
-      if (size(next) >= 6 && !(first.tight && !hugsRight(next))) {
+      if (size(next) < 6 && /[\p{L}\p{N}]/u.test(src[next.end] || '')) put(' ');   // ... nor to the word after it
+      if (size(next) >= 6 && !longCloser) {                 // a glued closer + opener (see above)
         runs[i + 1] = { start: next.start + 3, end: next.end };
         cursor = next.start + 3;
         i += 1;

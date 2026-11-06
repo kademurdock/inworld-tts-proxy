@@ -459,36 +459,40 @@ test('a forgotten closer whose line has a capital in it is speech after a stray,
 
 // ── final review (Nov 6): a forgotten closer at the start of a line, and the lone percent sign ────────────────
 test('a forgotten closer at the start of a line swallows no speech that runs on after the words', () => {
-  // the whole-line rule takes plain lowercase words only, nine at most, four at the very end of a text; a capital,
-  // a dash, a bracket, an emoji or a long line means the speech runs on, and then the direction is just spoken
-  // (as the old pairing did) instead of the speech being lost with it
+  // the whole-line rule takes plain lowercase words only, ten at most; a capital, a dash, a bracket, an emoji or a
+  // long line means the speech runs on, and then the direction is just spoken (as the old pairing did) instead of
+  // the speech being lost with it
   for (const input of [
-    '%%%warm and so then we went home',                                                // seven words at the end of the text
     '%%%interested like she is leaning in Hello there',
     '%%%warm - Thanks Kade',
     '%%%warm [laughs] Thanks Kade',
     '%%%warm \u{1F600} Thanks Kade',
-    '%%%warm and so then we went home today to see\nSo what now?',                     // ten words, even with a line break after
+    '%%%warm and so then we went home today to see all of it\nSo what now?',             // eleven words, even with a line break after
+    '%%%warm and so then we went home today to see all of it',                          // ... and at the end of a text
     'Okay, that makes sense.\n\n%%%interested like she is leaning in Hello there my friend',
   ]) {
     assert.deepEqual(pairs(balanceSteeringRuns(input)), [], input);
     assert.equal(speech(input), squash(input.replace(/%%%/g, '')), 'every word is spoken: ' + input);
   }
-  // but a direction alone on its line, with the speech on the next, is still closed (up to nine words)
+  // but a direction alone on its line, with the speech on the next, is closed (up to ten words, the longest real one)
   assert.deepEqual(pairs(balanceSteeringRuns('%%%fond and a little emotional\nSo what now?')), ['fond and a little emotional']);
-  assert.deepEqual(pairs(balanceSteeringRuns('%%%one two three four five six seven eight nine\nSo what now?')), ['one two three four five six seven eight nine']);
-  assert.deepEqual(pairs(balanceSteeringRuns('%%%one two three four five six seven eight nine ten\nSo what now?')), []);
-  // and four words at the very end of a text, five not
-  assert.deepEqual(pairs(balanceSteeringRuns('%%%warm and soft again')), ['warm and soft again']);
-  assert.deepEqual(pairs(balanceSteeringRuns('%%%warm and soft again now')), []);
+  assert.deepEqual(pairs(balanceSteeringRuns('%%%one two three four five six seven eight nine ten\nSo what now?')), ['one two three four five six seven eight nine ten']);
+  assert.deepEqual(pairs(balanceSteeringRuns('%%%one two three four five six seven eight nine ten eleven\nSo what now?')), []);
+  // and so is the head of a tag a chunker cut off, which is the whole piece: closing it is silence, which is right
+  for (const head of ['%%%warm and a little teas', '%%%fond and a little emotional', '%%%interested like she is leaning in', '%%%proud and trying to be casual abo']) {
+    assert.deepEqual(pairs(balanceSteeringRuns(head)), [head.slice(3)], head);
+    assert.equal(speech(head), '', head);
+  }
+  assert.deepEqual(pairs(balanceSteeringRuns('Before it, one sentence here.\n\n%%%warm and a little teas')), ['warm and a little teas']);
   // the helper: one word of 80 letters is a line, 81 is not
   assert.equal(unclosedLine('a'.repeat(80) + '\nx'), 'a'.repeat(80));
   assert.equal(unclosedLine('a'.repeat(81) + '\nx'), null);
   for (const bad of ['warm - Thanks\nx', 'warm [laughs]\nx', 'warm \u{1F600}\nx', 'Warm\nx', 'warm.\nx', '5 more\nx']) assert.equal(unclosedLine(bad), null, JSON.stringify(bad));
   assert.equal(unclosedLine('warm 5 more\nx'), 'warm 5 more');
-  assert.equal(unclosedLine('one two three four five six seven eight nine ten\nx'), null);
-  assert.equal(unclosedLine('one two three four five'), null, 'five words at the very end of a text');
-  assert.equal(unclosedLine('one two three four'), 'one two three four');
+  assert.equal(unclosedLine('one two three four five six seven eight nine ten\nx'), 'one two three four five six seven eight nine ten');
+  assert.equal(unclosedLine('one two three four five six seven eight nine ten eleven\nx'), null);
+  assert.equal(unclosedLine('one two three four five'), 'one two three four five', 'five words at the very end of a text: a cut head');
+  assert.equal(unclosedLine('one two three four five six seven eight nine ten eleven'), null);
 });
 
 test('a lone percent sign at an end of a piece that holds a tag: the rest of a delimiter goes, a percentage stays', () => {
@@ -664,7 +668,8 @@ test('a lone percent sign on a line of its own, a pair round no letters and the 
   // the incident's stray line one character short
   assert.equal(speech('Hello.\n\n%\n%%%warm%%% Hi there.'), 'Hello. Hi there.');
   assert.deepEqual(pairs(balanceSteeringRuns('Hello.\n\n%\n%%%warm%%% Hi there.')), ['warm']);
-  assert.equal(speech('Hello.\r\n \t% \t\r\nBye.'), 'Hello. Bye.');
+  assert.equal(speech('Hello.\r\n \t% \t\r\n%%%warm%%% Bye.'), 'Hello. Bye.');
+  assert.equal(balanceSteeringRuns('Hello.\n%\nBye.'), 'Hello.\n%\nBye.', 'ordinary text with a % on a line of its own is left alone');
   assert.equal(balanceSteeringRuns('Sales:\n50 %\nUp.'), 'Sales:\n50 %\nUp.', 'a percentage with its number stays');
   assert.equal(balanceSteeringRuns('Growth\n%%\nUp'), 'Growth\n\nUp', 'a doubled sign on its own line is a stray run, as before');
   // a pair of three-sign runs round a short body with no letter is an empty tag (the old pairing dropped it)
@@ -707,7 +712,7 @@ test('a text with a hundred thousand blanks and a percent sign is balanced in a 
   const big = 149000;
   const t0 = Date.now();
   for (const text of [' '.repeat(big) + 'x%', ' \t'.repeat(big / 2) + 'x%', 'x' + ' '.repeat(big) + '%', ' '.repeat(big) + '%', '\n'.repeat(big) + '%',
-    ' '.repeat(big) + 'x%', 'a'.repeat(big) + '%', '% '.repeat(big / 2)]) balanceSteeringRuns(text);
+    '\u00a0'.repeat(big) + 'x%', 'a'.repeat(big) + '%', '% '.repeat(big / 2)]) balanceSteeringRuns(text);
   assert.ok(Date.now() - t0 < 3000, `eight pathological texts took ${Date.now() - t0} ms`);
 });
 
@@ -743,8 +748,10 @@ test('pins from the second sweep: the empty pair, the doubled-sign limits, abbre
   assert.deepEqual(pairs(balanceSteeringRuns(`Hi %%${body160}b%% there`)), []);
   assert.deepEqual(pairs(balanceSteeringRuns('Hi %%80%% there')), []);
   assert.equal(speech('Hi %%80%% there'), 'Hi 80 there');
-  // the old normaliser wanted a Latin letter in it, so a digit followed by other letters is no doubled-sign tag either
-  assert.deepEqual(pairs(balanceSteeringRuns('Hi %%5 тихо%% there')), []);
+  // the old normaliser knew Latin letters only; a word in any alphabet is a doubled-sign tag here, digits alone are not
+  assert.deepEqual(pairs(balanceSteeringRuns('Hi %%5 тихо%% there')), ['5 тихо']);
+  assert.deepEqual(pairs(balanceSteeringRuns('Hi %%über cheerful%% there')), ['über cheerful']);
+  assert.deepEqual(pairs(balanceSteeringRuns('Hi %%(softly)%% there')), [], 'a bracket first is punctuation, as before');
   // a stray after a spaced dash is not inside a word
   assert.equal(speech('a --%%%then'), 'a -- then');
   // the end percent: a doubled run at the end of a text is a run, not a lone sign
@@ -755,6 +762,198 @@ test('pins from the second sweep: the empty pair, the doubled-sign limits, abbre
   // twelve are prose
   const eleven = Array.from({ length: 11 }, (_, i) => 'w' + i).join(' ');
   assert.deepEqual(pairs(balanceSteeringRuns(`%%%${eleven}%%% Hi. %%% This is a four word sentence. %%% Bye.`)), [eleven]);
+});
+
+test('pins from the confirmation round: the empty-pair class, paragraph breaks, long closers, cut heads, openers, edges and the lone percent', () => {
+  for (const [input, wantPairs, wantSpeech] of [
+    ["%%%\n%%% “Yes,” she said. %%%", [], "“Yes,” she said."],
+    ["%%%\n%%% ‘Yes,’ she said. %%%", [], "‘Yes,’ she said."],
+    ["%%%\n%%% 'Yes,' she said. %%%", [], "'Yes,' she said."],
+    ["%%%\n%%% (laughs) Okay then. %%%", [], "(laughs) Okay then."],
+    ["%%%\n%%% ¿Qué tal? %%%", [], "¿Qué tal?"],
+    ["%%%\n%%% ¡Hola amigo! %%%", [], "¡Hola amigo!"],
+    ["%%%\n%%% Écoute bien. %%%", [], "Écoute bien."],
+    ["%%%\n%%% — and then she left today. %%%", [], "— and then she left today."],
+    ["%%%\n%%% …and then it stopped. %%%", [], "…and then it stopped."],
+    ["%%%\n%%% - and then it stopped. %%%", [], "- and then it stopped."],
+    ["%%%\n%%% • Eggs and flour. %%%", [], "• Eggs and flour."],
+    ["%%%\n%%% « Oui » %%%", [], "« Oui »"],
+    ["%%%\n%%% [laughs] Okay then, see you. %%%", [], "[laughs] Okay then, see you."],
+    ["%%%\n%%% 😊 see you soon %%%", [], "😊 see you soon"],
+    ["%%%\n%%% # Heading %%%", [], "# Heading"],
+    ["%%%%%\n%%% See you soon. %%%", [], "See you soon."],
+    ["Page %%% 3 %%% Apples are good.", [], "Page 3 Apples are good."],
+    ["Wait %%% ... %%% Okay then.", [], "Wait Okay then."],
+    ["%%%\n%%% a little amused %%% Hello there.", ["a little amused"], "Hello there."],
+    ["Hello Kade\n\n%%%warm So what now?", ["warm"], "Hello Kade So what now?"],
+    ["Okay,\n\n%%%warm Hello there.", ["warm"], "Okay, Hello there."],
+    ["Dear Kade,\n\n%%%warm Here is the plan.", ["warm"], "Dear Kade, Here is the plan."],
+    ["Okay\n\n%%%quietly Two different problems.", ["quietly"], "Okay Two different problems."],
+    ["Well,\n%%%warm Hello there.", [], "Well, warm Hello there."],
+    ["%%%nervous zqaf%%% First \n%%%day's Monday. I've changed my outfit three times already.", ["nervous zqaf"], "First day's Monday. I've changed my outfit three times already."],
+    ["%%%sad zqaa%%%%%% curious zqbb %%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%sad zqaa%%%%%% curious zqbb%%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%sad zqaa%%%%%%\ncurious zqbb\n%%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%a zqaa%%%%%% b zqbb%%%%%% c zqcc%%% Yes.", ["a zqaa","b zqbb","c zqcc"], "Yes."],
+    ["%%%happy%%%%%% Yes.%%%", ["happy"], "Yes."],
+    ["%%%happy zqaa%%%%%%% Yes.%%%", ["happy zqaa"], "Yes."],
+    ["%%%sad zqaa%%%%%%curious zqbb%%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%warm and curious%%%%%% How far%%%%% back have you gotten?", ["warm and curious"], "How far back have you gotten?"],
+    ["%%%a beat%%%%%% Not a%%%%% chance.", ["a beat"], "Not a chance."],
+    ["%%%pleased%%%%%% So what is the shape%%%% of it?", ["pleased"], "So what is the shape of it?"],
+    ["%%%a beat%%%%%% Not %%%a chance.", ["a beat"], "Not a chance."],
+    ["%%%quietly%%%%%% I  %%%% would go and look.", ["quietly"], "I would go and look."],
+    ["%%%warm%%%%%% How far %%% back", ["warm"], "How far back"],
+    ["%%%warm%%%%%% hello there%%% Yes.", ["warm","hello there"], "Yes."],
+    ["%%%тихо%%%%%% мягко и спокойно %%% Привет.", ["тихо","мягко и спокойно"], "Привет."],
+    ["%%%тихо%%%%%% Мягко и спокойно %%% Привет.", ["тихо"], "Мягко и спокойно Привет."],
+    ["%%%suave%%%%%% ñoño %%% Hola.", ["suave","ñoño"], "Hola."],
+    ["%%%warm and easy like catching up with", ["warm and easy like catching up with"], ""],
+    ["I saved you the blue one.\n\n%%%amused and a little em", ["amused and a little em"], "I saved you the blue one."],
+    ["%%%claro Kade, sí.", [], "claro Kade, sí."],
+    ["%%%bueno Kade, sí.", [], "bueno Kade, sí."],
+    ["%%%vale Kade, sí.", [], "vale Kade, sí."],
+    ["%%%adios Kade, sí.", [], "adios Kade, sí."],
+    ["%%%nah Kade, that is fine.", [], "nah Kade, that is fine."],
+    ["%%%yeah Thanks. %%% Bye.", ["yeah Thanks."], "Bye."],
+    ["%%%\nreally excited (wow!)\n%%% Hello there, friend.", [], "really excited (wow!) Hello there, friend."],
+    ["%%%This is a test.%%% Hi there. %%% Here is one sentence now. %%% Bye.", ["This is a test.","Here is one sentence now."], "Hi there. Bye."],
+    ["Hi. %%% a\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\ta\tb\tc %%% Bye.", [], "Hi. a b a b a b a b a b a b a b a b a b a b a b a b a b a b a b c Bye."],
+    ["I said %%% very quiet %%%warm and soft %%% Okay.", ["very quiet"], "I said warm and soft Okay."],
+    ["%%% That is on me. %%% so then we went home and told her everything about the long day today %%% Bye.", ["That is on me."], "so then we went home and told her everything about the long day today Bye."],
+    ["5%% %%x y zYes.x y zOkay. %%%", ["x y zYes.x y zOkay."], "5"],
+    ["Okay.%%% x y zhmm Okay.%%%", ["x y zhmm Okay."], "Okay."],
+    ["%%%delighted%%% The neighbor's dog came through the gate. His%%%% name is Biscuit.\n\n%%% ", ["delighted"], "The neighbor's dog came through the gate. His name is Biscuit."],
+    ["Hello there%%%reset%%% friend how are you", ["reset"], "Hello there friend how are you"],
+    ["%%%baffled%%% Somebody keeps moving the garden gnome to face%%%% the %%%%fence.", ["baffled","the"], "Somebody keeps moving the garden gnome to face fence."],
+    ["Hello there. %%%warm%%%friend", ["warm"], "Hello there. friend"],
+    ["%%%sad zqaa%%%%%%% curious zqbb %%% Yes.", ["sad zqaa"], "curious zqbb Yes."],
+    ["%%% sad zqaa %%%%%%% curious zqbb %%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%sad zqaa%%%%%%%curious zqbb%%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%sad zqaa%%%%%%%%curious zqbb%%% Yes.", ["sad zqaa","curious zqbb"], "Yes."],
+    ["%%%%%%...%%%%%%%% Yes.", [], "... Yes."],
+    ["%%%friend%%%%%%\nit was\nYes.\n%%% a little amused", ["friend"], "it was Yes. a little amused"],
+    ["%%%friend%%%%%%\nit was\nYes.\n%%%%%%% a little amused", ["friend"], "it was Yes. a little amused"],
+    ["%%%The paper trail is thin.%%%%%% back have you gotten? %%%it was", ["The paper trail is thin."], "back have you gotten? it was"],
+    ["Okay,\r\n\r\n%%%warm Hello there.", ["warm"], "Okay, Hello there."],
+    ["Okay.\n\n%%%yup Kade, that is fine.", [], "Okay. yup Kade, that is fine."],
+    ["Okay.\n\n%%%mhm Kade, that is fine.", [], "Okay. mhm Kade, that is fine."],
+    ["Okay.\n\n%%%oof Kade, that is fine.", [], "Okay. oof Kade, that is fine."],
+    ["Okay.\n\n%%%like Kade, that is fine.", [], "Okay. like Kade, that is fine."],
+    ["Okay.\n\n%%%yea Kade, that is fine.", [], "Okay. yea Kade, that is fine."],
+    ["Okay.\n\n%%%uh Kade, that is fine.", [], "Okay. uh Kade, that is fine."],
+    ["Okay.\n\n%%%uhh Kade, that is fine.", [], "Okay. uhh Kade, that is fine."],
+    ["Okay.\n\n%%%mm Kade, that is fine.", [], "Okay. mm Kade, that is fine."],
+    ["Okay.\n\n%%%lol Kade, that is fine.", [], "Okay. lol Kade, that is fine."],
+    ["Okay.\n\n%%%lmao Kade, that is fine.", [], "Okay. lmao Kade, that is fine."],
+    ["Okay.\n\n%%%yay Kade, that is fine.", [], "Okay. yay Kade, that is fine."],
+    ["Okay.\n\n%%%goodness Kade, that is fine.", [], "Okay. goodness Kade, that is fine."],
+    ["Okay.\n\n%%%great Kade, that is fine.", [], "Okay. great Kade, that is fine."],
+    ["Okay.\n\n%%%just Kade, that is fine.", [], "Okay. just Kade, that is fine."],
+    ["Okay.\n\n%%%now Kade, that is fine.", [], "Okay. now Kade, that is fine."],
+    ["Okay.\n\n%%%then Kade, that is fine.", [], "Okay. then Kade, that is fine."],
+  ]) {
+    const out = balanceSteeringRuns(input);
+    assert.deepEqual(pairs(out), wantPairs, JSON.stringify(input).slice(0, 90));
+    assert.equal(squash(strip(out)), wantSpeech, JSON.stringify(input).slice(0, 90));
+  }
+  // the whole output string: ordinary text about the sign is left alone, a cut delimiter's lone % goes
+  for (const [input, want] of [
+    ["The percent sign is %", "The percent sign is %"],
+    ["%PATH% is where Windows looks for programs.", "%PATH% is where Windows looks for programs."],
+    ["Check your %PATH%", "Check your %PATH%"],
+    ["%d items left", "%d items left"],
+    ["Press shift 5 for %", "Press shift 5 for %"],
+    ["%", "%"],
+    ["% of the voters said so.", "% of the voters said so."],
+    ["Sales are up by one third %", "Sales are up by one third %"],
+    ["The tax rate went up by x%", "The tax rate went up by x%"],
+    ["Hello.\n%\nBye.", "Hello.\n%\nBye."],
+    ["% So what is the shape of it?", " So what is the shape of it?"],
+    ["Hello there. %", "Hello there. "],
+    ["Two different problems.\n\n%", "Two different problems.\n\n"],
+    ["%%%warm%%% The turnout was ninety\u00a0%", "%%%warm%%% The turnout was ninety\u00a0%"],
+    ["%%%warm%%% It cost three million %", "%%%warm%%% It cost three million %"],
+    ["%%%warm%%% It dropped to zero %", "%%%warm%%% It dropped to zero %"],
+    ["%%%warm%%% It was nineteen %", "%%%warm%%% It was nineteen %"],
+    ["%%%warm%%% It was twelve %", "%%%warm%%% It was twelve %"],
+    ["%%%warm%%% It was a hundred %", "%%%warm%%% It was a hundred %"],
+    ["%%%warm%%% It is 5½ %", "%%%warm%%% It is 5½ %"],
+    ["%%%warm%%% Hello there. %\n", "%%%warm%%% Hello there. \n"],
+    ["\n%curious%%% So what now?", "%%%curious%%% So what now?"],
+    ["%%%warm%%% The percent sign is %", "%%%warm%%% The percent sign is "],
+    ["%%%ok% % %%% Hi", "%%%ok%%%% Hi"],
+    ["%%% %ok%%% Hi", "%%%ok%%% Hi"],
+    ["% “Yes,” she said.", " “Yes,” she said."],
+    ["% ¿Qué tal?", " ¿Qué tal?"],
+    ["Hello there… %", "Hello there… "],
+    ["He said \"stop.\" %", "He said \"stop.\" "],
+    ["Note: %", "Note: "],
+    ["Wait. %\r\n", "Wait. \r\n"],
+    ["%%%warm%%% It was ninety\u2009%", "%%%warm%%% It was ninety\u2009%"],
+    ["%%%warm%%% It was ninety\u202f%", "%%%warm%%% It was ninety\u202f%"],
+    ["%%%warm%%% It is 1¼ %", "%%%warm%%% It is 1¼ %"],
+    ["%%%warm%%% It is 3¾ %", "%%%warm%%% It is 3¾ %"],
+    ["%%%warm%%% It is 2⅓ %", "%%%warm%%% It is 2⅓ %"],
+    ["%%%warm%%% It is 2⅔ %", "%%%warm%%% It is 2⅔ %"],
+    ["%%%warm%%% It is 7⅛ %", "%%%warm%%% It is 7⅛ %"],
+    ["%%%warm%%% It was ONE %", "%%%warm%%% It was ONE %"],
+    ["%%%warm%%% It was bone %", "%%%warm%%% It was bone "],
+    ["He said 'stop.' %", "He said 'stop.' "],
+    ["He said “stop.” %", "He said “stop.” "],
+    ["He said ‘stop.’ %", "He said ‘stop.’ "],
+    ["(It is over.) %", "(It is over.) "],
+    ["%%%warm%%% Hello there.\n%\t", "%%%warm%%% Hello there.\n"],
+    ["%%%warm%%% Hello there.\n% ", "%%%warm%%% Hello there.\n"],
+    ["Hello there%%%reset%%%friend how are you", "Hello there %%%reset%%% friend how are you"],
+    ["she said%%x %%%", "she said %%%x%%%"],
+  ]) assert.equal(balanceSteeringRuns(input), want, JSON.stringify(input).slice(0, 90));
+});
+
+test('every speech opener keeps the line it starts: a forgotten-closer head that opens like speech is never closed as a direction', () => {
+  const OPENERS = [
+    "yeah yes yep nope no okay ok oh ah hm hmm mm",
+    "uh um huh well right so you your i i'm i'll i've",
+    "we he she they it it's that this what why how who",
+    "hello hi hey wait look listen thanks thank please honestly actually anyway",
+    "maybe sure my me let let's and but because if do did",
+    "can will would there here sorry alright wow ha haha aw aww",
+    "ooh ouch gosh geez dear bye goodbye hola gracias bueno buenas buenos",
+    "bien oye vale pues claro adiós adios goodness great nice exactly definitely",
+    "just now absolutely totally true really seriously basically obviously clearly fine cool",
+    "awesome perfect wonderful lovely indeed certainly also then still yet ugh whoa",
+    "yikes damn dang jeez man dude nah yup mhm oof like yea",
+    "uhh lol lmao yay",
+  ].join(' ').split(' ');
+  assert.equal(OPENERS.length, 136);
+  for (const w of OPENERS) {
+    const out = balanceSteeringRuns(`Okay.\n\n%%%${w} Kade, that is fine.`);
+    assert.deepEqual(pairs(out), [], w);
+    assert.equal(squash(strip(out)), `Okay. ${w} Kade, that is fine.`, w);
+  }
+});
+
+test('every interjection that starts speech is never read as the tail of a cut tag: the word stays in the speech', () => {
+  const CUT_OPENERS = [
+    "yeah yes yep nope no okay ok oh ah hm hmm mm",
+    "uh um huh well right hello hi hey wait look listen thanks",
+    "thank please sorry alright wow ha haha",
+  ].join(' ').split(' ');
+  assert.equal(CUT_OPENERS.length, 31);
+  for (const w of CUT_OPENERS) {
+    const out = balanceSteeringRuns(`${w}%%% So what now?`);
+    assert.deepEqual(pairs(out), [], w);
+    assert.equal(squash(strip(out)), `${w} So what now?`, w);
+  }
+});
+
+test('dense inputs just under the size guard are balanced in a blink: nothing in the loop is quadratic', () => {
+  // a hand mutant that joins the whole output on every write passes every other test and takes minutes here
+  for (const text of ['%%a'.repeat(50000), '%%%a'.repeat(37500), '%%,I'.repeat(37500), '%%I'.repeat(50000), '%%%\n'.repeat(37000)]) {
+    const t0 = Date.now();
+    balanceSteeringRuns(text);
+    assert.ok(Date.now() - t0 < 4000, `${text.length} characters took ${Date.now() - t0} ms`);
+  }
 });
 
 // ── seeded generators of messages the way models actually break them ───────────────────────────────────────
