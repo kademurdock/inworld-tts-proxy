@@ -15,7 +15,7 @@ async function withServer(port, extraEnv, run) {
   const receipt = path.join(dir, 'requests.jsonl');
   fs.writeFileSync(receipt, '');
   const env = { ...process.env, PORT: String(port), INWORLD_API_KEY: 'offline', PROVIDER_RECEIPT: receipt, ...extraEnv };
-  for (const k of ['INWORLD_WRITER', 'INWORLD_TALK_FILLERS', 'INWORLD_TALK_SOUNDS', 'INWORLD_STEER_RATE', 'TTS_TALK_CALM', 'KADE_TTS_LIVELY_BASELINE', 'INWORLD_TALK_RATE']) if (!(k in extraEnv)) delete env[k];
+  for (const k of ['INWORLD_WRITER', 'INWORLD_TALK_FILLERS', 'INWORLD_TALK_SOUNDS', 'INWORLD_STEER_RATE', 'TTS_TALK_CALM', 'KADE_TTS_LIVELY_BASELINE', 'INWORLD_TALK_RATE', 'INWORLD_STEER_DROP_ABOVE']) if (!(k in extraEnv)) delete env[k];
   const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/provider.cjs'), 'server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '';
   child.stdout.on('data', (x) => { log += x; });
@@ -38,7 +38,17 @@ async function withServer(port, extraEnv, run) {
       assert.equal(calls.length, 1);
       return calls[0].body.audioConfig.speakingRate;
     };
-    return await run({ rate, health: async () => (await fetch(`http://127.0.0.1:${port}/health`)).json(), log: () => log });
+    // the rate and the instruction Inworld was sent
+    const sent = async (input, body = {}) => {
+      const before = rows().length;
+      const r = await fetch(`http://127.0.0.1:${port}/v1/audio/speech`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input, voice: 'alloy', ...body }) });
+      assert.equal(r.status, 200, log.slice(-1500));
+      await r.arrayBuffer();
+      const calls = rows().slice(before);
+      assert.equal(calls.length, 1);
+      return { rate: calls[0].body.audioConfig.speakingRate, instruction: calls[0].body.instruction || null };
+    };
+    return await run({ rate, sent, health: async () => (await fetch(`http://127.0.0.1:${port}/health`)).json(), log: () => log });
   } finally {
     child.kill();
     await new Promise((r) => child.once('exit', r));
@@ -50,6 +60,23 @@ test('off, the rate is the listener\'s, steered or not', async () => {
     assert.equal(await rate(`%%%hesitant%%% ${BODY}`), 1);
     assert.equal(await rate(`%%%hesitant%%% ${BODY}`, { speed: 1.2, stream: true }), 1.2);
     assert.equal((await health()).inworldSteer.on, false);
+  });
+});
+
+test('the costliest moods are spoken without the direction, at the voice\'s own pace; cheap ones keep theirs with the lift', async () => {
+  await withServer(31957, { INWORLD_STEER_RATE: '1', INWORLD_STEER_DROP_ABOVE: '1.4' }, async ({ sent, health, log }) => {
+    const { WORDS } = require('./inworld-steer');
+    for (const stream of [false, true]) {
+      assert.deepEqual(await sent(`%%%hesitant%%% ${BODY}`, { stream }), { rate: 1, instruction: null }, 'dropped: the voice\'s own pace, no instruction');
+      assert.deepEqual(await sent(`%%%uneasy%%% ${BODY}`, { stream, speed: 1.1 }), { rate: 1.1, instruction: null }, 'the listener\'s speed stays theirs');
+      assert.deepEqual(await sent(`%%%amused%%% ${BODY}`, { stream }), { rate: WORDS.amused, instruction: 'amused' }, 'cheap: kept, with the lift');
+      assert.deepEqual(await sent(`%%%thoughtful%%% ${BODY}`, { stream }), { rate: WORDS.thoughtful, instruction: 'thoughtful' });
+    }
+    // reading keeps its direction whatever it costs
+    assert.deepEqual(await sent(`%%%hesitant%%% ${BODY}`, { delivery: 'STABLE' }), { rate: 1, instruction: 'hesitant' });
+    assert.match(log(), /\[TTS\] steering: dropped the direction "hesitant"/);
+    assert.match(log(), /dropped the direction "hesitant".*streamed/);
+    assert.equal((await health()).inworldSteer.dropAbove, 1.4);
   });
 });
 

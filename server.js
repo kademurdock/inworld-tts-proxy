@@ -58,7 +58,7 @@ const fishDirector = createDirector();
 const { createWriter: createInworldWriter, writerOn: inworldWriterOn } = require('./inworld-writer');
 const inworldWriter = createInworldWriter();
 const { pauseSettings: inworldPauseSettings, createPauseLimiter: createInworldPauseLimiter, limitPauses: limitInworldPauses } = require('./inworld-pauses');
-const { steerSettings: inworldSteerSettings, steeredRate: inworldSteeredRate } = require('./inworld-steer');
+const { steerSettings: inworldSteerSettings, steeredRate: inworldSteeredRate, steeredInstruction: inworldSteeredInstruction } = require('./inworld-steer');
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1193,6 +1193,11 @@ const INWORLD_TIMEOUT_MS = 20000;
 async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false) {
   text = normalizeInworldCaps(text);
   // Nov 5 2026: a feeling word slows Inworld by its measured cost; chat speech gets that back (inworld-steer.js).
+  if (talk) {
+    const kept = inworldSteeredInstruction(instruction);
+    if (instruction && !kept) console.log(`[TTS] steering: dropped the direction "${String(instruction).slice(0, 60)}" (it costs more speed than the lift can give back)`);
+    instruction = kept;
+  }
   const baseRate = speakingRate != null ? speakingRate : TTS_SPEAKING_RATE;
   const sendRate = talk ? inworldSteeredRate(baseRate, instruction, text) : baseRate;
   if (sendRate !== baseRate) console.log(`[TTS] steering: speakingRate ${baseRate} -> ${sendRate}`);
@@ -1390,7 +1395,12 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
   const filled = fillers ? talkFillersByParagraph(liftedText, fillers) : liftedText;
   const sayText = sounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: sounds.turn, seedText: sounds.seedText }) : filled;
   if (!sayText || !sayText.trim()) return false;
-  const instruction = inworldInstruction(lifted, delivery);
+  let instruction = inworldInstruction(lifted, delivery);
+  if (talk) {
+    const kept = inworldSteeredInstruction(instruction);
+    if (instruction && !kept) console.log(`[TTS] steering: dropped the direction "${String(instruction).slice(0, 60)}" (it costs more speed than the lift can give back), streamed`);
+    instruction = kept;
+  }
   const baseRate = speakingRate != null ? speakingRate : TTS_SPEAKING_RATE;
   const sendRate = talk ? inworldSteeredRate(baseRate, instruction, sayText) : baseRate; // inworld-steer.js
   if (sendRate !== baseRate) console.log(`[TTS] steering: speakingRate ${baseRate} -> ${sendRate}, streamed`);

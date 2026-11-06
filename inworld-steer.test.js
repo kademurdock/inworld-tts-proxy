@@ -19,6 +19,26 @@ test('off unless INWORLD_STEER_RATE=1; the cap and the fallback move without a d
   assert.equal(steeredRate(1, 'hesitant', 'x', steerSettings({})), 1, 'off: the rate is the listener\'s');
 });
 
+test('a direction that costs too much speed is dropped, not sent; off by default', () => {
+  const { steeredInstruction } = require('./inworld-steer');
+  assert.equal(ON.dropAbove, 0);
+  assert.equal(steeredInstruction('hesitant', ON), 'hesitant', 'off: nothing is dropped');
+  const drop = steerSettings({ INWORLD_STEER_RATE: '1', INWORLD_STEER_DROP_ABOVE: '1.4' });
+  assert.equal(drop.dropAbove, 1.4);
+  for (const d of ['hesitant', 'uncertain', 'uneasy', 'sad', 'tired', 'sleepy', 'thinking out loud', 'worried and trying not to be']) {
+    assert.equal(steeredInstruction(d, drop), null, d + ' costs ' + directionCost(d, drop));
+  }
+  for (const d of ['amused', 'pleased', 'fond', 'curious', 'calm', 'thoughtful', 'nostalgic', 'disappointed', 'warm', 'matter of fact', 'a brand new feeling']) {
+    assert.equal(steeredInstruction(d, drop), d, d + ' costs ' + directionCost(d, drop));
+  }
+  assert.equal(steeredInstruction(null, drop), null);
+  assert.equal(steeredInstruction('', drop), '');
+  // steering off: the instruction always goes, whatever the threshold says
+  assert.equal(steeredInstruction('hesitant', steerSettings({ INWORLD_STEER_DROP_ABOVE: '1.4' })), 'hesitant');
+  // a threshold of 1 or under means never (a cost of exactly 1 must not wipe out every direction)
+  assert.equal(steeredInstruction('amused', steerSettings({ INWORLD_STEER_RATE: '1', INWORLD_STEER_DROP_ABOVE: '1' })), 'amused');
+});
+
 test('INWORLD_TALK_RATE is the one dial for overall chat pace: 1 changes nothing, it multiplies, and it stays in range', () => {
   assert.equal(ON.talkRate, 1);
   const slower = steerSettings({ INWORLD_STEER_RATE: '1', INWORLD_TALK_RATE: '0.9' });

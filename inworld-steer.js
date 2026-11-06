@@ -91,6 +91,11 @@ function steerSettings(source = process.env) {
     // The overall pace of chat speech while steering is on: 1 is each voice's own pace, 0.95 slows every
     // chat voice 5% evenly. One variable for "too fast" or "too slow" that every client obeys.
     talkRate: Math.min(1.3, Math.max(0.7, num(source.INWORLD_TALK_RATE, 1))),
+    // A direction whose measured cost is over this is not sent at all (0 = never): the lift is capped, and
+    // the costliest moods (hesitant, uncertain, uneasy, sad, tired, sleepy ... x1.4 and up) still dragged
+    // after it. Six of those against plain, blind, 20 sentences: plain won 11-5, and the lifted direction
+    // beat the unlifted one 17-1, plain beat the unlifted one 16-1.
+    dropAbove: Math.max(0, num(source.INWORLD_STEER_DROP_ABOVE, 0)),
   };
 }
 
@@ -126,6 +131,12 @@ function steerFactor(instruction, text, settings = steerSettings()) {
   return Math.min(settings.maxBoost, Math.max(1, ...dirs.map((d) => directionCost(d, settings))));
 }
 
+/** The instruction to send: the same one, or none when it costs more than dropAbove (null in, null out). */
+function steeredInstruction(instruction, settings = steerSettings()) {
+  if (!settings.on || !instruction || !(settings.dropAbove > 1)) return instruction;
+  return directionCost(instruction, settings) > settings.dropAbove ? null : instruction;
+}
+
 /** The speaking rate to send: the listener's, raised by what the steering costs and set by the overall
  *  chat pace (INWORLD_TALK_RATE). Inworld accepts 0.5 to 1.5. */
 function steeredRate(rate, instruction, text, settings = steerSettings()) {
@@ -134,4 +145,4 @@ function steeredRate(rate, instruction, text, settings = steerSettings()) {
   return Math.abs(f - 1) > 0.005 ? Math.min(1.5, Math.max(0.5, Math.round(rate * f * 1000) / 1000)) : rate;
 }
 
-module.exports = { steerSettings, directionCost, directionsOf, steerFactor, steeredRate, WORDS, PHRASES };
+module.exports = { steerSettings, directionCost, directionsOf, steerFactor, steeredRate, steeredInstruction, WORDS, PHRASES };
