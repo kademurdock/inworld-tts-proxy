@@ -77,6 +77,64 @@ test('Inworld: strays and a forgotten closer, in other shapes, never leave direc
   });
 });
 
+// The first version of the fix judged the WORDS of a tag too hard: a red team found these used to work and
+// began to be read aloud. Each: [name, message, words that must never be spoken, speech that must survive].
+const SHAPES = [
+  ['exclamation', '%%%excited!%%% Oh my gosh, look at that.', /\bexcited\b/i, /Oh my gosh, look at that\./],
+  ['question', '%%%whispering?%%% Oh my gosh, look at that.', /\bwhispering\b/i, /Oh my gosh, look at that\./],
+  ['line break after the opener', '%%%\nwarm%%% Hi there friend.', /\bwarm\b/i, /Hi there friend\./],
+  ['fence', 'Before the tag.\n%%%\nwarm and curious\n%%%\nSo what is the shape of it?', /\bcurious\b/i, /Before the tag\..*So what is the shape of it\?/],
+  ['abbreviation', '%%%gentle Mr. Rogers voice%%% Oh my gosh, look at that.', /\brogers\b/i, /Oh my gosh, look at that\./],
+  ['empty tag, then a tag', '%%%%%% I walked in and sat down %%%wry%%% quietly.', /\bwry\b/i, /I walked in and sat down\s+quietly\./],
+  ['closer forgotten, speech follows', '%%%warm Hello there, friend. And a little more to say.', /\bwarm\b/i, /Hello there, friend\. And a little more to say\./],
+  ['stray line before a padded tag', 'Hello.\n%%%\nThe paper trail is thin. %%% soft but sure %%%\nOkay then.', /soft but sure/i, /Hello\..*The paper trail is thin\..*Okay then\./],
+  // normalizeForSpeech used to turn "2019 %" into "2019 percent" and eat the first % of the delimiter that followed
+  ['a number right before a tag', 'In 2019 %%%wistful%%% it was simpler.', /\bwistful\b|percent/i, /In 2019\s+it was simpler\./],
+  ['a number and a line break right before a tag', 'Room 12\n%%%warm%%% Come in.', /\bwarm\b|percent/i, /Room 12\s+Come in\./],
+  ['a real percentage beside a tag still says percent', 'Sales are up 50% this year. %%%warm%%% Nice.', /\bwarm\b/i, /Sales are up 50 percent this year\.\s+Nice\./],
+  // the apps cut a reply in pieces; the second piece of a tag cut in half must not speak the direction
+  ['the tail of a tag cut in half', 'curious%%% So what is the shape of it? And how far back have you gotten?', /\bcurious\b/i, /So what is the shape of it\? And how far back have you gotten\?/],
+  ['a bare closer at the start of a piece', '%%% I spent twenty minutes looking for my', /^$/, /I spent twenty minutes looking for my/],
+  // the iPhone re-stamps its carried bare newline (`%%%\n%%% `) in front of the next pieces; a stray later in the
+  // piece closed it around the sentence and the provider was handed nothing (the old pairing spoke every word)
+  ['the iPhone re-stamp and a stray at the end of the piece', '%%%\n%%% See you soon. %%%', /^$/, /See you soon\./],
+  ['the iPhone re-stamp and a stray glued to the sentence', "%%%\n%%% Some of them are labeled in his handwriting, but the names don't match anything I know.%%%", /^$/, /labeled in his handwriting, but the names don't match anything I know\./],
+  ['the iPhone re-stamp and a stray between two sentences', '%%%\n%%% You made it. %%% I saved you the chair by the heater.', /^$/, /You made it\. I saved you the chair by the heater\./],
+  // a forgotten closer after a long direction with speech that has a capital: the words leak (as before), the speech is kept
+  ['a forgotten closer after five words, speech after it', '%%%fond and a little emotional She walked in without looking back', /^$/, /She walked in without looking back/],
+  // a chunker that cuts a delimiter in the middle leaves ONE lone %, which the voice would say as "percent"
+  ['a lone percent sign at the start of a piece (the cut closer)', "% I saved you the blue one. It's under my notebook so nobody takes it.", /^$/, /I saved you the blue one\. It's under my notebook so nobody takes it\./],
+  ['a lone percent sign at the end of a piece (the cut opener)', '%%%warm%%% Two different problems.\n\n%', /\bwarm\b/i, /Two different problems\./],
+  // two strays in one reply: a closer written with extra percent signs, then another stray
+  ['a closer with extra percent signs, then a second stray', '%%%happy%%%%%%% Yes.%%%', /\bhappy\b/i, /Yes\./],
+  ['doubled-percent strays far apart', '%%%pleased%%% Hello %%there friend.\n\nHow are you%% today?', /\bpleased\b/i, /Hello there friend\.\s+How are you today\?/],
+  // the incident's stray line one character short, and a tag round nothing but a beat of dots
+  ['a lone percent sign on a line of its own', 'Hello.\n\n%\n%%%warm%%% Hi there.', /\bwarm\b/i, /Hello\.\s+Hi there\./],
+  ['a tag round no letters', 'Before it. %%%...%%% After it, with a few more words.', /\.\.\./, /Before it\.\s+After it, with a few more words\./],
+];
+
+async function checkShapes(handed, body, label) {
+  for (const [name, input, gone, kept] of SHAPES) {
+    const reqs = await handed(input, body);
+    const heard = speechOf(reqs);
+    assert.doesNotMatch(heard, gone, `${label} ${name} speaks its direction: ${JSON.stringify(reqs)}`);
+    assert.match(heard.replace(/\s+/g, ' '), kept, `${label} ${name} lost its speech: ${JSON.stringify(reqs)}`);
+    assert.doesNotMatch(reqs.map((q) => q.text).join(' '), /%/, `${label} ${name} sent a delimiter`);
+  }
+}
+
+test('Inworld: tags with punctuation, line breaks, empty tags and a forgotten closer reach the provider as directions', async () => {
+  await withServer(31961, async ({ handed }) => {
+    for (const stream of [false, true]) await checkShapes(handed, { voice: 'alloy', stream }, 'inworld stream=' + stream);
+  });
+});
+
+test('Fish: the same shapes keep their directions out of the speech', async () => {
+  await withServer(31962, async ({ handed }) => {
+    await checkShapes(handed, { voice: 'fish:fixture' }, 'fish');
+  });
+});
+
 test('Fish: the same incident leaves the direction in brackets and none of its words in the speech', async () => {
   await withServer(31960, async ({ handed }) => {
     const reqs = await handed(INCIDENT, { voice: 'fish:fixture' });

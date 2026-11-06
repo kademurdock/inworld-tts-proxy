@@ -59,7 +59,10 @@ const { createWriter: createInworldWriter, writerOn: inworldWriterOn } = require
 const inworldWriter = createInworldWriter();
 const { pauseSettings: inworldPauseSettings, createPauseLimiter: createInworldPauseLimiter, limitPauses: limitInworldPauses } = require('./inworld-pauses');
 const { steerSettings: inworldSteerSettings, steeredRate: inworldSteeredRate, steeredInstruction: inworldSteeredInstruction } = require('./inworld-steer');
-const { balanceSteeringRuns } = require('./steering-balance');
+const { balanceSteeringRuns, setRepairLogger: setSteeringRepairLogger } = require('./steering-balance');
+// Nov 6 2026: one log line whenever the balancer repairs a message (a stray run dropped, a forgotten closer
+// closed), so "is it firing in real traffic" is a single grep for [TTS] steering-balance.
+setSteeringRepairLogger(({ strays, closed }) => console.log(`[TTS] steering-balance: dropped ${strays} stray run(s), closed ${closed} unclosed tag(s)`));
 const { classicPicker } = require('./classic');
 // Kill switch for the whole streamed lane: KADE_TTS_STREAM=0 makes the proxy
 // ignore the stream flag entirely and every caller gets today's buffered WAV.
@@ -1968,7 +1971,7 @@ function normalizeForSpeech(text) {
   });
 
   // 7) PERCENT → the word (92% → "92 percent")
-  t = t.replace(/(\d+(?:\.\d+)?)\s?%/g, '$1 percent');
+  t = t.replace(/(\d+(?:\.\d+)?)\s?%(?!%)/g, '$1 percent'); // a % that is part of a %%% steering delimiter is not a percentage
 
   // 8) UNITS the voice mangles: data sizes, mph, degrees
   const UNIT_WORDS = { KB: 'kilobytes', MB: 'megabytes', GB: 'gigabytes', TB: 'terabytes' };
@@ -2495,11 +2498,15 @@ function stripTempo(direction) {
 }
 
 function applySteeringTags(text) {
-  if (!text || text.indexOf("%%") === -1) return text;
+  // Any % gets as far as the balancer, which hands a text without a %% run straight back: a chunker that cuts
+  // a %%% delimiter in the middle leaves ONE lone % at the end or start of a piece, and the voice would say it
+  // (steering-balance.js trimLonePercent).
+  if (!text || text.indexOf("%") === -1) return text;
   // Nov 6 2026 (Kade: the voice said "warm and curious" out loud, from Kiana's "%%%\n%%%warm and curious%%%"):
   // decide which %% runs are tags BEFORE anything pairs them by position, so one stray %%% line cannot flip
   // the next tag into speech and every tag after it (steering-balance.js).
-  text = balanceSteeringRuns(text);
+  // (an exception here must never silence a voice: the text goes on as it came, which is the old pairing)
+  try { text = balanceSteeringRuns(text); } catch (e) { console.log(`[TTS] steering-balance failed, old pairing used: ${e && e.message}`); }
   if (text.indexOf("%%") === -1) return text;
   // Tag-typo tolerance (July 2 2026, seen live from Kiana): models sometimes
   // emit "%%sigh%%" or "%%%sigh%%" instead of the canonical "%%%sigh%%%".
