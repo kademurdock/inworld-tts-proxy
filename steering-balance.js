@@ -99,7 +99,10 @@
  *      reading: at the start before a blank and a capital (`% So what is the shape of it?`), at the end after a
  *      sentence end or a line break (`Two different problems.\n\n%`). applySteeringTags hands any text with a `%`
  *      in it to this function, which returns a text without a `%%` run right after that step.
- * A dropped stray between two words leaves a space so the words do not fuse (`hope%%%you` -> `hope you`).
+ * A dropped stray between two words leaves a space so the words do not fuse (`hope%%%you` -> `hope you`). A stray alone
+ * on its line between two lines of text takes its line with it, so the reply keeps the paragraphs it had (a blank line
+ * left there is a paragraph break the reply never had, and it moved the carry-forward cap of the paragraphs after it by
+ * one); next to a blank line, or at an end of the text, it leaves what it always left.
  * KILL SWITCH: KADE_STEERING_BALANCE=0 (a Railway variable and a redeploy) hands every text on untouched, which
  * is exactly the old left-to-right pairing. Texts over 150,000 characters are handed on untouched too.
  *
@@ -128,8 +131,6 @@
  *   - a padded or fenced direction of more than 24 words or 200 characters is not one (the old pairing took any
  *     length), so a long lowercase unpunctuated speech line of up to 24 words between two stray lines is read as
  *     a fenced direction; real directions are at most ten words;
- *   - a stray that sat alone on its line leaves a blank line, which moves the carry-forward cap of the
- *     paragraphs after it by one;
  *   - a text that starts or ends with a lone % that has no number before it (`x%`, `one third %`, `%s is the
  *     placeholder`) loses the sign, and `In 2019 %` cut after the first sign of the next tag's opener still says
  *     "percent" (normalizeForSpeech has already turned `2019 %` into `2019 percent`);
@@ -428,6 +429,15 @@ function balanceSteeringRuns(text) {
     const dropRun = () => { // a stray: dropped, never spoken
       strays += 1;
       cursor = run.end;
+      // A stray alone on its line, between two lines of text, takes its line with it. Left behind, that line is a blank
+      // one, a paragraph break the reply never had: applySteeringTags would count one paragraph more than the old pairing
+      // did and the carry-forward cap would end one paragraph early. (Next to a blank line, or at an end of the text, its
+      // line was a paragraph break already, or none, and what it leaves there stays as it was.)
+      if (sigTail && /^[ \t]*\r?\n[ \t]*$/.test(tailWs) && /^[ \t]*\r?\n[ \t]*\S/.test(src.slice(run.end, run.end + 400))) {
+        cursor = src.indexOf('\n', run.end) + 1;
+        i += 1;
+        return;
+      }
       // two words must not fuse (but no space before punctuation: `Hello%%%, friend` is `Hello, friend`, and none
       // inside a word that has an apostrophe or a hyphen in it: `you'%%%re`, `you%%%'re`, `well-%%%known`; a closing
       // quote or a spaced dash is no such thing: `'yes'%%%Then` is two words)

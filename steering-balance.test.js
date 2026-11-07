@@ -671,7 +671,8 @@ test('a lone percent sign on a line of its own, a pair round no letters and the 
   assert.equal(speech('Hello.\r\n \t% \t\r\n%%%warm%%% Bye.'), 'Hello. Bye.');
   assert.equal(balanceSteeringRuns('Hello.\n%\nBye.'), 'Hello.\n%\nBye.', 'ordinary text with a % on a line of its own is left alone');
   assert.equal(balanceSteeringRuns('Sales:\n50 %\nUp.'), 'Sales:\n50 %\nUp.', 'a percentage with its number stays');
-  assert.equal(balanceSteeringRuns('Growth\n%%\nUp'), 'Growth\n\nUp', 'a doubled sign on its own line is a stray run, as before');
+  // (its line goes with it since Nov 6 2026: a blank line left there was a paragraph the reply never had, see stray-line.test.js)
+  assert.equal(balanceSteeringRuns('Growth\n%%\nUp'), 'Growth\nUp', 'a doubled sign on its own line is a stray run, as before');
   // a pair of three-sign runs round a short body with no letter is an empty tag (the old pairing dropped it)
   for (const [input, want] of [
     ['Before it. %%%...%%% After it, with a few more words.', 'Before it. After it, with a few more words.'],
