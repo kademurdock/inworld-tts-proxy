@@ -8,6 +8,25 @@ let selectedClassicMoves = null; // classic-voice-moves.js: legacy and Classic m
 const selectedAuditionVoices = new Map();
 const { pickScene, KIND_BY_SCRIPT, audienceForSection } = require("./audition-scenes");
 const app = express();
+// Nov 7 2026 (an independent review of the Nov 6 robustness commits): the last line of defence behind guardAsync below. A
+// promise that rejects with nobody listening ended the process (Node's default) for every listener at once, and Railway
+// restarted it a few seconds later. One stray rejection is now logged and the proxy stays up. This cannot hide a crash loop:
+// more than REJECTION_STORM of them inside a minute end the process as before, so a proxy that keeps failing at any rate that
+// matters still looks like one to the platform's restart and its alarms. (An uncaught EXCEPTION still ends the process:
+// after one, nothing says what state the proxy is in.)
+const REJECTION_WINDOW_MS = Number(process.env.PROXY_REJECTION_WINDOW_MS) || 60 * 1000;   // (the env var is a test knob)
+const REJECTION_STORM = 20;
+let rejectionTimes = [];
+process.on("unhandledRejection", (reason) => {
+  const now = Date.now();
+  rejectionTimes = rejectionTimes.filter((t) => now - t < REJECTION_WINDOW_MS);
+  rejectionTimes.push(now);
+  console.error(`[proc] unhandled rejection (${rejectionTimes.length} in the last minute): ${(reason && reason.stack) || reason}`);
+  if (rejectionTimes.length > REJECTION_STORM) {
+    console.error("[proc] a storm of unhandled rejections: ending the process so the platform restarts it");
+    process.exit(1);
+  }
+});
 // July 18 2026: raised from the 100kb default so /github/commit can carry
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
 // commit proxy is whole-file by design, so its body limit must fit the
@@ -3698,7 +3717,28 @@ async function trySynthesizeScene(req, res, preppedText, ctx) {
   }
 }
 
-app.post("/v1/audio/speech", async (req, res) => {
+// Nov 7 2026 (review): `voice` and `model` come straight out of the request body and are used below in String(), template
+// literals and object lookups. A value whose conversion to text throws ({"toString":1} is enough, or an array nested 20,000
+// deep) threw at the first of those, outside every try/catch of this async handler. Express 4 does not catch a rejected
+// handler, so the unhandled rejection ended the process for every listener. What converts to text keeps its old behaviour
+// exactly; what cannot gets a 400 (see the checks after `input`), and a throw anywhere else in the handler ends that one
+// request with a 500 (guardAsync) instead of the process.
+function convertsToText(v) {
+  try { String(v); return true; } catch (e) { return false; }
+}
+function guardAsync(handler) {
+  return (req, res, next) => {
+    Promise.resolve(handler(req, res, next)).catch((err) => {
+      console.error(`[TTS] speech handler threw (${(err && err.message) || err}); this request ends, the proxy stays up`);
+      try {
+        if (!res.headersSent) res.status(500).json({ error: "Proxy internal error" });
+        else res.end();
+      } catch (e) { /* the connection is gone */ }
+    });
+  };
+}
+
+app.post("/v1/audio/speech", guardAsync(async (req, res) => {
   const { input, voice = selectedVoicePicker?.voices[0] || "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
@@ -3721,6 +3761,12 @@ app.post("/v1/audio/speech", async (req, res) => {
   // every listener at once. The speech API takes a string and nothing else: say so, and stay up.
   if (typeof input !== "string") {
     return res.status(400).json({ error: "Invalid field: input must be a string" });
+  }
+  if (!convertsToText(voice)) {
+    return res.status(400).json({ error: "Invalid field: voice must be a string" });
+  }
+  if (!convertsToText(model)) {
+    return res.status(400).json({ error: "Invalid field: model must be a string" });
   }
 
   // Native-app voice previews (July 22 2026, Kade: picker previews said only
@@ -4057,7 +4103,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     console.error("Proxy error:", err);
     res.status(500).json({ error: "Proxy internal error", details: err.message });
   }
-});
+}));
 
 
 // ---- Accessible on-demand voice preview library ----
