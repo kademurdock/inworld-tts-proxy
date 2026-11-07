@@ -10,6 +10,7 @@ let selectedClassicMoves = null; // classic-voice-moves.js: legacy and Classic m
 const selectedAuditionVoices = new Map();
 const { pickScene, KIND_BY_SCRIPT, audienceForSection } = require("./audition-scenes");
 const app = express();
+require("./async-routes").installFinalHandler(app); // Nov 7 2026: an error that reaches the end of the stack is logged and answered 500 JSON, as the app's own final handler (async-routes.js)
 // July 18 2026: raised from the 100kb default so /github/commit can carry
 // whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
 // commit proxy is whole-file by design, so its body limit must fit the
@@ -5962,7 +5963,9 @@ app.post("/v1/audio/transcriptions", (req, res) => {
   const chunks = []; let partType = "", language = "", gotFile = false;
   // Nov 7 2026: the one answer for an upload that cannot be read. It is asked for more than once (busboy reports the same
   // failure on the open file stream and on the form), so it answers only the first time.
-  const refuse = () => { if(!res.headersSent) res.status(400).json({ error: "Upload parse error." }); };
+  // The form stops reading when it fails (req.pipe unpipes it), so the rest of the body is read and dropped here: left alone it
+  // would hold a keep-alive connection until its timeout, with the next request on it unanswered.
+  const refuse = () => { if(!res.headersSent) res.status(400).json({ error: "Upload parse error." }); req.resume(); };
   bb.on("file", (name, stream, info) => {
     gotFile = true; partType = (info && info.mimeType) || "";
     stream.on("data", d => chunks.push(d));
@@ -6003,10 +6006,6 @@ app.post("/v1/audio/transcriptions", (req, res) => {
   req.pipe(bb);
 });
 
-
-// Nov 7 2026: the last stop for an error from any route above (async-routes.js): logged with its cause, answered 500 with no
-// stack, and when the answer is already out the response is ended instead of the socket destroyed. Mount nothing after it.
-app.use(require("./async-routes").finalErrorHandler);
 
 app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);

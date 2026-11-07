@@ -17,6 +17,8 @@ express.application.listen = function listen(...args) {
   });
   const stack = this._router.stack.map(describe);
   const patched = Layer.prototype.handle_request[Symbol.for('inworld-tts-proxy.async-routes')] === true;
-  this.get('/__stack', (req, res) => res.json({ stack, patched }));
+  // the final handler is the app's own `done`: app.handle carries the registered flag, and it is not a layer
+  const finalHandler = this.handle[Symbol.for('inworld-tts-proxy.final-handler')] === true;
+  this.get('/__stack', (req, res) => res.json({ stack, patched, finalHandler, handleName: this.handle.name }));
   return realListen.apply(this, args);
 };

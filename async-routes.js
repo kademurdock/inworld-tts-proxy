@@ -12,11 +12,11 @@
  *
  * This is the express-async-errors technique, done once on the Layer prototype that every Express 4 route and every
  * middleware passes through. When a handler returns something with a `then`, a rejection of it goes to next(err), exactly
- * as a synchronous throw always did, and from there to the error middleware that server.js mounts after the last route
- * (finalErrorHandler), which writes the answer. A promise that resolves is left alone, and so is everything a handler
- * returns that is not a thenable (`return res.json(...)` is common and stays exactly as it was). A rejection that comes
- * after the answer is already out is handled on the spot (the same function, no next()): the router may have moved past
- * the error middleware by then, and Express's own handler would destroy the socket.
+ * as a synchronous throw always did, and from there to the app's final handler (installFinalHandler: finalErrorHandler is
+ * the `done` of app.handle, not a layer), which writes the answer. A promise that resolves is left alone, and so is everything
+ * a handler returns that is not a thenable (`return res.json(...)` is common and stays exactly as it was). A rejection that
+ * comes after the answer is already out is handled on the spot (the same function, no next()): the router may have moved on
+ * by then, and Express's own handler would destroy the socket.
  *
  * Why not one process-level unhandledRejection handler INSTEAD: without a guard on each route it turns the crash into a
  * request that is NEVER answered (the socket stays open as long as the caller does, and a 10 MB body stays in memory with
@@ -33,6 +33,7 @@
  */
 
 const http = require("http");
+const path = require("path");
 
 const FLAG = Symbol.for("inworld-tts-proxy.async-routes");
 const CLIP = 300;
@@ -146,8 +147,8 @@ function handle_error(error, req, res, next) {
 
 /**
  * The status the caller gets. An HTTP library may have put a 4xx on the error (body-parser: 400 for a body that is not
- * JSON, 413 for one over the limit): that stays, as it did under Express's own handler. Anything else is the proxy's
- * fault, and is a 500.
+ * JSON, 413 for one over the limit; Express: 400 for a bad percent-escape; send: 404 for a missing file): that stays, as it
+ * did under Express's own handler. Anything else is the proxy's fault, and is a 500.
  */
 function statusOf(err) {
   try {
@@ -232,7 +233,7 @@ function closeStarted(res) {
 }
 
 /**
- * The last error middleware; server.js mounts it after every route (and the patch above also calls it for a handler
+ * The final error handler: installFinalHandler makes it the app's `done` (and the patch above also calls it for a handler
  * that rejects once its answer is out). Whatever reached it (a rejected handler through the patch above, a
  * synchronous throw, an error body-parser raised) is logged with its cause and answered:
  *   - a 4xx that an HTTP library attached keeps its status (any err.status or err.statusCode from 400 to 499: body-parser's
@@ -259,6 +260,58 @@ function finalErrorHandler(err, req, res, next) {
   }
 }
 
+const FINAL_FLAG = Symbol.for("inworld-tts-proxy.final-handler");
+
+/** finalhandler is Express's own dependency, not ours: under pnpm's strict layout it sits beside express, not on our path. */
+function loadFinalhandler() {
+  return require(require.resolve("finalhandler", { paths: [path.dirname(require.resolve("express"))] }));
+}
+
+/**
+ * Put finalErrorHandler where Express puts its own final handler: the `done` that app.handle gives the router. Errors that
+ * reach the end of the stack go to finalErrorHandler, and a request nothing answered gets Express's own 404 (the same
+ * finalhandler, so the page is byte for byte the same), and OPTIONS keeps its automatic Allow answer (the router wraps `done`).
+ *
+ * Why not an error middleware as the last layer: such a layer is visited by every request no route answers, calls next() with
+ * the stack already used up, and Express 4 then defers `done` by a setImmediate ("no more matching layers" in
+ * router/index.js). The 404, and with it the release of the parsed body, came after every other request that was ready had been
+ * parsed: eight 10 MB JSON bodies (each about 175 MB of heap once parsed; the global express.json parses before any route or
+ * auth) sent at once ended a process with a 1 GB heap that survived them without the layer (reviewer A of the review of
+ * Nov 7 2026, bigjson.js). As `done` it costs nothing on any path, and nothing mounted later can slip in behind it.
+ */
+function installFinalHandler(app) {
+  if (!app || typeof app.handle !== "function") {
+    throw new Error("async-routes: this is not an Express 4 application (it has no app.handle)");
+  }
+  if (app.handle[FINAL_FLAG]) return false;
+  const finalhandler = loadFinalhandler();
+  const original = app.handle;
+  function handleWithFinalErrorHandler(req, res, callback) {
+    if (callback) return original.call(this, req, res, callback); // a mounted sub-app: Express's own way
+    const router = this._router;
+    const fallback = finalhandler(req, res, { env: this.get("env") });
+    const done = (err) => {
+      if (!err) {
+        fallback();
+        return;
+      }
+      try {
+        finalErrorHandler(err, req, res, fallback);
+      } catch (e) {
+        lastResort(res);
+      }
+    };
+    if (!router) {
+      done();
+      return;
+    }
+    router.handle(req, res, done);
+  }
+  handleWithFinalErrorHandler[FINAL_FLAG] = true;
+  app.handle = handleWithFinalErrorHandler;
+  return true;
+}
+
 /** Patch Express's Layer once. Returns true when it patched, false when it already had. */
 function install() {
   const Layer = require("express/lib/router/layer");
@@ -273,4 +326,4 @@ function install() {
   return true;
 }
 
-module.exports = { install, describeCause, asFailure, framesOf, finalErrorHandler };
+module.exports = { install, installFinalHandler, describeCause, asFailure, framesOf, finalErrorHandler };

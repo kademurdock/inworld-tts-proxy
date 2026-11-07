@@ -140,6 +140,47 @@ test('every one of the 25 shapes is answered 500 {"error":"Proxy internal error"
   });
 });
 
+// found by the review (reviewer A): shapes that arrive in the query string or in a header ended the base process too. qs builds
+// { toString: '1' } out of ?f[toString]=1, whose String() throws; a header of two-byte characters as long as the secret makes
+// crypto.timingSafeEqual throw a RangeError (approvals.js), and that one needs no secret at all.
+const RW = { Authorization: 'Bearer ' + SECRETS.RAILWAY_PROXY_SECRET };
+// each of these ends a fresh base process before it answers
+const QUERY_CRASHERS = [
+  ['/librechat/memory/ledger?limit[toString]=1', LIB],
+  ['/librechat/memory/ledger?sinceDays[]=a&sinceDays[toString]=1', LIB],
+];
+// the reviewer's other query shapes: base answers them (400 or 502) on a fresh process; they must still be answered
+const QUERY_OTHERS = [
+  ['/librechat/admin-memories?userId[valueOf]=1', LIB],
+  ['/librechat/diary-admin-list?userId=a&userId[toString]=1', LIB],
+  ['/librechat/provider-voice-preview?id[' + 'x'.repeat(2000) + ']=1', LIB],
+  ['/librechat/library-inventory?after=a&after[toString]=1', LIB],
+  ['/railway/vars?serviceId[]=a&serviceId[toString]=1', RW],
+];
+
+test('shapes that arrive in the query string or in a header answer too: 500 where they used to end the process, and the process stays up', async () => {
+  await withServer(31996, async ({ port, state }) => {
+    for (const [route, headers] of QUERY_CRASHERS) {
+      const r = await send(port, route, headers, undefined, { method: 'GET' });
+      assert.equal(state.exited, null, `${route.slice(0, 80)} ended the process: ${state.log.slice(-500)}`);
+      assert.equal(r.kind, 'response', `${route.slice(0, 80)}: ${JSON.stringify(r)}`);
+      assert.equal(r.status, 500, route.slice(0, 80));
+      assert.equal(r.body, BODY_500, route.slice(0, 80));
+    }
+    for (const [route, headers] of QUERY_OTHERS) {
+      const r = await send(port, route, headers, undefined, { method: 'GET', timeoutMs: 3000 });
+      assert.equal(r.kind, 'response', `${route.slice(0, 80)}: ${JSON.stringify(r)}`);
+      assert.ok([400, 500, 502].includes(r.status), `${route.slice(0, 80)}: ${r.status}`);
+    }
+    const secretLength = SECRETS.KADE_APPROVAL_SECRET.length;
+    const header = await send(port, '/approvals/execute', { ...JSON_TYPE, 'x-kade-approval-secret': String.fromCharCode(233).repeat(secretLength) }, '{}');
+    assert.equal(header.status, 500);
+    assert.equal(header.body, BODY_500);
+    assert.equal(state.exited, null, 'a header or a query string ended the process: ' + state.log.slice(-500));
+    assert.equal((await send(port, '/healthz', {}, undefined, { method: 'GET', timeoutMs: 3000 })).status, 200);
+  });
+});
+
 test('all 25 at once, four times over, with big bodies alongside: every request is answered and none is left open', async () => {
   await withServer(31996, async ({ port, state }) => {
     const pad = ',"pad":"' + 'x'.repeat(1024 * 1024) + '"}';

@@ -1,6 +1,6 @@
 'use strict';
 // Nov 7 2026, step 2 of the route-guard series. async-routes.js (step 1) sends the rejection of any handler to next(err);
-// finalErrorHandler is the error middleware that server.js mounts after the last route. It answers 500 {"error":"Proxy
+// finalErrorHandler is the app's final handler (installFinalHandler: the `done` of app.handle, not a layer). It answers 500 {"error":"Proxy
 // internal error"} (no stack, no message), keeps a 4xx that an HTTP library attached (body-parser's 400 and 413), logs the
 // cause whatever was thrown, and when the answer is already out it ends the response instead of letting Express's own
 // handler destroy the socket (which drops every other request on that keep-alive connection).
@@ -12,8 +12,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const http = require('node:http');
+const os = require('node:os');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const express = require('express');
-const { install, finalErrorHandler } = require('./async-routes');
+const { install, installFinalHandler, finalErrorHandler } = require('./async-routes');
 
 install();
 const unhandled = [];
@@ -284,23 +287,19 @@ test('a console that throws does not make the handler fail', (t) => {
 });
 
 // ── the wiring in server.js ───────────────────────────────────────────────────────
-test('server.js mounts finalErrorHandler after the last route, right before it listens, with nothing mounted after it', () => {
+test('server.js hands the app to installFinalHandler right after making it, and mounts the handler nowhere as a layer', () => {
   const src = fs.readFileSync(require.resolve('./server.js'), 'utf8');
-  const mount = 'app.use(require("./async-routes").finalErrorHandler);';
-  const at = src.indexOf(mount);
-  assert.ok(at > 0, 'mounted');
-  assert.equal(src.indexOf(mount, at + 1), -1, 'once');
-  assert.ok(at > src.indexOf('app.post("/v1/audio/transcriptions"'), 'after the transcription route, the last route');
-  assert.match(src.slice(at + mount.length, src.indexOf('app.listen(PORT', at)), /^\s*$/, 'directly before app.listen');
-  assert.doesNotMatch(src.slice(at + mount.length), /\bapp\.(get|post|put|patch|delete|all|use)\(/, 'no route or middleware after it');
+  assert.match(src, /const app = express\(\);\r?\nrequire\("\.\/async-routes"\)\.installFinalHandler\(app\);/);
+  assert.equal(src.split('installFinalHandler(app)').length - 1, 1, 'once');
+  assert.doesNotMatch(src, /app\.use\([^)]*finalErrorHandler/, 'not as a layer: see installFinalHandler for why');
 });
 
 // ── wire: a real Express app on a real socket, with the patch and the handler ──────
 async function withApp(build, run, { jsonLimit = '10mb', final = true } = {}) {
   const app = express();
+  if (final) installFinalHandler(app);
   app.use(express.json({ limit: jsonLimit }));
   build(app);
-  if (final) app.use(finalErrorHandler);
   const server = http.createServer(app);
   const sockets = [];
   server.on('connection', (s) => { sockets.push(s); });
@@ -542,6 +541,147 @@ test('a handler that calls next() and then rejects, after the next one answered,
     agent.destroy();
   }
   assert.match(console.error.mock.calls[0].arguments.join(' '), /failed after its answer went out: Error: after next/);
+});
+
+// ── installFinalHandler: the app's own final handler, not a layer ──────────────────────────────────
+const without = (headers) => { const { date, connection, 'keep-alive': keepAlive, ...rest } = headers; return rest; };
+
+test('installFinalHandler: an unmatched request is answered by Express\'s own 404, byte for byte, whatever the method and the body', async () => {
+  const shapes = [
+    ['GET', '/nope', undefined, {}], ['HEAD', '/nope', undefined, {}], ['POST', '/nope', '{"a":1}', { 'Content-Type': 'application/json' }],
+    ['PUT', '/a/b/c?x=1', 'plain', { 'Content-Type': 'text/plain' }], ['DELETE', '/nope%20here', undefined, {}], ['PATCH', '/known', '{"a":1}', { 'Content-Type': 'application/json' }],
+  ];
+  shapes.push(['GET', '/leaves-the-router', undefined, {}]);
+  const seen = {};
+  for (const final of [true, false]) {
+    seen[final] = [];
+    await withApp((app) => {
+      app.get('/known', (req, res) => res.send('known'));
+      app.get('/leaves-the-router', (req, res, next) => next('router'));   // done(null): still a plain 404
+    }, async ({ port }) => {
+      for (const [method, path, body, headers] of shapes) {
+        const r = await call(port, path, { method, body, headers });
+        seen[final].push({ status: r.status, headers: without(r.headers), body: r.body });
+      }
+    }, { final });
+  }
+  assert.deepEqual(seen[true], seen[false], 'the same as an app with no final handler of ours');
+  assert.equal(seen[true][0].status, 404);
+  assert.match(seen[true][0].body, /Cannot GET \/nope/);
+  assert.match(seen[true][5].body, /Cannot PATCH \/known/);
+  assert.match(seen[true][6].body, /Cannot GET \/leaves-the-router/);
+});
+
+test('installFinalHandler: OPTIONS keeps Express\'s automatic Allow answer for a path that has routes', async () => {
+  const outcome = {};
+  for (const final of [true, false]) {
+    await withApp((app) => { app.get('/known', (req, res) => res.send('known')); app.post('/known', (req, res) => res.send('posted')); }, async ({ port }) => {
+      const r = await call(port, '/known', { method: 'OPTIONS' });
+      outcome[final] = { status: r.status, allow: r.headers.allow, body: r.body };
+    }, { final });
+  }
+  assert.deepEqual(outcome[true], outcome[false]);
+  assert.equal(outcome[true].status, 200);
+  assert.match(outcome[true].allow, /GET/);
+  assert.match(outcome[true].allow, /POST/);
+});
+
+// Express 4 defers `done` by a setImmediate when next() is called with the stack used up ("no more matching layers" in router/index.js).
+// A layer after the last route makes every unanswered request do that, which let big JSON bodies pile up in memory (reviewer A).
+async function routerImmediates({ final, trailingLayer }) {
+  const calls = [];
+  const real = global.setImmediate;
+  global.setImmediate = function patched(...args) {
+    if (/express[\\/]lib[\\/]router[\\/]index\.js/.test(new Error().stack)) calls.push(1);
+    return real.apply(this, args);
+  };
+  try {
+    await withApp((app) => {
+      app.get('/known', (req, res) => res.send('known'));
+      if (trailingLayer) app.use((err, req, res, next) => next(err));
+    }, async ({ port }) => {
+      await call(port, '/nope');
+      await call(port, '/nope', { method: 'POST', body: '{"a":1}', headers: { 'Content-Type': 'application/json' } });
+    }, { final });
+  } finally {
+    global.setImmediate = real;
+  }
+  return calls.length;
+}
+
+test('installFinalHandler: an unanswered request reaches Express\'s done in the same turn: the router defers nothing', async () => {
+  assert.equal(await routerImmediates({ final: true, trailingLayer: false }), 0);
+  assert.equal(await routerImmediates({ final: false, trailingLayer: false }), 0, 'and neither does plain Express');
+});
+
+test('(control) an error-handling layer after the last route makes the router defer that turn, which is why the handler is the app\'s done', async () => {
+  assert.ok(await routerImmediates({ final: false, trailingLayer: true }) >= 2);
+});
+
+test('installFinalHandler: a mounted sub-app\'s errors still reach it, an app with no routes still answers, and installing twice changes nothing', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const sub = express();
+  sub.get('/boom', async () => { throw new Error('in the sub-app'); });
+  await withApp((app) => { app.use('/sub', sub); }, async ({ port }) => {
+    const r = await call(port, '/sub/boom');
+    assert.equal(r.status, 500);
+    assert.equal(r.body, BODY_500);
+  });
+  const bare = express();
+  assert.equal(installFinalHandler(bare), true);
+  const server = http.createServer(bare);
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  try {
+    const r = await call(server.address().port, '/anything');
+    assert.equal(r.status, 404, 'no router at all: done() is called at once');
+    assert.match(r.body, /Cannot GET \/anything/);
+  } finally {
+    await new Promise((r) => { server.close(r); server.closeAllConnections(); });
+  }
+  const app = express();
+  assert.equal(installFinalHandler(app), true);
+  const handle = app.handle;
+  assert.equal(installFinalHandler(app), false);
+  assert.equal(app.handle, handle);
+  assert.throws(() => installFinalHandler({}), /not an Express 4 application/);
+  assert.throws(() => installFinalHandler(null), /not an Express 4 application/);
+});
+
+test('installFinalHandler on a mounted sub-app leaves the parent in charge: what the sub-app does not answer falls through to the parent\'s next route', async () => {
+  const sub = express();
+  installFinalHandler(sub);
+  sub.get('/mine', (req, res) => res.send('the sub-app\'s'));
+  await withApp((app) => {
+    app.use('/sub', sub);
+    app.get('/sub/other', (req, res) => res.send('the parent\'s'));
+  }, async ({ port }) => {
+    assert.equal((await call(port, '/sub/mine')).body, 'the sub-app\'s');
+    assert.equal((await call(port, '/sub/other')).body, 'the parent\'s', 'not a 404 from the sub-app');
+  });
+});
+
+test('installFinalHandler finds finalhandler where pnpm puts it: beside express, not on our own module path', () => {
+  // Under pnpm's strict layout the project sees express through a link, and finalhandler (Express's own dependency) is only beside the real express.
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tts-pnpm-layout-'));
+  const store = path.join(tmp, 'node_modules', '.pnpm', 'express@4.22.3', 'node_modules');
+  fs.mkdirSync(path.join(store, 'express'), { recursive: true });
+  fs.mkdirSync(path.join(store, 'finalhandler'), { recursive: true });
+  fs.writeFileSync(path.join(store, 'express', 'index.js'), 'module.exports = {};\n');
+  fs.writeFileSync(path.join(store, 'finalhandler', 'index.js'), 'module.exports = function finalhandler() { return function () { globalThis.finalhandlerStubCalls = (globalThis.finalhandlerStubCalls || 0) + 1; }; };\n');
+  const project = path.join(tmp, 'project');
+  fs.mkdirSync(path.join(project, 'node_modules'), { recursive: true });
+  fs.symlinkSync(path.join(store, 'express'), path.join(project, 'node_modules', 'express'), 'junction');
+  fs.copyFileSync(require.resolve('./async-routes'), path.join(project, 'async-routes.js'));
+  const script = `
+    const ar = require('./async-routes');
+    const app = { handle() {}, get() { return 'production'; } };
+    console.log(ar.installFinalHandler(app));
+    app.handle({}, {});               // no router: done() runs at once, which calls the finalhandler that was found
+    console.log(globalThis.finalhandlerStubCalls);
+  `;
+  const r = spawnSync(process.execPath, ['-e', script], { cwd: project, env: { ...process.env, NODE_PATH: '' }, encoding: 'utf8', timeout: 20000 });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(r.stdout.trim().split('\n'), ['true', '1']);
 });
 
 test('nothing in this file became an unhandled rejection', async () => {

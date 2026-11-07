@@ -173,6 +173,45 @@ test('an upload that is whole still reaches Deepgram and comes back as text; a f
   });
 });
 
+test('after an upload is refused early, the rest of its body is read and dropped: the next request on the same connection is served', async () => {
+  await withServer(31990, async ({ port }) => {
+    const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
+    try {
+      // a malformed part header, then 3 MB that nobody would otherwise read
+      const big = Buffer.concat([Buffer.from('--zz\r\nContent-Disposition form-data\r\n\r\n'), Buffer.alloc(3 * 1024 * 1024, 0x41)]);
+      const first = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { req.destroy(); reject(new Error('the refused upload never finished: the connection is stuck behind its unread body')); }, 4000);
+        const req = http.request({ host: '127.0.0.1', port, path: '/v1/audio/transcriptions', method: 'POST', agent, headers: { 'Content-Type': 'multipart/form-data; boundary=zz', 'Content-Length': big.length } }, (res) => {
+          let body = '';
+          res.setEncoding('utf8');
+          res.on('data', (c) => { body += c; });
+          res.on('end', () => resolve({ status: res.statusCode, body }));
+        });
+        req.on('error', reject);
+        req.on('close', () => clearTimeout(timer));
+        req.end(big);
+      });
+      assert.equal(first.status, 400);
+      assert.equal(first.body, BODY_400);
+      const t0 = Date.now();
+      const second = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { req.destroy(); reject(new Error('the next request on the same connection was not answered')); }, 2500);
+        const req = http.request({ host: '127.0.0.1', port, path: '/healthz', agent }, (res) => {
+          res.resume();
+          res.on('end', () => { clearTimeout(timer); resolve({ status: res.statusCode, reused: req.reusedSocket === true }); });
+        });
+        req.on('error', reject);
+        req.end();
+      });
+      assert.equal(second.status, 200);
+      assert.equal(second.reused, true, 'the same connection carried it');
+      assert.ok(Date.now() - t0 < 2000);
+    } finally {
+      agent.destroy();
+    }
+  });
+});
+
 test('a request that is not multipart at all is a 400 "Bad multipart request."', async () => {
   await withServer(31994, async ({ port, state }) => {
     for (const type of ['multipart/form-data', 'application/json', 'text/plain']) {
