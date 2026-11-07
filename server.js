@@ -5958,14 +5958,23 @@ app.post("/v1/audio/transcriptions", (req, res) => {
   try { bb = Busboy({ headers: req.headers, limits: { fileSize: 160*1024*1024 } }); }
   catch(e){ return res.status(400).json({ error: "Bad multipart request." }); }
   const chunks = []; let partType = "", language = "", gotFile = false;
+  // Nov 7 2026: the one answer for an upload that cannot be read. It is asked for more than once (busboy reports the same
+  // failure on the open file stream and on the form), so it answers only the first time.
+  const refuse = () => { if(!res.headersSent) res.status(400).json({ error: "Upload parse error." }); };
   bb.on("file", (name, stream, info) => {
     gotFile = true; partType = (info && info.mimeType) || "";
     stream.on("data", d => chunks.push(d));
     stream.on("limit", () => {});
+    // Nov 7 2026: an upload that stops before its closing boundary makes busboy destroy this stream with an error. With no
+    // listener that was an uncaught 'error' event, and the process ended.
+    stream.on("error", refuse);
   });
   bb.on("field", (name, val) => { if(name === "language" && val) language = val; });
-  bb.on("error", () => { if(!res.headersSent) res.status(400).json({ error: "Upload parse error." }); });
+  bb.on("error", refuse);
   bb.on("close", async () => {
+    // Nov 7 2026: busboy emits 'close' after an error that was already answered with a 400; a second answer here threw
+    // ERR_HTTP_HEADERS_SENT inside an async callback, which is an unhandled rejection, and the process ended.
+    if(res.headersSent) return;
     if(!gotFile || !chunks.length) return res.status(200).json({ text: "" });
     const audio = Buffer.concat(chunks);
     const ct = sniffAudioType(audio, partType || "audio/webm");
