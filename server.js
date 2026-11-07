@@ -3612,6 +3612,13 @@ app.post("/v1/audio/speech", async (req, res) => {
   if (!input) {
     return res.status(400).json({ error: "Missing required field: input" });
   }
+  // Nov 6 2026 (a red team, while the steering-tag leak was fixed): a number, true, an object or an array here
+  // reached stripThinkingBlock below ("text.replace is not a function"), which runs outside any try/catch in this
+  // async handler. Express 4 does not catch a rejected handler, so the unhandled rejection ended the process for
+  // every listener at once. The speech API takes a string and nothing else: say so, and stay up.
+  if (typeof input !== "string") {
+    return res.status(400).json({ error: "Invalid field: input must be a string" });
+  }
 
   // Native-app voice previews (July 22 2026, Kade: picker previews said only
   // "Hi there. This is how I sound." -- "I'd like it to be longer like in the
