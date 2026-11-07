@@ -2275,6 +2275,27 @@ function looksLikeDirection(raw) {
   return false;
 }
 
+/* Nov 6 2026 (red teams): is the text at `offset` inside a %%% tag that was opened earlier on THE SAME LINE? Delimiters are
+ * counted from the start of the line: a run of two to five percent signs is one delimiter, six or more is a closer and an
+ * opener (nothing net). A tag opened on an earlier line does not reach this one (a forgotten closer, or a stray line in front
+ * of the real tag, as in the incident of Nov 6), so one stray cannot flip the rest of a message. The offsets must come in
+ * increasing order: the text is scanned once, so a message of any length costs one pass. */
+function sameLineTagTracker(text) {
+  let pos = 0;        // scanned up to here
+  let open = false;   // a tag is open on this line
+  let run = 0;        // the percent signs of the run being read
+  return (offset) => {
+    for (; pos < offset; pos++) {
+      const c = text.charCodeAt(pos);
+      if (c === 37) { run++; continue; }
+      if (run >= 2 && run < 6) open = !open;
+      run = 0;
+      if (c === 10) open = false;
+    }
+    return run >= 2 && run < 6 ? !open : open;   // (a run that ends right at the offset counts too)
+  };
+}
+
 /* Part 236 (Sep 20 2026) — `verdicts` is the optional second opinion from
  * loose-jev.js: a Map(lowercased span -> "delivery" | "timing" | "physical" |
  * "silent") for spans the word list above does NOT recognise, already gated
@@ -2286,26 +2307,33 @@ function looksLikeDirection(raw) {
  * Aug 8 note is why a body is never handed to the synthesizer. */
 function rescueLooseDirections(text, verdicts) {
   if (!text) return text;
-  const rescue = (inner) => {
+  // `inside`: the span sits in the body of a %%% tag. A tag never holds another one, so there it is only words of that tag:
+  // a clock or a silent gesture still goes (as it does outside a tag) and anything else is handed back without its marks,
+  // so `%%%dry (softly) and flat%%%` is the direction "dry softly and flat". It used to become `%%%dry %%%softly%%% and
+  // flat%%%`, and the pairing that followed could close only some of those shapes: "and flat" was spoken.
+  const rescue = (inner, inside) => {
     const kind = looksLikeDirection(inner);
     if (!kind) {
       const second = verdicts && verdicts.get(String(inner).trim().toLowerCase());
       if (!second) return null;                   // not a direction: leave it exactly as written
-      if (second === "delivery") return `${STEERING_OPEN}${String(inner).trim()}${STEERING_CLOSE}`;
+      if (second === "delivery") return inside ? String(inner).trim() : `${STEERING_OPEN}${String(inner).trim()}${STEERING_CLOSE}`;
       return "";                                  // timing, physical, silent: nothing a voice can do
     }
+    if (inside && kind !== "timing") return kind === "silent" ? "" : String(inner).trim();
     if (kind === "timing") return "";             // Second Law: the clock is never a direction
     return `${STEERING_OPEN}${String(inner).trim()}${STEERING_CLOSE}`;
   };
-  let out = text.replace(/\(([^()\n]{1,60})\)/g, (whole, inner) => {
-    const r = rescue(inner);
+  const insideParen = sameLineTagTracker(text);
+  let out = text.replace(/\(([^()\n]{1,60})\)/g, (whole, inner, offset) => {
+    const r = rescue(inner, insideParen(offset));
     return r === null ? whole : r;
   });
   // Same shape stripSpeechMarkdown uses for single-asterisk italics, so the two
   // agree on what an asterisk span IS. Must run BEFORE it, or the markers are
   // already gone and the direction is indistinguishable from ordinary words.
-  out = out.replace(/(^|[^*\w])\*([^*\n]{1,60})\*(?!\*)/g, (whole, pre, inner) => {
-    const r = rescue(inner);
+  const insideStar = sameLineTagTracker(out);
+  out = out.replace(/(^|[^*\w])\*([^*\n]{1,60})\*(?!\*)/g, (whole, pre, inner, offset) => {
+    const r = rescue(inner, insideStar(offset + pre.length));
     return r === null ? whole : pre + r;
   });
   return out;
@@ -2409,7 +2437,7 @@ function sanitizeDirectionText(t) {
   if (t == null || !TAG_SANITIZE_ON) return t;
   let s = String(t).trim().toLowerCase();
   s = s.replace(/\s*,\s*(?:and\s+)?/g, " and ");
-  s = s.replace(/[.!?;:"()\u201c\u201d\u2014]+/g, " ");
+  s = s.replace(/[.!?;:"()\[\]\u201c\u201d\u2014]+/g, " ");
   s = s.replace(/\s{2,}/g, " ").trim();
   return s;
 }
