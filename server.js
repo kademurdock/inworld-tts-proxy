@@ -2046,15 +2046,19 @@ function normalizeForSpeech(text) {
   });
 
   // 7) PERCENT → the word (92% → "92 percent")
-  t = t.replace(/(\d+(?:\.\d+)?)\s?%(?!%)/g, '$1 percent'); // a % that is part of a %%% steering delimiter is not a percentage
+  //    The (?<!\d) here and in the three degree patterns of rule 8 makes a number start at the first digit of its run. A
+  //    start inside a run cannot succeed where the first digit failed (the match only depends on where the run ends), and
+  //    trying every start of a long run of digits cost the square of the run (149,000 digits: about a minute per pattern).
+  //    prep-linear-digits.test.js fuzzes each against the old pattern and pins the clock.
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?%(?!%)/g, '$1 percent'); // a % that is part of a %%% steering delimiter is not a percentage
 
   // 8) UNITS the voice mangles: data sizes, mph, degrees
   const UNIT_WORDS = { KB: 'kilobytes', MB: 'megabytes', GB: 'gigabytes', TB: 'terabytes' };
   t = t.replace(/\b(\d+(?:\.\d+)?)\s?(KB|MB|GB|TB)\b/g, (_, n, u) => `${n} ${UNIT_WORDS[u]}`);
   t = t.replace(/\b(\d+(?:\.\d+)?)\s?mph\b/gi, '$1 miles an hour');
-  t = t.replace(/(\d+(?:\.\d+)?)\s?°\s?F\b/g, '$1 degrees Fahrenheit');
-  t = t.replace(/(\d+(?:\.\d+)?)\s?°\s?C\b/g, '$1 degrees Celsius');
-  t = t.replace(/(\d+(?:\.\d+)?)\s?°(?![FC])/g, '$1 degrees');
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?°\s?F\b/g, '$1 degrees Fahrenheit');
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?°\s?C\b/g, '$1 degrees Celsius');
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?°(?![FC])/g, '$1 degrees');
 
   // 9) BARE 24-HOUR TIMES → 12-hour (17:30 → "5:30 PM"). Only hours 13-23
   //    convert (unambiguously 24-hour); anything else could be a ratio or
