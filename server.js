@@ -1886,14 +1886,13 @@ const MD_LIST_NUMBER = /^(?:(?<!^\s+?)|(?=\d))\s*\d+\.\s+/gm;
 // [bracket] spans (fish emotion cues ride those after conversion).
 function stripSpeechMarkdown(text) {
   if (!text) return text;
-  return text
+  return stripMarkdownLinks(text
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/__([^_]+)__/g, "$1")
     .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1$2")
     .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, "$1$2")
-    .replace(/~~([^~]+)~~/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)]*)\)/g, "$1")
+    .replace(/~~([^~]+)~~/g, "$1"))
     .replace(/`{1,3}([^`]*)`{1,3}/g, "$1")
     .replace(MD_LIST_BULLET, "")
     .replace(MD_LIST_NUMBER, "")
@@ -1907,6 +1906,38 @@ function stripSpeechMarkdown(text) {
     .replace(/#{2,}/g, "")
     .replace(/\*{2,}/g, "")
     .replace(/[ \t]{2,}/g, " ");
+}
+
+// The link rule of stripSpeechMarkdown, [label](target) -> label. As /\[([^\]]+)\]\(([^)]*)\)/g it tried a match at every "[",
+// and each try read its label on to the next "]" (to the end of the text when there is none) before it looked for the "(" behind
+// it, so a long run of "[" cost the square of the run ("[a[a[a...": 149,000 characters took 6 to 18 seconds). This goes by the
+// "](" instead. The label is what lies between the last "]" before it (or the end of the last link) and it, from the first "["
+// there that leaves a character for the label (a label may hold "[", "(" and line breaks, never "]"); the target runs to the
+// first ")" after the "(" (it may hold anything else); and when no ")" is left no later link can close either.
+// The same matches and the same words (prep-linear-links.test.js fuzzes it against the old pattern), in time linear in the text.
+function stripMarkdownLinks(t) {
+  let out = '';
+  let from = 0; // t[0, from) is already in `out`, or was eaten by a link
+  let at = 0;   // where to look for the next "]"
+  let lo = 0;   // the earliest place a label may start: behind the last "]" seen and behind the last link
+  for (;;) {
+    const q = t.indexOf(']', at);
+    if (q === -1) break;
+    at = q + 1;
+    if (t.charCodeAt(at) === 40) { // "](": a link target may follow
+      let s = lo;
+      while (s < q - 1 && t.charCodeAt(s) !== 91) s++;
+      if (s < q - 1) { // a "[" with at least one character between it and the "]"
+        const r = t.indexOf(')', q + 2);
+        if (r === -1) break;
+        out += t.slice(from, s) + t.slice(s + 1, q);
+        from = at = lo = r + 1;
+        continue;
+      }
+    }
+    lo = at;
+  }
+  return from === 0 ? t : out + t.slice(from);
 }
 
 function stripCitationMarkers(text) {
