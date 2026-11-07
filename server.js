@@ -5993,6 +5993,10 @@ app.post("/v1/audio/transcriptions", (req, res) => {
 });
 
 
+// Nov 7 2026: the last stop for an error from any route above (async-routes.js): logged with its cause, answered 500 with no
+// stack, and when the answer is already out the response is ended instead of the socket destroyed. Mount nothing after it.
+app.use(require("./async-routes").finalErrorHandler);
+
 app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);
   if (fishStretchOn() || fishExactOn()) fishStretch.warm();

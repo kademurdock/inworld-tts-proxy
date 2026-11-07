@@ -29,6 +29,8 @@
  * express/lib/router/layer: this file then stops the boot, loudly, and should be deleted.
  */
 
+const http = require("http");
+
 const FLAG = Symbol.for("inworld-tts-proxy.async-routes");
 const CLIP = 300;
 
@@ -119,6 +121,70 @@ function handle_error(error, req, res, next) {
   follow(returned, res, next);
 }
 
+// ── the error middleware that answers ─────────────────────────────────────────────────────────────
+
+/**
+ * The status the caller gets. An HTTP library may have put a 4xx on the error (body-parser: 400 for a body that is not
+ * JSON, 413 for one over the limit): that stays, as it did under Express's own handler. Anything else is the proxy's
+ * fault, and is a 500.
+ */
+function statusOf(err) {
+  try {
+    for (const status of [err.status, err.statusCode]) {
+      if (Number.isInteger(status) && status >= 400 && status <= 499) return status;
+    }
+  } catch (e) { /* null, undefined, or a getter that throws */ }
+  return 500;
+}
+
+/** "POST /librechat/janitor": the method and the path, never the query string (it may carry a secret). */
+function whereOf(req) {
+  try {
+    const path = req.path !== undefined ? req.path : String(req.url).split("?")[0];
+    return String(req.method).slice(0, 16) + " " + String(path).slice(0, 200).replace(/[^ -~]/g, "?");
+  } catch (e) {
+    return "(request unknown)";
+  }
+}
+
+/** One log line for a 4xx; a line and five stack frames for a 500. Printing must never be the thing that fails. */
+function report(req, err, status) {
+  try {
+    const where = whereOf(req);
+    const cause = describeCause(err);
+    if (status >= 500) {
+      let frames = "";
+      try { if (typeof err.stack === "string") frames = "\n" + err.stack.split("\n").slice(1, 6).join("\n"); } catch (e) { /* no stack to show */ }
+      console.error("[proxy] " + where + " failed with " + status + ": " + cause + frames);
+    } else {
+      console.warn("[proxy] " + where + " refused with " + status + ": " + cause);
+    }
+  } catch (e) { /* a log line is not worth a second failure */ }
+}
+
+/**
+ * The last error middleware; server.js mounts it after every route. Whatever reached it (a rejected handler through
+ * the patch above, a synchronous throw, an error body-parser raised) is logged with its cause and answered:
+ *   - a 4xx that an HTTP library attached keeps its status, with the standard reason as the text;
+ *   - anything else is 500 {"error":"Proxy internal error"}: no stack, no message, nothing about the inside;
+ *   - when the answer (or part of it) is already out, the response is ended and that is all. Express's own handler
+ *     would destroy the socket here, which drops every other request riding the same keep-alive connection.
+ * The cause may be anything that was thrown (a Symbol, an object without a prototype): describeCause copes.
+ */
+function finalErrorHandler(err, req, res, next) {
+  const status = statusOf(err);
+  report(req, err, status);
+  try {
+    if (res.headersSent) {
+      res.end();
+      return;
+    }
+    res.status(status).json({ error: status === 500 ? "Proxy internal error" : http.STATUS_CODES[status] || "Bad Request" });
+  } catch (e) {
+    lastResort(res);
+  }
+}
+
 /** Patch Express's Layer once. Returns true when it patched, false when it already had. */
 function install() {
   const Layer = require("express/lib/router/layer");
@@ -133,4 +199,4 @@ function install() {
   return true;
 }
 
-module.exports = { install, describeCause, asFailure };
+module.exports = { install, describeCause, asFailure, finalErrorHandler };
