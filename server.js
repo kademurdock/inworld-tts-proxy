@@ -1844,6 +1844,28 @@ app.get("/health", async (req, res) => {
   });
 });
 
+// stripThinkingBlock cuts everything between an opener and its closer, as /OPEN[\s\S]*?CLOSE/g did. That pattern tried every opener
+// of the text and, for each one with no closer after it, read on to the end of the text, so many unclosed openers cost the
+// square of the text (149,000 of U+F001 took 6 seconds, of "<think>" 24 seconds). Looking for the closer with indexOf, and
+// giving up for good at the first opener that has none (no later opener can have one either), is linear. The closer is
+// looked for from the end of the opener, as the lazy pattern did, and eatNewline takes the optional line break after it.
+// prep-linear-thinking.test.js fuzzes this against the three old patterns and pins the clock.
+function dropBetween(t, open, close, eatNewline) {
+  let at = t.indexOf(open);
+  if (at === -1) return t;
+  let out = '';
+  let from = 0; // t[0, from) is already in `out`
+  while (at !== -1) {
+    const end = t.indexOf(close, at + open.length);
+    if (end === -1) break; // no closer is left, so no later opener can match either
+    out += t.slice(from, at);
+    from = end + close.length;
+    if (eatNewline && t.charCodeAt(from) === 10) from++;
+    at = t.indexOf(open, from);
+  }
+  return from === 0 ? t : out + t.slice(from);
+}
+
 // Remove web-search citation markers so TTS never voices them. Catches the
 // private-use citation chars (U+E200-U+E20F) plus the "turn<N>search<M>"-style
 // tokens they carry (also turn<N>news<M>, view, etc. via the generic shape).
@@ -1857,11 +1879,10 @@ app.get("/health", async (req, res) => {
 // real answer, defeating the whole point of having a separate bubble.
 function stripThinkingBlock(text) {
   if (!text) return text;
-  return text
-    .replace(/:::thinking[\s\S]*?:::\n?/g, "")     // legacy :::thinking::: marker
-    .replace(/<think>[\s\S]*?<\/think>\n?/g, "") // <think>...</think> from reframe-proxy
-    .replace(/\uF001[\s\S]*?\uF002/g, "")        // PUA-wrapped reasoning text (extracted from think part by LibreChat before sending to TTS)
-    .trim();
+  let t = dropBetween(text, ":::thinking", ":::", true);        // legacy :::thinking::: marker
+  t = dropBetween(t, "<think>", "</think>", true);              // <think>...</think> from reframe-proxy
+  t = dropBetween(t, "\uF001", "\uF002", false);                // PUA-wrapped reasoning text (extracted from think part by LibreChat before sending to TTS)
+  return t.trim();
 }
 
 // The two list-marker rules of stripSpeechMarkdown: a bullet ("-", "*", "•") or "1." at the start of a line, and the blanks
