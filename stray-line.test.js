@@ -145,3 +145,29 @@ test('fuzz: a stray line put anywhere a model would put one changes no paragraph
   }
   assert.equal(checked, 15000);
 });
+
+// ── the trade-off an independent review measured (Nov 7 2026): the paragraph break a stray line was is NOT remembered ──────────
+// Taking the stray's line away (above) also took away the blank line that once let the forgotten-closer rule close a tag after a
+// line ending in a letter or a comma, so `Dear Kade,` / stray line / `%%%pleased Thanks.` speaks "pleased", as the same reply
+// without the stray does. A fix that remembers the break was built and measured: it closes that tag, and it also closes
+// `%%%not Kade who called, it was Kiana.` after `I told her it was` + a stray line, swallowing "not" and flipping the sentence.
+// The rule cannot tell the two apart without a vocabulary, and this file prefers a spoken direction word to a lost word. These
+// pins keep both behaviours in view so that nobody flips one without the other.
+test('a stray line before a forgotten-closer tag, after a line that ends in a letter or a comma, behaves as the reply without the stray: the words are spoken, never swallowed', () => {
+  for (const [input, want] of [
+    ['Dear Kade,\n%%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\npleased Thanks for coming over.'],            // the leak: a known limit
+    ['Dear Kade,\n%%%pleased Thanks for coming over.', 'Dear Kade,\npleased Thanks for coming over.'],                  // ... the same without the stray
+    ['I told her it was\n%%%\n%%%not Kade who called, it was Kiana.', 'I told her it was\nnot Kade who called, it was Kiana.'],   // the mirror: nothing is lost
+    ['I told her it was\n%%%not Kade who called, it was Kiana.', 'I told her it was\nnot Kade who called, it was Kiana.'],
+  ]) assert.equal(balanceSteeringRuns(input), want, JSON.stringify(input));
+  // a REAL blank line in front of the run is a paragraph break the reply had: the words are read as a forgotten-closer direction, as always
+  assert.equal(balanceSteeringRuns('Dear Kade,\n\n%%%pleased Thanks for coming over.'), 'Dear Kade,\n\n%%%pleased%%% Thanks for coming over.');
+  assert.equal(balanceSteeringRuns('Dear Kade,\n\n%%%\n%%%pleased Thanks for coming over.'), 'Dear Kade,\n\n\n%%%pleased%%% Thanks for coming over.');
+});
+
+test('through the shipped applySteeringTags the mirror case keeps its word and carries no cue onto the paragraphs after it', () => {
+  const input = 'I told her it was\n%%%\n%%%not Kade who called, it was Kiana.\n\nThen we sat down.\n\nThen we ate.\n\nThen we left.';
+  const out = withBalancer(input);
+  assert.equal(speech(out), 'I told her it was not Kade who called, it was Kiana. Then we sat down. Then we ate. Then we left.');
+  assert.doesNotMatch(out, /\[not\]/, JSON.stringify(out));
+});

@@ -164,6 +164,17 @@
  *   - a doubled `%%` run pairs only the way the old typo normaliser paired it, on one line, so a direction closed
  *     by `%%` alone on the next line (`%%%like she is sharing a secret\n%%`) is not a tag; the first version
  *     paired it, and the strictness is what keeps `half%% of it, then %% some` prose;
+ *   - a stray line alone between a line that ends in a letter or a comma and a tag whose closer was forgotten
+ *     (`Dear Kade,` / `%%%` / `%%%pleased Thanks for coming over.`) leaves the tag unclosed, so its words are spoken: exactly
+ *     what the same reply WITHOUT the stray line does. The blank line such a stray used to leave once closed it by accident
+ *     (before e936b4d), and it is not remembered on purpose: remembering it (a `strayBreak` flag was built and measured) also
+ *     closes `%%%not Kade who called, it was Kiana.` after `I told her it was` + a stray line, which swallows the word "not"
+ *     and flips the sentence, and the forgotten-closer rule cannot tell the two apart without a vocabulary. Swallowing speech
+ *     is worse than speaking a direction word, the rule of this file; stray lines in real traffic follow a sentence end or a
+ *     blank line, where nothing is lost either way;
+ *   - a tag-only line, a stray line and another tag (`%%%cool%%%` / `%%%` / `%%%warm%%% Second thing.`) read as ONE paragraph
+ *     once the stray's line is gone, which is what they are without the stray: applySteeringTags sends both cues where the
+ *     blank line used to make the first a direction-only paragraph that it drops;
  *   - a stray between two letters becomes a space, so a stray inside a word splits it (`hope%%%you` is `hope
  *     you`, and `No%%%t` is `No t`); next to an apostrophe or a hyphen inside a word it just vanishes
  *     (`you'%%%re`, `well-%%%known`). */
