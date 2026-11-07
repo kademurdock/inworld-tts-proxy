@@ -3698,7 +3698,29 @@ async function trySynthesizeScene(req, res, preppedText, ctx) {
   }
 }
 
-app.post("/v1/audio/speech", async (req, res) => {
+// Nov 7 2026 (review): `voice` and `model` come straight out of the request body and are used below in String(), template
+// literals and object lookups. A value whose conversion to text throws ({"toString":1} is enough, or an array nested 20,000
+// deep) threw at the first of those, outside every try/catch of this async handler. Express 4 does not catch a rejected
+// handler, so the unhandled rejection ended the process for every listener. What converts to text keeps its old behaviour
+// exactly; what cannot gets a 400 (see the checks after `input`), and a throw anywhere else in the handler ends that one
+// request with a 500 (guardAsync) instead of the process.
+function convertsToText(v) {
+  try { String(v); return true; } catch (e) { return false; }
+}
+function guardAsync(handler) {
+  return (req, res, next) => {
+    Promise.resolve(handler(req, res, next)).catch((err) => {
+      // (what was thrown may not even be printable, a Symbol or an object without a prototype: the answer must not depend on it)
+      try { console.error(`[TTS] speech handler threw (${(err && err.message) || String(err)}); this request ends, the proxy stays up`); } catch (e) { /* unprintable */ }
+      try {
+        if (!res.headersSent) res.status(500).json({ error: "Proxy internal error" });
+        else res.end();
+      } catch (e) { /* the connection is gone */ }
+    });
+  };
+}
+
+app.post("/v1/audio/speech", guardAsync(async (req, res) => {
   const { input, voice = selectedVoicePicker?.voices[0] || "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
@@ -3721,6 +3743,12 @@ app.post("/v1/audio/speech", async (req, res) => {
   // every listener at once. The speech API takes a string and nothing else: say so, and stay up.
   if (typeof input !== "string") {
     return res.status(400).json({ error: "Invalid field: input must be a string" });
+  }
+  if (!convertsToText(voice)) {
+    return res.status(400).json({ error: "Invalid field: voice must be a string" });
+  }
+  if (!convertsToText(model)) {
+    return res.status(400).json({ error: "Invalid field: model must be a string" });
   }
 
   // Native-app voice previews (July 22 2026, Kade: picker previews said only
@@ -4057,7 +4085,7 @@ app.post("/v1/audio/speech", async (req, res) => {
     console.error("Proxy error:", err);
     res.status(500).json({ error: "Proxy internal error", details: err.message });
   }
-});
+}));
 
 
 // ---- Accessible on-demand voice preview library ----
