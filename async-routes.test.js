@@ -122,6 +122,20 @@ test('install() stops the boot, with a message, on an Express that has no handle
   assert.equal(Layer.prototype.handle_request.name, 'handle', 'the real Layer was not touched');
 });
 
+test('a handler whose promise resolves before its answer is finished (it started a stream and returned) is not cut off', async () => {
+  await withApp((app) => {
+    app.get('/streams-on', async (req, res) => {
+      res.write('a');
+      setTimeout(() => { res.write('b'); setTimeout(() => res.end('c'), 5); }, 5);
+    });
+  }, async ({ port, seen }) => {
+    const r = await call(port, '/streams-on');
+    assert.equal(r.status, 200);
+    assert.equal(r.body, 'abc', 'every chunk arrives');
+    assert.deepEqual(seen, []);
+  });
+});
+
 // ── what gets handed to next() ────────────────────────────────────────────────────
 const FALSY_OR_CONTROL = [undefined, null, 0, '', false, NaN, 'route', 'router'];
 
