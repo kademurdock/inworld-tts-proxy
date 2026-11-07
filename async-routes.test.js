@@ -199,6 +199,13 @@ test('asFailure and describeCause: every kind of value has an answer, and no ans
   assert.ok(long.length <= 303 && long.endsWith('...'), 'a huge string becomes one short line');
   assert.equal(describeCause('y'.repeat(300)), 'y'.repeat(300), 'exactly 300 characters is kept whole');
   assert.equal(describeCause('y'.repeat(301)), 'y'.repeat(300) + '...', 'one more is cut');
+  // one clean line: line breaks and every other control character (C0, DEL, C1) become a space, ordinary text is kept
+  const CR = String.fromCharCode(13), LF = String.fromCharCode(10), ESC = String.fromCharCode(27);
+  assert.equal(describeCause('a' + CR + LF + 'b' + ESC + '[2Jc'), 'a  b [2Jc');
+  assert.equal(describeCause(new Error('one' + LF + 'two')), 'Error: one two');
+  for (const code of [0, 9, 31, 127, 133, 159]) assert.equal(describeCause('x' + String.fromCharCode(code) + 'y'), 'x y', 'control character ' + code);
+  for (const code of [32, 126, 160, 233]) assert.equal(describeCause('x' + String.fromCharCode(code) + 'y'), 'x' + String.fromCharCode(code) + 'y', 'character ' + code + ' stays');
+  assert.equal(describeCause('z'.repeat(299) + ESC + 'tail'), 'z'.repeat(299) + ' ...', 'a control character at the cut is cleaned too');
   assert.ok(asFailure(hostile) === hostile, 'a truthy value is never inspected on its way to next()');
 });
 
@@ -295,7 +302,9 @@ test('a thenable that rejects is followed; one whose then() throws is followed; 
   });
 });
 
-test('a promise that resolves never calls next, and next is called once for a rejection that comes after the answer', async () => {
+test('a promise that resolves never calls next; a rejection that comes after the answer is dealt with on the spot, not handed to next()', async (t) => {
+  const logged = [];
+  t.mock.method(console, 'error', (...a) => { logged.push(a.join(' ')); });
   const boom = new Error('after the answer');
   await withApp((app) => {
     app.get('/ok', async (req, res) => { res.send('fine'); });
@@ -306,18 +315,46 @@ test('a promise that resolves never calls next, and next is called once for a re
     assert.deepEqual(seen, [], 'a resolved promise sent nothing to the error middleware');
     assert.equal((await call(port, '/answers-then-fails')).body, 'answered');
     await sleep(10);
-    assert.deepEqual(seen, [boom], 'the late rejection reached the error middleware exactly once');
+    assert.deepEqual(seen, [], 'the answer was already out: nothing downstream could add to it, so next() was not asked');
   });
+  assert.equal(logged.length, 1, 'but it was logged, once');
+  assert.match(logged[0], /^\[proxy\] GET \/answers-then-fails failed after its answer went out: Error: after the answer\n\s+at /);
+});
+
+test('the handler is called as a plain function, the way Express calls it: this is undefined', async () => {
+  await withApp((app) => {
+    app.get('/this', function (req, res) { res.send(String(this)); });
+  }, async ({ port }) => {
+    assert.equal((await call(port, '/this')).body, 'undefined');
+  });
+});
+
+test('a second copy of the module finds the patch already there: the flag is a registered Symbol', () => {
+  const id = require.resolve('./async-routes');
+  const saved = require.cache[id];
+  delete require.cache[id];
+  try {
+    const copy = require('./async-routes');
+    assert.notEqual(copy.install, install, 'really a second copy');
+    assert.equal(copy.install(), false);
+  } finally {
+    require.cache[id] = saved;
+  }
 });
 
 // ── the patch itself never throws or rejects ──────────────────────────────────────
 function fakeRes({ headersSent = false, endThrows = false } = {}) {
-  const res = { headersSent, statusCode: 200, ended: 0 };
+  const res = { headersSent, statusCode: 200, ended: 0, writableEnded: false };
   res.end = () => { res.ended += 1; if (endThrows) throw new Error('socket gone'); };
+  res.hasHeader = () => false;
+  res.destroy = () => { res.destroyed = true; };
+  res.listenerCount = () => 1;
+  res.on = () => res;
   return res;
 }
 
-test('if next() itself throws while a rejection is being handed over, the request is ended and the process is not', async () => {
+test('if next() itself throws while a rejection is being handed over, the request is ended and the process is not', async (t) => {
+  t.mock.method(console, 'error', () => {});
   const handle = Layer.prototype.handle_request;
   const layer = { handle: async () => { throw new Error('x'); } };
   const before = unhandled.length;
@@ -327,9 +364,11 @@ test('if next() itself throws while a rejection is being handed over, the reques
   assert.equal(fresh.statusCode, 500, 'an empty 500');
   assert.equal(fresh.ended, 1);
   const started = fakeRes({ headersSent: true });
-  handle.call(layer, {}, started, () => { throw new Error('next blew up'); });
+  let asked = 0;
+  handle.call(layer, {}, started, () => { asked += 1; throw new Error('next blew up'); });
   await settle();
-  assert.equal(started.statusCode, 200, 'a response that already started keeps its status');
+  assert.equal(asked, 0, 'a response that already started is dealt with without next()');
+  assert.equal(started.statusCode, 200, 'it keeps its status');
   assert.equal(started.ended, 1, 'and is ended');
   const dead = fakeRes({ endThrows: true });
   handle.call(layer, {}, dead, () => { throw new Error('next blew up'); });

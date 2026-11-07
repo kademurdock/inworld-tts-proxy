@@ -4,6 +4,10 @@
 // internal error"} (no stack, no message), keeps a 4xx that an HTTP library attached (body-parser's 400 and 413), logs the
 // cause whatever was thrown, and when the answer is already out it ends the response instead of letting Express's own
 // handler destroy the socket (which drops every other request on that keep-alive connection).
+// Hardened after the independent review of Nov 7 2026: the log never carries a query string or a forged line, the error answer
+// does not inherit the failing handler's Content-Type or Content-Disposition, an answer that announced a Content-Length and
+// stopped short is destroyed so the client hears at once, a late writer cannot kill the process, and a rejection that comes after
+// the answer went out is dealt with where it happens.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -18,13 +22,20 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ── unit: the handler on its own, with fakes ──────────────────────────────────────
 function fakeReq(over = {}) {
-  return { method: 'POST', path: '/librechat/janitor', url: '/librechat/janitor?token=SECRET-IN-THE-QUERY', ...over };
+  // (a real Express request has path without the query, and url and originalUrl with it)
+  return { method: 'POST', path: '/librechat/janitor', url: '/librechat/janitor?token=SECRET-IN-THE-QUERY', originalUrl: '/librechat/janitor?token=SECRET-IN-THE-QUERY', baseUrl: '', ...over };
 }
 function fakeRes(over = {}) {
-  const res = { headersSent: false, statusCode: 200, calls: [] };
+  const res = { headersSent: false, writableEnded: false, statusCode: 200, calls: [], headers: {}, removed: [], errorListeners: [] };
   res.status = (c) => { res.calls.push(['status', c]); res.statusCode = c; return res; };
   res.json = (b) => { res.calls.push(['json', JSON.stringify(b)]); return res; };
   res.end = () => { res.calls.push(['end']); };
+  res.destroy = () => { res.calls.push(['destroy']); };
+  res.setHeader = (k, v) => { res.headers[String(k).toLowerCase()] = v; };
+  res.hasHeader = (k) => String(k).toLowerCase() in res.headers;
+  res.removeHeader = (k) => { res.removed.push(String(k).toLowerCase()); delete res.headers[String(k).toLowerCase()]; };
+  res.listenerCount = (ev) => (ev === 'error' ? res.errorListeners.length : 0);
+  res.on = (ev, fn) => { if (ev === 'error') res.errorListeners.push(fn); return res; };
   return Object.assign(res, over);
 }
 // run the handler with console.error / console.warn captured
@@ -102,6 +113,121 @@ test('a status that is not a 4xx integer is a 500', (t) => {
   assert.equal(res.calls[0][1], 404, 'statusCode counts when status says nothing usable');
 });
 
+test('a 4xx on status wins over one on statusCode, and every code from 400 to 499 keeps itself and its standard reason', (t) => {
+  const both = run(t, Object.assign(new Error('x'), { status: 400, statusCode: 404 }));
+  assert.equal(both.res.calls[0][1], 400);
+  t.mock.restoreAll();
+  for (let code = 400; code <= 499; code++) {
+    const { res } = run(t, Object.assign(new Error('x'), { status: code }));
+    assert.deepEqual(res.calls, [['status', code], ['json', JSON.stringify({ error: http.STATUS_CODES[code] || 'Bad Request' })]], String(code));
+    t.mock.restoreAll();
+  }
+});
+
+const STALE = ['content-type', 'content-length', 'content-disposition', 'content-encoding', 'content-language', 'content-range', 'etag', 'last-modified', 'accept-ranges'];
+
+test('the error answer does not inherit what the failing handler set: content headers go, other middleware\'s headers stay, nosniff is added', (t) => {
+  const res = fakeRes({
+    headers: {
+      'content-type': 'application/vnd.android.package-archive', 'content-length': '99', 'content-disposition': 'attachment; filename="Kade-AI.apk"',
+      'content-encoding': 'gzip', 'content-language': 'en', 'content-range': 'bytes 0-9/99', etag: 'W/"abc"', 'last-modified': 'Mon, 01 Jan 2024 00:00:00 GMT',
+      'accept-ranges': 'bytes', 'access-control-allow-origin': 'https://kademurdock.com', 'cache-control': 'public, max-age=0', 'x-kade-thing': '1',
+    },
+  });
+  run(t, Object.assign(new Error('ENOENT: no such file'), { status: 404 }), { res });
+  assert.deepEqual([...res.removed].sort(), [...STALE].sort());
+  assert.deepEqual(Object.keys(res.headers).sort(), ['access-control-allow-origin', 'cache-control', 'x-content-type-options', 'x-kade-thing']);
+  assert.equal(res.headers['x-content-type-options'], 'nosniff');
+  assert.deepEqual(res.calls, [['status', 404], ['json', '{"error":"Not Found"}']]);
+});
+
+test('an answer that is already out ends the right way: a finished one is left alone, a short fixed-length one is destroyed, a chunked one is ended', (t) => {
+  const finished = fakeRes({ headersSent: true, writableEnded: true, headers: { 'content-length': '5' } });
+  run(t, new Error('late'), { res: finished });
+  t.mock.restoreAll();
+  assert.deepEqual(finished.calls, [['end']], 'finished: never destroyed (other requests may ride the socket), ending again is a no-op');
+  const short = fakeRes({ headersSent: true, headers: { 'content-length': '100' } });
+  run(t, new Error('late'), { res: short });
+  t.mock.restoreAll();
+  assert.deepEqual(short.calls, [['destroy']], 'a fixed length that was not reached: cut loose, so the client hears at once');
+  const chunked = fakeRes({ headersSent: true });
+  run(t, new Error('late'), { res: chunked });
+  t.mock.restoreAll();
+  assert.deepEqual(chunked.calls, [['end']], 'no announced length: ended, a well-formed short body');
+});
+
+test('a response that is being closed gets an error listener, once, unless it has one; an answer still to be written needs none', (t) => {
+  const a = fakeRes({ headersSent: true });
+  run(t, new Error('x'), { res: a });
+  t.mock.restoreAll();
+  assert.equal(a.errorListeners.length, 1);
+  const b = fakeRes({ headersSent: true, errorListeners: [() => {}] });
+  run(t, new Error('x'), { res: b });
+  t.mock.restoreAll();
+  assert.equal(b.errorListeners.length, 1, 'its own listener is enough');
+  const c = fakeRes();
+  run(t, new Error('x'), { res: c });
+  assert.equal(c.errorListeners.length, 0);
+});
+
+test('a failure after the answer went out is logged as that, at error level, with its cause and frames, whatever status the error carries', (t) => {
+  const a = run(t, new TypeError('boom after'), { res: fakeRes({ headersSent: true }) });
+  const lines = a.logs.error[0].split('\n');
+  assert.equal(lines[0], '[proxy] POST /librechat/janitor failed after its answer went out: TypeError: boom after');
+  assert.ok(lines.length >= 2 && lines.length <= 6);
+  assert.equal(a.logs.warn.length, 0);
+  t.mock.restoreAll();
+  const b = run(t, Object.assign(new Error('late 404'), { status: 404 }), { res: fakeRes({ headersSent: true }) });
+  assert.equal(b.logs.error.length, 1);
+  assert.equal(b.logs.warn.length, 0, 'the caller already has its answer: this is not a refusal');
+});
+
+test('odd responses and errors are coped with: no stack frames, a headersSent that cannot be read, a response that cannot take a listener or lose a header', (t) => {
+  // an error whose stack is text without any frame: the log line is just the line, no trailing line break
+  const bare = Object.defineProperty(new Error('x'), 'stack', { value: 'Error: x' });
+  assert.equal(run(t, bare).logs.error[0], '[proxy] POST /librechat/janitor failed with 500: Error: x');
+  t.mock.restoreAll();
+  // headersSent that throws when read counts as "not sent": the error is answered the ordinary way
+  const unreadable = fakeRes();
+  Object.defineProperty(unreadable, 'headersSent', { get() { throw new Error('no'); } });
+  run(t, new Error('x'), { res: unreadable });
+  t.mock.restoreAll();
+  assert.deepEqual(unreadable.calls, [['status', 500], ['json', BODY_500]]);
+  // a response that throws when asked about its listeners is still ended
+  const noListeners = fakeRes({ headersSent: true });
+  noListeners.listenerCount = () => { throw new Error('no'); };
+  run(t, new Error('x'), { res: noListeners });
+  t.mock.restoreAll();
+  assert.deepEqual(noListeners.calls, [['end']]);
+  // a response that cannot remove a header still gets its answer
+  const stuck = fakeRes();
+  stuck.removeHeader = () => { throw new Error('no'); };
+  run(t, new Error('x'), { res: stuck });
+  assert.deepEqual(stuck.calls, [['status', 500], ['json', BODY_500]]);
+});
+
+test('at most five stack frames are logged, whatever the depth, and each one is cleaned of control characters', (t) => {
+  const frames = Array.from({ length: 8 }, (_, i) => `    at frame${i} (file${i}.js:${i}:1)`);
+  const deep = Object.defineProperty(new Error('deep'), 'stack', { value: ['Error: deep', ...frames].join('\n') });
+  const a = run(t, deep);
+  assert.deepEqual(a.logs.error[0].split('\n').slice(1), frames.slice(0, 5));
+  t.mock.restoreAll();
+  const ESC = String.fromCharCode(27), CR = String.fromCharCode(13);
+  const dirty = Object.defineProperty(new Error('d'), 'stack', { value: ['Error: d', '    at f (/tmp/a' + ESC + '[31mb.js:1:1)' + CR].join('\n') });
+  const b = run(t, dirty);
+  assert.equal(b.logs.error[0].split('\n')[1], '    at f (/tmp/a [31mb.js:1:1) ');
+});
+
+test('a cause with line breaks or control characters stays on one log line, and nothing after it can pass for a log line', (t) => {
+  const CR = String.fromCharCode(13), LF = String.fromCharCode(10), ESC = String.fromCharCode(27);
+  const { logs } = run(t, new Error('bad' + CR + LF + '[proxy] FAKE LINE' + ESC + '[2J'));
+  const lines = logs.error[0].split('\n');
+  assert.equal(lines[0], '[proxy] POST /librechat/janitor failed with 500: Error: bad  [proxy] FAKE LINE [2J');
+  assert.ok(lines.length <= 6);
+  for (const frame of lines.slice(1)) assert.match(frame, /^\s+at /, 'only real frames follow');
+  assert.ok(!logs.error[0].includes(ESC) && !logs.error[0].includes(CR));
+});
+
 const deepArray = JSON.parse('['.repeat(30000) + ']'.repeat(30000));
 const HOSTILE = [
   ['a Symbol', Symbol('s')],
@@ -139,10 +265,10 @@ test('when the answer is already out the response is ended, nothing is written, 
 
 test('if writing the answer fails, the request is ended with an empty 500 and nothing is thrown', (t) => {
   const broken = fakeRes();
-  broken.json = () => { throw new Error('socket gone'); };
+  broken.status = () => { throw new Error('socket gone'); };   // (so only the last resort can set the 500)
   const a = run(t, new Error('x'), { res: broken });
   assert.equal(a.res.statusCode, 500);
-  assert.ok(a.res.calls.some(([c]) => c === 'end'), 'ended');
+  assert.deepEqual(a.res.calls, [['end']], 'ended, nothing written');
   t.mock.restoreAll();
   const brokenEnd = fakeRes({ headersSent: true });
   brokenEnd.end = () => { brokenEnd.calls.push(['end']); throw new Error('socket gone'); };
@@ -265,12 +391,34 @@ test('a handler that rejects after it answered does not destroy the socket: the 
   }
 });
 
-test('(control) without the final handler Express destroys that socket, so the test above can tell', async (t) => {
+test('an error handed to next() after the answer went out does not destroy the socket either: the final handler ends the response and stops', async (t) => {
   t.mock.method(console, 'error', () => {});
   const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
   try {
     await withApp((app) => {
-      app.get('/late', async (req, res) => { res.send('answered'); throw new Error('after the answer'); });
+      app.get('/late', (req, res, next) => { res.send('answered'); next(new Error('handed over after the answer')); });
+      app.get('/ok', (req, res) => res.send('ok'));
+    }, async ({ port, sockets }) => {
+      const first = await call(port, '/late', { agent });
+      assert.equal(first.body, 'answered');
+      await sleep(20);
+      assert.equal(sockets[0].destroyed, false);
+      const second = await call(port, '/ok', { agent });
+      assert.equal(second.body, 'ok');
+      assert.equal(second.reused, true);
+    });
+  } finally {
+    agent.destroy();
+  }
+  assert.match(console.error.mock.calls[0].arguments.join(' '), /failed after its answer went out: Error: handed over after the answer/);
+});
+
+test('(control) without the final handler, Express destroys the socket for an error handed to next() after the answer, so the tests above can tell', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
+  try {
+    await withApp((app) => {
+      app.get('/late', (req, res, next) => { res.send('answered'); next(new Error('handed over after the answer')); });
     }, async ({ port, sockets }) => {
       await call(port, '/late', { agent }).catch(() => {});
       await sleep(30);
@@ -300,6 +448,100 @@ test('a handler that fails halfway through a streamed answer ends it cleanly: th
   } finally {
     agent.destroy();
   }
+});
+
+test('a failing request logs its path and never its query string, through the real Express request (and the real mounted router)', async (t) => {
+  const errors = [];
+  t.mock.method(console, 'error', (...a) => { errors.push(a.join(' ')); });
+  const SECRET = 'sk-live-SECRET-IN-QUERY-0123456789';
+  await withApp((app) => {
+    app.get('/boom', async () => { throw new Error('inside'); });
+    const sub = express.Router();
+    sub.get('/deep', async () => { throw new Error('deep'); });
+    app.use('/sub', sub);
+  }, async ({ port }) => {
+    await call(port, `/boom?apikey=${SECRET}&x=1`);
+    await call(port, `/sub/deep?apikey=${SECRET}`);
+  });
+  assert.equal(errors.length, 2);
+  assert.match(errors[0], /^\[proxy\] GET \/boom failed with 500: Error: inside\n/);
+  assert.match(errors[1], /^\[proxy\] GET \/sub\/deep failed with 500: Error: deep\n/);
+  assert.ok(!errors.join('\n').includes(SECRET), 'the secret in the query string is nowhere in the log');
+});
+
+test('the error answer of a failed download does not look like the download: JSON, no attachment, nosniff, the CORS header kept', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  await withApp((app) => {
+    app.use((req, res, next) => { res.set('Access-Control-Allow-Origin', 'https://kademurdock.com'); next(); });
+    app.get('/Kade-AI.apk', (req, res, next) => {
+      res.set({
+        'Content-Type': 'application/vnd.android.package-archive', 'Content-Disposition': 'attachment; filename="Kade-AI.apk"', 'Content-Length': '123',
+        ETag: 'W/"x"', 'Last-Modified': 'Mon, 01 Jan 2024 00:00:00 GMT', 'Accept-Ranges': 'bytes',
+      });
+      next(Object.assign(new Error('ENOENT: no such file'), { status: 404, code: 'ENOENT' }));
+    });
+  }, async ({ port }) => {
+    const r = await call(port, '/Kade-AI.apk');
+    assert.equal(r.status, 404);
+    assert.equal(r.body, '{"error":"Not Found"}');
+    assert.match(r.headers['content-type'], /^application\/json/);
+    for (const h of ['content-disposition', 'last-modified', 'accept-ranges']) assert.equal(r.headers[h], undefined, h);
+    assert.notEqual(r.headers.etag, 'W/"x"', 'the download\'s validator is gone (Express adds one for the new body)');
+    assert.equal(r.headers['content-length'], String(Buffer.byteLength('{"error":"Not Found"}')));
+    assert.equal(r.headers['x-content-type-options'], 'nosniff');
+    assert.equal(r.headers['access-control-allow-origin'], 'https://kademurdock.com');
+  });
+});
+
+test('an answer that announced a length and stopped short is cut loose at once: the client hears, it does not wait', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  await withApp((app) => {
+    app.get('/short', async (req, res) => { res.setHeader('Content-Length', '100'); res.write('0123456789'); await sleep(5); throw new Error('read error mid-file'); });
+  }, async ({ port }) => {
+    const t0 = Date.now();
+    await assert.rejects(call(port, '/short'), (e) => /aborted|ECONNRESET|socket hang up/i.test(String(e.code || '') + ' ' + String(e.message)));
+    assert.ok(Date.now() - t0 < 1000, 'heard within a second, not at its own timeout');
+  });
+});
+
+test('a writer that writes once more right after the final handler ended the response cannot kill the process', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const server = http.createServer((req, res) => {
+    res.write('first');                                      // headers and one chunk are out
+    finalErrorHandler(new Error('x'), req, res, () => {});   // ends the response
+    res.write('late');                                       // ERR_STREAM_WRITE_AFTER_END, emitted on the response a tick later
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  try {
+    const r = await call(server.address().port, '/');
+    assert.equal(r.body, 'first');
+    await sleep(30);   // (an unheard 'error' on the response is an uncaught exception, and fails the test)
+  } finally {
+    await new Promise((r) => { server.close(r); server.closeAllConnections(); });
+  }
+});
+
+test('a handler that calls next() and then rejects, after the next one answered, does not cost the connection', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
+  try {
+    await withApp((app) => {
+      app.get('/two', async (req, res, next) => { next(); throw new Error('after next'); }, (req, res) => res.send('second answered'));
+      app.get('/ok', (req, res) => res.send('ok'));
+    }, async ({ port, sockets }) => {
+      const first = await call(port, '/two', { agent });
+      assert.equal(first.body, 'second answered');
+      await sleep(20);
+      assert.equal(sockets.length, 1);
+      assert.equal(sockets[0].destroyed, false, 'the router had moved past the error middleware; Express\'s own handler was not asked');
+      const second = await call(port, '/ok', { agent });
+      assert.equal(second.body, 'ok');
+      assert.equal(second.reused, true);
+    });
+  } finally {
+    agent.destroy();
+  }
+  assert.match(console.error.mock.calls[0].arguments.join(' '), /failed after its answer went out: Error: after next/);
 });
 
 test('nothing in this file became an unhandled rejection', async () => {
