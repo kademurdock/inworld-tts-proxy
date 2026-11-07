@@ -1,5 +1,6 @@
 const express = require("express");
 require("./async-routes").install(); // Nov 7 2026: a handler that rejects answers its own request instead of ending the process (async-routes.js)
+const rejectionNet = require("./rejection-net").install(); // Nov 7 2026: a rejection that belongs to no request is logged and counted, fatal in the first 30 s (rejection-net.js)
 const crypto = require("crypto");
 const { createReferenceStore, fishBody, selectedPicker, installSelectedBindings } = require("./private-voice-references");
 let selectedReferenceStore = null;
@@ -1811,6 +1812,7 @@ app.get("/health", async (req, res) => {
   res.status(storage && !storage.ok && storage.settingsFault ? 503 : 200).json({
     status: storage && !storage.ok ? "degraded" : "ok",
     service: "inworld-tts-proxy",
+    unhandledRejections: rejectionNet.stats(),
     fishModel: FISH_TTS_MODEL,
     fishTemperature: { default: FISH_TEMPERATURE, max: FISH_TEMPERATURE_MAX },
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
