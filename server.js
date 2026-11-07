@@ -1960,7 +1960,7 @@ function speakDigits(s) {
 //   /\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,10})\b/g,
 // tried to match at every word boundary and ran its name part to the end of the run before it looked for the "@", so a long
 // stretch with no blank in it cost the square of its length (70,000 characters of "%%%a%%%" took over a second, "a.a.a."
-// ten times that; steering delimiters are made of percent signs and the name class holds %). This anchors on the "@" instead:
+// five times that; steering delimiters are made of percent signs and the name class holds %). This anchors on the "@" instead:
 // find it, read the domain to its right once, walk left once over the characters a name may hold, and look for the word
 // boundary the old pattern began with. The same matches and the same words (prep-linear.test.js fuzzes it against the old
 // pattern), in time linear in the text.
