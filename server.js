@@ -1864,6 +1864,17 @@ function stripThinkingBlock(text) {
     .trim();
 }
 
+// The two list-marker rules of stripSpeechMarkdown: a bullet ("-", "*", "•") or "1." at the start of a line, and the blanks
+// after it. As /^\s*[-*•]\s+/gm and /^\s*\d+\.\s+/gm they let \s* run across line breaks (so the blank lines in front of a
+// list item go with its marker, and still do) and tried every line start of a long run of blank lines, each one reading the
+// rest of the run before it looked for the marker that was not there: 149,000 line breaks took half a minute. Every line start
+// inside one run of blanks ends its \s* at the same place, so only the first can match where the others cannot. The lookbehind
+// lets a line start through only when no earlier line start lies in the same run of blanks (lazy, so it stops at the nearest
+// one); the other start worth trying is a marker that stands right at its line start, whose blanks the marker before it ate.
+// prep-linear-lists.test.js fuzzes both against the old patterns and pins the clock.
+const MD_LIST_BULLET = /^(?:(?<!^\s+?)|(?=[-*•]))\s*[-*•]\s+/gm;
+const MD_LIST_NUMBER = /^(?:(?<!^\s+?)|(?=\d))\s*\d+\.\s+/gm;
+
 // Aug 6 2026 (Kade, native this morning: voices "reading star star or number
 // sign or asterisk" — fish especially reads markdown literally where inworld
 // mostly shrugs). The platform note asks characters for speakable prose, but
@@ -1884,8 +1895,8 @@ function stripSpeechMarkdown(text) {
     .replace(/~~([^~]+)~~/g, "$1")
     .replace(/\[([^\]]+)\]\(([^)]*)\)/g, "$1")
     .replace(/`{1,3}([^`]*)`{1,3}/g, "$1")
-    .replace(/^\s*[-*•]\s+/gm, "")
-    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(MD_LIST_BULLET, "")
+    .replace(MD_LIST_NUMBER, "")
     .replace(/^>\s+/gm, "")
     .replace(/\|/g, " ")
     // Inline hardening (Aug 6, second pass — the live receipt caught a
