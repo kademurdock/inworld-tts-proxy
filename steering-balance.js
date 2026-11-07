@@ -102,7 +102,9 @@
  * A dropped stray between two words leaves a space so the words do not fuse (`hope%%%you` -> `hope you`). A stray alone
  * on its line between two lines of text takes its line with it, so the reply keeps the paragraphs it had (a blank line
  * left there is a paragraph break the reply never had, and it moved the carry-forward cap of the paragraphs after it by
- * one); next to a blank line, or at an end of the text, it leaves what it always left.
+ * one); next to a blank line, or at an end of the text, it leaves what it always left. The forgotten-closer rule still sees the
+ * paragraph break such a stray was (`Dear Kade,` / stray line / `%%%pleased Thanks for coming over.` closes the tag, as it did
+ * while the line stayed behind as a blank one).
  * KILL SWITCH: KADE_STEERING_BALANCE=0 (a Railway variable and a redeploy) hands every text on untouched, which
  * is exactly the old left-to-right pairing. Texts over 150,000 characters are handed on untouched too.
  *
@@ -164,6 +166,9 @@
  *   - a doubled `%%` run pairs only the way the old typo normaliser paired it, on one line, so a direction closed
  *     by `%%` alone on the next line (`%%%like she is sharing a secret\n%%`) is not a tag; the first version
  *     paired it, and the strictness is what keeps `half%% of it, then %% some` prose;
+ *   - a tag-only line, a stray line and another tag (`%%%cool%%%` / `%%%` / `%%%warm%%% Second thing.`) read as ONE paragraph
+ *     once the stray's line is gone, which is what they are without the stray: applySteeringTags sends both cues where the
+ *     blank line used to make the first a direction-only paragraph that it drops;
  *   - a stray between two letters becomes a space, so a stray inside a word splits it (`hope%%%you` is `hope
  *     you`, and `No%%%t` is `No t`); next to an apostrophe or a hyphen inside a word it just vanishes
  *     (`you'%%%re`, `well-%%%known`). */
@@ -377,6 +382,8 @@ function balanceSteeringRuns(text) {
   let lineBlank = true;   // nothing but whitespace written since the last line break
   let sigTail = '';       // the last few characters written that were not whitespace
   let tailWs = '';        // the whitespace written after them (its last few characters)
+  let strayBreak = false; // a stray alone on its line was dropped together with its line: the paragraph break that line used to
+                          // leave still counts for the forgotten-closer rule, until anything but blanks is written
   const put = (s) => {
     if (!s) return;
     parts.push(s);
@@ -384,13 +391,13 @@ function balanceSteeringRuns(text) {
     const nl = s.lastIndexOf('\n');
     lineBlank = nl === -1 ? lineBlank && /^\s*$/.test(s) : /^\s*$/.test(s.slice(nl + 1));
     const sig = s.trimEnd();
-    if (sig) { sigTail = (sigTail + sig).slice(-3); tailWs = s.slice(sig.length).slice(-20); }
+    if (sig) { sigTail = (sigTail + sig).slice(-3); tailWs = s.slice(sig.length).slice(-20); strayBreak = false; }
     else tailWs = (tailWs + s).slice(-20);
   };
   // a new sentence starts here: the start of a line, after . ! ? … or a colon, or right after a tag. (A line that
   // carries on a sentence the one before it left open, one that ends in a letter or a comma, is not one, unless a
   // blank line came between: a paragraph break ends whatever the paragraph before it was, `Dear Kade,\n\n%%%warm Hi`.)
-  const sentenceStart = () => (lineBlank && (!/[\p{L},]$/u.test(sigTail) || /\n[ \t]*\r?\n[ \t]*$/.test(tailWs)))
+  const sentenceStart = () => (lineBlank && (!/[\p{L},]$/u.test(sigTail) || strayBreak || /\n[ \t]*\r?\n[ \t]*$/.test(tailWs)))
     || /(?:[.!?…:]["'”’)]*|%%%)$/.test(sigTail);
   const hugsRight = (r) => !spaceAt(src, r.end);
   const hugsLeft = (r) => !spaceAt(src, r.start - 1);
@@ -435,6 +442,7 @@ function balanceSteeringRuns(text) {
       // line was a paragraph break already, or none, and what it leaves there stays as it was.)
       if (sigTail && /^[ \t]*\r?\n[ \t]*$/.test(tailWs) && /^[ \t]*\r?\n[ \t]*\S/.test(src.slice(run.end, run.end + 400))) {
         cursor = src.indexOf('\n', run.end) + 1;
+        strayBreak = true;   // (the line is gone, the paragraph break it was is not: `Dear Kade,` / stray line / `%%%pleased Thanks.`)
         i += 1;
         return;
       }

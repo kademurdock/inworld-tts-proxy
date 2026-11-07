@@ -145,3 +145,75 @@ test('fuzz: a stray line put anywhere a model would put one changes no paragraph
   }
   assert.equal(checked, 15000);
 });
+
+// ── the paragraph break the stray's line was ────────────────────────────────────────────────────────────────────────
+// An independent review (Nov 7 2026) found that taking the stray's line away also took away the blank line the forgotten-closer
+// rule leaned on: after a line that ends in a letter or a comma, `%%%pleased Thanks.` is a sentence start only when a blank
+// line came between, and the stray used to supply it. The direction word was then SPOKEN. The line still goes (the cap fix
+// above), but the paragraph break it was is remembered until anything but blanks is written.
+test('a stray line before a tag whose closer was forgotten still lets the tag be closed, after a line that ends in a letter or a comma', () => {
+  for (const [input, want] of [
+    ['Dear Kade,\n%%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\n%%%pleased%%% Thanks for coming over.'],
+    ['Hello there\n%%%\n%%%pleased Thanks for coming over.', 'Hello there\n%%%pleased%%% Thanks for coming over.'],
+    ['Hi Kade,\n%%%\n%%%warm Good to see you again.', 'Hi Kade,\n%%%warm%%% Good to see you again.'],
+    ['Chapter Three\n%%%\n%%%wry Dear Kade, it was a long night.', 'Chapter Three\n%%%wry%%% Dear Kade, it was a long night.'],
+    ['# Chapter Three\n%%%\n%%%wry Dear Kade, it was a long night.', '# Chapter Three\n%%%wry%%% Dear Kade, it was a long night.'],   // (a heading is a line that ends in a letter)
+    ['Dear Kade,\r\n%%%\r\n%%%pleased Thanks for coming over.', 'Dear Kade,\r\n%%%pleased%%% Thanks for coming over.'],
+    ['Dear Kade,\n \t%%% \t\n%%%pleased Thanks for coming over.', 'Dear Kade,\n \t%%%pleased%%% Thanks for coming over.'],
+    ['Dear Kade,\n%%%\n%%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\n%%%pleased%%% Thanks for coming over.'],      // two stray lines in a row
+    ['Dear Kade,\n%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\n%%%pleased%%% Thanks for coming over.'],          // any size
+    ['Dear Kade,\n%%%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\n%%%pleased%%% Thanks for coming over.'],
+    ['Dear Kade,\n%%%%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\n%%%pleased%%% Thanks for coming over.'],
+    ['Dear Kade,\n%%%%%%\n%%%pleased Thanks for coming over.', 'Dear Kade,\n%%%pleased%%% Thanks for coming over.'],
+    ['Dear Kade,\n%%%\n  %%%pleased Thanks for coming over.', 'Dear Kade,\n  %%%pleased%%% Thanks for coming over.'],      // blanks in front of the tag do not end it
+    ['Dear Kade,\n%%%\n%%%pleased\nThanks for coming over.', 'Dear Kade,\n%%%pleased%%%\nThanks for coming over.'],       // the tag alone on its line
+  ]) assert.equal(balanceSteeringRuns(input), want, JSON.stringify(input));
+});
+
+test('what that never did stays as it was: the reply without the stray, speech that opens like speech, text written in between, a blank line in front', () => {
+  // without any stray the forgotten closer after a comma line is not repaired (a known limit of the head rule): the word is spoken
+  assert.equal(balanceSteeringRuns('Dear Kade,\n%%%pleased Thanks for coming over.'), 'Dear Kade,\npleased Thanks for coming over.');
+  // speech that opens like speech is never taken for a direction
+  assert.equal(balanceSteeringRuns('Dear Kade,\n%%%\n%%%yeah okay so then'), 'Dear Kade,\nyeah okay so then');
+  // the remembered break ends with the first text written after it
+  assert.equal(balanceSteeringRuns('Dear Kade,\n%%%\nShe walked in and sat down by the window, and then she waited\n%%%pleased Thanks for coming over.'),
+    'Dear Kade,\nShe walked in and sat down by the window, and then she waited\npleased Thanks for coming over.');
+  // a blank line in front of the stray: nothing to restore, the line stays as it always did
+  assert.equal(balanceSteeringRuns('Dear Kade,\n\n%%%\n%%%pleased Thanks for coming over.'), 'Dear Kade,\n\n\n%%%pleased%%% Thanks for coming over.');
+  // only a stray ALONE on its line leaves the break: one that shares its line with text changes nothing about the line after it
+  assert.equal(balanceSteeringRuns('Dear Kade,%%%\n%%%pleased Thanks for coming over.'), 'Dear Kade,\npleased Thanks for coming over.');
+  assert.equal(balanceSteeringRuns('Dear Kade, %%%\n%%%pleased Thanks for coming over.'), 'Dear Kade, \npleased Thanks for coming over.');
+  assert.equal(balanceSteeringRuns('Dear Kade,%%%%%\n%%%pleased Thanks for coming over.'), 'Dear Kade,\npleased Thanks for coming over.');
+});
+
+test('through the shipped applySteeringTags: the direction is a cue, never speech, and nothing else of the reply moves', () => {
+  for (const [input, dir, rest] of [
+    ['Dear Kade,\n%%%\n%%%pleased Thanks for coming over.', 'pleased', 'Dear Kade, Thanks for coming over.'],
+    ['# Chapter Three\n%%%\n%%%wry Dear Kade, it was a long night.', 'wry', '# Chapter Three Dear Kade, it was a long night.'],
+  ]) {
+    const out = withBalancer(input);
+    assert.match(out, new RegExp(`\\[${dir}\\]`), `${dir} must become a cue: ${JSON.stringify(out)}`);
+    assert.equal(speech(out), rest, JSON.stringify(input));
+  }
+});
+
+test('fuzz: a stray line, any size, any number, after any line that ends in a letter or a comma, in front of a tag with a forgotten closer: the direction is never speech (4,000 replies)', () => {
+  const r = rng(20261107);
+  const OPENERS = ['Dear Kade,', 'Hi Kade,', 'Hello there', 'Chapter Three', '# Chapter Three', 'Well,', 'So here is the thing', 'Good morning'];
+  const SIZES = ['%%', '%%%', '%%%%', '%%%%%', '%%%%%%'];
+  const BLANKS = ['', '', ' ', ' \t'];
+  const pick = (a) => a[Math.floor(r() * a.length)];
+  for (let trial = 0; trial < 4000; trial++) {
+    const eol = r() < 0.2 ? '\r\n' : '\n';
+    const opener = pick(OPENERS);
+    const dir = pick(DIRS);
+    const prose = pick(PROSE);
+    let msg = opener + eol;
+    for (let k = 0, n = 1 + Math.floor(r() * 3); k < n; k++) msg += pick(BLANKS) + pick(SIZES) + pick(BLANKS) + eol;
+    msg += pick(['', '', '  ']) + `%%%${dir} ${prose}`;
+    const out = balanceSteeringRuns(msg);
+    const tags = [...out.matchAll(/%%%([^%]*)%%%/g)].map((m) => m[1].trim());
+    assert.deepEqual(tags, [dir], `the direction must be a tag: ${JSON.stringify(msg)} -> ${JSON.stringify(out)}`);
+    assert.equal(out.replace(/%%%[^%]*%%%/g, ' ').replace(/\s+/g, ' ').trim(), `${opener} ${prose}`, `the speech must be the opener and the prose: ${JSON.stringify(msg)}`);
+  }
+});
