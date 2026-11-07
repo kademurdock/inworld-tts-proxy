@@ -1990,6 +1990,51 @@ function speakEmails(t) {
   return from === 0 ? t : out + t.slice(from);
 }
 
+// Rules 2+3 of normalizeForSpeech. The single replace this was, over
+//   /(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:TLDs))\b(\/[^\s)\]}"'<>]*)?/g,
+// tried a match at every word boundary, and each try read the whole run of labels in front of it ("a.a.a.", "1-1-1-",
+// "1.1.1.") before it looked for the top-level domain, so a long run that ended in none cost the square of its length (149,000
+// characters: 8 to 20 seconds). The same pattern now runs sticky, one try at a time, and a try that fails at a word boundary
+// skips the rest of its run of labels: every start inside the run needs a ".tld" the run does not hold, so none can match
+// where this one did not. The only start inside a run that can still match is an "http://" at its very end (a scheme is five
+// letters or fewer), so the skip stops five characters short of the end. A text with no dot holds no host at all.
+// prep-linear-url.test.js fuzzes this against the old statement (kept there as the oracle) and pins the clock.
+const URL_AT = new RegExp(String.raw`(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:${TLD_SPOKEN}))\b(\/[^\s)\]}"'<>]*)?`, 'y');
+function isLabelChar(c) { // [a-zA-Z0-9-], by char code (NaN, past an end of the text, is not one)
+  return (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 45;
+}
+function labelsEnd(t, at) { // where the run of labels that begins at `at` ends: label, a dot with a label after it, label ...
+  let i = at;
+  for (;;) {
+    while (isLabelChar(t.charCodeAt(i))) i++;
+    if (t.charCodeAt(i) === 46 && isLabelChar(t.charCodeAt(i + 1))) i++; else return i;
+  }
+}
+function speakUrl(host, path) {
+  const spokenHost = host.replace(/\./g, ' dot ');
+  if (!path || path === '/') return spokenHost;
+  const clean = path.replace(/[?#].*$/, '');
+  const segs = clean.split('/').filter(Boolean);
+  if (segs.length === 0 || segs.length > 3 || clean.length > 40) return spokenHost;
+  return `${spokenHost} slash ${segs.join(' slash ')}`;
+}
+function speakUrls(t) {
+  if (t.indexOf('.') === -1) return t;
+  let out = '';
+  let from = 0; // t[0, from) is already in `out`
+  let at = 0;   // where the next match may begin
+  while (at < t.length) {
+    // both alternatives begin at a word boundary, and both need a label character there
+    if (!isLabelChar(t.charCodeAt(at)) || isWordChar(t.charCodeAt(at - 1)) === isWordChar(t.charCodeAt(at))) { at++; continue; }
+    URL_AT.lastIndex = at;
+    const m = URL_AT.exec(t);
+    if (m === null) { at = Math.max(at + 1, labelsEnd(t, at) - 5); continue; }
+    out += t.slice(from, at) + speakUrl(m[1], m[2]);
+    from = at = at + m[0].length;
+  }
+  return from === 0 ? t : out + t.slice(from);
+}
+
 function normalizeForSpeech(text) {
   if (!text || process.env.KADE_TTS_NORMALIZE === '0') return text;
   let t = String(text);
@@ -2002,17 +2047,7 @@ function normalizeForSpeech(text) {
   //    or query-stringed paths collapse to just the domain (nobody wants a
   //    UTM parameter performed dramatically). File names like server.js and
   //    decimals like 3.14 are safe: the last label must be a real TLD word.
-  t = t.replace(
-    new RegExp(String.raw`(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:${TLD_SPOKEN}))\b(\/[^\s)\]}"'<>]*)?`, 'g'),
-    (_, host, path) => {
-      const spokenHost = host.replace(/\./g, ' dot ');
-      if (!path || path === '/') return spokenHost;
-      const clean = path.replace(/[?#].*$/, '');
-      const segs = clean.split('/').filter(Boolean);
-      if (segs.length === 0 || segs.length > 3 || clean.length > 40) return spokenHost;
-      return `${spokenHost} slash ${segs.join(' slash ')}`;
-    },
-  );
+  t = speakUrls(t);
 
   // 4) ISO DATES 2026-08-07 → "August 7, 2026" (before phones/ranges ever see the digits)
   t = t.replace(/\b(20\d{2})-(\d{2})-(\d{2})\b/g, (_, y, mo, d) => {
