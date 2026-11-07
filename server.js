@@ -1,4 +1,5 @@
 const express = require("express");
+require("./async-routes").install(); // Nov 7 2026: a handler that rejects answers its own request instead of ending the process (async-routes.js)
 const crypto = require("crypto");
 const { createReferenceStore, fishBody, selectedPicker, installSelectedBindings } = require("./private-voice-references");
 let selectedReferenceStore = null;
