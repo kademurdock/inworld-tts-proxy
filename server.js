@@ -706,17 +706,55 @@ function splitSentences(text) {
     );
   }
 
-  // A sentence's terminal .!? may be followed by closing quotes/brackets
-  // (e.g. 'Nice tie."') before the whitespace boundary. Without allowing
-  // them here, the global match cannot close that sentence and silently
-  // SKIPS the whole quoted span -- dropping it from the audio (Kade, July
-  // 2026: read-aloud was losing jokes/dialogue that ended inside quotes).
-  const matches = masked.match(/[^.!?]+[.!?]+(?:["'”’»)\]}]|<\/(?:whisper|emphasis|soft|fast|slow|stress|forceful)>)*(\s+|$)|[^.!?]+$/g);
   const restore = (s) =>
     s.split(ELLIPSIS_TOKEN).join("...").split(DOT_TOKEN).join(".");
 
-  if (!matches) return [restore(masked).trim()].filter(Boolean);
-  return matches.map((s) => restore(s).trim()).filter(Boolean);
+  // A sentence ends at a run of .!? that is followed by a blank or the end of the text, and its terminal run may be
+  // followed by closing quotes/brackets first (e.g. 'Nice tie."'; Kade, July 2026: read-aloud was losing jokes/dialogue
+  // that ended inside quotes).
+  //
+  // Nov 6 2026 (red teams). This used to be ONE pattern, /[^.!?]+[.!?]+(closers)*(\s+|$)|[^.!?]+$/g, that listed the
+  // sentences, and whatever it could not close it SKIPPED without a word: a stop with no blank after it ("Version 3.5 is out."
+  // came back as "5 is out.", "example.com" lost "example", "[a.b]" its first half) was dropped from the audio. It also cost
+  // the square of a long run when its first stop had no blank after it. Now only the ENDS are looked for, a stop that ends
+  // nothing stays in its sentence, and the text between two ends is the sentence: nothing can be skipped. (A run of marks
+  // with nothing in front of it was never speech and is still left out.)
+  //
+  // A stop inside a short [direction] ends nothing either ("[warm. smile]" is one direction, not two fragments), unless the
+  // bracket closes right behind it ("[Laughs.] Then he left." ends after the bracket, as before).
+  const holes = []; // start, end of every [bracketed span] of up to 400 characters, in order
+  for (const b of masked.matchAll(/\[[^\[\]]{0,400}\]/g)) holes.push(b.index, b.index + b[0].length);
+  const boundary = /(?<![.!?])[.!?]+(?:["'”’»)\]}]|<\/(?:whisper|emphasis|soft|fast|slow|stress|forceful)>)*(?:\s+|$)/g;
+  const pieces = [];
+  let from = 0;
+  let h = 0;
+  for (const m of masked.matchAll(boundary)) {
+    const end = m.index + m[0].length;
+    while (h < holes.length && holes[h + 1] <= m.index) h += 2;
+    if (h < holes.length && holes[h] < m.index && end < holes[h + 1]) continue; // inside a [direction]
+    if (m.index > from || /[\p{L}\p{N}]/u.test(m[0])) pieces.push(masked.slice(from, end));
+    from = end;
+  }
+  if (from < masked.length) pieces.push(masked.slice(from));
+
+  if (!pieces.length) return [restore(masked).trim()].filter(Boolean);
+  return pieces.map((s) => restore(s).trim()).filter(Boolean);
+}
+
+// Nov 6 2026 (red teams): a hard cut for a sentence longer than the chunk size must not fall INSIDE a [direction]. The first
+// request would end in a bracket that never closes and the next would begin with the rest of the direction and a stray "]",
+// which the voice reads as words. When the cut would split one, cut in front of it (there is text before it in this piece), or,
+// when it starts the window, take the whole direction with the piece (up to twice the chunk size, so one piece may run a little
+// over). A direction longer than that cannot be kept whole and is cut where the plain rule cut.
+function keepDirectionWhole(s, pos, end, limit) {
+  if (end >= s.length) return end;
+  const at = s.slice(pos, end).lastIndexOf("[");
+  if (at === -1) return end;
+  const open = pos + at;
+  const rel = s.slice(open, Math.min(s.length, open + 2 * limit)).indexOf("]");
+  if (rel === -1 || open + rel < end) return end; // it closes inside this piece, or is out of reach
+  if (open > pos) return open; // cut in front of it
+  return open + rel + 1; // it starts the window: take all of it
 }
 
 // Groups whole sentences together up to maxChunkLen -- used as a fallback
@@ -760,6 +798,7 @@ function groupSentences(text, maxChunkLen) {
           else if (space > half) end = pos + space;
         }
         if (end <= pos) end = Math.min(pos + maxChunkLen, sentence.length); // never stall
+        end = keepDirectionWhole(sentence, pos, end, maxChunkLen);
         const piece = sentence.slice(pos, end).trim();
         if (piece) chunks.push(piece);
         pos = end;
