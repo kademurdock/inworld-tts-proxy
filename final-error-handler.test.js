@@ -127,7 +127,44 @@ test('a 4xx on status wins over one on statusCode, and every code from 400 to 49
   }
 });
 
-const STALE = ['content-type', 'content-length', 'content-disposition', 'content-encoding', 'content-language', 'content-range', 'etag', 'last-modified', 'accept-ranges'];
+test('a 4xx brings its own err.headers (a 416\'s Content-Range), except the content type and length; an error that becomes a 500 brings none', (t) => {
+  const err416 = Object.assign(new Error('Range Not Satisfiable'), { status: 416, headers: { 'Content-Range': 'bytes */1234', 'Retry-After': '5', 'Content-Type': 'text/evil', 'content-length': '1' } });
+  const res = fakeRes({ headers: { 'content-range': 'bytes 0-9/99', 'content-type': 'application/octet-stream' } });
+  run(t, err416, { res });
+  t.mock.restoreAll();
+  assert.equal(res.headers['content-range'], 'bytes */1234', 'the failing handler\'s range is replaced by the error\'s');
+  assert.equal(res.headers['retry-after'], '5');
+  assert.equal(res.headers['content-type'], undefined, 'the type stays ours (res.json sets it)');
+  assert.equal(res.headers['content-length'], undefined);
+  const res503 = fakeRes();
+  run(t, Object.assign(new Error('x'), { status: 503, headers: { 'Retry-After': '5' } }), { res: res503 });
+  t.mock.restoreAll();
+  assert.equal(res503.calls[0][1], 500);
+  assert.equal(res503.headers['retry-after'], undefined, 'a 503 on the error is a 500 here, and its headers belong to the 503');
+  for (const headers of [null, 'text', 5, [], { get a() { throw new Error('no'); } }, { fine: 'yes' }]) {
+    const r = fakeRes();
+    run(t, Object.assign(new Error('x'), { status: 400, headers }), { res: r });
+    t.mock.restoreAll();
+    assert.deepEqual(r.calls, [['status', 400], ['json', '{"error":"Bad Request"}']], String(headers));
+    assert.deepEqual(Object.keys(r.headers).sort(), headers && headers.fine ? ['fine', 'x-content-type-options'] : ['x-content-type-options'], 'only real header entries are sent: ' + String(headers));
+  }
+  const getter = fakeRes();
+  run(t, Object.defineProperty(Object.assign(new Error('x'), { status: 400 }), 'headers', { get() { throw new Error('no'); } }), { res: getter });
+  assert.deepEqual(getter.calls, [['status', 400], ['json', '{"error":"Bad Request"}']]);
+});
+
+test('the log names the whole path of a request inside a router mounted below the root', (t) => {
+  const a = run(t, new Error('x'), { req: fakeReq({ baseUrl: '/sub', path: '/deep' }) });
+  assert.match(a.logs.error[0], /^\[proxy\] POST \/sub\/deep failed with 500: Error: x/);
+  t.mock.restoreAll();
+  const b = run(t, new Error('x'), { req: fakeReq({ baseUrl: '', path: '/deep' }) });
+  assert.match(b.logs.error[0], /^\[proxy\] POST \/deep failed with 500/);
+  t.mock.restoreAll();
+  const c = run(t, new Error('x'), { req: fakeReq({ baseUrl: undefined, path: '/deep' }) });
+  assert.match(c.logs.error[0], /^\[proxy\] POST \/deep failed with 500/);
+});
+
+const STALE = ['content-type', 'content-length', 'content-disposition', 'content-encoding', 'content-language', 'content-range', 'etag', 'last-modified', 'accept-ranges', 'cache-control'];
 
 test('the error answer does not inherit what the failing handler set: content headers go, other middleware\'s headers stay, nosniff is added', (t) => {
   const res = fakeRes({
@@ -139,7 +176,7 @@ test('the error answer does not inherit what the failing handler set: content he
   });
   run(t, Object.assign(new Error('ENOENT: no such file'), { status: 404 }), { res });
   assert.deepEqual([...res.removed].sort(), [...STALE].sort());
-  assert.deepEqual(Object.keys(res.headers).sort(), ['access-control-allow-origin', 'cache-control', 'x-content-type-options', 'x-kade-thing']);
+  assert.deepEqual(Object.keys(res.headers).sort(), ['access-control-allow-origin', 'x-content-type-options', 'x-kade-thing']);
   assert.equal(res.headers['x-content-type-options'], 'nosniff');
   assert.deepEqual(res.calls, [['status', 404], ['json', '{"error":"Not Found"}']]);
 });
@@ -207,6 +244,20 @@ test('odd responses and errors are coped with: no stack frames, a headersSent th
   stuck.removeHeader = () => { throw new Error('no'); };
   run(t, new Error('x'), { res: stuck });
   assert.deepEqual(stuck.calls, [['status', 500], ['json', BODY_500]]);
+});
+
+test('a frame line is cut like any other, and only an indented "at" line counts as a frame', (t) => {
+  const LF = String.fromCharCode(10);
+  const huge = Object.defineProperty(new Error('m'), 'stack', { value: ['Error: m', '    at ' + 'q'.repeat(3000000), '    at fine (a.js:1:1)'].join(LF) });
+  const a = run(t, huge);
+  const lines = a.logs.error[0].split(LF);
+  assert.equal(lines.length, 3);
+  assert.equal(lines[1].length, 303, 'cut at 300 characters, then "..."');
+  assert.ok(lines[1].endsWith('...'));
+  assert.equal(lines[2], '    at fine (a.js:1:1)');
+  t.mock.restoreAll();
+  const forged = Object.defineProperty(new Error('m'), 'stack', { value: ['Error: m', 'at forged (x.js:1:1)', 'attached to nothing', '    at real (y.js:2:2)'].join(LF) });
+  assert.deepEqual(run(t, forged).logs.error[0].split(LF).slice(1), ['    at real (y.js:2:2)']);
 });
 
 test('at most five stack frames are logged, whatever the depth, and each one is cleaned of control characters', (t) => {
@@ -490,6 +541,38 @@ test('the error answer of a failed download does not look like the download: JSO
     assert.equal(r.headers['x-content-type-options'], 'nosniff');
     assert.equal(r.headers['access-control-allow-origin'], 'https://kademurdock.com');
   });
+});
+
+test('a 416 keeps the Content-Range its error carries (what send puts there for a resuming downloader), through the real server', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  await withApp((app) => {
+    app.get('/file', (req, res, next) => {
+      res.set({ 'Content-Type': 'application/zip', 'Content-Range': 'bytes 0-9/1234', ETag: 'W/"x"' });
+      next(Object.assign(new Error('Range Not Satisfiable'), { status: 416, headers: { 'Bad Name': 'x', 'Content-Range': 'bytes */1234', 'Content-Type': 'text/evil' } }));
+    });
+  }, async ({ port }) => {
+    const r = await call(port, '/file', { headers: { Range: 'bytes=99999999-' } });
+    assert.equal(r.status, 416);
+    assert.equal(r.headers['content-range'], 'bytes */1234');
+    assert.match(r.headers['content-type'], /^application\/json/);
+    assert.equal(r.body, '{"error":"Range Not Satisfiable"}');
+  });
+});
+
+test('inside a router mounted below the root, a failure after the answer is logged with the whole path', async (t) => {
+  const errors = [];
+  t.mock.method(console, 'error', (...a) => { errors.push(a.join(' ')); });
+  await withApp((app) => {
+    const sub = express.Router();
+    sub.get('/late', async (req, res) => { res.send('answered'); throw new Error('after the answer'); });
+    app.use('/sub', sub);
+  }, async ({ port }) => {
+    assert.equal((await call(port, '/sub/late?secret=1')).body, 'answered');
+    await sleep(20);
+  });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /^\[proxy\] GET \/sub\/late failed after its answer went out: Error: after the answer/);
+  assert.ok(!errors[0].includes('secret=1'));
 });
 
 test('an answer that announced a length and stopped short is cut loose at once: the client hears, it does not wait', async (t) => {

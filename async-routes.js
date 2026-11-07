@@ -38,10 +38,11 @@ const path = require("path");
 const FLAG = Symbol.for("inworld-tts-proxy.async-routes");
 const CLIP = 300;
 const noop = () => {};
-// C0 and C1 control characters and DEL (built from code points: this file holds no escape sequences for them)
-const CONTROLS = new RegExp("[" + String.fromCharCode(0) + "-" + String.fromCharCode(31) + String.fromCharCode(127) + "-" + String.fromCharCode(159) + "]", "g");
+// Everything that can move the cursor or hide text in a log: control characters (C0, DEL, C1), format characters (zero-width
+// characters, bidi overrides, the byte order mark, the soft hyphen) and the line and paragraph separators U+2028 and U+2029.
+const CONTROLS = new RegExp("[\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]", "gu");
 
-/** One short clean line: cut at CLIP characters, line breaks and other control characters (an ESC, a CR) become spaces. */
+/** One short clean line: cut at CLIP characters; line breaks and other control or invisible characters (an ESC, a CR, a U+2028) become spaces. */
 function clip(s) {
   const head = s.length > CLIP ? s.slice(0, CLIP) : s;
   return head.replace(CONTROLS, " ") + (s.length > CLIP ? "..." : "");
@@ -159,10 +160,14 @@ function statusOf(err) {
   return 500;
 }
 
-/** "POST /librechat/janitor": the method and the path, never the query string (it may carry a secret). */
+/**
+ * "POST /librechat/janitor": the method and the path, never the query string (it may carry a secret). Inside a router mounted
+ * below the root, req.path is relative to the mount (and stays so for a request the router never handed on), so the mount
+ * (req.baseUrl) goes in front.
+ */
 function whereOf(req) {
   try {
-    const path = req.path !== undefined ? req.path : String(req.url).split("?")[0];
+    const path = req.path !== undefined ? String(req.baseUrl || "") + req.path : String(req.url).split("?")[0];
     return String(req.method).slice(0, 16) + " " + String(path).slice(0, 200).replace(/[^ -~]/g, "?");
   } catch (e) {
     return "(request unknown)";
@@ -177,7 +182,7 @@ function whereOf(req) {
 function framesOf(err) {
   try {
     if (typeof err.stack === "string") {
-      const frames = err.stack.split("\n").filter((line) => /^\s+at /.test(line)).slice(0, 5).map((line) => line.replace(CONTROLS, " "));
+      const frames = err.stack.split("\n").filter((line) => /^\s+at /.test(line)).slice(0, 5).map(clip);
       if (frames.length) return "\n" + frames.join("\n");
     }
   } catch (e) { /* no stack to show */ }
@@ -202,15 +207,32 @@ function report(req, err, status, late) {
 
 /**
  * What a handler may have put on the response before it failed that must not describe the error answer: its content
- * type, length, encoding, range, validators and a download's Content-Disposition (res.json would keep an existing
- * Content-Type, and a failed APK download would answer as an attachment). Headers other middleware set (CORS and so on) stay.
+ * type, length, encoding, range, validators, caching and a download's Content-Disposition (res.json would keep an existing
+ * Content-Type, a failed APK download would answer as an attachment, and a 404 would be cached for a minute). Headers other
+ * middleware set (CORS and so on) stay.
  */
-const STALE_HEADERS = ["Content-Type", "Content-Length", "Content-Disposition", "Content-Encoding", "Content-Language", "Content-Range", "ETag", "Last-Modified", "Accept-Ranges"];
+const STALE_HEADERS = ["Content-Type", "Content-Length", "Content-Disposition", "Content-Encoding", "Content-Language", "Content-Range", "ETag", "Last-Modified", "Accept-Ranges", "Cache-Control"];
 
 function clearStaleHeaders(res) {
   for (const name of STALE_HEADERS) {
     try { res.removeHeader(name); } catch (e) { /* not a response that can */ }
   }
+}
+
+/**
+ * What an error asks to be sent with its answer (http-errors style `headers`: the send module puts Content-Range: bytes * /N
+ * on its 416, which a resuming downloader needs; Express's own handler sends them). Only used for a status that came from the
+ * error itself, and the content type and length stay ours.
+ */
+function applyErrorHeaders(res, err) {
+  try {
+    const headers = err.headers;
+    if (!headers || typeof headers !== "object") return;
+    for (const name of Object.keys(headers)) {
+      if (/^content-(type|length)$/i.test(name)) continue;
+      try { res.setHeader(name, headers[name]); } catch (e) { /* a header Node refuses is skipped */ }
+    }
+  } catch (e) { /* a getter that throws */ }
 }
 
 /**
@@ -238,6 +260,7 @@ function closeStarted(res) {
  * synchronous throw, an error body-parser raised) is logged with its cause and answered:
  *   - a 4xx that an HTTP library attached keeps its status (any err.status or err.statusCode from 400 to 499: body-parser's
  *     400 and 413, Express's 400 for a bad percent-escape, a missing sendFile target's 404), with the standard reason as the text;
+ *   - for a 4xx, err.headers go out with it (a 416's Content-Range), except the content type and length;
  *   - anything else, including a 5xx status on the error, is 500 {"error":"Proxy internal error"}: no stack, no message,
  *     nothing about the inside. err.headers and a status the handler had already set on the response are not used;
  *   - when the answer (or part of it) is already out, closeStarted decides how it ends.
@@ -253,6 +276,7 @@ function finalErrorHandler(err, req, res, next) {
   }
   try {
     clearStaleHeaders(res);
+    if (status !== 500) applyErrorHeaders(res, err);
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.status(status).json({ error: status === 500 ? "Proxy internal error" : http.STATUS_CODES[status] || "Bad Request" });
   } catch (e) {

@@ -206,6 +206,10 @@ test('asFailure and describeCause: every kind of value has an answer, and no ans
   for (const code of [0, 9, 31, 127, 133, 159]) assert.equal(describeCause('x' + String.fromCharCode(code) + 'y'), 'x y', 'control character ' + code);
   for (const code of [32, 126, 160, 233]) assert.equal(describeCause('x' + String.fromCharCode(code) + 'y'), 'x' + String.fromCharCode(code) + 'y', 'character ' + code + ' stays');
   assert.equal(describeCause('z'.repeat(299) + ESC + 'tail'), 'z'.repeat(299) + ' ...', 'a control character at the cut is cleaned too');
+  // invisible characters too: the line and paragraph separators, bidi overrides, zero-width characters, the byte order mark, the soft hyphen
+  for (const code of [0x2028, 0x2029, 0x202e, 0x202a, 0x200b, 0x200d, 0x2060, 0xfeff, 0xad]) assert.equal(describeCause('x' + String.fromCharCode(code) + 'y'), 'x y', 'invisible character U+' + code.toString(16));
+  // ordinary text in other scripts is kept
+  assert.equal(describeCause('caf' + String.fromCharCode(233) + ' ' + String.fromCharCode(0x65e5, 0x672c, 0x8a9e) + ' ' + String.fromCodePoint(0x1f600)), 'caf' + String.fromCharCode(233) + ' ' + String.fromCharCode(0x65e5, 0x672c, 0x8a9e) + ' ' + String.fromCodePoint(0x1f600));
   assert.ok(asFailure(hostile) === hostile, 'a truthy value is never inspected on its way to next()');
 });
 

@@ -128,6 +128,35 @@ test('the settings can be changed: no grace, a limit of 2, a window of a second'
   assert.match(state.lines.at(-1), /3 unhandled rejections in the last 1 seconds/);
 });
 
+test('a limit of 0 makes the first rejection after the grace a storm', () => {
+  const { net, state } = rig({ limit: 0 });
+  net.onRejection(new Error('x'));
+  assert.deepEqual(state.exits, [1]);
+});
+
+test('if the net itself fails while handling a rejection it says so, and the count still went up', () => {
+  const { net, state } = rig({ now: () => { throw new Error('the clock broke'); } });
+  net.onRejection(new Error('x'));
+  assert.deepEqual(state.lines, ['[proc] the rejection net failed while handling a rejection']);
+  assert.deepEqual(state.exits, []);
+});
+
+test('with nothing injected the window runs on a monotonic clock: a wall clock stepped back does not keep old rejections alive', (t) => {
+  let wall = 1700000000000;
+  let monotonic = 5000;
+  t.mock.method(Date, 'now', () => wall);
+  t.mock.method(performance, 'now', () => monotonic);
+  const exits = [];
+  const net = createRejectionNet({ uptimeMs: () => 60000, exit: (code) => exits.push(code), log: () => {} });
+  for (let i = 0; i < 15; i++) net.onRejection(new Error('a' + i));
+  monotonic += 90000;   // ninety seconds really pass
+  wall -= 120000;       // and somebody sets the wall clock back two minutes
+  for (let i = 0; i < 6; i++) net.onRejection(new Error('b' + i));
+  assert.deepEqual(exits, []);
+  assert.equal(net.stats().recent, 6);
+  assert.equal(net.stats().total, 21);
+});
+
 // ── install(): once per process, settings from the environment ────────────────────────────────────
 function inChild(script, env = {}) {
   const r = spawnSync(process.execPath, ['-e', script], { cwd: __dirname, env: { ...process.env, ...env }, encoding: 'utf8', timeout: 20000 });
@@ -168,6 +197,14 @@ test('install() with nothing set uses 30 s, 60 s and 20, and ignores nonsense in
     console.log(JSON.stringify(net.stats()));
   `, { PROXY_BOOT_GRACE_MS: 'x', PROXY_REJECTION_WINDOW_MS: 'abc', PROXY_REJECTION_LIMIT: '-3' });
   assert.deepEqual(JSON.parse(stats.out), { total: 0, recent: 0, windowSeconds: 60 });
+  // a blank or whitespace setting is no setting (Number(" ") is 0, which would switch the starting-up rule off), and Infinity is nonsense
+  const blank = inChild(script, { PROXY_BOOT_GRACE_MS: ' ' + String.fromCharCode(10), PROXY_REJECTION_WINDOW_MS: 'Infinity' });
+  assert.equal(blank.code, 1, 'still fatal during startup: ' + blank.err);
+  const infinite = inChild(`
+    const net = require('./rejection-net').install();
+    console.log(JSON.stringify(net.stats()));
+  `, { PROXY_REJECTION_WINDOW_MS: 'Infinity', PROXY_BOOT_GRACE_MS: 'Infinity' });
+  assert.deepEqual(JSON.parse(infinite.out), { total: 0, recent: 0, windowSeconds: 60 });
   // a limit of 0 is nonsense too (every rejection would be a storm): the default 20 holds
   const survive = inChild(`
     const net = require('./rejection-net').install();

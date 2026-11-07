@@ -35,7 +35,9 @@ function createRejectionNet(options = {}) {
   const windowMs = options.windowMs === undefined ? DEFAULTS.windowMs : options.windowMs;
   const limit = options.limit === undefined ? DEFAULTS.limit : options.limit;
   const uptimeMs = options.uptimeMs || (() => process.uptime() * 1000);
-  const now = options.now || Date.now;
+  // the window counts on a monotonic clock: the wall clock can be stepped (NTP, a manual change), and a step back would keep old
+  // rejections in the window and end a healthy process, a step forward would let a storm through
+  const now = options.now || (() => performance.now());
   const exit = options.exit || ((code) => process.exit(code));
   const log = options.log || ((line) => console.error(line));
   const seconds = windowMs / 1000;
@@ -82,7 +84,8 @@ function createRejectionNet(options = {}) {
 }
 
 function numberFrom(value, fallback, min) {
-  if (value === undefined || value === "") return fallback;
+  // (Number(" ") and Number("\n") are 0: a blank setting must not switch the starting-up rule off)
+  if (value === undefined || String(value).trim() === "") return fallback;
   const n = Number(value);
   return Number.isFinite(n) && n >= min ? n : fallback;
 }
