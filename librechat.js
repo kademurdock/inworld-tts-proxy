@@ -213,6 +213,11 @@ router.post("/librechat/avatar-gen", auth, express.json({ limit: "64kb" }), asyn
             const chunks = [];
             resp.on("data", (c) => chunks.push(c));
             resp.on("end", () => resolve({ status: resp.statusCode, buf: Buffer.concat(chunks) }));
+            /* Nov 8 2026: a connection that resets in the middle of the body ends the response with 'aborted' and an 'error' (when something
+             * listens), never with 'end', and the 45 s idle timeout cannot fire on a socket that is already gone: this promise waited forever,
+             * and so did the caller. A response that stops short now rejects like any other connection error. */
+            resp.on("error", (err) => reject(new Error(`${err.code || err.message} @ ${u.hostname}`)));
+            resp.on("close", () => { if (!resp.complete) reject(new Error(`ECONNRESET @ ${u.hostname}`)); });
           },
         );
         r.on("timeout", () => r.destroy(new Error("timeout")));
