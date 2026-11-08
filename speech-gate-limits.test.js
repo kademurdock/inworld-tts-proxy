@@ -181,12 +181,14 @@ test("a refused request's log line carries no control or invisible character of 
   const log = quietLog();
   const g = enforcing(log);
   // C1 controls (NEL, CSI) pass the HTTP parser in a header value; the others are what a terminal or a log viewer acts on
-  const evil = "A\u0085B\u009b[31mC\u0007D\u001bE\u200bF\u2028G\u2029H\ufeffI\u0009J\u202eK";
+  const evil = "A\u0085B\u009b[31mC\u0007D\u001bE\u200bF\u2028G\u2029H\ufeffI\u0009J\u202eK\"L";
   for (const header of ["user-agent", "origin", "x-kade-caller"]) pass(g, req({ headers: { [header]: evil } }));
   const lines = log.lines.filter((l) => l.startsWith("[speech-gate] refused:"));
   assert.equal(lines.length, 3);
   for (const l of lines) {
     assert.doesNotMatch(l, /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u, JSON.stringify(l));
-    assert.match(l, /A B.*C.*D.*E.*F.*G.*H.*I.*J.*K|A-B/, 'the printable letters of the header are still there: ' + l);
+    assert.match(l, /A B.*C.*D.*E.*F.*G.*H.*I.*J.*K.*L|A-B/, 'the printable letters of the header are still there: ' + l);
   }
+  assert.match(lines[0], / ua="[^"]*"$/, 'a quote in the user agent cannot close the quoted field early: ' + lines[0]);
+  assert.ok(lines[0].endsWith('K L"'), lines[0]);
 });

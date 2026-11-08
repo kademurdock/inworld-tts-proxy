@@ -189,3 +189,24 @@ test('the content type sent to Deepgram is the audio part\'s own, not the empty 
     await s.stop();
   }
 });
+
+test('an upload that stops inside a LATER file part (the first file is whole) is answered 400 once, reaches no provider, and the proxy stays up', async () => {
+  const port = 31950;
+  const s = start(port);
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    const secondHead = Buffer.from(`--zzz${CRLF}Content-Disposition: form-data; name="more"; filename="more.webm"${CRLF}Content-Type: audio/webm${CRLF}${CRLF}`, 'latin1');
+    const tails = [Buffer.alloc(0), Buffer.alloc(300, 0x42), Buffer.concat([Buffer.alloc(300, 0x42), Buffer.from(`${CRLF}--zzz`, 'latin1')])];
+    for (const tail of tails) {
+      const before = s.rows().length;
+      const r = await upload(port, Buffer.concat([filePart('audio', audio(1500, 0x41)), secondHead, tail]));
+      assert.equal(r.status, 400, JSON.stringify(r));
+      assert.equal(r.body, '{"error":"Upload parse error."}');
+      assert.equal(s.rows().length, before, 'a form that was cut off reaches no provider');
+    }
+    assert.equal(s.state.exited, null, s.state.log.slice(-500));
+    assert.equal((await fetch(`http://127.0.0.1:${port}/healthz`)).status, 200);
+  } finally {
+    await s.stop();
+  }
+});

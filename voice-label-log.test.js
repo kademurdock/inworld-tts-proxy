@@ -70,7 +70,8 @@ test('a label with a line break (or any control or invisible character) is a 400
     const CR = String.fromCharCode(13);
     const hostile = `Voice 5${LF}[proxy] POST /librechat/janitor failed with 500: forged${CR}${LF}[speech-gate] mode=off`;
     const before = s.rows();
-    for (const voice of [hostile, `alloy${LF}`, `al${String.fromCharCode(0)}loy`, `al${String.fromCharCode(0x1b)}[31mloy`, `al${String.fromCharCode(0x2028)}loy`, `al${String.fromCharCode(0x200b)}loy`, `al${String.fromCharCode(9)}loy`]) {
+    for (const voice of [hostile, `alloy${LF}`, `al${String.fromCharCode(0)}loy`, `al${String.fromCharCode(0x1b)}[31mloy`, `al${String.fromCharCode(0x2028)}loy`, `al${String.fromCharCode(0x2029)}loy`, `al${String.fromCharCode(0x200b)}loy`, `al${String.fromCharCode(9)}loy`,
+      `${'v'.repeat(400)}${LF}[proxy] forged late`, `${'w'.repeat(5000)}${String.fromCharCode(0x200b)}`]) { // the last two: the character sits far beyond what the log copy keeps
       for (const stream of [false, true]) {
         const r = await speak({ input: 'Hello there, friend.', voice, ...(stream ? { stream: true } : {}) });
         assert.equal(r.status, 400, JSON.stringify(voice) + ' ' + JSON.stringify(r).slice(0, 200));

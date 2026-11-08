@@ -146,6 +146,48 @@ test('secrets: Bearer tokens, well-known token shapes, JWTs, passwords in URLs, 
   ]);
 });
 
+test('every name of the three key lists is one: JSON fields, URL parameters, header names, with and without their separators', () => {
+  const expand = (name) => (name.includes('[_-]?') ? [name.replace('[_-]?', ''), name.replace('[_-]?', '_'), name.replace('[_-]?', '-')] : [name]);
+  const JSON_FIELDS = ['api[_-]?key', 'access[_-]?token', 'auth[_-]?token', 'refresh[_-]?token', 'id[_-]?token', 'client[_-]?secret', 'private[_-]?key', 'secret', 'password', 'passwd', 'pass', 'token',
+    'authorization', 'x-api-key', 'x-key', 'x-auth-token', 'x-kade-secret', 'x-proxy-secret', 'x-kade-approval-secret'];
+  for (const raw of JSON_FIELDS) {
+    for (const name of expand(raw)) assert.equal(scrubText(`{"${name}":"abcdef123456"}`), `{"${name}":"${H}"}`, `JSON field ${name}`);
+  }
+  const URL_KEYS = ['x-api-key', 'x-key', 'api[_-]?key', 'access[_-]?token', 'auth[_-]?token', 'client[_-]?secret', 'secret', 'password', 'key', 'token', 'sig', 'signature'];
+  for (const raw of URL_KEYS) {
+    for (const name of expand(raw)) {
+      assert.equal(scrubText(`/x?a=1&${name}=abcdef123456&b=2`), `/x?a=1&${name}=${H}&b=2`, `URL parameter ${name}`);
+      assert.equal(scrubText(`/x?${name}=abcdef123456`), `/x?${name}=${H}`, `first URL parameter ${name}`);
+    }
+  }
+  const HEADERS = ['x-api-key', 'x-key', 'api-key', 'authorization', 'proxy-authorization', 'x-auth-token', 'x-kade-secret', 'x-proxy-secret', 'x-kade-approval-secret'];
+  for (const name of HEADERS) {
+    assert.equal(scrubText(`${name}: abcdef123456`), `${name}: ${H}`, `header ${name}`);
+    assert.equal(scrubText(`${name}=abcdef123456 ok`), `${name}=${H} ok`, `header-like ${name}=`);
+    const upper = name.toUpperCase();
+    assert.equal(scrubText(`${upper}: ABCDEF123456`), `${upper}: ${H}`, `header ${upper}`);
+  }
+});
+
+test('the edges of the rules: minimum lengths, case, and what stops a path', () => {
+  const jwt = (a, b, c) => `eyJ${'a'.repeat(a)}.${'b'.repeat(b)}.${'c'.repeat(c)}`;
+  table([
+    [jwt(8, 8, 8), H],
+    [`token ${jwt(8, 8, 8)} end`, `token ${H} end`],
+    ['Authorization: Bearer abc+def/ghi12345678==', `Authorization: Bearer ${H}`],
+    ['Bearer YWJjZGVmZ2g=', `Bearer ${H}`],
+    ['postgresql://some_long_username_here:pw1234@host/db', `postgresql://${H}@host/db`],
+    ['AUTHORIZATION: abcde1 and X-KEY: ABC123def', `AUTHORIZATION: ${H} and X-KEY: ${H}`],
+    ['FILE:///app/data/x.json missing', `${P} missing`],
+    ['File:///tmp/a.txt', P],
+    ['see /app<here> and /app/x<br>', `see ${P}<here> and ${P}<br>`],
+    ['at fn (/app/x.js(12:5))', `at fn (${P}(12:5))`],
+    ['/app/x.js[0] and /app/y.js{a}', `${P}[0] and ${P}{a}`],
+    ['open "C:\\Users\\kade\\x.txt" failed and D:/Users/kade/y.txt too', `open "${P}" failed and ${P} too`],
+  ]);
+  same([jwt(7, 8, 8), jwt(8, 7, 8), jwt(8, 8, 7)]);
+});
+
 test('a path and a secret in one message', () => {
   const input = `connect failed: open "/app/node_modules/x/y.js" via https://svc.test/path?key=SUPERSECRET123 and Authorization: Bearer ghp_${'0a1b'.repeat(9)}`;
   assert.equal(scrubText(input), `connect failed: open "${P}" via https://svc.test/path?key=${H} and Authorization: Bearer ${H}`);
@@ -211,6 +253,7 @@ test('scrubAnswer: the text fields of an error answer, nothing else, and the ori
   const body = {
     error: "open '/app/x.js'", details: 'Bearer abcDEF123456789xyz', detail: 'at /tmp/y', message: '?key=SECRET99', text: 'a reply that mentions /app/x.js', bytes: 5,
     nested: { error: '/app/z' }, ok: false, note: '/app/n', said: '/app/s', hint: '/app/h', reason: '/app/r', status: '/app/st',
+    data: '/app/d', url: '/app/u', path: '/app/p', output: '/app/o', stderr: '/app/e',
   };
   const copy = JSON.parse(JSON.stringify(body));
   const out = scrubAnswer(body);
@@ -219,7 +262,7 @@ test('scrubAnswer: the text fields of an error answer, nothing else, and the ori
   assert.equal(out.details, `Bearer ${H}`);
   assert.equal(out.detail, `at ${P}`);
   assert.equal(out.message, `?key=${H}`);
-  for (const key of ['text', 'note', 'said', 'hint', 'reason', 'status']) assert.equal(out[key], body[key], `${key} is not an error text field`);
+  for (const key of ['text', 'note', 'said', 'hint', 'reason', 'status', 'data', 'url', 'path', 'output', 'stderr']) assert.equal(out[key], body[key], `${key} is not an error text field`);
   assert.equal(out.bytes, 5);
   assert.deepEqual(out.nested, { error: '/app/z' }, 'only the top level of the answer');
   assert.equal(out.ok, false);
