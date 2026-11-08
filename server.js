@@ -6047,8 +6047,9 @@ function sniffAudioType(b, fallback){
 }
 // Nov 8 2026: the call to Deepgram (the upload, Deepgram's work, the answer) is cut after this long. A Deepgram that took the audio and went quiet
 // held the request, and up to 160 MB of buffered audio with it, until the HTTP client gave up on its own: five minutes. Railway's edge answers at
-// 300 s, so 240 s gives the caller a real answer (504 JSON, not the edge's page) and a long recording its time. DEEPGRAM_TIMEOUT_MS (a whole
-// number of milliseconds from 1 to 2147483647, the range of a timer) changes it, anything else is ignored; it is not set on Railway.
+// 300 s counted from the start of the request (this timer starts once the client's upload is in), so 240 s gives the caller a real answer (504 JSON,
+// not the edge's page) and a long recording its time. DEEPGRAM_TIMEOUT_MS (a number of milliseconds from 1 to 2147483647, the range of a timer; a
+// fraction is cut off) changes it, anything else is ignored; it is not set on Railway.
 const DEEPGRAM_TIMEOUT_MS = (() => { const n = Math.floor(Number(process.env.DEEPGRAM_TIMEOUT_MS)); return n >= 1 && n <= 2147483647 ? n : 240000; })();
 const { describeCause } = require("./async-routes"); // one short clean line for a log, whatever was thrown
 app.post("/v1/audio/transcriptions", (req, res) => {
