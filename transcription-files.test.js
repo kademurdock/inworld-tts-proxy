@@ -119,3 +119,50 @@ test('forty files of two megabytes each (80 MB in all) are answered, and only th
     await s.stop();
   }
 });
+
+// a browser sends a file input nobody chose as an EMPTY part, ahead of the real one
+const CRLF = String.fromCharCode(13, 10);
+const emptyPart = (name) => Buffer.from(`--zzz${CRLF}Content-Disposition: form-data; name="${name}"; filename=""${CRLF}Content-Type: application/octet-stream${CRLF}${CRLF}${CRLF}`, 'latin1');
+
+test('the audio is the first file part that holds bytes: empty parts in front of it, between, or after are skipped', async () => {
+  const port = 31950;
+  const s = start(port);
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    const shapes = [
+      ['one empty part, then the audio', [emptyPart('doc'), filePart('audio', audio(1500, 0x41)), END], 1500],
+      ['three empty parts, then the audio', [emptyPart('a'), emptyPart('b'), emptyPart('c'), filePart('audio', audio(1700, 0x41)), END], 1700],
+      ['the audio, then an empty part', [filePart('audio', audio(1900, 0x41)), emptyPart('doc'), END], 1900],
+      ['an empty part, the audio, another file', [emptyPart('doc'), filePart('audio', audio(2100, 0x41)), filePart('more', audio(500, 0x42)), END], 2100],
+      ['twenty empty parts, then the audio', [...Array.from({ length: 19 }, (_, i) => emptyPart('e' + i)), filePart('audio', audio(2300, 0x41)), END], 2300],
+    ];
+    for (const [label, parts, bytes] of shapes) {
+      const before = s.rows().length;
+      const r = await upload(port, Buffer.concat(parts));
+      assert.equal(r.status, 200, `${label}: ${JSON.stringify(r)}`);
+      assert.deepEqual(JSON.parse(r.body), { text: 'hello from the fixture' }, label);
+      const rows = s.rows().slice(before);
+      assert.equal(rows.length, 1, `${label}: one call to Deepgram`);
+      assert.equal(rows[0].bytes, bytes, `${label}: the audio went, whole`);
+    }
+    assert.equal(s.state.exited, null);
+  } finally {
+    await s.stop();
+  }
+});
+
+test('a form with no bytes in any file part is still { text: "" } and reaches no provider', async () => {
+  const port = 31950;
+  const s = start(port);
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    for (const parts of [[emptyPart('a'), END], [emptyPart('a'), emptyPart('b'), field('language', 'en'), END], [END]]) {
+      const r = await upload(port, Buffer.concat(parts));
+      assert.equal(r.status, 200, JSON.stringify(r));
+      assert.deepEqual(JSON.parse(r.body), { text: '' });
+    }
+    assert.equal(s.rows().length, 0);
+  } finally {
+    await s.stop();
+  }
+});

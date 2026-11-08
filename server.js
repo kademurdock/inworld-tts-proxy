@@ -6048,19 +6048,25 @@ app.post("/v1/audio/transcriptions", (req, res) => {
   if(!key) return res.status(500).json({ error: "DEEPGRAM_API_KEY not set on this service." });
   let bb;
   // Nov 8 2026: ONE file. Every file part used to be appended to the same buffer, so the 160 MB cap on a file was no cap on the route
-  // (fifty parts, 8 GB) and the audio sent to Deepgram was the parts glued end to end. `files: 1` makes busboy skip the others without
-  // buffering them, so the most this route holds is the 160 MB of the first file (a running byte total would never add anything).
-  try { bb = Busboy({ headers: req.headers, limits: { fileSize: 160*1024*1024, files: 1 } }); }
+  // (fifty parts, 8 GB) and the audio sent to Deepgram was the parts glued end to end. The audio is now the first file part that holds any
+  // bytes; the parts after it are read off and dropped, never kept, so the route buffers one file, at most 160 MB of it (about five times
+  // that at the peak while it is copied on to Deepgram: +126 MB measured for a 24 MB upload). `files: 20` stops busboy counting parts
+  // past twenty. A browser sends a file input nobody chose as an EMPTY part (filename="") in front of the real one: `files: 1` alone took
+  // that empty part for the file and skipped the audio.
+  try { bb = Busboy({ headers: req.headers, limits: { fileSize: 160*1024*1024, files: 20 } }); }
   catch(e){ return res.status(400).json({ error: "Bad multipart request." }); }
-  const chunks = []; let partType = "", language = "", gotFile = false;
+  let chunks = []; let partType = "", language = "", gotFile = false;
   // Nov 7 2026: the one answer for an upload that cannot be read. It is asked for more than once (busboy reports the same
   // failure on the open file stream and on the form), so it answers only the first time.
   // The form stops reading when it fails (req.pipe unpipes it), so the rest of the body is read and dropped here: left alone it
   // would hold a keep-alive connection until its timeout, with the next request on it unanswered.
   const refuse = () => { if(!res.headersSent) res.status(400).json({ error: "Upload parse error." }); req.resume(); };
   bb.on("file", (name, stream, info) => {
-    gotFile = true; partType = (info && info.mimeType) || "";
-    stream.on("data", d => chunks.push(d));
+    // the audio is already taken: this part is read off and dropped (and an upload that stops inside it still answers 400 once)
+    if(gotFile){ stream.on("error", refuse); stream.resume(); return; }
+    const mine = []; let size = 0;
+    stream.on("data", d => { mine.push(d); size += d.length; });
+    stream.on("end", () => { if(size > 0 && !gotFile){ gotFile = true; partType = (info && info.mimeType) || ""; chunks = mine; } });
     stream.on("limit", () => {});
     // Nov 7 2026: an upload that stops before its closing boundary makes busboy destroy this stream with an error. With no
     // listener that was an uncaught 'error' event, and the process ended.
