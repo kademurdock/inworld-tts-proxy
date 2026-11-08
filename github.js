@@ -43,7 +43,9 @@ const PAT = process.env.GITHUB_PAT;
 const SECRET = process.env.GITHUB_PROXY_SECRET;
 const UA = "KadeAI-Forge-Agent";
 
-function auth(req, res, next) {
+// Nov 8 2026: the secret is checked first and the JSON body (up to 10 MB: whole files) is read only for a caller that passes (body-limits.js).
+const { afterSecret } = require("./body-limits");
+function checkSecret(req, res, next) {
   const h = req.get("authorization") || "";
   const tok = h.startsWith("Bearer ") ? h.slice(7) : null;
   if (!SECRET || tok !== SECRET) {
@@ -52,6 +54,7 @@ function auth(req, res, next) {
   if (!PAT) return res.status(500).json({ error: "GITHUB_PAT not set" });
   next();
 }
+const auth = afterSecret(checkSecret);
 
 async function ghFetch(path, opts) {
   const r = await fetch(`https://api.github.com${path}`, {

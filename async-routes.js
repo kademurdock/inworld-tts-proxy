@@ -306,9 +306,10 @@ function loadFinalhandler() {
  * Why not an error middleware as the last layer: such a layer is visited by every request no route answers, calls next() with
  * the stack already used up, and Express 4 then defers `done` by a setImmediate ("no more matching layers" in
  * router/index.js). The 404, and with it the release of the parsed body, came after every other request that was ready had been
- * parsed: eight 10 MB JSON bodies (each about 175 MB of heap once parsed; the global express.json parses before any route or
- * auth) sent at once ended a process with a 1 GB heap that survived them without the layer (reviewer A of the review of
- * Nov 7 2026, bigjson.js). As `done` it costs nothing on any path, and nothing mounted later can slip in behind it.
+ * parsed: eight 10 MB JSON bodies (each about 175 MB of heap once parsed; the global express.json of that day parsed before any
+ * route or auth, and is gone since Nov 8 2026: body-limits.js) sent at once ended a process with a 1 GB heap that survived them
+ * without the layer (reviewer A of the review of Nov 7 2026, bigjson.js). As `done` it costs nothing on any path, and nothing
+ * mounted later can slip in behind it.
  */
 function installFinalHandler(app) {
   if (!app || typeof app.handle !== "function") {

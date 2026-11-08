@@ -11,14 +11,13 @@ const selectedAuditionVoices = new Map();
 const { pickScene, KIND_BY_SCRIPT, audienceForSection } = require("./audition-scenes");
 const app = express();
 require("./async-routes").installFinalHandler(app); // Nov 7 2026: an error that reaches the end of the stack is logged and answered 500 JSON, as the app's own final handler (async-routes.js)
-// July 18 2026: raised from the 100kb default so /github/commit can carry
-// whole large files (e.g. the bridge's voice-stream.js, ~140KB raw) — the
-// commit proxy is whole-file by design, so its body limit must fit the
-// biggest file anyone needs to ship through it.
-app.use(express.json({ limit: "10mb" })); /* Aug 14 2026: was 2mb — the agent-avatar
- * lane ships base64 PNGs (~2MB image = ~2.7MB JSON) and the GLOBAL parser
- * runs before any route-level limit can raise it (the bridge paid for this
- * same lesson on /app-crashes). TTS bodies are tiny; only avatars are big. */
+// Nov 8 2026: there is NO global JSON parser any more. It sat here as `app.use(express.json({ limit: "10mb" }))` (July 18 2026: raised from
+// the 100kb default so /github/commit could carry whole files; Aug 14: 10mb for the agent-avatar lane's base64 PNGs, and global because a
+// global parser runs before any route-level limit can raise it), ahead of every route and every secret check, so a stranger could make the
+// service parse 10 MB (a 10 KB gzip body inflates to it). Each route now reads its own JSON body, once it knows who is asking: the
+// secret-gated routes (railway, github, librechat, /approvals/execute) after their secret check and up to the old 10 MB, the speech route
+// after the speech gate and up to 256 KB. A path no route answers reads nothing. The whole story and the rule are in body-limits.js.
+const bodyLimits = require("./body-limits");
 
 // Mount the accessible help system (/help and friends). See help.js.
 app.use(require("./help"));
@@ -3826,7 +3825,7 @@ function guardAsync(handler) {
   };
 }
 
-app.post("/v1/audio/speech", guardAsync(async (req, res) => {
+app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) => { // Nov 8 2026: 256 KB of JSON, read after the speech gate above (body-limits.js)
   const { input, voice = selectedVoicePicker?.voices[0] || "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.

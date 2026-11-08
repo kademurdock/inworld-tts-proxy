@@ -30,13 +30,16 @@ const UA =
   "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 const AGENT_VIEWER = "agent_viewer";
 
-function auth(req, res, next) {
+// Nov 8 2026: the secret is checked first and the JSON body (up to 10 MB) is read only for a caller that passes (body-limits.js).
+const { afterSecret } = require("./body-limits");
+function checkSecret(req, res, next) {
   const h = req.get("authorization") || "";
   const tok = h.startsWith("Bearer ") ? h.slice(7) : null;
   if (!SECRET || tok !== SECRET) return res.status(401).json({ error: "Unauthorized" });
   if (!USER || !PASS) return res.status(500).json({ error: "LIBRECHAT_USER / LIBRECHAT_PASS not set" });
   next();
 }
+const auth = afterSecret(checkSecret);
 
 // ---- anti-abuse: serialize outbound calls, min gap between them ----
 let _chain = Promise.resolve();

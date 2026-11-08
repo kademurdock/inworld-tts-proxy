@@ -29,7 +29,9 @@ const SECRET = process.env.RAILWAY_PROXY_SECRET;
 const { railwayQuery } = require("./railway-client");
 const { requestApproval, registerExecutor, approvalsOn } = require("./approvals");
 
-function auth(req, res, next) {
+// Nov 8 2026: the secret is checked first and the JSON body (up to 10 MB) is read only for a caller that passes (body-limits.js).
+const { afterSecret } = require("./body-limits");
+function checkSecret(req, res, next) {
   const h = req.get("authorization") || "";
   const tok = h.startsWith("Bearer ") ? h.slice(7) : null;
   if (!SECRET || tok !== SECRET) {
@@ -38,6 +40,7 @@ function auth(req, res, next) {
   if (!RW_TOKEN) return res.status(500).json({ error: "RAILWAY_API_TOKEN not set" });
   next();
 }
+const auth = afterSecret(checkSecret);
 
 async function gql(query, variables) {
   return railwayQuery(RW_TOKEN, query, variables || {});

@@ -103,6 +103,7 @@ async function requestApproval({ kind, params, summary, revert, agentId }) {
 
 /* ---- executors, registered by github.js and railway.js ---- */
 const executors = new Map();
+const { afterSecret } = require("./body-limits");
 function registerExecutor(kind, fn) {
   executors.set(kind, fn);
 }
@@ -115,8 +116,10 @@ function secretOk(req) {
 }
 
 // POST /approvals/execute {approvalId, kind, params}  (site only)
-router.post("/approvals/execute", async (req, res) => {
-  if (!secretOk(req)) return res.status(403).json({ error: "Unauthorized" });
+// Nov 8 2026: the secret is checked first and the JSON body is read only for the site that holds it. The params of an approved commit
+// carry whole files, so the limit after the check is the old 10 MB (body-limits.js).
+const executeSecret = afterSecret((req, res, next) => (secretOk(req) ? next() : res.status(403).json({ error: "Unauthorized" })));
+router.post("/approvals/execute", executeSecret, async (req, res) => {
   const { approvalId, kind, params } = req.body || {};
   const run = executors.get(String(kind || ""));
   if (!run) return res.status(400).json({ error: `no executor for ${kind}` });
