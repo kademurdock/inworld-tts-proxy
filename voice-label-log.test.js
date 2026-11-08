@@ -138,3 +138,25 @@ test('the three preview-swap log lines print the cut copy of a long label too', 
     await s.stop();
   }
 });
+
+test('the scene lane prints the cut copy of a long base label too, and a catalog voice shows what it resolved to (reviewer E, round 4)', async () => {
+  const s = start();
+  try {
+    assert.ok(await ready(s.state), s.state.log);
+    const long = 'x'.repeat(500);
+    const r = await speak({ input: '[[Voice 5]] Hello there, my friend. [[Voice 6]] Hi, nice to see you again.', voice: long });
+    assert.equal(r.status, 200, JSON.stringify(r).slice(0, 200));
+    const want = '[TTS] scene response: base="' + 'x'.repeat(300) + '..."';
+    for (let i = 0; i < 60 && !s.state.log.includes(want); i++) await new Promise((res) => setTimeout(res, 50));
+    assert.ok(s.state.log.includes(want), 'the scene lane\'s line arrives with the base label cut at 300 characters');
+    assert.ok(!s.state.log.includes('x'.repeat(301)), 'and no line of the log holds more of it');
+    // a catalog alias: the label and what it resolved to are two different things in the line (alloy is Sarah)
+    const a = await speak({ input: 'Hello there, friend.', voice: 'alloy' });
+    assert.equal(a.status, 200, JSON.stringify(a).slice(0, 200));
+    assert.ok(await logHas(s.state, /\[TTS\] voice request: label="alloy" -> resolved="Sarah"/), 'the request line says what alloy resolved to');
+    assert.ok(await logHas(s.state, /\[TTS\] voice response: label="alloy" resolved="Sarah" /), 'and so does the response line');
+    assert.equal(s.state.exited, null);
+  } finally {
+    await s.stop();
+  }
+});

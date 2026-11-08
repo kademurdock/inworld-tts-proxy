@@ -205,3 +205,12 @@ test("the net label of a refused request (the first groups of a colon-separated 
   assert.equal(callerNet(req({ headers: { "x-forwarded-for": "2001:db8:85a3:0:0:8a2e:370:7334" } })), "2001:db8:85a3:0:x", "a real IPv6 address reads as it did");
   assert.equal(callerNet(req({ headers: { "x-forwarded-for": "203.0.113.77, 10.0.0.1" } })), "203.0.113.x", "and a real IPv4 one");
 });
+
+test("the route of a refused request has its quote replaced like every other part of the line (reviewer E, round 4)", () => {
+  const log = quietLog();
+  const g = enforcing(log);
+  pass(g, req({ url: '/v1/audio/speech/a"b' }));
+  const line = log.lines.find((l) => l.startsWith("[speech-gate] refused:"));
+  assert.ok(line, "the refusal is logged");
+  assert.match(line, / POST \/v1\/audio\/speech\/a b caller=/, line);
+});

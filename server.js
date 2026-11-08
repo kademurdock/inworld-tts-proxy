@@ -3953,7 +3953,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   // with the tags stripped — never spoken, never fatal.
   if (SCENE_TAG_RE.test(preppedText)) {
     const handled = await trySynthesizeScene(req, res, preppedText, {
-      baseVoiceLabel: voice,
+      baseVoiceLabel: voiceForLog,
       baseVoiceId: inworldVoice,
       inworldModel,
       speakingRate,
