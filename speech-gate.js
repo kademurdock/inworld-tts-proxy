@@ -99,7 +99,7 @@ function callerNet(req) {
   const fwd = first || String(req.ip || "").slice(0, 64);
   const v4 = fwd.match(/(\d+)\.(\d+)\.(\d+)\.\d+$/);
   if (v4) return `${v4[1]}.${v4[2]}.${v4[3]}.x`;
-  if (fwd.includes(":")) return fwd.split(":").slice(0, 4).join(":") + ":x";
+  if (fwd.includes(":")) return clip(fwd.split(":").slice(0, 4).join(":"), 64) + ":x"; // the caller's own text up to the 4th colon: cleaned like the rest of the log line (reviewer E, Nov 8)
   return fwd ? "?" : "none";
 }
 

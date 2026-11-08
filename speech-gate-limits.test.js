@@ -185,10 +185,23 @@ test("a refused request's log line carries no control or invisible character of 
   for (const header of ["user-agent", "origin", "x-kade-caller"]) pass(g, req({ headers: { [header]: evil } }));
   const lines = log.lines.filter((l) => l.startsWith("[speech-gate] refused:"));
   assert.equal(lines.length, 3);
-  for (const l of lines) {
-    assert.doesNotMatch(l, /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u, JSON.stringify(l));
-    assert.match(l, /A B.*C.*D.*E.*F.*G.*H.*I.*J.*K.*L|A-B/, 'the printable letters of the header are still there: ' + l);
-  }
+  for (const l of lines) assert.doesNotMatch(l, /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u, JSON.stringify(l));
+  // the printable letters of each header are still there, each in the lane it came in by (a name has its blanks as hyphens)
+  assert.match(lines[0], / ua="A B \[31mC D E F G H I J K L"$/, lines[0]);
+  assert.match(lines[1], / origin=A B \[31mC D E F G H I J K L /, lines[1]);
+  assert.match(lines[2], / caller=A-B-\[31mC-D-E-F-G-H-I-J-K-L /, lines[2]);
   assert.match(lines[0], / ua="[^"]*"$/, 'a quote in the user agent cannot close the quoted field early: ' + lines[0]);
   assert.ok(lines[0].endsWith('K L"'), lines[0]);
+});
+
+test("the net label of a refused request (the first groups of a colon-separated forwarded address) is cleaned like the rest of its log line (reviewer E, E4)", () => {
+  const log = quietLog();
+  const g = enforcing(log);
+  pass(g, req({ headers: { "x-forwarded-for": "2001:db8\u0085:\u009b[31m:a\tb\"c:d:e" } }));
+  const line = log.lines.find((l) => l.startsWith("[speech-gate] refused:"));
+  assert.ok(line, "the refusal is logged");
+  assert.doesNotMatch(line, /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u, JSON.stringify(line));
+  assert.match(line, / net=2001:db8 : \[31m:a b c:x ua=/, line);
+  assert.equal(callerNet(req({ headers: { "x-forwarded-for": "2001:db8:85a3:0:0:8a2e:370:7334" } })), "2001:db8:85a3:0:x", "a real IPv6 address reads as it did");
+  assert.equal(callerNet(req({ headers: { "x-forwarded-for": "203.0.113.77, 10.0.0.1" } })), "203.0.113.x", "and a real IPv4 one");
 });
