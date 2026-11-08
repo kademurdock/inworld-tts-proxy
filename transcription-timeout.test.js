@@ -96,7 +96,7 @@ test('a Deepgram that fails some other way (the connection drops) is still a 502
     const r = await upload(port, AUDIO);
     assert.ok(!r.hang && !r.reset, JSON.stringify(r));
     assert.equal(r.status, 502, r.body);
-    assert.equal(typeof JSON.parse(r.body).error, 'string');
+    assert.equal(r.body, '{"error":"Transcription failed."}');
     assert.ok(r.ms < 400, 'answered at once, not after the timeout: ' + r.ms + ' ms');
     assert.equal(s.state.exited, null);
   } finally {

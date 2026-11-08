@@ -4166,7 +4166,11 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     res.send(finalAudio);
   } catch (err) {
     console.error("Proxy error:", err);
-    res.status(500).json({ error: "Proxy internal error", details: err.message });
+    // Nov 8 2026: the cause is in the log line above; the caller gets the plain answer. `details` carried the provider's own words (and now and
+    // then a path) to whoever asked, and nobody reads it: the fork ignores an error body, the bridge only prints 200 characters of it in its own log.
+    // The one exception is this service's own run-on diagnosis (fish-runaway.js: "Fish ran on twice for this chunk ..."): numbers, no provider
+    // text, and it is meant to fail clearly (fish-runaway.test.js pins it).
+    res.status(500).json(err && err.isRunaway ? { error: "Proxy internal error", details: err.message } : { error: "Proxy internal error" });
   }
 }));
 
@@ -6037,6 +6041,7 @@ function sniffAudioType(b, fallback){
 // buffered audio with it, until the HTTP client gave up on its own: five minutes). Railway's edge answers at 300 s, so 150 s leaves the caller a
 // real answer. DEEPGRAM_TIMEOUT_MS (a number above zero) changes it; it is not set on Railway.
 const DEEPGRAM_TIMEOUT_MS = Number(process.env.DEEPGRAM_TIMEOUT_MS) > 0 ? Number(process.env.DEEPGRAM_TIMEOUT_MS) : 150000;
+const { describeCause } = require("./async-routes"); // one short clean line for a log, whatever was thrown
 app.post("/v1/audio/transcriptions", (req, res) => {
   const key = process.env.DEEPGRAM_API_KEY;
   if(!key) return res.status(500).json({ error: "DEEPGRAM_API_KEY not set on this service." });
@@ -6079,7 +6084,11 @@ app.post("/v1/audio/transcriptions", (req, res) => {
         signal: AbortSignal.timeout(DEEPGRAM_TIMEOUT_MS)
       });
       const j = await dg.json();
-      if(!dg.ok) return res.status(502).json({ error: (j && (j.err_msg || j.message)) || "Deepgram error" });
+      // Nov 8 2026: Deepgram's own words go to the log, the caller gets the plain answer (answer-text.test.js says why).
+      if(!dg.ok){
+        console.warn(`[stt] Deepgram answered ${dg.status}: ${describeCause((j && (j.err_msg || j.message)) || "no message")}`);
+        return res.status(502).json({ error: "Transcription failed." });
+      }
       const alt = (j && j.results && j.results.channels && j.results.channels[0] &&
                    j.results.channels[0].alternatives && j.results.channels[0].alternatives[0]) || {};
       const text = (alt.transcript || "").trim();
@@ -6089,8 +6098,12 @@ app.post("/v1/audio/transcriptions", (req, res) => {
       if(!text) console.warn(`[stt] empty transcript: ${audio.length} bytes, sent as ${ct} (part said ${partType || "nothing"}), Deepgram heard ${j && j.metadata && j.metadata.duration != null ? Number(j.metadata.duration).toFixed(1) + " s" : "no duration"}, confidence ${alt.confidence != null ? alt.confidence : "none"}`);
       return res.json({ text });
     } catch(e){
-      if(e && e.name === "TimeoutError") return res.status(504).json({ error: "Transcription timed out." });
-      return res.status(502).json({ error: String(e) });
+      if(e && e.name === "TimeoutError"){
+        console.warn(`[stt] Deepgram did not answer within ${DEEPGRAM_TIMEOUT_MS} ms`);
+        return res.status(504).json({ error: "Transcription timed out." });
+      }
+      console.warn(`[stt] the call to Deepgram failed: ${describeCause(e)}`);
+      return res.status(502).json({ error: "Transcription failed." });
     }
   });
   req.pipe(bb);
