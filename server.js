@@ -1848,6 +1848,28 @@ app.get("/health", async (req, res) => {
   });
 });
 
+// stripThinkingBlock cuts everything between an opener and its closer, as /OPEN[\s\S]*?CLOSE/g did. That pattern tried every opener
+// of the text and, for each one with no closer after it, read on to the end of the text, so many unclosed openers cost the
+// square of the text (149,000 of U+F001 took 6 seconds, of "<think>" 24 seconds). Looking for the closer with indexOf, and
+// giving up for good at the first opener that has none (no later opener can have one either), is linear. The closer is
+// looked for from the end of the opener, as the lazy pattern did, and eatNewline takes the optional line break after it.
+// prep-linear-thinking.test.js fuzzes this against the three old patterns and pins the clock.
+function dropBetween(t, open, close, eatNewline) {
+  let at = t.indexOf(open);
+  if (at === -1) return t;
+  let out = '';
+  let from = 0; // t[0, from) is already in `out`
+  while (at !== -1) {
+    const end = t.indexOf(close, at + open.length);
+    if (end === -1) break; // no closer is left, so no later opener can match either
+    out += t.slice(from, at);
+    from = end + close.length;
+    if (eatNewline && t.charCodeAt(from) === 10) from++;
+    at = t.indexOf(open, from);
+  }
+  return from === 0 ? t : out + t.slice(from);
+}
+
 // Remove web-search citation markers so TTS never voices them. Catches the
 // private-use citation chars (U+E200-U+E20F) plus the "turn<N>search<M>"-style
 // tokens they carry (also turn<N>news<M>, view, etc. via the generic shape).
@@ -1861,12 +1883,22 @@ app.get("/health", async (req, res) => {
 // real answer, defeating the whole point of having a separate bubble.
 function stripThinkingBlock(text) {
   if (!text) return text;
-  return text
-    .replace(/:::thinking[\s\S]*?:::\n?/g, "")     // legacy :::thinking::: marker
-    .replace(/<think>[\s\S]*?<\/think>\n?/g, "") // <think>...</think> from reframe-proxy
-    .replace(/\uF001[\s\S]*?\uF002/g, "")        // PUA-wrapped reasoning text (extracted from think part by LibreChat before sending to TTS)
-    .trim();
+  let t = dropBetween(text, ":::thinking", ":::", true);        // legacy :::thinking::: marker
+  t = dropBetween(t, "<think>", "</think>", true);              // <think>...</think> from reframe-proxy
+  t = dropBetween(t, "\uF001", "\uF002", false);                // PUA-wrapped reasoning text (extracted from think part by LibreChat before sending to TTS)
+  return t.trim();
 }
+
+// The two list-marker rules of stripSpeechMarkdown: a bullet ("-", "*", "•") or "1." at the start of a line, and the blanks
+// after it. As /^\s*[-*•]\s+/gm and /^\s*\d+\.\s+/gm they let \s* run across line breaks (so the blank lines in front of a
+// list item go with its marker, and still do) and tried every line start of a long run of blank lines, each one reading the
+// rest of the run before it looked for the marker that was not there: 149,000 line breaks took half a minute. Every line start
+// inside one run of blanks ends its \s* at the same place, so only the first can match where the others cannot. The lookbehind
+// lets a line start through only when no earlier line start lies in the same run of blanks (lazy, so it stops at the nearest
+// one); the other start worth trying is a marker that stands right at its line start, whose blanks the marker before it ate.
+// prep-linear-lists.test.js fuzzes both against the old patterns and pins the clock.
+const MD_LIST_BULLET = /^(?:(?<!^\s+?)|(?=[-*•]))\s*[-*•]\s+/gm;
+const MD_LIST_NUMBER = /^(?:(?<!^\s+?)|(?=\d))\s*\d+\.\s+/gm;
 
 // Aug 6 2026 (Kade, native this morning: voices "reading star star or number
 // sign or asterisk" — fish especially reads markdown literally where inworld
@@ -1879,17 +1911,16 @@ function stripThinkingBlock(text) {
 // [bracket] spans (fish emotion cues ride those after conversion).
 function stripSpeechMarkdown(text) {
   if (!text) return text;
-  return text
+  return stripMarkdownLinks(text
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/__([^_]+)__/g, "$1")
     .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1$2")
     .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, "$1$2")
-    .replace(/~~([^~]+)~~/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)]*)\)/g, "$1")
+    .replace(/~~([^~]+)~~/g, "$1"))
     .replace(/`{1,3}([^`]*)`{1,3}/g, "$1")
-    .replace(/^\s*[-*•]\s+/gm, "")
-    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(MD_LIST_BULLET, "")
+    .replace(MD_LIST_NUMBER, "")
     .replace(/^>\s+/gm, "")
     .replace(/\|/g, " ")
     // Inline hardening (Aug 6, second pass — the live receipt caught a
@@ -1900,6 +1931,38 @@ function stripSpeechMarkdown(text) {
     .replace(/#{2,}/g, "")
     .replace(/\*{2,}/g, "")
     .replace(/[ \t]{2,}/g, " ");
+}
+
+// The link rule of stripSpeechMarkdown, [label](target) -> label. As /\[([^\]]+)\]\(([^)]*)\)/g it tried a match at every "[",
+// and each try read its label on to the next "]" (to the end of the text when there is none) before it looked for the "(" behind
+// it, so a long run of "[" cost the square of the run ("[a[a[a...": 149,000 characters took 6 to 18 seconds). This goes by the
+// "](" instead. The label is what lies between the last "]" before it (or the end of the last link) and it, from the first "["
+// there that leaves a character for the label (a label may hold "[", "(" and line breaks, never "]"); the target runs to the
+// first ")" after the "(" (it may hold anything else); and when no ")" is left no later link can close either.
+// The same matches and the same words (prep-linear-links.test.js fuzzes it against the old pattern), in time linear in the text.
+function stripMarkdownLinks(t) {
+  let out = '';
+  let from = 0; // t[0, from) is already in `out`, or was eaten by a link
+  let at = 0;   // where to look for the next "]"
+  let lo = 0;   // the earliest place a label may start: behind the last "]" seen and behind the last link
+  for (;;) {
+    const q = t.indexOf(']', at);
+    if (q === -1) break;
+    at = q + 1;
+    if (t.charCodeAt(at) === 40) { // "](": a link target may follow
+      let s = lo;
+      while (s < q - 1 && t.charCodeAt(s) !== 91) s++;
+      if (s < q - 1) { // a "[" with at least one character between it and the "]"
+        const r = t.indexOf(')', q + 2);
+        if (r === -1) break;
+        out += t.slice(from, s) + t.slice(s + 1, q);
+        from = at = lo = r + 1;
+        continue;
+      }
+    }
+    lo = at;
+  }
+  return from === 0 ? t : out + t.slice(from);
 }
 
 function stripCitationMarkers(text) {
@@ -1994,6 +2057,51 @@ function speakEmails(t) {
   return from === 0 ? t : out + t.slice(from);
 }
 
+// Rules 2+3 of normalizeForSpeech. The single replace this was, over
+//   /(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:TLDs))\b(\/[^\s)\]}"'<>]*)?/g,
+// tried a match at every word boundary, and each try read the whole run of labels in front of it ("a.a.a.", "1-1-1-",
+// "1.1.1.") before it looked for the top-level domain, so a long run that ended in none cost the square of its length (149,000
+// characters: 8 to 20 seconds). The same pattern now runs sticky, one try at a time, and a try that fails at a word boundary
+// skips the rest of its run of labels: every start inside the run needs a ".tld" the run does not hold, so none can match
+// where this one did not. The only start inside a run that can still match is an "http://" at its very end (a scheme is five
+// letters or fewer), so the skip stops five characters short of the end. A text with no dot holds no host at all.
+// prep-linear-url.test.js fuzzes this against the old statement (kept there as the oracle) and pins the clock.
+const URL_AT = new RegExp(String.raw`(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:${TLD_SPOKEN}))\b(\/[^\s)\]}"'<>]*)?`, 'y');
+function isLabelChar(c) { // [a-zA-Z0-9-], by char code (NaN, past an end of the text, is not one)
+  return (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 45;
+}
+function labelsEnd(t, at) { // where the run of labels that begins at `at` ends: label, a dot with a label after it, label ...
+  let i = at;
+  for (;;) {
+    while (isLabelChar(t.charCodeAt(i))) i++;
+    if (t.charCodeAt(i) === 46 && isLabelChar(t.charCodeAt(i + 1))) i++; else return i;
+  }
+}
+function speakUrl(host, path) {
+  const spokenHost = host.replace(/\./g, ' dot ');
+  if (!path || path === '/') return spokenHost;
+  const clean = path.replace(/[?#].*$/, '');
+  const segs = clean.split('/').filter(Boolean);
+  if (segs.length === 0 || segs.length > 3 || clean.length > 40) return spokenHost;
+  return `${spokenHost} slash ${segs.join(' slash ')}`;
+}
+function speakUrls(t) {
+  if (t.indexOf('.') === -1) return t;
+  let out = '';
+  let from = 0; // t[0, from) is already in `out`
+  let at = 0;   // where the next match may begin
+  while (at < t.length) {
+    // both alternatives begin at a word boundary, and both need a label character there
+    if (!isLabelChar(t.charCodeAt(at)) || isWordChar(t.charCodeAt(at - 1)) === isWordChar(t.charCodeAt(at))) { at++; continue; }
+    URL_AT.lastIndex = at;
+    const m = URL_AT.exec(t);
+    if (m === null) { at = Math.max(at + 1, labelsEnd(t, at) - 5); continue; }
+    out += t.slice(from, at) + speakUrl(m[1], m[2]);
+    from = at = at + m[0].length;
+  }
+  return from === 0 ? t : out + t.slice(from);
+}
+
 function normalizeForSpeech(text) {
   if (!text || process.env.KADE_TTS_NORMALIZE === '0') return text;
   let t = String(text);
@@ -2006,17 +2114,7 @@ function normalizeForSpeech(text) {
   //    or query-stringed paths collapse to just the domain (nobody wants a
   //    UTM parameter performed dramatically). File names like server.js and
   //    decimals like 3.14 are safe: the last label must be a real TLD word.
-  t = t.replace(
-    new RegExp(String.raw`(?:\bhttps?:\/\/(?:www\.)?|\b)((?:[a-zA-Z0-9-]+\.)+(?:${TLD_SPOKEN}))\b(\/[^\s)\]}"'<>]*)?`, 'g'),
-    (_, host, path) => {
-      const spokenHost = host.replace(/\./g, ' dot ');
-      if (!path || path === '/') return spokenHost;
-      const clean = path.replace(/[?#].*$/, '');
-      const segs = clean.split('/').filter(Boolean);
-      if (segs.length === 0 || segs.length > 3 || clean.length > 40) return spokenHost;
-      return `${spokenHost} slash ${segs.join(' slash ')}`;
-    },
-  );
+  t = speakUrls(t);
 
   // 4) ISO DATES 2026-08-07 → "August 7, 2026" (before phones/ranges ever see the digits)
   t = t.replace(/\b(20\d{2})-(\d{2})-(\d{2})\b/g, (_, y, mo, d) => {
@@ -2050,15 +2148,19 @@ function normalizeForSpeech(text) {
   });
 
   // 7) PERCENT → the word (92% → "92 percent")
-  t = t.replace(/(\d+(?:\.\d+)?)\s?%(?!%)/g, '$1 percent'); // a % that is part of a %%% steering delimiter is not a percentage
+  //    The (?<!\d) here and in the three degree patterns of rule 8 makes a number start at the first digit of its run. A
+  //    start inside a run cannot succeed where the first digit failed (the match only depends on where the run ends), and
+  //    trying every start of a long run of digits cost the square of the run (149,000 digits: about a minute per pattern).
+  //    prep-linear-digits.test.js fuzzes each against the old pattern and pins the clock.
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?%(?!%)/g, '$1 percent'); // a % that is part of a %%% steering delimiter is not a percentage
 
   // 8) UNITS the voice mangles: data sizes, mph, degrees
   const UNIT_WORDS = { KB: 'kilobytes', MB: 'megabytes', GB: 'gigabytes', TB: 'terabytes' };
   t = t.replace(/\b(\d+(?:\.\d+)?)\s?(KB|MB|GB|TB)\b/g, (_, n, u) => `${n} ${UNIT_WORDS[u]}`);
   t = t.replace(/\b(\d+(?:\.\d+)?)\s?mph\b/gi, '$1 miles an hour');
-  t = t.replace(/(\d+(?:\.\d+)?)\s?°\s?F\b/g, '$1 degrees Fahrenheit');
-  t = t.replace(/(\d+(?:\.\d+)?)\s?°\s?C\b/g, '$1 degrees Celsius');
-  t = t.replace(/(\d+(?:\.\d+)?)\s?°(?![FC])/g, '$1 degrees');
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?°\s?F\b/g, '$1 degrees Fahrenheit');
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?°\s?C\b/g, '$1 degrees Celsius');
+  t = t.replace(/(?<!\d)(\d+(?:\.\d+)?)\s?°(?![FC])/g, '$1 degrees');
 
   // 9) BARE 24-HOUR TIMES → 12-hour (17:30 → "5:30 PM"). Only hours 13-23
   //    convert (unambiguously 24-hour); anything else could be a ratio or
