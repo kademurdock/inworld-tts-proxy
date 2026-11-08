@@ -2587,7 +2587,9 @@ router.get("/android", (_req, res) => res.redirect(302, "/help/android"));
 // ---- Register a route for every page --------------------------------------
 // Old app bookmarks keep working; only our fixed-origin public-page fetch skips this redirect.
 router.use('/help', (req, res, next) => {
-  if (req.hostname.endsWith('.railway.app') && req.get('X-Kade-Help-Proxy') !== '1') {
+  // Nov 8 2026: Express 4 leaves req.hostname undefined when the request has no Host header (HTTP/1.0) or an empty one; that used to be a
+  // TypeError and a 500 for the whole help system. No Host is not the old railway.app address, so the page opens.
+  if (String(req.hostname || '').endsWith('.railway.app') && req.get('X-Kade-Help-Proxy') !== '1') {
     return res.redirect(302, CHAT_URL + req.originalUrl);
   }
   next();
