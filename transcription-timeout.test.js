@@ -1,7 +1,7 @@
 'use strict';
 // Nov 8 2026. The fetch to Deepgram in POST /v1/audio/transcriptions had no timeout of its own: a Deepgram that took the audio and went
 // quiet held the request, and up to 160 MB of buffered audio with it, until the HTTP client gave up (undici's own limits are 5 minutes;
-// the route-guard review of Nov 7 2026 asked for one of the route's own). Now the call is cut after DEEPGRAM_TIMEOUT_MS (150 s unless
+// the route-guard review of Nov 7 2026 asked for one of the route's own). Now the call is cut after DEEPGRAM_TIMEOUT_MS (240 s unless
 // set), the caller is told 504 once, and the memory goes back. Through the real HTTP handler, a Deepgram fixture that never answers.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -82,10 +82,27 @@ test('a Deepgram that never answers: the caller gets 504 once the route\'s own t
   }
 });
 
-test('the timeout is 150 seconds unless DEEPGRAM_TIMEOUT_MS says otherwise (a number above zero)', () => {
+test('the timeout is 240 seconds unless DEEPGRAM_TIMEOUT_MS says otherwise (a whole number of milliseconds a timer can take)', () => {
   const src = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
-  assert.ok(/const DEEPGRAM_TIMEOUT_MS = Number\(process\.env\.DEEPGRAM_TIMEOUT_MS\) > 0 \? Number\(process\.env\.DEEPGRAM_TIMEOUT_MS\) : 150000;/.test(src), 'the default is 150000 ms and the variable must be a number above zero');
-  assert.ok(/signal: AbortSignal\.timeout\(DEEPGRAM_TIMEOUT_MS\)/.test(src), 'and the fetch carries it');
+  assert.ok(src.includes('const DEEPGRAM_TIMEOUT_MS = (() => { const n = Math.floor(Number(process.env.DEEPGRAM_TIMEOUT_MS)); return n >= 1 && n <= 2147483647 ? n : 240000; })();'), 'the default is 240000 ms; the variable must be 1 to 2147483647');
+  assert.ok(src.includes('signal: AbortSignal.timeout(DEEPGRAM_TIMEOUT_MS)'), 'and the fetch carries it');
+});
+
+test('a value for DEEPGRAM_TIMEOUT_MS that a timer cannot take is ignored: the call is not cut at once, it waits as it would with no value', async () => {
+  const port = 31969;
+  // 5e9 and 1e999 and Infinity make AbortSignal.timeout throw, 2147483648 would become a 1 ms timer, 0 and -5 and 0.5 mean "no time", abc is not a number
+  for (const value of ['5e9', '1e999', 'Infinity', '2147483648', '4294967296', '0', '-5', '0.5', 'abc', '']) {
+    const s = start(port, { DEEPGRAM_TIMEOUT_MS: value });
+    try {
+      assert.ok(await ready(port, s.state), s.state.log);
+      const r = await upload(port, AUDIO, 1500);
+      assert.ok(r.hang, `DEEPGRAM_TIMEOUT_MS=${JSON.stringify(value)}: the call was cut at once or failed (${JSON.stringify(r)}) instead of waiting for a Deepgram that is only slow`);
+      assert.equal(s.state.exited, null);
+      assert.equal(s.rows().length, 1, 'the call to Deepgram was made');
+    } finally {
+      await s.stop();
+    }
+  }
 });
 
 test('a Deepgram that fails some other way (the connection drops) is still a 502, not a timeout', async () => {
