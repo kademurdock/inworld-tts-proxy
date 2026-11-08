@@ -135,7 +135,7 @@ test('the audio is the first file part that holds bytes: empty parts in front of
       ['three empty parts, then the audio', [emptyPart('a'), emptyPart('b'), emptyPart('c'), filePart('audio', audio(1700, 0x41)), END], 1700],
       ['the audio, then an empty part', [filePart('audio', audio(1900, 0x41)), emptyPart('doc'), END], 1900],
       ['an empty part, the audio, another file', [emptyPart('doc'), filePart('audio', audio(2100, 0x41)), filePart('more', audio(500, 0x42)), END], 2100],
-      ['twenty empty parts, then the audio', [...Array.from({ length: 19 }, (_, i) => emptyPart('e' + i)), filePart('audio', audio(2300, 0x41)), END], 2300],
+      ['nineteen empty parts, then the audio (the twentieth file part)', [...Array.from({ length: 19 }, (_, i) => emptyPart('e' + i)), filePart('audio', audio(2300, 0x41)), END], 2300],
     ];
     for (const [label, parts, bytes] of shapes) {
       const before = s.rows().length;
@@ -205,6 +205,57 @@ test('an upload that stops inside a LATER file part (the first file is whole) is
       assert.equal(s.rows().length, before, 'a form that was cut off reaches no provider');
     }
     assert.equal(s.state.exited, null, s.state.log.slice(-500));
+    assert.equal((await fetch(`http://127.0.0.1:${port}/healthz`)).status, 200);
+  } finally {
+    await s.stop();
+  }
+});
+
+test('the cap is twenty file parts: a form whose audio is its 21st file part is answered { text: "" } and reaches no provider (reviewer E, E3)', async () => {
+  const port = 31950;
+  const s = start(port);
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    const before = s.rows().length;
+    const r = await upload(port, Buffer.concat([...Array.from({ length: 20 }, (_, i) => emptyPart('e' + i)), filePart('audio', audio(1500, 0x41)), END]));
+    assert.equal(r.status, 200, JSON.stringify(r));
+    assert.deepEqual(JSON.parse(r.body), { text: '' });
+    assert.equal(s.rows().length, before, 'the 21st file part is not looked at');
+    assert.equal(s.state.exited, null);
+  } finally {
+    await s.stop();
+  }
+});
+
+// the body in two writes with a pause between: the first ends exactly after a delimiter, so the audio part has ended (and been taken) before the next part's header arrives
+function uploadInTwo(port, first, second, gapMs) {
+  return new Promise((resolve) => {
+    const t = setTimeout(() => { req.destroy(); resolve({ hang: true }); }, 15000);
+    const req = http.request({ host: '127.0.0.1', port, path: '/v1/audio/transcriptions', method: 'POST', agent: false, headers: { 'Content-Type': 'multipart/form-data; boundary=zzz', 'Content-Length': first.length + second.length } }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => { clearTimeout(t); resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString() }); });
+    });
+    req.on('error', (e) => { clearTimeout(t); resolve({ reset: e.code || e.message }); });
+    req.write(first);
+    setTimeout(() => req.end(second), gapMs);
+  });
+}
+
+test('an upload cut inside a file part that arrives AFTER the audio was taken is answered 400 once and the proxy stays up (reviewer E, E1)', async () => {
+  const port = 31950;
+  const s = start(port);
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    const head = Buffer.from(`Content-Disposition: form-data; name="more"; filename="more.webm"${CRLF}Content-Type: audio/webm${CRLF}${CRLF}`, 'latin1');
+    for (const tail of [Buffer.alloc(0), Buffer.alloc(300, 0x42), Buffer.concat([Buffer.alloc(300, 0x42), Buffer.from(`${CRLF}--zzz`, 'latin1')])]) {
+      const before = s.rows().length;
+      const r = await uploadInTwo(port, Buffer.concat([filePart('audio', audio(1500, 0x41)), Buffer.from(`--zzz${CRLF}`, 'latin1')]), Buffer.concat([head, tail]), 250);
+      assert.equal(r.status, 400, JSON.stringify(r));
+      assert.equal(r.body, '{"error":"Upload parse error."}');
+      assert.equal(s.rows().length, before, 'a form that was cut off reaches no provider');
+      assert.equal(s.state.exited, null, s.state.log.slice(-500));
+    }
     assert.equal((await fetch(`http://127.0.0.1:${port}/healthz`)).status, 200);
   } finally {
     await s.stop();

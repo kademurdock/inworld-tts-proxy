@@ -6072,7 +6072,9 @@ app.post("/v1/audio/transcriptions", (req, res) => {
     // the audio is already taken: this part is read off and dropped (and an upload that stops inside it still answers 400 once)
     if(gotFile){ stream.on("error", refuse); stream.resume(); return; }
     const mine = []; let size = 0;
-    stream.on("data", d => { mine.push(d); size += d.length; });
+    // A part whose 'file' event comes in the same read as the end of the part before it starts as a candidate: gotFile is set one tick later, on that
+    // part's 'end'. From then on this one keeps nothing (and drops what it holds), so the part right after the audio is never held whole, up to 160 MB.
+    stream.on("data", d => { if(gotFile){ mine.length = 0; return; } mine.push(d); size += d.length; });
     stream.on("end", () => { if(size > 0 && !gotFile){ gotFile = true; partType = (info && info.mimeType) || ""; chunks = mine; } });
     stream.on("limit", () => {});
     // Nov 7 2026: an upload that stops before its closing boundary makes busboy destroy this stream with an error. With no
