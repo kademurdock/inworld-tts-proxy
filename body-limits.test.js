@@ -14,7 +14,7 @@ async function withApp(build, run) {
   build(app, seen);
   app.use((err, req, res, next) => { seen.errors.push(err); res.status(err.status || 500).json({ error: err.expose ? err.message : 'internal', type: err.type }); }); // eslint-disable-line no-unused-vars
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
-  try { return await run(server.address().port, seen); } finally { await new Promise((r) => server.close(r)); server.closeAllConnections?.(); }
+  try { return await run(server.address().port, seen); } finally { await new Promise((r) => { server.close(r); server.closeAllConnections?.(); }); }
 }
 
 function post(port, path, body, headers = {}) {
@@ -158,5 +158,21 @@ test('afterSecret fails closed: a check that throws never lets the handler run, 
     assert.match(seen.errors.at(-1).message, /the check blew up/);
     const late = await post(port, '/late', '{"a":2}');
     assert.equal(late.body, '{"body":{"a":2}}');
+  });
+});
+
+test('afterSecret hands back what the check returns: the route guard answers an async check that rejects, and waits for one that is slow (reviewer A, A4)', async () => {
+  require('./async-routes').install(); // the Nov 7 route guard follows what a handler returns; this wrapper is a handler
+  await withApp((app, seen) => {
+    app.post('/rejects', afterSecret(async () => { throw new Error('the async check blew up'); }), (req, res) => { seen.reached.push('rejects'); res.json({ ok: true }); });
+    app.post('/slow', afterSecret(async (req, res, next) => { await new Promise((r) => setTimeout(r, 40)); next(); }), echo(seen));
+  }, async (port, seen) => {
+    const hung = new Promise((r) => setTimeout(() => r({ status: 'no answer in 2 s' }), 2000));
+    const rejected = await Promise.race([post(port, '/rejects', '{"a":1}'), hung]);
+    assert.equal(rejected.status, 500, 'a rejected check is answered, not left hanging: ' + JSON.stringify(rejected));
+    assert.deepEqual(seen.reached, [], 'the handler did not run');
+    assert.match(seen.errors.at(-1).message, /the async check blew up/);
+    const slow = await post(port, '/slow', '{"a":2}');
+    assert.equal(slow.body, '{"body":{"a":2}}', 'a slow check still gets its body parsed after it lets the request through');
   });
 });

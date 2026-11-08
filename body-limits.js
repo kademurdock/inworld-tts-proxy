@@ -68,7 +68,9 @@ const speechJson = express.json({ limit: SPEECH_LIMIT });
 function afterSecret(check) {
   function secretThenBody(req, res, next) {
     scrubErrorAnswers(res); // an error answer of a secret-gated route keeps its words and loses paths and tokens (error-text.js)
-    check(req, res, (arg) => (arg ? next(arg) : gatedJson(req, res, next)));
+    // `return`: the route guard of Nov 7 (async-routes.js) follows what a handler hands back, so a check that is an async function and
+    // rejects is answered 500 instead of leaving its request hanging for ever (all four checks today are synchronous)
+    return check(req, res, (arg) => (arg ? next(arg) : gatedJson(req, res, next)));
   }
   secretThenBody.parsesJson = true; // the route table of body-limits-wire.test.js looks for these two
   secretThenBody.scrubsErrors = true;
