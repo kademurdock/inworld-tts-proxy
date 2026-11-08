@@ -88,7 +88,7 @@ function clip(s, n) {
 /**
  * The first forwarded address, cut to its /24 (or the first four IPv6 groups).
  * Nov 8 2026: the header is the caller's own words and can be 16 KB long, and /(\d+)\.(\d+)\.(\d+)\.\d+$/ is quadratic on a long run of
- * digits: a 16 KB header cost 200 to 330 ms of CPU per request, and twelve strangers at once held /healthz for 2.8 s. An address is at most
+ * digits: a 16 KB header cost 0.2 to 0.4 s of CPU per request on an idle machine (2.1 to 2.3 s under load), and twelve strangers at once held /healthz for 2 s to more than 20 s. An address is at most
  * 45 characters, so only the first 64 of the first element are read, and the label they make is short.
  */
 function callerNet(req) {
@@ -126,7 +126,7 @@ function createSpeechGate({ env = process.env, log = console, now = Date.now, su
 
   function bump(map, key) {
     // Nov 8 2026: the path, user agent, origin and address in a key are the caller's to choose, so the number of distinct keys was too:
-    // 4,000 requests with 15 KB paths took the heap from 18 to 94 MB before the ten-minute summary. A window names at most MAX_KEYS
+    // 4,000 requests with 15 KB paths took the heap up by 59 to 76 MB before the ten-minute summary. A window names at most MAX_KEYS
     // callers; the rest are counted together, so the totals stay right.
     if (!map.has(key) && map.size >= MAX_KEYS) key = OTHER;
     map.set(key, (map.get(key) || 0) + 1);

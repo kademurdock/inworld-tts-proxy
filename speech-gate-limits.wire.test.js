@@ -1,6 +1,6 @@
 'use strict';
 // Nov 8 2026: the clock test for speech-gate.js's callerNet(). On the real server, twelve strangers at once, each with a 15.8 KB
-// X-Forwarded-For header of digits, held /healthz for 2.8 seconds (the review of Nov 7 2026, finding A3): the gate looks at every
+// X-Forwarded-For header of digits, held /healthz for 2 seconds to more than 20 (the review of Nov 7 2026, finding A3): the gate looks at every
 // request to the two paid routes before it knows who is asking, and the regex that cuts the caller's address down to its /24 was
 // quadratic in the length of that header. (speech-gate-limits.test.js has the same thing without a server, and the memory half.)
 const test = require('node:test');

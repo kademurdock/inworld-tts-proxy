@@ -23,7 +23,10 @@
  *     1,587 characters, and the biggest request the LibreChat fork can make is one `input` of 32,767 characters (its
  *     TTSService cuts longer text into pieces of 4,000), which is 98 KB of JSON at three bytes a character; 256 KB leaves room
  *     for escapes. Express's own default of 100 KB served this route until July 18. Worst case for JSON.parse at 256 KB is
- *     about 0.2 s of CPU, and only for a caller the gate let through (or any caller in gate mode `log`);
+ *     0.3 to 0.4 s of CPU (flat arrays and deep ones measured), and only for a caller the gate let through (or any caller in gate mode
+ *     `log`). That is the PARSE. The work the route does for the text it is given (shaping and limiting the audio that comes back) grows with
+ *     the length of `input`, not with the JSON, and this cap does not bound it: one 257 KB request held the loop 1.1 s in the black-box
+ *     review of Nov 8 with an instant provider, and the same route holds it for as long as the audio is long (hand-over: a cap on `input`);
  *   - there is NO global parser: a path no route answers, a GET, an upload (the transcription route is multipart, read by busboy)
  *     parses no JSON at all (Express still reads an unwanted body off the wire, unparsed). A new route that needs a body says so itself: after a secret check (afterSecret) or with
  *     speechJson / its own express.json(). body-limits-wire.test.js asks the running server and fails for a route that has neither.
@@ -33,6 +36,15 @@
  * reached, because the global parser had already read the body; they still are not, for the same reason, one step later.
  * Only requests that were failing anyway are answered differently: a bad secret with a body that is not JSON is now 401 or
  * 403 (it was 400), and a body that is not JSON sent to a path no route answers is now 404 (it was 400).
+ *
+ * KNOWN RESIDUAL (black-box review of Nov 8, finding A3). A caller that asks for `Connection: close` (HTTP/1.0 clients, Python's urllib,
+ * a Node client with agent: false), sends a wrong secret AND a body of about 256 KB or more is answered before its body is read, and Node
+ * closes that connection right after the answer with the rest of the body unread: the client's TCP stack can turn that into a reset, and
+ * a client library may report ECONNRESET instead of the 401 (256 KB: 1 try in 20; 512 KB to 1 MB: 35 to 40 in 100; 4 MB: all; a raw socket
+ * still reads the 401). Keep-alive clients, every caller with the right secret and every unknown path are not affected (Express's final
+ * handler reads a body off the wire before it answers 404). The body used to be read first, so that answer was clean. The remedy is to hold
+ * the answer until the body has been read off the wire (not parsed), or a lingering close; neither is built, because the price of the
+ * residual is a confusing error for a misconfigured close-client with a big body, and the remedy is new code on every gated route.
  *
  * ONE MORE DUTY OF THE GATE (also Nov 8 2026): afterSecret() makes every error answer sent with res.json (status 400 and up) of a route it guards
  * lose the paths and tokens in its text (error-text.js) and keep every other word. The text stays because its readers need it (Forge diagnoses

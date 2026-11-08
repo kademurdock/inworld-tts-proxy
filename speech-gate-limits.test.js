@@ -2,9 +2,9 @@
 /* Nov 8 2026: the speech gate must not be a way to hurt the service. The route-guard review of Nov 7 found two things in it that any
  * stranger can reach (the gate looks at a request before it knows who is asking):
  *   - callerNet() ran /(\d+)\.(\d+)\.(\d+)\.\d+$/ on the first X-Forwarded-For element, whatever its length. That regex is quadratic on a
- *     long run of digits: a 16 KB header cost 200 to 330 ms of CPU per request, and twelve at once held /healthz for 2.8 seconds;
+ *     long run of digits: a 16 KB header cost 0.2 to 0.4 s of CPU per request on an idle machine (2.1 to 2.3 s under load), and twelve at once held /healthz for 2 s to more than 20 s;
  *   - the `refused` counter was keyed by path, user agent, origin and caller with no cap until the ten-minute summary, and the path was
- *     the one part that was not clipped: 4,000 requests with 15 KB paths took the heap from 18 to 94 MB.
+ *     the one part that was not clipped: 4,000 requests with 15 KB paths took the heap up by 59 to 76 MB.
  * (speech-gate.test.js has the gate's rules; this file only has the limits.)
  */
 const test = require("node:test");
