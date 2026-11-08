@@ -176,3 +176,17 @@ test("the route in a refused request's log line and counter key is cut at exactl
   assert.ok(lines[0].includes(` POST ${exact} caller=`), "80 characters are kept whole");
   assert.ok(lines[1].includes(` POST ${exact} caller=`) && !lines[1].includes(exact + "z"), "the 81st is cut");
 });
+
+test("a refused request's log line carries no control or invisible character of the caller's choosing (reviewer A, A5)", () => {
+  const log = quietLog();
+  const g = enforcing(log);
+  // C1 controls (NEL, CSI) pass the HTTP parser in a header value; the others are what a terminal or a log viewer acts on
+  const evil = "A\u0085B\u009b[31mC\u0007D\u001bE\u200bF\u2028G\u2029H\ufeffI\u0009J\u202eK";
+  for (const header of ["user-agent", "origin", "x-kade-caller"]) pass(g, req({ headers: { [header]: evil } }));
+  const lines = log.lines.filter((l) => l.startsWith("[speech-gate] refused:"));
+  assert.equal(lines.length, 3);
+  for (const l of lines) {
+    assert.doesNotMatch(l, /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u, JSON.stringify(l));
+    assert.match(l, /A B.*C.*D.*E.*F.*G.*H.*I.*J.*K|A-B/, 'the printable letters of the header are still there: ' + l);
+  }
+});

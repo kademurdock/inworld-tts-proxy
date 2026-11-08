@@ -80,9 +80,12 @@ function presentedCredentials(req) {
   return { header, bearer };
 }
 
-/** Short, log-safe text: no newlines, no quotes, capped. */
+/**
+ * Short, log-safe text: no quotes, no control or invisible character (line breaks, NEL, CSI, ESC, BEL, zero-width and bidi marks, line and
+ * paragraph separators: a stranger chooses these in User-Agent, Origin and x-kade-caller, and a terminal or a log viewer acts on them), capped.
+ */
 function clip(s, n) {
-  return String(s || "").replace(/[\r\n"]/g, " ").slice(0, n);
+  return String(s || "").replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}"]/gu, " ").slice(0, n);
 }
 
 /**
