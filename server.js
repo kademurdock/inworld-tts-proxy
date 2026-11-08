@@ -6055,6 +6055,10 @@ function sniffAudioType(b, fallback){
   if(b[0]===0xFF && (b[1]&0xE0)===0xE0) return "audio/mpeg";                          // mp3 frame
   return fallback;
 }
+// Nov 8 2026: the call to Deepgram is cut after this long (a Deepgram that took the audio and went quiet held the request, and up to 160 MB of
+// buffered audio with it, until the HTTP client gave up on its own: five minutes). Railway's edge answers at 300 s, so 150 s leaves the caller a
+// real answer. DEEPGRAM_TIMEOUT_MS (a number above zero) changes it; it is not set on Railway.
+const DEEPGRAM_TIMEOUT_MS = Number(process.env.DEEPGRAM_TIMEOUT_MS) > 0 ? Number(process.env.DEEPGRAM_TIMEOUT_MS) : 150000;
 app.post("/v1/audio/transcriptions", (req, res) => {
   const key = process.env.DEEPGRAM_API_KEY;
   if(!key) return res.status(500).json({ error: "DEEPGRAM_API_KEY not set on this service." });
@@ -6093,7 +6097,8 @@ app.post("/v1/audio/transcriptions", (req, res) => {
       const dg = await fetch("https://api.deepgram.com/v1/listen?" + p.toString(), {
         method: "POST",
         headers: { Authorization: "Token " + key, "Content-Type": ct },
-        body: audio
+        body: audio,
+        signal: AbortSignal.timeout(DEEPGRAM_TIMEOUT_MS)
       });
       const j = await dg.json();
       if(!dg.ok) return res.status(502).json({ error: (j && (j.err_msg || j.message)) || "Deepgram error" });
@@ -6105,7 +6110,10 @@ app.post("/v1/audio/transcriptions", (req, res) => {
       // nothing here said why. One line: what arrived and what Deepgram heard.
       if(!text) console.warn(`[stt] empty transcript: ${audio.length} bytes, sent as ${ct} (part said ${partType || "nothing"}), Deepgram heard ${j && j.metadata && j.metadata.duration != null ? Number(j.metadata.duration).toFixed(1) + " s" : "no duration"}, confidence ${alt.confidence != null ? alt.confidence : "none"}`);
       return res.json({ text });
-    } catch(e){ return res.status(502).json({ error: String(e) }); }
+    } catch(e){
+      if(e && e.name === "TimeoutError") return res.status(504).json({ error: "Transcription timed out." });
+      return res.status(502).json({ error: String(e) });
+    }
   });
   req.pipe(bb);
 });
