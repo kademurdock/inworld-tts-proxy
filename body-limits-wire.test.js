@@ -1,7 +1,7 @@
 'use strict';
 // Nov 8 2026. The route-guard review of Nov 7 found that the proxy parsed every JSON body, up to 10 MB, BEFORE it knew who was
 // asking: `app.use(express.json({ limit: "10mb" }))` was the first layer of the app. A 10 KB gzip body that inflates to a 10 MB
-// `[{},{},...]` held the event loop for about five seconds (JSON.parse) and cost about 175 MB of heap, from any stranger, on any path,
+// `[{},{},...]` held the event loop for 0.4 to 1.2 seconds (JSON.parse) and cost 175 to 435 MB of heap, from any stranger, on any path,
 // and eight of them at once ended a 1 GB process. This file proves, on the real server through the real HTTP handler, the new rule:
 //   - a stranger's body is never parsed: the secret-gated routes check the secret first and read the body after it, the approvals
 //     route does the same with its own secret, the speech route reads its JSON after the speech gate and with a small limit, and a path
@@ -96,7 +96,7 @@ function send(port, route, headers, body, { method = 'POST', timeoutMs = 20000 }
 }
 
 // The clock test: while `work` runs, ask /healthz every 25 ms on a fresh socket and keep the slowest answer. A parse that holds the
-// event loop for five seconds shows up as a /healthz that takes about five seconds.
+// event loop for a second shows up as a /healthz that takes about a second.
 async function slowestHealthz(port, work) {
   let running = true;
   let worst = 0;
@@ -122,7 +122,7 @@ const AP = { ...JSON_TYPE, 'x-kade-approval-secret': SECRETS.KADE_APPROVAL_SECRE
 const MB = 1024 * 1024;
 
 // Arrays nested as deep as `bytes` allows, '[[[[...]]]]': about 1.2 s and 435 MB for JSON.parse to read 10 MB of it in a fresh process
-// (`[{},{},...]` takes 0.6 s and 175 MB: the review's shape), and about 10 KB once gzipped
+// (`[{},{},...]`, the review's shape, takes 0.6 s and 330 MB of RSS), and about 10 KB once gzipped
 function nestedArrays(bytes) { return '['.repeat(Math.floor(bytes / 2)) + ']'.repeat(Math.floor(bytes / 2)); }
 function gzipBomb(bytes) { return zlib.gzipSync(Buffer.from(nestedArrays(bytes)), { level: 9 }); }
 
@@ -216,18 +216,19 @@ test('with the secret the old 10 MB limit still holds on the routes that need bi
   await withServer(31966, {}, async ({ port, state }) => {
     const big = (mb, field = 'content') => JSON.stringify({ [field]: 'a'.repeat(mb * MB) });
     // the handler is reached (the answer is the handler's own, whatever it is), never the parser's 413 or the gate's 401, and the body really was parsed
-    const reach = async (route, headers, bodyText, label) => {
+    const reach = async (route, headers, bodyText, label, wantStatus, wantBody) => {
       const before = parseMark(state);
       const r = await send(port, route, headers, bodyText);
       assert.equal(r.kind, 'response', label + ': ' + JSON.stringify(r));
-      assert.ok(![401, 403, 413].includes(r.status), `${label}: HTTP ${r.status} ${r.body.slice(0, 160)}`);
+      assert.equal(r.status, wantStatus, `${label}: HTTP ${r.status} ${r.body.slice(0, 160)}`);
+      assert.match(r.body, wantBody, `${label}: the answer is the handler's own`);
       assert.deepEqual(parsedSince(state, before), [bodyText.length], `${label}: the whole body was parsed, once`);
     };
-    await reach('/github/commit', GH, JSON.stringify({ owner: 'o', repo: 'r', path: 'big.js', message: 'm', content: 'a'.repeat(3 * MB) }), 'github commit, 3 MB file');
-    await reach('/librechat/agent-avatar', LIB, JSON.stringify({ id: 'agent_x', image_b64: 'A'.repeat(3 * MB) }), 'agent avatar, 3 MB of base64');
-    await reach('/approvals/execute', AP, JSON.stringify({ approvalId: 'a', kind: 'no-such-kind', params: { content: 'a'.repeat(3 * MB) } }), 'approvals execute, 3 MB of params');
-    await reach('/railway/redeploy', RW, JSON.stringify({ serviceId: 's', environmentId: 'e', note: 'a'.repeat(2 * MB) }), 'railway redeploy, 2 MB');
-    await reach('/github/commit', GH, JSON.stringify({ owner: 'o', repo: 'r', path: 'big.js', message: 'm', content: 'a'.repeat(9 * MB + 512 * 1024) }), 'github commit, 9.5 MB file');
+    await reach('/github/commit', GH, JSON.stringify({ owner: 'o', repo: 'r', path: 'big.js', message: 'm', content: 'a'.repeat(3 * MB) }), 'github commit, 3 MB file', 502, /^{"error":"GitHub commit failed"/);
+    await reach('/librechat/agent-avatar', LIB, JSON.stringify({ id: 'agent_x', image_b64: 'A'.repeat(3 * MB) }), 'agent avatar, 3 MB of base64', 502, /External network blocked/);
+    await reach('/approvals/execute', AP, JSON.stringify({ approvalId: 'a', kind: 'no-such-kind', params: { content: 'a'.repeat(3 * MB) } }), 'approvals execute, 3 MB of params', 400, /no executor for no-such-kind/);
+    await reach('/railway/redeploy', RW, JSON.stringify({ serviceId: 's', environmentId: 'e', note: 'a'.repeat(2 * MB) }), 'railway redeploy, 2 MB', 502, /External network blocked/);
+    await reach('/github/commit', GH, JSON.stringify({ owner: 'o', repo: 'r', path: 'big.js', message: 'm', content: 'a'.repeat(9 * MB + 512 * 1024) }), 'github commit, 9.5 MB file', 502, /^{"error":"GitHub commit failed"/);
     const over = await send(port, '/github/commit', GH, big(10));
     assert.equal(over.status, 413, 'over 10 MB is still refused: ' + over.body.slice(0, 120));
     assert.equal(over.body, '{"error":"Payload Too Large"}');
@@ -260,6 +261,7 @@ test('the running server has no global JSON parser, and every route that takes a
     const table = await (await fetch(`http://127.0.0.1:${port}/__routes`)).json();
     assert.ok(table.routes.length >= 100, 'a real app: ' + table.routes.length + ' routes');
     assert.ok(!table.topLevel.includes('jsonParser'), 'no body parser is mounted at the top of the app, ahead of the secret checks: ' + table.topLevel.join(', '));
+    assert.ok(table.inner.length > 0 && !table.inner.includes('jsonParser'), 'and none inside a mounted router either (router.use(express.json()) would read every body of that router before its secret checks): ' + table.inner.join(', '));
     const BODY_METHODS = ['post', 'put', 'patch', 'delete'];
     const NOT_JSON = new Set(['post /v1/audio/transcriptions']); // multipart, read by busboy
     const bodyRoutes = table.routes.filter((r) => BODY_METHODS.includes(r.method));

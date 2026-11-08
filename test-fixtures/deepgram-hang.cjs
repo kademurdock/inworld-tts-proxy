@@ -3,6 +3,7 @@
 // wait only when the request carries an abort signal (as a real fetch would reject), and records whether it did (hasSignal) in
 // PROVIDER_RECEIPT. DEEPGRAM_FIXTURE_MODE changes what it does:
 //   reset      fail at once, the way a dropped connection does ("fetch failed")
+//   reset-newline  the same, with a line break and a forged log line in the message
 //   bad-audio  answer 400 with a message that names a file on Deepgram's disk
 // Every other URL is blocked.
 const fs = require('node:fs');
@@ -13,6 +14,7 @@ global.fetch = (url, options = {}) => new Promise((resolve, reject) => {
   const s = options.signal;
   fs.appendFileSync(process.env.PROVIDER_RECEIPT, JSON.stringify({ url: u, bytes: options.body ? options.body.length : 0, hasSignal: Boolean(s) }) + '\n');
   if (process.env.DEEPGRAM_FIXTURE_MODE === 'reset') return reject(new TypeError('fetch failed'));
+  if (process.env.DEEPGRAM_FIXTURE_MODE === 'reset-newline') return reject(new TypeError('fetch failed\n[proxy] forged by a network error'));
   if (process.env.DEEPGRAM_FIXTURE_MODE === 'bad-audio') return resolve(Response.json({ err_code: 'CORRUPT_AUDIO', err_msg: 'Could not decode /var/dg/spool/upload-8841.webm\n[proxy] forged line' }, { status: 400 }));
   if (s) {
     if (s.aborted) return reject(s.reason);

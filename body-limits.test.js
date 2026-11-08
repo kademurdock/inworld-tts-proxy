@@ -124,3 +124,39 @@ test('speechJson: 256 KB of JSON, counted after inflating, the fork\'s biggest r
     assert.equal(empty.body, '{"body":{}}');
   });
 });
+
+test('afterSecret hands the request on exactly once: after a good parse, and with an error', async () => {
+  await withApp((app, seen) => {
+    seen.behind = [];
+    // the first handler answers and does not call next(); a second next() from the wrapper would run the handler behind it
+    app.post('/once', afterSecret((req, res, next) => next()), (req, res) => { seen.reached.push('A'); res.json({ ok: true }); }, () => { seen.behind.push('B'); });
+    app.post('/err', afterSecret((req, res, next) => next(new Error('stop'))), (req, res) => { seen.reached.push('E'); res.end(); }, () => { seen.behind.push('F'); });
+    app.post('/skip', afterSecret((req, res, next) => next('route')), (req, res) => { seen.reached.push('S'); res.end(); });
+    app.post('/skip', (req, res) => res.json({ second: true }));
+  }, async (port, seen) => {
+    const good = await post(port, '/once', '{"a":1}');
+    assert.equal(good.status, 200);
+    const bad = await post(port, '/err', '{"a":1}');
+    assert.equal(bad.status, 500);
+    const skipped = await post(port, '/skip', '{"a":1}');
+    assert.equal(skipped.body, '{"second":true}');
+    await new Promise((r) => setTimeout(r, 150));
+    assert.deepEqual(seen.reached, ['A'], 'the handler of /once ran once; /err and /skip never reached theirs');
+    assert.deepEqual(seen.behind, [], 'no second next() reached a handler behind');
+    assert.equal(seen.errors.length, 1, 'the error of /err reached the error handler once');
+  });
+});
+
+test('afterSecret fails closed: a check that throws never lets the handler run, and a check that answers later still gets its body parsed', async () => {
+  await withApp((app, seen) => {
+    app.post('/boom', afterSecret(() => { throw new Error('the check blew up'); }), (req, res) => { seen.reached.push('boom'); res.json({ ok: true }); });
+    app.post('/late', afterSecret((req, res, next) => setTimeout(next, 30)), (req, res) => { seen.reached.push('late'); res.json({ body: req.body }); });
+  }, async (port, seen) => {
+    const boom = await post(port, '/boom', '{"a":1}');
+    assert.equal(boom.status, 500);
+    assert.deepEqual(seen.reached, [], 'the handler did not run');
+    assert.match(seen.errors.at(-1).message, /the check blew up/);
+    const late = await post(port, '/late', '{"a":2}');
+    assert.equal(late.body, '{"body":{"a":2}}');
+  });
+});

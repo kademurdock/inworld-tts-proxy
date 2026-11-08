@@ -25,7 +25,7 @@
  *     for escapes. Express's own default of 100 KB served this route until July 18. Worst case for JSON.parse at 256 KB is
  *     about 0.2 s of CPU, and only for a caller the gate let through (or any caller in gate mode `log`);
  *   - there is NO global parser: a path no route answers, a GET, an upload (the transcription route is multipart, read by busboy)
- *     reads no JSON at all. A new route that needs a body says so itself: after a secret check (afterSecret) or with
+ *     parses no JSON at all (Express still reads an unwanted body off the wire, unparsed). A new route that needs a body says so itself: after a secret check (afterSecret) or with
  *     speechJson / its own express.json(). body-limits-wire.test.js asks the running server and fails for a route that has neither.
  *
  * WHAT DID NOT CHANGE. A request with the right secret gets the same limit (10 MB), the same parser and the same

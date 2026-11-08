@@ -8,6 +8,7 @@ const realListen = express.application.listen;
 express.application.listen = function listen(...args) {
   const routes = [];
   const topLevel = [];
+  const inner = []; // the layers that are not routes, inside the mounted routers (router.use(...))
   const handlers = (route) => route.stack.map((l) => ({ name: l.name || '<anonymous>', parsesJson: l.handle.parsesJson === true, scrubsErrors: l.handle.scrubsErrors === true }));
   const walk = (stack, depth) => {
     for (const l of stack) {
@@ -15,12 +16,12 @@ express.application.listen = function listen(...args) {
         for (const method of Object.keys(l.route.methods)) routes.push({ method, path: String(l.route.path), chain: handlers(l.route), depth });
       } else if (l.handle && Array.isArray(l.handle.stack)) {
         walk(l.handle.stack, depth + 1);
-      } else if (depth === 0) {
-        topLevel.push(l.name || '<anonymous>');
+      } else {
+        (depth === 0 ? topLevel : inner).push(l.name || '<anonymous>');
       }
     }
   };
   walk(this._router.stack, 0);
-  this.get('/__routes', (req, res) => res.json({ routes, topLevel }));
+  this.get('/__routes', (req, res) => res.json({ routes, topLevel, inner }));
   return realListen.apply(this, args);
 };

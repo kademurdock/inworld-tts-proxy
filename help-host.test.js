@@ -43,6 +43,8 @@ const CASES = (pathName) => ({
   localhost: `GET ${pathName} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n`,
   ordinary: `GET ${pathName} HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n`,
   railwayHost: `GET ${pathName}?x=1 HTTP/1.1\r\nHost: inworld-tts-proxy-production.up.railway.app\r\nConnection: close\r\n\r\n`,
+  lookalikeHost: `GET ${pathName} HTTP/1.1\r\nHost: notrailway.app\r\nConnection: close\r\n\r\n`,
+  bareRailwayApp: `GET ${pathName} HTTP/1.1\r\nHost: railway.app\r\nConnection: close\r\n\r\n`,
   railwayHostFixedOrigin: `GET ${pathName} HTTP/1.1\r\nHost: inworld-tts-proxy-production.up.railway.app\r\nX-Kade-Help-Proxy: 1\r\nConnection: close\r\n\r\n`,
 });
 

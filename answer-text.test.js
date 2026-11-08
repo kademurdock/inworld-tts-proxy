@@ -110,6 +110,22 @@ test('transcription: the connection to Deepgram drops -> 502 with the plain answ
   }
 });
 
+test('transcription: a line break in the network error does not forge a log line', async () => {
+  const port = 31926;
+  const s = start(port, 'deepgram-hang.cjs', { DEEPGRAM_FIXTURE_MODE: 'reset-newline' });
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    const r = await upload(port);
+    assert.equal(r.status, 502, JSON.stringify(r));
+    assert.equal(r.body, '{"error":"Transcription failed."}');
+    for (let i = 0; i < 40 && !/\[stt\] the call to Deepgram failed/.test(s.state.log); i++) await new Promise((res) => setTimeout(res, 50));
+    assert.match(s.state.log, /\[stt\] the call to Deepgram failed: TypeError: fetch failed \[proxy\] forged by a network error/, 'one line, the break is a space');
+    assert.doesNotMatch(s.state.log, /^\[proxy\] forged by a network error/m);
+  } finally {
+    await s.stop();
+  }
+});
+
 test('transcription: a timeout is its own answer (504), still without a word of the cause', async () => {
   const port = 31926;
   const s = start(port, 'deepgram-hang.cjs', { DEEPGRAM_TIMEOUT_MS: '500' });

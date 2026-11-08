@@ -223,6 +223,6 @@ test('guardAsync: a handler that finishes is left alone, and convertsToText says
 });
 
 test('the speech route is registered through guardAsync, and closes with it', () => {
-  assert.match(src, /app\.post\("\/v1\/audio\/speech", bodyLimits\.speechJson, guardAsync\(async \(req, res\) => \{/); // Nov 8 2026: its own 128 KB JSON parser first (body-limits.js)
+  assert.match(src, /app\.post\("\/v1\/audio\/speech", bodyLimits\.speechJson, guardAsync\(async \(req, res\) => \{/); // Nov 8 2026: its own 256 KB JSON parser first (body-limits.js)
   assert.match(src, /res\.status\(500\)\.json\(err && err\.isRunaway \? \{ error: "Proxy internal error", details: err\.message \} : \{ error: "Proxy internal error" \}\);\r?\n  \}\r?\n\}\)\);/); // Nov 8 2026: `details` only for the run-on guard's own words (answer-text.test.js)
 });

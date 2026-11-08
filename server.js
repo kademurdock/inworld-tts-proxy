@@ -16,7 +16,7 @@ require("./async-routes").installFinalHandler(app); // Nov 7 2026: an error that
 // global parser runs before any route-level limit can raise it), ahead of every route and every secret check, so a stranger could make the
 // service parse 10 MB (a 10 KB gzip body inflates to it). Each route now reads its own JSON body, once it knows who is asking: the
 // secret-gated routes (railway, github, librechat, /approvals/execute) after their secret check and up to the old 10 MB, the speech route
-// after the speech gate and up to 256 KB. A path no route answers reads nothing. The whole story and the rule are in body-limits.js.
+// after the speech gate and up to 256 KB. A path no route answers parses nothing. The whole story and the rule are in body-limits.js.
 const bodyLimits = require("./body-limits");
 
 // Mount the accessible help system (/help and friends). See help.js.

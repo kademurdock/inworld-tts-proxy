@@ -163,3 +163,16 @@ test("the allowed counter has the same cap (a leaked secret must not be a way to
   assert.match(line, new RegExp(`allowed ${N}`));
   assert.match(line, new RegExp(`\\(other callers\\) ${N - 100}`));
 });
+
+test("the route in a refused request's log line and counter key is cut at exactly 80 characters", () => {
+  const log = quietLog();
+  const g = enforcing(log);
+  const exact = "/v1/audio/speech/" + "z".repeat(63);
+  assert.equal(exact.length, 80);
+  pass(g, req({ url: exact }));
+  pass(g, req({ url: exact + "z" }));
+  const lines = log.lines.filter((l) => l.startsWith("[speech-gate] refused:"));
+  assert.equal(lines.length, 2);
+  assert.ok(lines[0].includes(` POST ${exact} caller=`), "80 characters are kept whole");
+  assert.ok(lines[1].includes(` POST ${exact} caller=`) && !lines[1].includes(exact + "z"), "the 81st is cut");
+});
