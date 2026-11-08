@@ -78,6 +78,12 @@ test('a label with a line break (or any control or invisible character) is a 400
         assert.equal(r.text, '{"error":"Invalid field: voice must be a plain label"}');
       }
     }
+    // the three exact-match inputs of the voice previews do not get past the check either: nothing about them is logged for a hostile label
+    for (const input of ['Hi there. This is how I sound.', 'Hey — quick hello from this voice, right here with you.']) {
+      const r = await speak({ input, voice: hostile });
+      assert.equal(r.status, 400, input + ' ' + JSON.stringify(r).slice(0, 200));
+    }
+    assert.doesNotMatch(s.state.log, /swapped for/, 'the check comes before the preview swaps (and their log lines)');
     assert.equal(s.rows(), before, 'no provider was asked');
     assert.doesNotMatch(s.state.log, /^\[proxy\] POST \/librechat\/janitor/m, 'no log line begins with the forged text');
     assert.doesNotMatch(s.state.log, /^\[speech-gate\] mode=off/m);
@@ -98,9 +104,10 @@ test('a label with a line break (or any control or invisible character) is a 400
     assert.match(s.state.log, /\[TTS\] voice request: label="alloy" -> resolved=/, 'a normal label reads as before');
     assert.match(s.state.log, /\[TTS\] voice response: label="alloy" resolved=/);
     assert.match(s.state.log, /\[TTS\] stream out: label="alloy" resolved=/);
-    assert.match(s.state.log, new RegExp(`\\[TTS\\] voice request: label="v{300}\\.\\.\\." -> resolved=`), 'a long label is cut at 300 characters in the log');
-    assert.match(s.state.log, new RegExp(`\\[TTS\\] stream out: label="v{300}\\.\\.\\." resolved=`), 'in the streamed lane too');
-    assert.ok(await logHas(s.state, new RegExp(`\\[TTS\\] voice response: label="v{300}\\.\\.\\." resolved=`)), 'and in the response line');
+    assert.match(s.state.log, new RegExp(`\\[TTS\\] voice request: label="v{300}\\.\\.\\." -> resolved="v{300}\\.\\.\\."`), 'a long label is cut at 300 characters in the log, and so is what it resolved to (the label itself, when it is no known voice)');
+    assert.match(s.state.log, new RegExp(`\\[TTS\\] stream out: label="v{300}\\.\\.\\." resolved="v{300}\\.\\.\\."`), 'in the streamed lane too');
+    assert.ok(await logHas(s.state, new RegExp(`\\[TTS\\] voice response: label="v{300}\\.\\.\\." resolved="v{300}\\.\\.\\."`)), 'and in the response line');
+    assert.doesNotMatch(s.state.log, /v{301}/, 'no line of the log holds more of the label than that');
     assert.equal(s.state.exited, null);
   } finally {
     await s.stop();

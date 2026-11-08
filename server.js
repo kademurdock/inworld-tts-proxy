@@ -1587,7 +1587,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       normalizeLoudness(raw, processor.fmt.sampleRate, inworldVoice, { measureOnly: true });
     }
     console.log(
-      `[TTS] stream out: label="${voiceLabel}" resolved="${inworldVoice}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}`
+      `[TTS] stream out: label="${voiceLabel}" resolved="${require("./async-routes").describeCause(inworldVoice)}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}`
     );
     return true;
   });
@@ -3516,7 +3516,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
      * which is exactly the number the next clip should start from. */
     if (opts.measureOnly) {
       console.log(
-        `[TTS] normalize (measure-only, streamed): voice="${voiceKey}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), next-clip gain ${(20 * Math.log10(gain)).toFixed(1)} dB`
+        `[TTS] normalize (measure-only, streamed): voice="${require("./async-routes").describeCause(voiceKey)}" measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), next-clip gain ${(20 * Math.log10(gain)).toFixed(1)} dB`
       );
       return pcmBuf;
     }
@@ -3561,7 +3561,7 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
       if (kneed) limitNote = `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)`;
     }
     console.log(
-      `[TTS] normalize: voice="${voiceKey}"${lab ? ` LAB ${opts.lab}` : ""} measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${limitNote}`
+      `[TTS] normalize: voice="${require("./async-routes").describeCause(voiceKey)}"${lab ? ` LAB ${opts.lab}` : ""} measured ${rmsDb.toFixed(1)} dBFS (level ${level.toFixed(1)}${snapped ? " SNAPPED" : ""}), applied ${(20 * Math.log10(gain)).toFixed(1)} dB${rampSamples ? ` (ramped from ${(20 * Math.log10(prevGain)).toFixed(1)} dB over ${TTS_NORM_RAMP_MS}ms)` : ""}${limitNote}`
     );
   } catch (e) {
     console.warn("[TTS] normalize skipped:", e.message);
@@ -3890,6 +3890,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   }
 
   const inworldVoice = VOICE_MAP[voice] || voice;
+  const resolvedForLog = require("./async-routes").describeCause(inworldVoice); // the label itself when it is no known voice: cut like the label
   const inworldModel = MODEL_MAP[model] || "inworld-tts-2";
   // Provider fork: "fish:<model_id>" targets go to fish.audio, everything else
   // to Inworld. Key checks are per-provider so an unset FISH_API_KEY can never
@@ -3910,7 +3911,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   // label -> resolved id mapping for every call. If it happens again, the
   // exact request can be found in Railway logs by timestamp instead of
   // guessed at after the fact.
-  console.log(`[TTS] voice request: label="${voiceForLog}" -> resolved="${inworldVoice}"`);
+  console.log(`[TTS] voice request: label="${voiceForLog}" -> resolved="${resolvedForLog}"`);
   const fishModel = isFishVoice ? fishModelFor(inworldVoice.slice(FISH_VOICE_PREFIX.length)) : null;
   console.log(`[TTS] performance: provider=${isFishVoice ? 'fish' : 'inworld'} model=${isFishVoice ? fishModel : inworldModel} delivery=${isFishVoice ? (delivery || 'DEFAULT') : (delivery || TTS_DELIVERY_MODE)} preview=${isVoicePreview} asked=${delivery ? 'listener' : 'server'}`);
 
@@ -4167,7 +4168,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
       return res.send(mulaw);
     }
     const audioFingerprint = crypto.createHash("sha256").update(combinedData).digest("hex").slice(0, 16);
-    console.log(`[TTS] voice response: label="${voiceForLog}" resolved="${inworldVoice}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
+    console.log(`[TTS] voice response: label="${voiceForLog}" resolved="${resolvedForLog}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
     res.set("Content-Type", "audio/wav");
     res.set("Content-Length", finalAudio.length);
     res.send(finalAudio);
