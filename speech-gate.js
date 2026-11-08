@@ -39,6 +39,8 @@ const crypto = require("crypto");
 const MODES = ["off", "log", "enforce"];
 const SUMMARY_MS = 10 * 60 * 1000;
 const LINES_PER_MINUTE = 20;
+const MAX_KEYS = 100; // distinct callers named in one summary window (refused and allowed each); past it they are counted together
+const OTHER = "(other callers)";
 
 function parseSecrets(...values) {
   const out = [];
@@ -83,9 +85,15 @@ function clip(s, n) {
   return String(s || "").replace(/[\r\n"]/g, " ").slice(0, n);
 }
 
-/** The first forwarded address, cut to its /24 (or the first four IPv6 groups). */
+/**
+ * The first forwarded address, cut to its /24 (or the first four IPv6 groups).
+ * Nov 8 2026: the header is the caller's own words and can be 16 KB long, and /(\d+)\.(\d+)\.(\d+)\.\d+$/ is quadratic on a long run of
+ * digits: a 16 KB header cost 200 to 330 ms of CPU per request, and twelve strangers at once held /healthz for 2.8 s. An address is at most
+ * 45 characters, so only the first 64 of the first element are read, and the label they make is short.
+ */
 function callerNet(req) {
-  const fwd = String(headerOf(req, "x-forwarded-for")).split(",")[0].trim() || String(req.ip || "");
+  const first = String(headerOf(req, "x-forwarded-for")).split(",")[0].trim().slice(0, 64);
+  const fwd = first || String(req.ip || "").slice(0, 64);
   const v4 = fwd.match(/(\d+)\.(\d+)\.(\d+)\.\d+$/);
   if (v4) return `${v4[1]}.${v4[2]}.${v4[3]}.x`;
   if (fwd.includes(":")) return fwd.split(":").slice(0, 4).join(":") + ":x";
@@ -94,7 +102,7 @@ function callerNet(req) {
 
 function routeOf(req) {
   const url = String(req.originalUrl || req.url || "");
-  return url.split("?")[0] || "?";
+  return clip(url.split("?")[0], 80) || "?"; // Nov 8 2026: clipped like the other parts of the key; the path past /v1/audio/speech is the caller's to choose
 }
 
 function createSpeechGate({ env = process.env, log = console, now = Date.now, summaryMs = SUMMARY_MS, timers = true } = {}) {
@@ -117,6 +125,10 @@ function createSpeechGate({ env = process.env, log = console, now = Date.now, su
   let linesThisMinute = 0;
 
   function bump(map, key) {
+    // Nov 8 2026: the path, user agent, origin and address in a key are the caller's to choose, so the number of distinct keys was too:
+    // 4,000 requests with 15 KB paths took the heap from 18 to 94 MB before the ten-minute summary. A window names at most MAX_KEYS
+    // callers; the rest are counted together, so the totals stay right.
+    if (!map.has(key) && map.size >= MAX_KEYS) key = OTHER;
     map.set(key, (map.get(key) || 0) + 1);
   }
 
