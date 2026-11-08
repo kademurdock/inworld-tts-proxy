@@ -6059,7 +6059,10 @@ app.post("/v1/audio/transcriptions", (req, res) => {
   const key = process.env.DEEPGRAM_API_KEY;
   if(!key) return res.status(500).json({ error: "DEEPGRAM_API_KEY not set on this service." });
   let bb;
-  try { bb = Busboy({ headers: req.headers, limits: { fileSize: 160*1024*1024 } }); }
+  // Nov 8 2026: ONE file. Every file part used to be appended to the same buffer, so the 160 MB cap on a file was no cap on the route
+  // (fifty parts, 8 GB) and the audio sent to Deepgram was the parts glued end to end. `files: 1` makes busboy skip the others without
+  // buffering them, so the most this route holds is the 160 MB of the first file (a running byte total would never add anything).
+  try { bb = Busboy({ headers: req.headers, limits: { fileSize: 160*1024*1024, files: 1 } }); }
   catch(e){ return res.status(400).json({ error: "Bad multipart request." }); }
   const chunks = []; let partType = "", language = "", gotFile = false;
   // Nov 7 2026: the one answer for an upload that cannot be read. It is asked for more than once (busboy reports the same
