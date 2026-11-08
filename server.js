@@ -3833,6 +3833,13 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   if (!convertsToText(model)) {
     return res.status(400).json({ error: "Invalid field: model must be a string" });
   }
+  // Nov 8 2026: the voice label is the caller's own text, and it went raw into log lines (and, for a label that is no known voice, into the
+  // provider call): a line break in it forged log lines of this service's own. A label with a control or invisible character in it is no label
+  // (it failed at the provider before, as an unknown voice id): 400. A long label is cut in the log lines below, which print this copy.
+  if (/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(String(voice))) {
+    return res.status(400).json({ error: "Invalid field: voice must be a plain label" });
+  }
+  const voiceForLog = require("./async-routes").describeCause(voice);
 
   // Native-app voice previews (July 22 2026, Kade: picker previews said only
   // "Hi there. This is how I sound." -- "I'd like it to be longer like in the
@@ -3856,7 +3863,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_SCRIPTS, voice).split("{voice}").join(String(voice));
     auditionKind = KIND_BY_SCRIPT.get(effectiveInput) || "conversation";
-    console.log(`[TTS] native preview sentinel swapped for audition script, label="${voice}"`);
+    console.log(`[TTS] native preview sentinel swapped for audition script, label="${voiceForLog}"`);
   }
   /* PART 115 (Sep 1 2026) — THE PICKER STOPS SAYING THE SAME THING 700 TIMES.
    * Her words: "It's already annoying that they all share the same sample and
@@ -3874,12 +3881,12 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_QUICK_LINES, voice);
     auditionKind = KIND_BY_SCRIPT.get(effectiveInput) || "conversation";
-    console.log(`[TTS] native quick preview swapped for a pooled line, label="${voice}"`);
+    console.log(`[TTS] native quick preview swapped for a pooled line, label="${voiceForLog}"`);
   } else if (typeof input === "string" && input.trim() === AUDITION_TEXT.trim()) {
     isVoicePreview = true;
     effectiveInput = pickAudition(AUDITION_SCRIPTS, voice).split("{voice}").join(String(voice));
     auditionKind = KIND_BY_SCRIPT.get(effectiveInput) || "conversation";
-    console.log(`[TTS] web audition script swapped for a pooled script, label="${voice}"`);
+    console.log(`[TTS] web audition script swapped for a pooled script, label="${voiceForLog}"`);
   }
 
   const inworldVoice = VOICE_MAP[voice] || voice;
@@ -3903,7 +3910,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   // label -> resolved id mapping for every call. If it happens again, the
   // exact request can be found in Railway logs by timestamp instead of
   // guessed at after the fact.
-  console.log(`[TTS] voice request: label="${voice}" -> resolved="${inworldVoice}"`);
+  console.log(`[TTS] voice request: label="${voiceForLog}" -> resolved="${inworldVoice}"`);
   const fishModel = isFishVoice ? fishModelFor(inworldVoice.slice(FISH_VOICE_PREFIX.length)) : null;
   console.log(`[TTS] performance: provider=${isFishVoice ? 'fish' : 'inworld'} model=${isFishVoice ? fishModel : inworldModel} delivery=${isFishVoice ? (delivery || 'DEFAULT') : (delivery || TTS_DELIVERY_MODE)} preview=${isVoicePreview} asked=${delivery ? 'listener' : 'server'}`);
 
@@ -4056,7 +4063,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
         inworldModel,
         speakingRate,
         previousTexts: contextFor(chunks, 0, previousTexts),
-        voiceLabel: voice,
+        voiceLabel: voiceForLog,
         delivery,
         fillers: inworldFillers ? { turn: 0, seed: talkSeed } : null,
         sounds: inworldSounds ? { turn: 0, seedText: soundSeed(0) } : null,
@@ -4160,7 +4167,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
       return res.send(mulaw);
     }
     const audioFingerprint = crypto.createHash("sha256").update(combinedData).digest("hex").slice(0, 16);
-    console.log(`[TTS] voice response: label="${voice}" resolved="${inworldVoice}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
+    console.log(`[TTS] voice response: label="${voiceForLog}" resolved="${inworldVoice}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
     res.set("Content-Type", "audio/wav");
     res.set("Content-Length", finalAudio.length);
     res.send(finalAudio);
