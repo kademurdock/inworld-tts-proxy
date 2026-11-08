@@ -97,6 +97,7 @@ test('what only looks like a secret is left alone', () => {
     'Authorization: failed',
     'https://api.github.com/repos/o/r reached; mail me at kade@example.com or see https://host.test:8080/path',
     'Bearer abc1234',
+    'the routes /app-x and /app_x are no container path', 'https://host.test/a:b@c.example', 'x-key: abcd1',
     `github_pat_${'x'.repeat(19)} and sk-${'y'.repeat(15)} and ghp_${'z'.repeat(19)}`,
     `AIza${'q'.repeat(19)} and xoxb-${'1'.repeat(9)} and rw_${'k'.repeat(19)}`,
   ]);
@@ -176,6 +177,8 @@ test('the edges of the rules: minimum lengths, case, and what stops a path', () 
     [`token ${jwt(8, 8, 8)} end`, `token ${H} end`],
     ['Authorization: Bearer abc+def/ghi12345678==', `Authorization: Bearer ${H}`],
     ['Bearer YWJjZGVmZ2g=', `Bearer ${H}`],
+    ['Bearer ya29.a0AfH6SMBxQ rejected', `Bearer ${H} rejected`],
+    ['/x?key=abc"def', `/x?key=${H}"def`],
     ['postgresql://some_long_username_here:pw1234@host/db', `postgresql://${H}@host/db`],
     ['AUTHORIZATION: abcde1 and X-KEY: ABC123def', `AUTHORIZATION: ${H} and X-KEY: ${H}`],
     ['FILE:///app/data/x.json missing', `${P} missing`],
@@ -249,6 +252,31 @@ test('and the rules themselves are quick on the 2,000 characters they do read: a
   }
 });
 
+// A pattern with a nested quantifier (`(\s+)+`) is exponential in a run of 28 characters: seconds, where the real rules need microseconds (reviewer F, T-02).
+const NESTING = {
+  'bearer then spaces': 'Bearer' + ' '.repeat(28) + '!',
+  'header name then spaces': 'x-key' + ' '.repeat(28) + '!',
+  'header colon then spaces': 'x-key:' + ' '.repeat(28) + '!',
+  'json key then spaces': '"password"' + ' '.repeat(28) + '!',
+  'json colon then spaces': '"password":' + ' '.repeat(28) + '!',
+  'jwt first segment': 'eyJ' + 'a'.repeat(28) + '!',
+  'jwt second segment': 'eyJ' + 'a'.repeat(10) + '.' + 'b'.repeat(28) + '!',
+  'jwt third segment': 'eyJ' + 'a'.repeat(10) + '.' + 'b'.repeat(10) + '.' + 'c'.repeat(28) + '!',
+  'userinfo': 'http://' + 'u'.repeat(28) + ':' + 'p'.repeat(28) + '!',
+  'url parameter value': '?key=' + 'v'.repeat(28) + '!',
+  'windows path': 'C:\\' + 'a'.repeat(28) + '!',
+  'token shapes': 'ghp_' + 'a'.repeat(28) + '!' + 'sk-' + 'b'.repeat(28) + '!',
+};
+
+test('and none of them is exponential: runs of spaces and letters that a nested quantifier would choke on', () => {
+  for (const [label, text] of Object.entries(NESTING)) {
+    const t0 = process.hrtime.bigint();
+    scrubText(text);
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    assert.ok(ms < 50, `${label}: ${ms.toFixed(1)} ms`);
+  }
+});
+
 test('scrubAnswer: the text fields of an error answer, nothing else, and the original object is not touched', () => {
   const body = {
     error: "open '/app/x.js'", details: 'Bearer abcDEF123456789xyz', detail: 'at /tmp/y', message: '?key=SECRET99', text: 'a reply that mentions /app/x.js', bytes: 5,
@@ -289,7 +317,7 @@ function fakeRes(statusCode) {
 test('scrubErrorAnswers: an answer with status 400 or more is cleaned, a success answer never is, and a failure to clean cannot stop the answer', () => {
   const { res, sent } = fakeRes(200);
   scrubErrorAnswers(res);
-  res.json({ error: '/app/a' });
+  assert.equal(res.json({ error: '/app/a' }), res, 'what the original res.json returns is what the hooked one returns (Express chains on it)');
   res.status(502).json({ error: "open '/app/b'", details: 'Bearer abcDEF123456789xyz' });
   res.status(400).json({ error: '/tmp/c' });
   res.status(399).json({ error: '/tmp/d' });
@@ -333,6 +361,21 @@ test('scrubErrorAnswers is transparent: res.json(status, body) and res.json(body
   b.res.json(null);
   b.res.json([{ error: '/app/x' }]);
   assert.deepEqual(b.sent, [[null], [[{ error: '/app/x' }]]], 'what is not a plain object goes out as it is');
+});
+
+test('the gated modules answer through res.json, except one SSE stream and one success body: a new res.send or res.end would carry error text past the hook (reviewer F, T-01)', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
+  const allowed = { 'librechat.js': { send: 1, write: 4, end: 1 } }; // the voice preview body (a success), and the ask-stream SSE (its error frame is cleaned by hand)
+  for (const f of ['railway.js', 'github.js', 'librechat.js', 'approvals.js']) {
+    const src = strip(fs.readFileSync(path.join(__dirname, f), 'utf8'));
+    const count = (re) => (src.match(re) || []).length;
+    const got = {
+      send: count(/\.send\(/g), jsonp: count(/\.jsonp\(/g), sendFile: count(/\.sendFile\(/g), download: count(/\.download\(/g), redirect: count(/\.redirect\(/g),
+      sendStatus: count(/\.sendStatus\(/g), write: count(/\bres\.write\(/g), end: count(/\bres\.end\(/g),
+    };
+    const want = { send: 0, jsonp: 0, sendFile: 0, download: 0, redirect: 0, sendStatus: 0, write: 0, end: 0, ...(allowed[f] || {}) };
+    assert.deepEqual(got, want, `${f}: a new way of answering that error-text.js does not see: use res.json, or clean the text by hand and say so here`);
+  }
 });
 
 test('the middleware form installs the same hook and carries the marker the route table looks for', () => {

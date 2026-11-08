@@ -176,3 +176,38 @@ test('afterSecret hands back what the check returns: the route guard answers an 
     assert.equal(slow.body, '{"body":{"a":2}}', 'a slow check still gets its body parsed after it lets the request through');
   });
 });
+
+test('speechJson and afterSecret are strict: a JSON primitive is refused by the parser (400), never handed to the route as the body (reviewer B, B04)', async () => {
+  await withApp((app, seen) => {
+    app.post('/s', speechJson, echo(seen));
+    app.post('/g', afterSecret((req, res, next) => next()), echo(seen));
+  }, async (port, seen) => {
+    for (const route of ['/s', '/g']) {
+      for (const body of ['123', 'null', '"abc"', 'true']) {
+        const r = await post(port, route, body);
+        assert.equal(r.status, 400, route + ' ' + body + ' ' + r.body);
+        assert.equal(seen.errors.at(-1).type, 'entity.parse.failed', route + ' ' + body);
+      }
+    }
+    assert.deepEqual(seen.reached, [], 'no handler saw a primitive');
+    const ok = await post(port, '/s', '[1]');
+    assert.equal(ok.status, 200, 'an array is still a JSON body the parser takes (as it always was)');
+  });
+});
+
+test('afterSecret passes an error of the check on exactly once: after the error handler answered, nothing reaches the final handler of the app (reviewer B, R02)', async () => {
+  const app = express();
+  const finals = [];
+  app.post('/err', afterSecret((req, res, next) => next(new Error('stop'))), (req, res) => res.end());
+  app.use((err, req, res, next) => { res.status(500).json({ error: 'internal' }); }); // eslint-disable-line no-unused-vars
+  // the app's own `done`: where a second next(err) from the wrapper would end up once the error handler is behind it
+  const server = await new Promise((resolve) => { const s = http.createServer((req, res) => app(req, res, (err) => { finals.push(err ? 'error: ' + err.message : 'no error'); })); s.listen(0, '127.0.0.1', () => resolve(s)); });
+  try {
+    const r = await post(server.address().port, '/err', '{"a":1}');
+    assert.equal(r.status, 500);
+    await new Promise((res) => setTimeout(res, 100));
+    assert.deepEqual(finals, [], 'a second next(err) would have reached the final handler');
+  } finally {
+    await new Promise((r) => { server.close(r); server.closeAllConnections?.(); });
+  }
+});
