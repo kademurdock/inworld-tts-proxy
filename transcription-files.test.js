@@ -1,8 +1,9 @@
 'use strict';
 // Nov 8 2026. POST /v1/audio/transcriptions capped ONE file at 160 MB but not how many files a form may hold: every file part was
 // appended to the same buffer, so a form with fifty parts of 160 MB each could ask for 8 GB of memory (the route-guard review of
-// Nov 7 2026), and the audio sent to Deepgram was the parts glued end to end. The route reads one file, the first; busboy's
-// `files: 1` skips the others without buffering them, so the memory the route can hold is the 160 MB of that one file.
+// Nov 7 2026), and the audio sent to Deepgram was the parts glued end to end. The route reads one file: the first file part that holds
+// any bytes (a browser sends an empty part for a file input nobody chose, ahead of the real one); the parts after it are read off and
+// dropped without being kept, so the memory the route holds for files is the 160 MB of that one.
 // Through the real HTTP handler, a Deepgram fixture instead of the network.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -162,6 +163,28 @@ test('a form with no bytes in any file part is still { text: "" } and reaches no
       assert.deepEqual(JSON.parse(r.body), { text: '' });
     }
     assert.equal(s.rows().length, 0);
+  } finally {
+    await s.stop();
+  }
+});
+
+test('the content type sent to Deepgram is the audio part\'s own, not the empty part\'s in front of it', async () => {
+  const port = 31950;
+  const s = start(port);
+  try {
+    assert.ok(await ready(port, s.state), s.state.log);
+    const typed = (type, bytes) => Buffer.concat([
+      Buffer.from(`--zzz${CRLF}Content-Disposition: form-data; name="audio"; filename="a.bin"${CRLF}Content-Type: ${type}${CRLF}${CRLF}`, 'latin1'),
+      bytes,
+      Buffer.from(CRLF, 'latin1'),
+    ]);
+    const before = s.rows().length;
+    const r = await upload(port, Buffer.concat([emptyPart('doc'), typed('audio/ogg', Buffer.alloc(1500, 0x41)), typed('audio/wav', Buffer.alloc(900, 0x42)), END]));
+    assert.equal(r.status, 200, JSON.stringify(r));
+    const rows = s.rows().slice(before);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].contentType, 'audio/ogg', 'the type of the part that held the audio (not octet-stream from the empty part, not wav from the file after it)');
+    assert.equal(rows[0].bytes, 1500);
   } finally {
     await s.stop();
   }

@@ -99,6 +99,32 @@ test('a label with a line break (or any control or invisible character) is a 400
     assert.match(s.state.log, /\[TTS\] stream out: label="alloy" resolved=/);
     assert.match(s.state.log, new RegExp(`\\[TTS\\] voice request: label="v{300}\\.\\.\\." -> resolved=`), 'a long label is cut at 300 characters in the log');
     assert.match(s.state.log, new RegExp(`\\[TTS\\] stream out: label="v{300}\\.\\.\\." resolved=`), 'in the streamed lane too');
+    assert.ok(await logHas(s.state, new RegExp(`\\[TTS\\] voice response: label="v{300}\\.\\.\\." resolved=`)), 'and in the response line');
+    assert.equal(s.state.exited, null);
+  } finally {
+    await s.stop();
+  }
+});
+
+test('the three preview-swap log lines print the cut copy of a long label too', async () => {
+  const s = start();
+  try {
+    assert.ok(await ready(s.state), s.state.log);
+    const long = 'w'.repeat(500);
+    // the three exact-match inputs the picker sends (server.js: NATIVE_PREVIEW_SENTINEL, NATIVE_QUICK_PREVIEW_LINE, AUDITION_TEXT)
+    const AUDITION_TEXT = [
+      "%%%calm, warm, unhurried, like the end of a long day%%% I can keep things soft and easy when that's what you need.",
+      "%%%bright, delighted, grinning ear to ear%%% Or turn it all the way up — good news deserves loud!",
+      "%%%low, slow, completely serious%%% And when it matters, I don't play around.",
+      "%%%warm, playful, a little flirty%%% So... am I the one?",
+    ].join('\n\n');
+    for (const input of ['Hi there. This is how I sound.', 'Hey — quick hello from this voice, right here with you.', AUDITION_TEXT]) {
+      const r = await speak({ input, voice: long });
+      assert.equal(r.status, 200, JSON.stringify(r).slice(0, 200));
+    }
+    for (const what of ['native preview sentinel swapped for audition script', 'native quick preview swapped for a pooled line', 'web audition script swapped for a pooled script']) {
+      assert.ok(await logHas(s.state, new RegExp(`\\[TTS\\] ${what}, label="w{300}\\.\\.\\."`)), `${what}: the line arrives with the label cut at 300 characters`);
+    }
     assert.equal(s.state.exited, null);
   } finally {
     await s.stop();
