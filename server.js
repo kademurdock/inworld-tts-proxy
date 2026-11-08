@@ -6097,7 +6097,7 @@ app.post("/v1/audio/transcriptions", (req, res) => {
 });
 
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   console.log(`Inworld TTS proxy running on port ${PORT}`);
   if (fishStretchOn() || fishExactOn()) fishStretch.warm();
   /* Part 180.5: listener reports move voices between picker sections on
@@ -6112,4 +6112,23 @@ app.listen(PORT, () => {
       secret: process.env.LIBRECHAT_PROXY_SECRET,
     });
   } catch (e) { console.warn(`[voice-moves] not started: ${e.message}`); }
+});
+// Nov 8 2026: the server's 'error' event had no listener, and an 'error' event with no listener is an uncaught exception.
+//  - At boot (not listening yet: the port is taken, or not ours): the process ends, as it did, with exit code 1 and one plain line instead of a
+//    stack from node:events. Railway restarts it (railway.toml: ON_FAILURE, three tries).
+//  - While serving (a failed accept: EMFILE when the process is out of file descriptors, the way libuv reports it): a moment of trouble, not an
+//    end. The connections already open keep being served and the next accept works once a descriptor is free. One line at most every ten seconds.
+let httpServerErrorLoggedAt = 0;
+httpServer.on("error", (err) => {
+  const what = `${err && err.code ? err.code + " " : ""}${err && err.message ? err.message : err}`;
+  if (!httpServer.listening) {
+    const line = `[proxy] cannot listen on port ${PORT}: ${what}`;
+    try { require("fs").writeSync(2, line + "\n"); } catch (_) { console.error(line); }
+    process.exit(1);
+  }
+  const now = Date.now();
+  if (now - httpServerErrorLoggedAt >= 10000) {
+    console.error(`[proxy] server error (still listening): ${what}`);
+    httpServerErrorLoggedAt = now;
+  }
 });
