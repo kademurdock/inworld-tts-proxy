@@ -688,6 +688,8 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>November 8, 2026: Android 2.17.0, rebuilt to match the iPhone app</h2>
+<p>The Android app now works like the iPhone app. Talk, the Library, Create, Play and More are built into the app instead of opening web pages, and each message in a chat is one TalkBack stop with the same actions as on the iPhone. Calls, the voice picker, characters' faces, the Character Builder, the Sound Booth, Settings, Search and Help are all new. Kade's Clubhouse and Described video still open their web pages, and the Arcade comes later. It has passed 2,735 automated checks and an emulator run but has not been tried on a real phone with TalkBack, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.17.0</a> and install it over your existing copy; it is about 78 MB.</p>
 <h2>October 8, 2026: backing vocals, stronger rhyme and fuller song sections</h2>
 <p>The Sound Booth song desk now writes backing vocals and ad-libs into the lyrics, in (parentheses), either after a lead phrase or on a line of their own. The music engine sings whatever sits inside the parentheses, so they hold sung words and never directions. The desk also reaches for creative rhyme, with two-syllable, run-together and inside-the-line rhymes and a different rhyme pattern from section to section, and it gives short pre-choruses, bridges and outros more lines. After the first draft it measures its own work for missing backing parts, lines that rhyme with nothing, an overused word, short sections and a last chorus that is a copy of the first, and asks the writer to fix just those. The notes under the draft say what it changed. Your own lyrics are never touched. The music engines have no separate backing-vocal track, so a backing part is sung as an extra phrase and not recorded as its own layer. Read the draft and adjust any line you would not sing before making a take.</p>
 <h2>October 8, 2026: clearer characters and Android 2.16.3</h2>
@@ -2320,6 +2322,16 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.17.0 (build 124): rebuilt to match the iPhone app</h2>
+<ul>
+<li><strong>Talk.</strong> Each message is one TalkBack stop, with the iPhone's actions in the iPhone's order: Open images, Copy text, Play, Reading view, Share, Edit and resend, Regenerate and Delete. Sighted family find the same list behind the three dots beside each message. Stop works, Retry checks with the server first so nothing posts twice, and the Talk list has Pin, Rename, Archive and Bookmark on every chat.</li>
+<li><strong>Calls and voices.</strong> A new call screen, one voice speed list, the voice picker, the Pronunciation Dictionary, whisper, and replies spoken while they are still being written.</li>
+<li><strong>Characters.</strong> Faces, portraits, puppet bodies and About a character, plus the full Character Builder: the editor, writing desk, voice, painted portrait, knowledge files, connections and version history.</li>
+<li><strong>Library, Create and Play.</strong> The Library player and shelves, the Sound Booth, Describe, Transcribe, the Game Room, Matchmaker, the Debate Room, the Parlor and Reverie are built into the app.</li>
+<li><strong>More.</strong> Settings, Search everything, Help, Memories, Logbook, Alerts, Announcements, Morning Brief and your account pages are built into the app. Family history is too, for accounts that have it.</li>
+<li><strong>Still on the website for now:</strong> Kade's Clubhouse and Described video open their web pages, and the Arcade is not in the Android app yet.</li>
+</ul>
+<p>2,735 automated tests, lint, release signing and file alignment passed, and the app was opened on an Android emulator, signed in to a test server, without a crash. It has not been tried on a real phone or with TalkBack yet, so tell Kade about anything that reads wrong. The download is about 78 MB, larger than before, because the painted pictures and call ringtones now live inside the app.</p>
 <h2>Android 2.16.3 (build 123): characters, conversations, and calls</h2>
 <ul>
 <li>Expressions change smoothly, and changing characters clears the previous portrait immediately. Describe character opens a scrollable description of the current supported portrait in chat or calls, even with faces hidden.</li>
