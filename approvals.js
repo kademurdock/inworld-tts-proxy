@@ -104,6 +104,7 @@ async function requestApproval({ kind, params, summary, revert, agentId }) {
 /* ---- executors, registered by github.js and railway.js ---- */
 const executors = new Map();
 const { afterSecret } = require("./body-limits");
+const { scrubbingErrors } = require("./error-text");
 function registerExecutor(kind, fn) {
   executors.set(kind, fn);
 }
@@ -132,7 +133,8 @@ router.post("/approvals/execute", executeSecret, async (req, res) => {
 });
 
 // GET /approvals/:id  (Forge's GitHub or Railway bearer)
-router.get("/approvals/:id", async (req, res) => {
+// Nov 8 2026: it checks its own Bearer, so it is not behind afterSecret(); its error text is cleaned all the same (error-text.js).
+router.get("/approvals/:id", scrubbingErrors, async (req, res) => {
   const h = req.get("authorization") || "";
   const tok = h.startsWith("Bearer ") ? h.slice(7) : "";
   const allowed = [process.env.GITHUB_PROXY_SECRET, process.env.RAILWAY_PROXY_SECRET, process.env.LIBRECHAT_PROXY_SECRET].filter(Boolean);

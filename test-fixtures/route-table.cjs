@@ -8,7 +8,7 @@ const realListen = express.application.listen;
 express.application.listen = function listen(...args) {
   const routes = [];
   const topLevel = [];
-  const handlers = (route) => route.stack.map((l) => ({ name: l.name || '<anonymous>', parsesJson: l.handle.parsesJson === true }));
+  const handlers = (route) => route.stack.map((l) => ({ name: l.name || '<anonymous>', parsesJson: l.handle.parsesJson === true, scrubsErrors: l.handle.scrubsErrors === true }));
   const walk = (stack, depth) => {
     for (const l of stack) {
       if (l.route) {

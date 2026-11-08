@@ -540,7 +540,7 @@ router.post('/librechat/seat-speech', auth, async (req, res) => {
       const buf = Buffer.from(await r.arrayBuffer());
       const contentType = r.headers.get('content-type') || '';
       const out = { status: r.status, contentType, bytes: buf.length, ms: Date.now() - t0 };
-      if (!r.ok || /json|text/.test(contentType)) out.said = buf.toString('utf8').slice(0, 200);
+      if (!r.ok || /json|text/.test(contentType)) out.said = scrubText(buf.toString('utf8').slice(0, 200)); // Nov 8 2026: the site's reply, cleaned like an error text (error-text.js)
       if (transcribe && r.ok && buf.length) {
         const fd = new FormData();
         const type = contentType.split(';')[0] || 'audio/wav';
@@ -550,7 +550,7 @@ router.post('/librechat/seat-speech', auth, async (req, res) => {
         const said = await st.text();
         let text = null;
         try { text = JSON.parse(said).text; } catch (_) { /* not JSON */ }
-        out.stt = { status: st.status, ms: Date.now() - s0, text: text != null ? String(text).slice(0, 200) : said.slice(0, 200) };
+        out.stt = { status: st.status, ms: Date.now() - s0, text: scrubText(text != null ? String(text).slice(0, 200) : said.slice(0, 200)) };
       }
       return out;
     });

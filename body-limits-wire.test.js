@@ -279,5 +279,12 @@ test('the running server has no global JSON parser, and every route that takes a
     const speech = table.routes.find((r) => r.method === 'post' && r.path === '/v1/audio/speech');
     assert.equal(speech.chain[0].name, 'jsonParser', 'the speech route has its own parser, the first thing in its chain (the speech gate is mounted ahead of the route)');
     assert.equal(table.routes.filter((r) => r.chain.some((h) => h.parsesJson) && r.chain.slice(1).some((h) => h.parsesJson)).length, 0, 'no route checks a secret twice');
+    // every route of the secret-gated families cleans its error text (error-text.js): its first handler is afterSecret() or the scrubbing middleware
+    const FAMILIES = ['/librechat', '/github', '/railway', '/twilio', '/bridge', '/balances', '/codemagic', '/approvals'];
+    const inFamilies = table.routes.filter((r) => FAMILIES.some((p) => r.path === p || r.path.startsWith(p + '/')));
+    assert.ok(inFamilies.length >= 85, 'the families have their routes: ' + inFamilies.length);
+    const dirty = inFamilies.filter((r) => !(r.chain[0].parsesJson || r.chain[0].scrubsErrors)).map((r) => `${r.method} ${r.path}`);
+    assert.deepEqual(dirty, [], 'these routes of the secret-gated families do not clean their error text (error-text.js): ' + dirty.join(', '));
+    assert.ok(inFamilies.some((r) => r.method === 'get' && r.path === '/approvals/:id' && r.chain[0].scrubsErrors && !r.chain[0].parsesJson), 'GET /approvals/:id checks its own Bearer and uses the middleware');
   }, ['route-table.cjs']);
 });

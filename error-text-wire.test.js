@@ -5,9 +5,7 @@
 // (The text itself stays on these routes on purpose: Forge, an LLM, diagnoses from it, and the bridge's battery matches /403|forbidden/ in it.)
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
 const http = require('node:http');
-const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
@@ -21,11 +19,10 @@ const SECRETS = {
 const CLEAN = 'connect failed: open "<path>" via https://svc.test/path?key=<hidden> and Authorization: Bearer <hidden>';
 
 function start(extra = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tts-error-text-'));
   const env = {
     ...process.env, PORT: String(PORT), ...SECRETS, INWORLD_API_KEY: 'offline', FISH_API_KEY: 'offline', VOICE_AUTO_MOVE: '0',
     GITHUB_PAT: 'ghp_dummy', RAILWAY_API_TOKEN: 'dummy-railway-token', LIBRECHAT_USER: 'wire-test@example.invalid', LIBRECHAT_PASS: 'dummy-pass',
-    LIBRECHAT_BASE: 'http://127.0.0.1:9', LIBRECHAT_MIN_GAP_MS: '1', PROVIDER_RECEIPT: path.join(dir, 'r.jsonl'), ...extra,
+    LIBRECHAT_BASE: 'http://127.0.0.1:9', LIBRECHAT_MIN_GAP_MS: '1', ...extra,
   };
   delete env.SPEECH_GATE;
   const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/fetch-leaks.cjs'), 'server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -78,6 +75,7 @@ test('every secret-gated route cleans the error text it answers, keeps the other
       ['github commit (details)', 'POST', '/github/commit', GH, { owner: 'o', repo: 'r', path: 'p', content: 'c', message: 'm' }, 502, (j) => { assert.equal(j.error, 'GitHub commit failed'); return j.details; }],
       ['railway read', 'GET', '/railway/overview', RW, undefined, 502, (j) => j.error],
       ['librechat (fail helper)', 'GET', '/librechat/agents', LIB, undefined, 502, (j) => j.error],
+      ['approvals read (checks its own Bearer)', 'GET', '/approvals/abc123', LIB, undefined, 502, (j) => j.error],
       ['approvals executor', 'POST', '/approvals/execute', AP, { approvalId: 'a', kind: 'github-commit', params: { owner: 'o', repo: 'r', path: 'p', content: 'c', message: 'm' } }, 502, (j) => { assert.equal(j.ok, false); return j.error; }],
     ];
     for (const [label, method, route, headers, body, status, pick] of cases) {
@@ -110,6 +108,44 @@ test('the other answers of a gated route are as they were: 401 for no secret, 40
     assert.equal(s.state.exited, null);
   } finally {
     await s.stop();
+  }
+});
+
+test('ask-stream writes its error as a Server-Sent-Events frame, and the frame is cleaned too', async () => {
+  const s = start();
+  try {
+    assert.ok(await ready(s.state), s.state.log);
+    const r = await call('POST', '/librechat/ask-stream', LIB, { agentId: 'agent_x', messages: [{ role: 'user', content: 'hello' }] });
+    assert.equal(r.status, 200, r.text.slice(0, 200));
+    const frames = r.text.split('data: ').slice(1).map((f) => f.trim());
+    const errorFrame = frames.find((f) => f.startsWith('{"error"'));
+    assert.ok(errorFrame, 'an error frame came back: ' + r.text.slice(0, 300));
+    for (const bad of NEVER) assert.doesNotMatch(errorFrame, bad, `the frame still holds ${bad}`);
+    assert.equal(JSON.parse(errorFrame).error, CLEAN);
+    assert.equal(s.state.exited, null);
+  } finally {
+    await s.stop();
+  }
+});
+
+const SEAT_ENV = { LIBRECHAT_SEAT_VISCHECK_USER: 'seat@example.invalid', LIBRECHAT_SEAT_VISCHECK_PASS: 'seat-pass' };
+
+test('seat-speech hands back the site\'s reply in a 200 answer, and the reply is cleaned (said, and the transcript text)', async () => {
+  for (const [mode, ask, check] of [
+    ['seat-error', { seat: 'vischeck', input: 'Hello there.' }, (j) => { assert.equal(j.status, 500); assert.equal(j.said, 'the site failed at <path> with ?key=<hidden> and Bearer <hidden>'); }],
+    ['seat-stt', { seat: 'vischeck', input: 'Hello there.', transcribe: true }, (j) => { assert.equal(j.status, 200); assert.equal(j.stt.text, 'transcript read from <path> ?key=<hidden>'); }],
+  ]) {
+    const s = start({ FETCH_FIXTURE_MODE: mode, ...SEAT_ENV });
+    try {
+      assert.ok(await ready(s.state), s.state.log);
+      const r = await call('POST', '/librechat/seat-speech', LIB, ask);
+      assert.equal(r.status, 200, `${mode}: ${r.text.slice(0, 300)}`);
+      for (const bad of [/SECRET99/, /SECRET77/, /abcdefgh12345678/, /\/app\/api/, /\/app\/y\.js/]) assert.doesNotMatch(r.text, bad, `${mode}: the answer still holds ${bad}`);
+      check(JSON.parse(r.text));
+      assert.equal(s.state.exited, null);
+    } finally {
+      await s.stop();
+    }
   }
 });
 
