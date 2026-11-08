@@ -8,7 +8,8 @@
  * and said why it had to be global: the global parser runs before any route-level limit can raise it. The price, found by the
  * route-guard review of Nov 7: a STRANGER could make the service parse 10 MB of JSON. A 10 KB gzip body that inflates to a
  * 10 MB `[{},{},...]` held the event loop for 0.4 to 1.2 seconds per request on a fresh process (more on a busy one), cost
- * 175 to 435 MB of heap each, and eight at once ended a 1 GB process. body-parser counts the INFLATED bytes against the limit, so
+ * 175 to 435 MB of heap each (eight at once took a process with a 1 GB heap to 805 MB of RSS; the first design of the route guard, which let
+ * them wait for the 404, ran out of memory with eight). body-parser counts the INFLATED bytes against the limit, so
  * the compression itself was never the hole: the limit was simply 10 MB for everyone.
  *
  * THE RULE NOW. Nobody's body is read until the service knows what it is dealing with, and nobody who is not trusted gets
