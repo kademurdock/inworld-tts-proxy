@@ -86,6 +86,9 @@ async function slowestHealthz(port, work) {
 
 const JSON_TYPE = { 'Content-Type': 'application/json' };
 const HEADER_OF_DIGITS = '1'.repeat(15800);
+// The old regex cost 0.2 to 2.3 s a request, so twelve at once held /healthz 2.4 s and more (3.3 s to over 20 s measured by three reviewers); the fixed code holds it for
+// milliseconds. 1,000 ms sits between the two with room for a busy machine (a 400 ms limit failed once at 417 ms while four other jobs ran).
+const HELD_LIMIT_MS = 1000;
 
 for (const [port, mode, extra, want] of [
   [31947, 'log', {}, 400],
@@ -99,9 +102,9 @@ for (const [port, mode, extra, want] of [
         assert.equal(r.kind, 'response', JSON.stringify(r));
         assert.equal(r.status, want, `${mode} mode answers a stranger's empty speech request ${want}: ${r.body}`);
       }
-      assert.ok(worst < 400, `/healthz was held up for ${worst} ms`);
+      assert.ok(worst < HELD_LIMIT_MS, `/healthz was held up for ${worst} ms`);
       const sttHeld = await slowestHealthz(port, () => hold('/v1/audio/transcriptions'));
-      assert.ok(sttHeld.worst < 400, `the transcription route: /healthz was held up for ${sttHeld.worst} ms`);
+      assert.ok(sttHeld.worst < HELD_LIMIT_MS, `the transcription route: /healthz was held up for ${sttHeld.worst} ms`);
       assert.match(state.log, /\[speech-gate\] (would refuse|refused): missing POST \/v1\/audio\/speech caller=unnamed origin=none net=\? ua="none"/, 'the stranger is still named in the log, with a short net label');
       assert.equal(state.exited, null);
     });
