@@ -21,7 +21,7 @@
  *                   res.json(status, body), res.json(body, status)); res.send(object) goes through res.json and is covered. A 200 carries
  *                   data, such as the text of a file, which is not an error text and may well hold a path or a key as part of its content.
  *                   NOT covered: res.jsonp, res.send(string), res.end, a body that is not a plain object. No route of the gated modules
- *                   writes an error that way (grep before adding one).
+ *                   writes an error that way, and error-text.test.js counts the ways of answering in those modules, so a new one fails the test.
  * scrubbingErrors   the same as an Express middleware, for a gated route that does not go through afterSecret() (GET /approvals/:id checks
  *                   its own Bearer).
  *
