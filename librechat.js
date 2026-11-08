@@ -32,6 +32,7 @@ const AGENT_VIEWER = "agent_viewer";
 
 // Nov 8 2026: the secret is checked first and the JSON body (up to 10 MB) is read only for a caller that passes (body-limits.js).
 const { afterSecret } = require("./body-limits");
+const { scrubText } = require("./error-text"); // an error text goes out without a container path or a token in it
 function checkSecret(req, res, next) {
   const h = req.get("authorization") || "";
   const tok = h.startsWith("Bearer ") ? h.slice(7) : null;
@@ -1642,6 +1643,11 @@ router.get("/balances", auth, async (req, res) => {
   } catch (e) {
     out.search = { error: e.message };
   }
+  // Nov 8 2026: this answer is a 200 that carries one error text per source that failed (a fetch error, "bfl 500: <the provider's body>"): clean
+  // those like the error answers of the rest of this router (error-text.js).
+  for (const source of Object.keys(out)) {
+    if (out[source] && typeof out[source].error === "string") out[source] = { ...out[source], error: scrubText(out[source].error) };
+  }
   res.json(out);
 });
 
@@ -2137,7 +2143,7 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
     res.write("data: [DONE]\n\n");
   } catch (err) {
     console.error("[lcAskStream] error:", err.message);
-    try { res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`); } catch {}
+    try { res.write(`data: ${JSON.stringify({ error: scrubText(err.message) })}\n\n`); } catch {} // Nov 8 2026: cleaned like every other error text of this router (error-text.js)
   }
   clearInterval(keepalive);
   res.end();

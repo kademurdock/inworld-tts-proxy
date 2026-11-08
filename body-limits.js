@@ -33,8 +33,13 @@
  * reached, because the global parser had already read the body; they still are not, for the same reason, one step later.
  * Only requests that were failing anyway are answered differently: a bad secret with a body that is not JSON is now 401 or
  * 403 (it was 400), and a body that is not JSON sent to a path no route answers is now 404 (it was 400).
+ *
+ * ONE MORE DUTY OF THE GATE (also Nov 8 2026): afterSecret() makes every ERROR answer of a secret-gated route lose the paths and tokens in its
+ * text (error-text.js) and keep every other word. The text stays because its readers need it (Forge diagnoses from it; the bridge's battery
+ * matches /403|forbidden/ in it). A success answer is never touched.
  */
 const express = require("express");
+const { scrubErrorAnswers } = require("./error-text");
 
 const GATED_LIMIT = "10mb";
 const SPEECH_LIMIT = "256kb";
@@ -49,6 +54,7 @@ const speechJson = express.json({ limit: SPEECH_LIMIT });
  */
 function afterSecret(check) {
   function secretThenBody(req, res, next) {
+    scrubErrorAnswers(res); // an error answer of a secret-gated route keeps its words and loses paths and tokens (error-text.js)
     check(req, res, (arg) => (arg ? next(arg) : gatedJson(req, res, next)));
   }
   secretThenBody.parsesJson = true; // the route table of body-limits-wire.test.js looks for this
