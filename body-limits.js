@@ -37,14 +37,16 @@
  * Only requests that were failing anyway are answered differently: a bad secret with a body that is not JSON is now 401 or
  * 403 (it was 400), and a body that is not JSON sent to a path no route answers is now 404 (it was 400).
  *
- * KNOWN RESIDUAL (black-box review of Nov 8, finding A3). A caller that asks for `Connection: close` (HTTP/1.0 clients, Python's urllib,
- * a Node client with agent: false), sends a wrong secret AND a body of about 256 KB or more is answered before its body is read, and Node
- * closes that connection right after the answer with the rest of the body unread: the client's TCP stack can turn that into a reset, and
- * a client library may report ECONNRESET instead of the 401 (256 KB: 1 try in 20; 512 KB to 1 MB: 35 to 40 in 100; 4 MB: all; a raw socket
- * still reads the 401). Keep-alive clients, every caller with the right secret and every unknown path are not affected (Express's final
- * handler reads a body off the wire before it answers 404). The body used to be read first, so that answer was clean. The remedy is to hold
- * the answer until the body has been read off the wire (not parsed), or a lingering close; neither is built, because the price of the
- * residual is a confusing error for a misconfigured close-client with a big body, and the remedy is new code on every gated route.
+ * KNOWN RESIDUAL (black-box reviews of Nov 8, findings A3 and C3). A caller that asks for `Connection: close` (HTTP/1.0 clients, Python's
+ * urllib, a Node client with agent: false) and sends a body of about 256 KB or more to a route that answers without needing it (a wrong or
+ * missing secret on a gated route; a GET route that takes no body, such as /help) is answered before its body is read, and Node closes that
+ * connection right after the answer with the rest of the body unread: the client's TCP stack can turn that into a reset, and a client
+ * library may report ECONNRESET instead of the answer (wrong secret: 256 KB 1 try in 20, 512 KB to 1 MB 35 to 40 in 100, 4 MB all; GET /help
+ * with a 3 MB body 13 of 40, with 10 MB 10 of 40; a raw socket still reads the answer). Keep-alive clients, every caller with the right
+ * secret on a route that reads its body, and every unknown path are not affected (Express's final handler reads a body off the wire before it
+ * answers 404). The body used to be read first, so those answers were clean. The remedy is to hold the answer until the body has been read
+ * off the wire (not parsed), or a lingering close; neither is built, because the price of the residual is a confusing error for a
+ * close-client that sends a big body where none is wanted, and the remedy is new code in the path of every route.
  *
  * ONE MORE DUTY OF THE GATE (also Nov 8 2026): afterSecret() makes every error answer sent with res.json (status 400 and up) of a route it guards
  * lose the paths and tokens in its text (error-text.js) and keep every other word. The text stays because its readers need it (Forge diagnoses
