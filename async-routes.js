@@ -219,18 +219,24 @@ function clearStaleHeaders(res) {
   }
 }
 
+// The headers an error may ask to be sent with its answer (http-errors style `headers`): the send module puts Content-Range: bytes * /N
+// on its 416, which a resuming downloader needs; http-errors puts Allow on a 405, WWW-Authenticate on a 401, Retry-After on a 429.
+// Nothing else: any other header on an error (framing, encoding, cookies, caching, a download's disposition) belongs to some other answer.
+const ERROR_HEADERS = ["content-range", "retry-after", "allow", "www-authenticate"];
+
 /**
- * What an error asks to be sent with its answer (http-errors style `headers`: the send module puts Content-Range: bytes * /N
- * on its 416, which a resuming downloader needs; Express's own handler sends them). Only used for a status that came from the
- * error itself, and the content type and length stay ours.
+ * Send those headers of the error with its answer, for a status that came from the error itself (Express's own handler sends them
+ * all). The content type and length stay ours, and a header Node refuses (a bad character in a value) is skipped.
  */
 function applyErrorHeaders(res, err) {
   try {
     const headers = err.headers;
     if (!headers || typeof headers !== "object") return;
     for (const name of Object.keys(headers)) {
-      if (/^content-(type|length)$/i.test(name)) continue;
-      try { res.setHeader(name, headers[name]); } catch (e) { /* a header Node refuses is skipped */ }
+      if (!ERROR_HEADERS.includes(name.toLowerCase())) continue;
+      const value = headers[name];
+      if (typeof value !== "string" && typeof value !== "number") continue;
+      try { res.setHeader(name, value); } catch (e) { /* a header Node refuses is skipped */ }
     }
   } catch (e) { /* a getter that throws */ }
 }
@@ -260,9 +266,10 @@ function closeStarted(res) {
  * synchronous throw, an error body-parser raised) is logged with its cause and answered:
  *   - a 4xx that an HTTP library attached keeps its status (any err.status or err.statusCode from 400 to 499: body-parser's
  *     400 and 413, Express's 400 for a bad percent-escape, a missing sendFile target's 404), with the standard reason as the text;
- *   - for a 4xx, err.headers go out with it (a 416's Content-Range), except the content type and length;
+ *   - for a 4xx, the error's own Content-Range, Retry-After, Allow and WWW-Authenticate headers go out with it (a 416's
+ *     Content-Range tells a resuming downloader the size); no other header of the error does;
  *   - anything else, including a 5xx status on the error, is 500 {"error":"Proxy internal error"}: no stack, no message,
- *     nothing about the inside. err.headers and a status the handler had already set on the response are not used;
+ *     nothing about the inside, and none of the error's headers. A status the handler had already set on the response is not used;
  *   - when the answer (or part of it) is already out, closeStarted decides how it ends.
  * The cause may be anything that was thrown (a Symbol, an object without a prototype): describeCause copes.
  */

@@ -20,7 +20,7 @@ export default [{
                Buffer:"readonly", __dirname:"readonly", setTimeout:"readonly", clearTimeout:"readonly",
                setInterval:"readonly", clearInterval:"readonly", fetch:"readonly", URL:"readonly", URLSearchParams:"readonly",
                AbortController:"readonly", TextEncoder:"readonly", TextDecoder:"readonly",
-               structuredClone:"readonly", exports:"writable", global:"readonly", WebSocket:"readonly" }
+               structuredClone:"readonly", exports:"writable", global:"readonly", WebSocket:"readonly", performance:"readonly" }
   },
   rules: { "no-undef": "error" }
 }];

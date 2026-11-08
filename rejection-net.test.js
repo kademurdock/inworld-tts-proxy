@@ -141,6 +141,14 @@ test('if the net itself fails while handling a rejection it says so, and the cou
   assert.deepEqual(state.exits, []);
 });
 
+test('the starting-up rule does not depend on the clock: a broken clock cannot stop a failing boot from ending', () => {
+  const { net, state } = rig({ now: () => { throw new Error('the clock broke'); } });
+  state.up = 100;
+  net.onRejection(new Error('while starting'));
+  assert.deepEqual(state.exits, [1]);
+  assert.match(state.lines[0], /while starting up/);
+});
+
 test('with nothing injected the window runs on a monotonic clock: a wall clock stepped back does not keep old rejections alive', (t) => {
   let wall = 1700000000000;
   let monotonic = 5000;

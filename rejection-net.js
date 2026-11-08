@@ -56,15 +56,16 @@ function createRejectionNet(options = {}) {
   function onRejection(reason) {
     try {
       total += 1;
-      const t = now();
-      times.push(t);
-      const recent = recentCount(t);
       const what = describeCause(reason) + framesOf(reason);
+      // (the starting-up rule comes before anything reads the clock: whatever else fails in here, a boot that fails still ends)
       if (uptimeMs() < graceMs) {
         say("[proc] unhandled rejection while starting up, ending the process so the deploy fails its health check: " + what);
         exit(1);
         return;
       }
+      const t = now();
+      times.push(t);
+      const recent = recentCount(t);
       if (recent > limit) {
         say("[proc] " + recent + " unhandled rejections in the last " + seconds + " seconds, ending the process so the platform restarts it; the last one: " + what);
         exit(1);

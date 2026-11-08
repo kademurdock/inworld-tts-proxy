@@ -127,26 +127,39 @@ test('a 4xx on status wins over one on statusCode, and every code from 400 to 49
   }
 });
 
-test('a 4xx brings its own err.headers (a 416\'s Content-Range), except the content type and length; an error that becomes a 500 brings none', (t) => {
-  const err416 = Object.assign(new Error('Range Not Satisfiable'), { status: 416, headers: { 'Content-Range': 'bytes */1234', 'Retry-After': '5', 'Content-Type': 'text/evil', 'content-length': '1' } });
+test('a 4xx brings its own Content-Range, Retry-After, Allow and WWW-Authenticate and nothing else of err.headers; an error that becomes a 500 brings none', (t) => {
+  const err416 = Object.assign(new Error('Range Not Satisfiable'), {
+    status: 416,
+    headers: {
+      'content-range': 'bytes */1234', 'Retry-After': 5, ALLOW: 'GET, HEAD', 'WWW-Authenticate': 'Basic realm="x"',
+      'Content-Type': 'text/evil', 'content-length': '1', 'Transfer-Encoding': 'chunked', 'Content-Encoding': 'gzip', 'Set-Cookie': 'a=b', 'Content-Disposition': 'attachment',
+      'Cache-Control': 'public, max-age=60', Connection: 'close', 'X-Content-Type-Options': 'sniff', 'X-Whatever': '1',
+    },
+  });
   const res = fakeRes({ headers: { 'content-range': 'bytes 0-9/99', 'content-type': 'application/octet-stream' } });
   run(t, err416, { res });
   t.mock.restoreAll();
+  assert.deepEqual(Object.keys(res.headers).sort(), ['allow', 'content-range', 'retry-after', 'www-authenticate', 'x-content-type-options']);
   assert.equal(res.headers['content-range'], 'bytes */1234', 'the failing handler\'s range is replaced by the error\'s');
-  assert.equal(res.headers['retry-after'], '5');
-  assert.equal(res.headers['content-type'], undefined, 'the type stays ours (res.json sets it)');
-  assert.equal(res.headers['content-length'], undefined);
+  assert.equal(res.headers['retry-after'], 5);
+  assert.equal(res.headers.allow, 'GET, HEAD');
+  assert.equal(res.headers['x-content-type-options'], 'nosniff', 'the error cannot take that one over');
   const res503 = fakeRes();
   run(t, Object.assign(new Error('x'), { status: 503, headers: { 'Retry-After': '5' } }), { res: res503 });
   t.mock.restoreAll();
   assert.equal(res503.calls[0][1], 500);
   assert.equal(res503.headers['retry-after'], undefined, 'a 503 on the error is a 500 here, and its headers belong to the 503');
+  // odd values: an array, an object, a boolean and null are not header values
+  const odd = fakeRes();
+  run(t, Object.assign(new Error('x'), { status: 429, headers: { 'Retry-After': ['5'], Allow: { a: 1 }, 'WWW-Authenticate': true, 'content-range': null } }), { res: odd });
+  t.mock.restoreAll();
+  assert.deepEqual(Object.keys(odd.headers), ['x-content-type-options']);
   for (const headers of [null, 'text', 5, [], { get a() { throw new Error('no'); } }, { fine: 'yes' }]) {
     const r = fakeRes();
     run(t, Object.assign(new Error('x'), { status: 400, headers }), { res: r });
     t.mock.restoreAll();
     assert.deepEqual(r.calls, [['status', 400], ['json', '{"error":"Bad Request"}']], String(headers));
-    assert.deepEqual(Object.keys(r.headers).sort(), headers && headers.fine ? ['fine', 'x-content-type-options'] : ['x-content-type-options'], 'only real header entries are sent: ' + String(headers));
+    assert.deepEqual(Object.keys(r.headers), ['x-content-type-options'], 'no header entry is sent: ' + String(headers));
   }
   const getter = fakeRes();
   run(t, Object.defineProperty(Object.assign(new Error('x'), { status: 400 }), 'headers', { get() { throw new Error('no'); } }), { res: getter });
@@ -543,17 +556,25 @@ test('the error answer of a failed download does not look like the download: JSO
   });
 });
 
-test('a 416 keeps the Content-Range its error carries (what send puts there for a resuming downloader), through the real server', async (t) => {
+test('a 416 keeps the Content-Range its error carries (what send puts there for a resuming downloader), through the real server; a header Node refuses is skipped', async (t) => {
   t.mock.method(console, 'warn', () => {});
+  const CR = String.fromCharCode(13), LF = String.fromCharCode(10);
   await withApp((app) => {
     app.get('/file', (req, res, next) => {
       res.set({ 'Content-Type': 'application/zip', 'Content-Range': 'bytes 0-9/1234', ETag: 'W/"x"' });
-      next(Object.assign(new Error('Range Not Satisfiable'), { status: 416, headers: { 'Bad Name': 'x', 'Content-Range': 'bytes */1234', 'Content-Type': 'text/evil' } }));
+      next(Object.assign(new Error('Range Not Satisfiable'), {
+        status: 416,
+        // the first value tries to smuggle a second header in; Node refuses it, and that must not cost the headers after it
+        headers: { 'Retry-After': '5' + CR + LF + 'Set-Cookie: evil=1', 'Content-Range': 'bytes */1234', 'Transfer-Encoding': 'chunked', 'Content-Type': 'text/evil' },
+      }));
     });
   }, async ({ port }) => {
     const r = await call(port, '/file', { headers: { Range: 'bytes=99999999-' } });
     assert.equal(r.status, 416);
     assert.equal(r.headers['content-range'], 'bytes */1234');
+    assert.equal(r.headers['retry-after'], undefined);
+    assert.equal(r.headers['set-cookie'], undefined);
+    assert.equal(r.headers['transfer-encoding'], undefined, 'a Content-Length answer, not a chunked one');
     assert.match(r.headers['content-type'], /^application\/json/);
     assert.equal(r.body, '{"error":"Range Not Satisfiable"}');
   });
