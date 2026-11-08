@@ -1198,29 +1198,7 @@ function pcm16ToMulaw(pcmBuf) {
 //     of failing the whole reply.
 const MAX_CONCURRENT_INWORLD_CALLS = 6;
 
-function createLimiter(maxConcurrent) {
-  let active = 0;
-  const queue = [];
-
-  function next() {
-    if (active >= maxConcurrent || queue.length === 0) return;
-    active++;
-    const { fn, resolve, reject } = queue.shift();
-    fn()
-      .then(resolve, reject)
-      .finally(() => {
-        active--;
-        next();
-      });
-  }
-
-  return function limit(fn) {
-    return new Promise((resolve, reject) => {
-      queue.push({ fn, resolve, reject });
-      next();
-    });
-  };
-}
+const { createLimiter } = require("./call-limiter"); // Nov 8 2026: moved to its own module, so it can be tested and its promise chain has an end
 
 const inworldLimiter = createLimiter(MAX_CONCURRENT_INWORLD_CALLS);
 
