@@ -3833,8 +3833,10 @@ function guardAsync(handler) {
   };
 }
 
-// Nov 10 2026: the longest `input` one speech request may carry (see the check in the handler below).
-const SPEECH_MAX_INPUT_CHARS_DEFAULT = 32767;
+// Nov 10 2026: the longest `input` one speech request may carry (see the check in the handler below). 100,000 is the LibreChat fork's
+// own ceiling (DEFAULT_TTS_MAX_INPUT_CHARS in its speechCap.js, env KADE_TTS_MAX_INPUT_CHARS): if that is ever raised there, raise
+// SPEECH_MAX_INPUT_CHARS here with it, or the website's auto-play goes silent for the texts in between.
+const SPEECH_MAX_INPUT_CHARS_DEFAULT = 100000;
 function speechMaxInputChars() {
   const set = Number(process.env.SPEECH_MAX_INPUT_CHARS);
   return Number.isInteger(set) && set >= 1000 ? set : SPEECH_MAX_INPUT_CHARS_DEFAULT;
@@ -3865,8 +3867,11 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   }
   // Nov 10 2026 (the follow-up the Nov 8 hardening left): the 256 KB limit bounds the PARSE, but the work below (the prep chain, the
   // provider calls and the shaping of the audio that comes back) grows with the text, and the audio of one long text holds the loop for
-  // as long as it is. The biggest request the LibreChat fork can make is one `input` of 32,767 characters (body-limits.js), so a longer
-  // one is no real request: 413, before any provider is asked or paid. SPEECH_MAX_INPUT_CHARS (a whole number of 1,000 or more) moves it.
+  // as long as it is. The biggest request the LibreChat fork can make is one `input` of 100,000 characters: its auto-play lane
+  // (streamAudio) sends a finished message whole, capped only by its speechCap.js, and a real one of 56,702 characters is on record there.
+  // (The first shape of this check said 32,767, which is the fork's MANUAL lane only, and would have silenced auto-play for every reply
+  // longer than that; corrected the same day by the independent review.) A longer one is no real request: 413, before any provider is
+  // asked or paid. SPEECH_MAX_INPUT_CHARS (a whole number of 1,000 or more) moves it.
   if (input.length > speechMaxInputChars()) {
     return res.status(413).json({ error: `Input too long: at most ${speechMaxInputChars()} characters in one request` });
   }

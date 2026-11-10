@@ -2,8 +2,12 @@
 // Nov 10 2026. The Nov 8 hardening capped the JSON of a speech request at 256 KB but left the length of `input` itself open: the work
 // the route does grows with the text (one 257 KB request held the loop 1.1 s with an instant provider, and long audio holds it for as
 // long as it is), and every character is paid for at the provider. The biggest request the LibreChat fork can make is one `input` of
-// 32,767 characters, so a longer one is refused 413 before any provider is asked. Real server, real HTTP handler; the provider fixture
+// 100,000 characters, so a longer one is refused 413 before any provider is asked. Real server, real HTTP handler; the provider fixture
 // blocks the network, so nothing leaves the machine and nothing is paid.
+// The first shape of this cap was 32,767 (the fork's manual lane, which cuts longer text into pieces of 4,000). The independent review
+// of the same day found that the fork's AUTO-PLAY lane sends a finished message whole, up to 100,000 characters (its speechCap.js, which
+// records a real request of 56,702): at 32,767 the website would have gone silent for every reply longer than that. The second test
+// below is that case.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -64,7 +68,7 @@ function speak(port, input) {
       res.on('end', () => resolve({ status: res.statusCode, raw: Buffer.concat(chunks), body: Buffer.concat(chunks).toString() }));
     });
     req.on('error', reject);
-    req.setTimeout(120000, () => req.destroy(new Error('no answer in 120 s')));
+    req.setTimeout(300000, () => req.destroy(new Error('no answer in 300 s')));
     req.end(data);
   });
 }
@@ -72,17 +76,30 @@ const providerCalls = (state) => fs.readFileSync(state.receipt, 'utf8').split(/\
 const sentence = 'The river ran low that summer. ';
 const textOf = (n) => sentence.repeat(Math.ceil(n / sentence.length)).slice(0, n);
 
-test('an input one character over 32,767 is refused 413 and no provider is asked; an ordinary request still gets its audio', async () => {
+test('an input one character over 100,000 is refused 413 and no provider is asked; an ordinary request still gets its audio', async () => {
   await withServer(32001, {}, async ({ port, state }) => {
     const ok = await speak(port, 'Hello there.');
     assert.equal(ok.status, 200, ok.body.slice(0, 200));
     assert.equal(ok.raw.toString('latin1', 0, 4), 'RIFF', 'audio came back');
     const before = providerCalls(state);
     assert.ok(before >= 1, 'the provider fixture saw the ordinary request');
-    const over = await speak(port, textOf(32768));
+    const over = await speak(port, textOf(100001));
     assert.equal(over.status, 413);
-    assert.equal(over.body, '{"error":"Input too long: at most 32767 characters in one request"}');
+    assert.equal(over.body, '{"error":"Input too long: at most 100000 characters in one request"}');
     assert.equal(providerCalls(state), before, 'nothing was sent to a provider for the refused text');
+    assert.equal(state.exited, null);
+  });
+});
+
+test('what the website\'s auto-play really sends is spoken: one finished reply of 32,768, of 56,702 and of 100,000 characters', async () => {
+  await withServer(32007, {}, async ({ port, state }) => {
+    for (const n of [32768, 56702, 100000]) {
+      const before = providerCalls(state);
+      const r = await speak(port, textOf(n));
+      assert.equal(r.status, 200, `${n} characters: ${r.body.slice(0, 200)}`);
+      assert.equal(r.raw.toString('latin1', 0, 4), 'RIFF', `${n} characters: audio came back`);
+      assert.ok(providerCalls(state) > before, `${n} characters: the provider was asked`);
+    }
     assert.equal(state.exited, null);
   });
 });

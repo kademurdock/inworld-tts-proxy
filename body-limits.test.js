@@ -105,11 +105,14 @@ test('speechJson: 256 KB of JSON, counted after inflating, the fork\'s biggest r
     app.post('/s', speechJson, echo(seen));
   }, async (port) => {
     const KB = 1024;
-    // the biggest request the LibreChat fork can make: one `input` of 32,767 characters (TTSService.js cuts longer text into pieces of 4,000)
+    // the biggest request the LibreChat fork's manual lane can make: one `input` of 32,767 characters (TTSService.js cuts longer text into
+    // pieces of 4,000). Its auto-play lane sends up to 100,000 in one request (body-limits.js, the correction of Nov 10 2026).
     const cjk = await post(port, '/s', JSON.stringify({ input: '语'.repeat(32767), voice: 'alloy', model: 'tts-1' }));
     assert.equal(cjk.status, 200, '32,767 characters at three bytes each (about 98 KB) are read');
     const controls = await post(port, '/s', JSON.stringify({ input: '\u0001'.repeat(32767) }));
     assert.equal(controls.status, 200, 'and so is the same number of characters that JSON escapes to six bytes each (about 196 KB)');
+    const autoPlay = await post(port, '/s', JSON.stringify({ input: 'The river ran low. '.repeat(6000).slice(0, 100000), voice: 'alloy', model: 'tts-1' }));
+    assert.equal(autoPlay.status, 200, 'the fork\'s auto-play ceiling, 100,000 characters of plain English in one request, is read');
     const under = await post(port, '/s', JSON.stringify({ input: 'a'.repeat(255 * KB) }));
     assert.equal(under.status, 200);
     const over = await post(port, '/s', JSON.stringify({ input: 'a'.repeat(257 * KB) }));

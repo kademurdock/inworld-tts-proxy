@@ -20,9 +20,13 @@
  *     missing secret is answered 401 or 403 without the body being read (it used to be answered after the 10 MB parse);
  *   - POST /v1/audio/speech reads its JSON AFTER the speech gate (SPEECH_GATE=enforce answers a stranger 401 first) and at
  *     most 256 KB. Real requests are small: the longest `input` in a day of live traffic (709 requests, Nov 6 and 7 2026) was
- *     1,587 characters, and the biggest request the LibreChat fork can make is one `input` of 32,767 characters (its
+ *     1,587 characters, and the biggest request the LibreChat fork's MANUAL lane can make is one `input` of 32,767 characters (its
  *     TTSService cuts longer text into pieces of 4,000), which is 98 KB of JSON at three bytes a character; 256 KB leaves room
- *     for escapes. Express's own default of 100 KB served this route until July 18. Worst case for JSON.parse at 256 KB is
+ *     for escapes. CORRECTION, Nov 10 2026: that is not the fork's biggest request. Its auto-play lane (streamAudio) sends a finished
+ *     message as ONE `input` of up to 100,000 characters (speechCap.js there, which records a real one of 56,702). In plain English
+ *     that is about 100 KB of JSON and fits; a text of more than about 85,000 characters written mostly in three-byte characters
+ *     (Chinese, Japanese, Korean) does not fit 256 KB and has been answered 413 by this parser since Nov 8. The cap on `input`
+ *     itself (server.js, SPEECH_MAX_INPUT_CHARS) is 100,000 for the same reason. Express's own default of 100 KB served this route until July 18. Worst case for JSON.parse at 256 KB is
  *     0.3 to 0.4 s of CPU (flat arrays and deep ones measured), and only for a caller the gate let through (or any caller in gate mode
  *     `log`). That is the PARSE. The work the route does for the text it is given (shaping and limiting the audio that comes back) grows with
  *     the length of `input`, not with the JSON, and this cap does not bound it: one 257 KB request held the loop 1.1 s in the black-box
