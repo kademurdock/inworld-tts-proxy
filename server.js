@@ -1643,7 +1643,14 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   };
   const encoded = await fishBody(payload, fishModelId, selectedReferenceStore, reference);
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
+  let timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
+  // Nov 10 2026 (independent review): FISH_TIMEOUT_MS is how long Fish may stay SILENT, not how long a clip may take. It is started
+  // again when the headers arrive and with every piece of the body, because Fish streams its audio while it generates: one timer from
+  // the request to the end of the body cut a clip that was still arriving, asked for it three more times and then failed it.
+  const stillAlive = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
+  };
   let response;
   try {
     response = await fetch("https://api.fish.audio/v1/tts", {
@@ -1665,7 +1672,10 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     }
     throw err;
   }
-  // Nov 10 2026: the timer covers the body too (it was cleared here, at the headers); a body it cuts is a timeout like any other.
+  // Nov 10 2026: the timer watches the body too (it was cleared here, at the headers, so a clip that began and then stalled was waited
+  // on with no limit of our own); a body it cuts is a timeout like any other. It cuts a body that has gone quiet, never one that is
+  // still sending (stillAlive above).
+  stillAlive();
   const bodyWithinTimeout = async (read) => {
     try {
       return await read();
@@ -1694,7 +1704,20 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     throw err;
   }
 
-  let pcm = Buffer.from(await bodyWithinTimeout(() => response.arrayBuffer()));
+  // Read piece by piece so each piece can restart the timer. An answer with no readable stream (the fakes of the unit tests) is read
+  // whole, under the one timer, as before.
+  let pcm = await bodyWithinTimeout(async () => {
+    if (!response.body || typeof response.body.getReader !== "function") return Buffer.from(await response.arrayBuffer());
+    const reader = response.body.getReader();
+    const pieces = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      stillAlive();
+      if (value && value.byteLength) pieces.push(Buffer.from(value.buffer, value.byteOffset, value.byteLength));
+    }
+    return Buffer.concat(pieces);
+  });
   if (!pcm.length) throw new Error("Empty audio from Fish API");
   if (pcm.length % 2) pcm = pcm.slice(0, pcm.length - 1); // s16 alignment guard
   if (keepTake) keepTake.pcm = pcm; // before the cap below: see fishStretchTake

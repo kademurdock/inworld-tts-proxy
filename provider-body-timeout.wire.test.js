@@ -11,7 +11,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
-function start(port, extra = {}) {
+function start(port, extra = {}, fixture = 'provider-stalled-body.cjs') {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tts-body-timeout-'));
   const receipt = path.join(dir, 'requests.jsonl');
   const stalls = path.join(dir, 'stalls.txt');
@@ -28,7 +28,7 @@ function start(port, extra = {}) {
   };
   for (const k of ['INWORLD_WRITER', 'INWORLD_TALK_FILLERS', 'INWORLD_TALK_SOUNDS', 'FISH_TALK_FILLERS', 'FISH_TALK_SOUNDS', 'FISH_DEFAULT_DIRECTION', 'TTS_TALK_CALM', 'SPEECH_GATE']) delete env[k];
   const child = spawn(process.execPath, ['--require', path.join(__dirname, 'test-fixtures/provider.cjs'),
-    '--require', path.join(__dirname, 'test-fixtures/provider-stalled-body.cjs'), 'server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    '--require', path.join(__dirname, `test-fixtures/${fixture}`), 'server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
   const state = { log: '', exited: null, stalls };
   child.stdout.on('data', (x) => { state.log += x; });
   child.stderr.on('data', (x) => { state.log += x; });
@@ -75,6 +75,27 @@ test('a Fish clip that stalls after its headers is cut at the timeout and asked 
     assert.equal(r.raw.toString('latin1', 0, 4), 'RIFF', 'audio came back');
     assert.equal(fishCalls(s.state), 2, 'the stalled take, then one more that answered');
     assert.match(s.state.log, /fish chunk attempt 1\/4 failed \(Fish request timed out after 700ms\)/);
+  } finally {
+    await s.stop();
+  }
+});
+
+// Nov 10 2026, the independent review. The first shape of this fix kept ONE timer from the request to the end of the body, which made
+// FISH_TIMEOUT_MS a limit on the whole clip: a Fish that was still sending audio when it ran out was cut, asked again three more times
+// (each one paid for) and then failed, where the code before it had spoken the clip. The timer is a silence detector now: it starts
+// again with every piece of the body. Here the clip takes about 2 s, three times the 700 ms timeout, and is never quiet for 700 ms.
+test('a Fish clip that takes longer than the timeout in all, but never stops sending, is spoken from the one request', async () => {
+  const s = start(32006, { LIVE_PIECES: '20', LIVE_PIECE_MS: '100' }, 'provider-slow-live-body.cjs');
+  try {
+    assert.ok(await ready(32006, s.state), s.state.log.slice(-2000));
+    const r = await speak(32006, 'fish:fixture', 30000);
+    assert.equal(r.kind, 'response', `an answer came back; log: ${s.state.log.slice(-600)}`);
+    assert.equal(r.status, 200, `the live clip is spoken, not cut; log: ${s.state.log.slice(-600)}`);
+    assert.equal(r.raw.toString('latin1', 0, 4), 'RIFF', 'audio came back');
+    assert.ok(r.raw.length >= 44 + 20 * 4800 * 0.9, `the whole clip, not its first pieces (got ${r.raw.length} bytes)`);
+    assert.ok(r.ms >= 1500, `the clip really did outlast the 700 ms timeout (${r.ms} ms)`);
+    assert.equal(fishCalls(s.state), 1, 'one Fish request: nothing was cut, so nothing was asked for twice');
+    assert.doesNotMatch(s.state.log, /Fish request timed out/);
   } finally {
     await s.stop();
   }
