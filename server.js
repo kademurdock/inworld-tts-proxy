@@ -1281,18 +1281,34 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
   });
 
   } catch (err) {
+    clearTimeout(timer);
     if (err.name === "AbortError") {
       const e = new Error(`Inworld request timed out after ${INWORLD_TIMEOUT_MS}ms`);
       e.isTimeout = true;
       throw e;
     }
     throw err;
-  } finally {
-    clearTimeout(timer);
   }
+  // Nov 10 2026: the timer used to be cleared here, as soon as the HEADERS arrived, so an answer that began and then stalled was
+  // awaited with no limit of our own (and held a provider slot). It now covers the body too, and a body it cuts is a timeout like
+  // any other (isTimeout: the caller's ladder asks again).
+  const bodyWithinTimeout = async (read) => {
+    try {
+      return await read();
+    } catch (err) {
+      if (err && err.name === "AbortError") {
+        const e = new Error(`Inworld request timed out after ${INWORLD_TIMEOUT_MS}ms`);
+        e.isTimeout = true;
+        throw e;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
   if (!response.ok) {
-    const errorText = await response.text();
+    const errorText = await bodyWithinTimeout(() => response.text());
     const err = new Error(`Inworld API error ${response.status}: ${errorText}`);
     err.status = response.status;
     err.isRateLimit = response.status === 429;
@@ -1311,7 +1327,7 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
     throw err;
   }
 
-  const data = await response.json();
+  const data = await bodyWithinTimeout(() => response.json());
   if (!data.audioContent) {
     throw new Error("No audioContent in Inworld response");
   }
@@ -1641,18 +1657,32 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
       body: encoded.body,
     });
   } catch (err) {
+    clearTimeout(timer);
     if (err.name === "AbortError") {
       const e = new Error(`Fish request timed out after ${FISH_TIMEOUT_MS}ms`);
       e.isTimeout = true;
       throw e;
     }
     throw err;
-  } finally {
-    clearTimeout(timer);
   }
+  // Nov 10 2026: the timer covers the body too (it was cleared here, at the headers); a body it cuts is a timeout like any other.
+  const bodyWithinTimeout = async (read) => {
+    try {
+      return await read();
+    } catch (err) {
+      if (err && err.name === "AbortError") {
+        const e = new Error(`Fish request timed out after ${FISH_TIMEOUT_MS}ms`);
+        e.isTimeout = true;
+        throw e;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
   if (!response.ok) {
-    const errorText = await response.text();
+    const errorText = await bodyWithinTimeout(() => response.text());
     const err = new Error(`Fish API error ${response.status}: ${errorText}`);
     err.status = response.status;
     err.isRateLimit = response.status === 429;
@@ -1664,7 +1694,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     throw err;
   }
 
-  let pcm = Buffer.from(await response.arrayBuffer());
+  let pcm = Buffer.from(await bodyWithinTimeout(() => response.arrayBuffer()));
   if (!pcm.length) throw new Error("Empty audio from Fish API");
   if (pcm.length % 2) pcm = pcm.slice(0, pcm.length - 1); // s16 alignment guard
   if (keepTake) keepTake.pcm = pcm; // before the cap below: see fishStretchTake
