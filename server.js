@@ -3803,6 +3803,12 @@ function guardAsync(handler) {
   };
 }
 
+// Nov 10 2026: the longest `input` one speech request may carry (see the check in the handler below).
+const SPEECH_MAX_INPUT_CHARS_DEFAULT = 32767;
+function speechMaxInputChars() {
+  const set = Number(process.env.SPEECH_MAX_INPUT_CHARS);
+  return Number.isInteger(set) && set >= 1000 ? set : SPEECH_MAX_INPUT_CHARS_DEFAULT;
+}
 app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) => { // Nov 8 2026: 256 KB of JSON, read after the speech gate above (body-limits.js)
   const { input, voice = selectedVoicePicker?.voices[0] || "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
@@ -3826,6 +3832,13 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   // every listener at once. The speech API takes a string and nothing else: say so, and stay up.
   if (typeof input !== "string") {
     return res.status(400).json({ error: "Invalid field: input must be a string" });
+  }
+  // Nov 10 2026 (the follow-up the Nov 8 hardening left): the 256 KB limit bounds the PARSE, but the work below (the prep chain, the
+  // provider calls and the shaping of the audio that comes back) grows with the text, and the audio of one long text holds the loop for
+  // as long as it is. The biggest request the LibreChat fork can make is one `input` of 32,767 characters (body-limits.js), so a longer
+  // one is no real request: 413, before any provider is asked or paid. SPEECH_MAX_INPUT_CHARS (a whole number of 1,000 or more) moves it.
+  if (input.length > speechMaxInputChars()) {
+    return res.status(413).json({ error: `Input too long: at most ${speechMaxInputChars()} characters in one request` });
   }
   if (!convertsToText(voice)) {
     return res.status(400).json({ error: "Invalid field: voice must be a string" });
