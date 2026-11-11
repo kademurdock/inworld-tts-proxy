@@ -28,13 +28,14 @@ const IW11 = new Set(['aei', 'o', 'ee', 'bmp', 'fv', 'l', 'r', 'th', 'qw', 'u', 
 const SPOKEN = /[\p{L}\p{N}]/u;
 const BRACKETED = /^\[[^\]\n]{1,40}\]$/;
 
-/** The switches, read per request so Railway can change them without a deploy. */
+/** The switches, read per request so Railway can change them without a deploy. The size cap stops at
+ *  512 KB because every reader (the website, readTrack) throws away a bigger track. */
 function timingSettings(source = process.env) {
   const kb = Number(source.INWORLD_TIMINGS_MAX_KB);
   return {
     on: source.INWORLD_TIMINGS !== '0',
     words: source.INWORLD_TIMINGS_WORDS !== '0',
-    maxBytes: Math.round((Number.isFinite(kb) && kb > 0 ? Math.min(kb, 4096) : 256) * 1024),
+    maxBytes: Math.round((Number.isFinite(kb) && kb > 0 ? Math.min(kb, 512) : 256) * 1024),
   };
 }
 

@@ -32,6 +32,7 @@ test('settings: on by default, each switch read from the environment given', () 
   assert.deepEqual(timingSettings({}), { on: true, words: true, maxBytes: 256 * 1024 });
   assert.deepEqual(timingSettings({ INWORLD_TIMINGS: '0', INWORLD_TIMINGS_WORDS: '0', INWORLD_TIMINGS_MAX_KB: '8' }), { on: false, words: false, maxBytes: 8 * 1024 });
   assert.equal(timingSettings({ INWORLD_TIMINGS_MAX_KB: 'lots' }).maxBytes, 256 * 1024);
+  assert.equal(timingSettings({ INWORLD_TIMINGS_MAX_KB: '4096' }).maxBytes, 512 * 1024); // no reader keeps more
   assert.equal(timingAsked('1', undefined), true);
   assert.equal(timingAsked(undefined, true), true);
   assert.equal(timingAsked(undefined, 'true'), true);

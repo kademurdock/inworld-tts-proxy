@@ -5,6 +5,7 @@
 //     pause limiter and the seams have something to move.
 // Like Inworld, lipsyncAlignment comes back only when the request had lipsyncConfig, and wordAlignment
 // only with timestampType WORD. A chunk whose text contains "nolip" comes back without lipsyncAlignment.
+// A chunk whose text contains "refusetiming" is refused (400) while it asks for timings, and spoken without them.
 const fs = require('fs');
 const path = require('path');
 const SR = 24000;
@@ -54,6 +55,7 @@ global.fetch = async (url, options) => {
   fs.appendFileSync(process.env.PROVIDER_RECEIPT, JSON.stringify({ url: u, body }) + '\n');
   if (u.includes('fish.audio')) return new Response(pcm);
   if (u.endsWith(':stream')) return new Response(JSON.stringify({ result: { audioContent: wav.toString('base64') } }) + '\n', { headers: { 'Content-Type': 'application/x-ndjson' } });
+  if (/refusetiming/.test(body.text) && (body.lipsyncConfig || body.timestampType)) return Response.json({ code: 3, message: 'fixture: timing fields refused' }, { status: 400 });
   const timestampInfo = {};
   if (body.timestampType === 'WORD') timestampInfo.wordAlignment = info.wordAlignment;
   if (body.lipsyncConfig && !/nolip/.test(body.text)) timestampInfo.lipsyncAlignment = info.lipsyncAlignment;

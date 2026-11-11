@@ -162,3 +162,19 @@ test('a chunk Inworld answered without lip-sync is a gap in cov and counts as mi
     assert.equal(h.inworldTimings.missing, 1);
   });
 });
+
+test('Inworld refusing a chunk for the timing fields still gives the audio, without a track', async () => {
+  const input = 'Well, refusetiming is just a word in this sentence for the fake Inworld.';
+  await withServer(32107, {}, async ({ say, requests, log }) => {
+    const plain = await say({ input });
+    const asked = await say({ input }, ASK);
+    const [, refused, again] = requests();
+    assert.deepEqual(refused.body.lipsyncConfig, {});
+    assert.equal('lipsyncConfig' in again.body, false);
+    assert.equal('timestampType' in again.body, false);
+    assert.equal(requests().length, 3, 'one ask without timings, no ladder of retries');
+    assert.equal(asked.sha, plain.sha, 'the same audio as an unasked request');
+    assert.notEqual(asked.timing, '1');
+    assert.ok(log().includes('refused with timings (400)'), 'the log says why the track is missing');
+  });
+});

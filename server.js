@@ -1410,6 +1410,15 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
       } catch (err) {
         lastErr = err;
         const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
+        /* Nov 11 2026: timings are decoration and the audio always wins. Should Inworld ever refuse
+         * a chunk for the timing fields (a 4xx that is not 429), ask once more without them; the
+         * chunk then simply carries no track (buildTrack leaves its span uncovered). */
+        if (timing && !retryable && err.status >= 400 && err.status < 500) {
+          console.warn(`[TTS] chunk refused with timings (${err.status}) -- asking again without them`);
+          timing = null;
+          attempt--;
+          continue;
+        }
         if (!retryable || attempt === maxAttempts) { noteChunk('failed'); throw err; }
         console.warn(`[TTS] chunk attempt ${attempt}/${maxAttempts} failed (${err.message}) -- retrying`);
         // Backoff with a little jitter so retries from a batch of chunks
