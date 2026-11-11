@@ -1,0 +1,1161 @@
+{
+ "usage": {
+  "processedCharactersCount": 102,
+  "modelId": "inworld-tts-2"
+ },
+ "timestampInfo": {
+  "wordAlignment": {
+   "words": [
+    "Well",
+    ", ",
+    "I",
+    " ",
+    "finally",
+    " ",
+    "got",
+    " ",
+    "the",
+    " ",
+    "garden",
+    " ",
+    "planted",
+    " ",
+    "this",
+    " ",
+    "morning",
+    ", ",
+    "and",
+    " ",
+    "honestly",
+    " ",
+    "the",
+    " ",
+    "tomatoes",
+    " ",
+    "look",
+    " ",
+    "happier",
+    " ",
+    "than",
+    " ",
+    "I",
+    " ",
+    "do",
+    ".",
+    ""
+   ],
+   "wordStartTimeSeconds": [
+    0,
+    0.59,
+    0.8,
+    0.95,
+    0.95,
+    1.4,
+    1.4,
+    1.57,
+    1.57,
+    1.65,
+    1.65,
+    1.99,
+    1.99,
+    2.33,
+    2.33,
+    2.51,
+    2.51,
+    2.92,
+    3.11,
+    3.38,
+    3.41,
+    3.96,
+    4,
+    4.1,
+    4.1,
+    4.59,
+    4.59,
+    4.71,
+    4.71,
+    5.16,
+    5.16,
+    5.29,
+    5.29,
+    5.45,
+    5.45,
+    5.72,
+    6.02
+   ],
+   "wordEndTimeSeconds": [
+    0.59,
+    0.8,
+    0.95,
+    0.95,
+    1.4,
+    1.4,
+    1.57,
+    1.57,
+    1.65,
+    1.65,
+    1.99,
+    1.99,
+    2.33,
+    2.33,
+    2.51,
+    2.51,
+    2.92,
+    3.11,
+    3.38,
+    3.41,
+    3.96,
+    4,
+    4.1,
+    4.1,
+    4.59,
+    4.59,
+    4.71,
+    4.71,
+    5.16,
+    5.16,
+    5.29,
+    5.29,
+    5.45,
+    5.45,
+    5.72,
+    6.02,
+    6.0384583
+   ],
+   "phoneticDetails": [
+    {
+     "wordIndex": 0,
+     "phones": [
+      {
+       "phoneSymbol": "w",
+       "startTimeSeconds": 0,
+       "durationSeconds": 0.17,
+       "visemeSymbol": "qw"
+      },
+      {
+       "phoneSymbol": "\u02c8\u025b",
+       "startTimeSeconds": 0.17,
+       "durationSeconds": 0.11,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "l",
+       "startTimeSeconds": 0.28,
+       "durationSeconds": 0.31,
+       "visemeSymbol": "l"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 1,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 0.59,
+       "durationSeconds": 0.21,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 2,
+     "phones": [
+      {
+       "phoneSymbol": "a",
+       "startTimeSeconds": 0.8,
+       "durationSeconds": 0.08,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 0.88,
+       "durationSeconds": 0.07,
+       "visemeSymbol": "ee"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 3,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 0.95,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 4,
+     "phones": [
+      {
+       "phoneSymbol": "f",
+       "startTimeSeconds": 0.95,
+       "durationSeconds": 0.16,
+       "visemeSymbol": "fv"
+      },
+      {
+       "phoneSymbol": "\u02c8a",
+       "startTimeSeconds": 1.11,
+       "durationSeconds": 0.1,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 1.21,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 1.25,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 1.28,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "l",
+       "startTimeSeconds": 1.31,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "l"
+      },
+      {
+       "phoneSymbol": "i",
+       "startTimeSeconds": 1.36,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "ee"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 5,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 1.4,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 6,
+     "phones": [
+      {
+       "phoneSymbol": "\u0261",
+       "startTimeSeconds": 1.4,
+       "durationSeconds": 0.07,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u0251",
+       "startTimeSeconds": 1.47,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "t",
+       "startTimeSeconds": 1.51,
+       "durationSeconds": 0.06,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 7,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 1.57,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 8,
+     "phones": [
+      {
+       "phoneSymbol": "\u00f0",
+       "startTimeSeconds": 1.57,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "th"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 1.61,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "aei"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 9,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 1.65,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 10,
+     "phones": [
+      {
+       "phoneSymbol": "\u0261",
+       "startTimeSeconds": 1.65,
+       "durationSeconds": 0.09,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u02c8\u0251\u02d0",
+       "startTimeSeconds": 1.74,
+       "durationSeconds": 0.08,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "\u0279",
+       "startTimeSeconds": 1.82,
+       "durationSeconds": 0.06,
+       "visemeSymbol": "r"
+      },
+      {
+       "phoneSymbol": "d",
+       "startTimeSeconds": 1.88,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 1.91,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 1.94,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 11,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 1.99,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 12,
+     "phones": [
+      {
+       "phoneSymbol": "p",
+       "startTimeSeconds": 1.99,
+       "durationSeconds": 0.07,
+       "visemeSymbol": "bmp"
+      },
+      {
+       "phoneSymbol": "l",
+       "startTimeSeconds": 2.06,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "l"
+      },
+      {
+       "phoneSymbol": "\u02c8\u00e6",
+       "startTimeSeconds": 2.11,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 2.16,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "t",
+       "startTimeSeconds": 2.21,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 2.26,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "d",
+       "startTimeSeconds": 2.3,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 13,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 2.33,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 14,
+     "phones": [
+      {
+       "phoneSymbol": "\u00f0",
+       "startTimeSeconds": 2.33,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "th"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 2.37,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "s",
+       "startTimeSeconds": 2.41,
+       "durationSeconds": 0.1,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 15,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 2.51,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 16,
+     "phones": [
+      {
+       "phoneSymbol": "m",
+       "startTimeSeconds": 2.51,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "bmp"
+      },
+      {
+       "phoneSymbol": "\u02c8\u0254",
+       "startTimeSeconds": 2.56,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "o"
+      },
+      {
+       "phoneSymbol": "\u0279",
+       "startTimeSeconds": 2.59,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "r"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 2.63,
+       "durationSeconds": 0.06,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 2.69,
+       "durationSeconds": 0.08,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "\u014b",
+       "startTimeSeconds": 2.77,
+       "durationSeconds": 0.15,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 17,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 2.92,
+       "durationSeconds": 0.19,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 18,
+     "phones": [
+      {
+       "phoneSymbol": "\u00e6",
+       "startTimeSeconds": 3.11,
+       "durationSeconds": 0.2,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 3.31,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "d",
+       "startTimeSeconds": 3.34,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 19,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 3.38,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 20,
+     "phones": [
+      {
+       "phoneSymbol": "\u02c8\u0251",
+       "startTimeSeconds": 3.41,
+       "durationSeconds": 0.11,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 3.52,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 3.57,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "s",
+       "startTimeSeconds": 3.62,
+       "durationSeconds": 0.07,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "t",
+       "startTimeSeconds": 3.69,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "l",
+       "startTimeSeconds": 3.72,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "l"
+      },
+      {
+       "phoneSymbol": "i",
+       "startTimeSeconds": 3.77,
+       "durationSeconds": 0.19,
+       "visemeSymbol": "ee"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 21,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 3.96,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 22,
+     "phones": [
+      {
+       "phoneSymbol": "\u00f0",
+       "startTimeSeconds": 4,
+       "durationSeconds": 0.06,
+       "visemeSymbol": "th"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 4.06,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "aei"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 23,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 4.1,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 24,
+     "phones": [
+      {
+       "phoneSymbol": "t",
+       "startTimeSeconds": 4.1,
+       "durationSeconds": 0.09,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 4.19,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "m",
+       "startTimeSeconds": 4.23,
+       "durationSeconds": 0.06,
+       "visemeSymbol": "bmp"
+      },
+      {
+       "phoneSymbol": "\u02c8e",
+       "startTimeSeconds": 4.29,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 4.34,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "t",
+       "startTimeSeconds": 4.39,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "o",
+       "startTimeSeconds": 4.43,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "o"
+      },
+      {
+       "phoneSymbol": "\u028a",
+       "startTimeSeconds": 4.47,
+       "durationSeconds": 0.07,
+       "visemeSymbol": "o"
+      },
+      {
+       "phoneSymbol": "z",
+       "startTimeSeconds": 4.54,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 25,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 4.59,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 26,
+     "phones": [
+      {
+       "phoneSymbol": "l",
+       "startTimeSeconds": 4.59,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "l"
+      },
+      {
+       "phoneSymbol": "\u028a",
+       "startTimeSeconds": 4.62,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "o"
+      },
+      {
+       "phoneSymbol": "k",
+       "startTimeSeconds": 4.66,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 27,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 4.71,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 28,
+     "phones": [
+      {
+       "phoneSymbol": "h",
+       "startTimeSeconds": 4.71,
+       "durationSeconds": 0.14,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "\u02c8\u00e6",
+       "startTimeSeconds": 4.85,
+       "durationSeconds": 0.08,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "p",
+       "startTimeSeconds": 4.93,
+       "durationSeconds": 0.08,
+       "visemeSymbol": "bmp"
+      },
+      {
+       "phoneSymbol": "i",
+       "startTimeSeconds": 5.01,
+       "durationSeconds": 0.07,
+       "visemeSymbol": "ee"
+      },
+      {
+       "phoneSymbol": "\u0259",
+       "startTimeSeconds": 5.08,
+       "durationSeconds": 0.08,
+       "visemeSymbol": "aei"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 29,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 5.16,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 30,
+     "phones": [
+      {
+       "phoneSymbol": "\u00f0",
+       "startTimeSeconds": 5.16,
+       "durationSeconds": 0.06,
+       "visemeSymbol": "th"
+      },
+      {
+       "phoneSymbol": "\u00e6",
+       "startTimeSeconds": 5.22,
+       "durationSeconds": 0.03,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "n",
+       "startTimeSeconds": 5.25,
+       "durationSeconds": 0.04,
+       "visemeSymbol": "cdgknstxyz"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 31,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 5.29,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 32,
+     "phones": [
+      {
+       "phoneSymbol": "a",
+       "startTimeSeconds": 5.29,
+       "durationSeconds": 0.11,
+       "visemeSymbol": "aei"
+      },
+      {
+       "phoneSymbol": "\u026a",
+       "startTimeSeconds": 5.4,
+       "durationSeconds": 0.05,
+       "visemeSymbol": "ee"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 33,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 5.45,
+       "durationSeconds": 0,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 34,
+     "phones": [
+      {
+       "phoneSymbol": "d",
+       "startTimeSeconds": 5.45,
+       "durationSeconds": 0.18,
+       "visemeSymbol": "cdgknstxyz"
+      },
+      {
+       "phoneSymbol": "u",
+       "startTimeSeconds": 5.63,
+       "durationSeconds": 0.09,
+       "visemeSymbol": "o"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 35,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 5.72,
+       "durationSeconds": 0.3,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    },
+    {
+     "wordIndex": 36,
+     "phones": [
+      {
+       "phoneSymbol": "[silence]",
+       "startTimeSeconds": 6.02,
+       "durationSeconds": 0.018458351,
+       "visemeSymbol": "bmp"
+      }
+     ],
+     "isPartial": false
+    }
+   ]
+  },
+  "lipsyncAlignment": {
+   "visemes": [
+    "sil",
+    "ou",
+    "E",
+    "nn",
+    "oh",
+    "nn",
+    "sil",
+    "aa",
+    "E",
+    "aa",
+    "FF",
+    "aa",
+    "nn",
+    "ih",
+    "kk",
+    "aa",
+    "DD",
+    "TH",
+    "aa",
+    "kk",
+    "aa",
+    "RR",
+    "DD",
+    "aa",
+    "nn",
+    "PP",
+    "nn",
+    "E",
+    "nn",
+    "DD",
+    "aa",
+    "DD",
+    "TH",
+    "aa",
+    "SS",
+    "PP",
+    "oh",
+    "RR",
+    "nn",
+    "ih",
+    "kk",
+    "sil",
+    "kk",
+    "ih",
+    "E",
+    "nn",
+    "sil",
+    "oh",
+    "aa",
+    "nn",
+    "ih",
+    "SS",
+    "nn",
+    "ih",
+    "TH",
+    "aa",
+    "DD",
+    "aa",
+    "PP",
+    "E",
+    "DD",
+    "oh",
+    "SS",
+    "nn",
+    "aa",
+    "kk",
+    "E",
+    "PP",
+    "ih",
+    "RR",
+    "TH",
+    "aa",
+    "nn",
+    "aa",
+    "DD",
+    "ih",
+    "RR",
+    "ou",
+    "sil"
+   ],
+   "visemeStartTimeSeconds": [
+    0,
+    0.0875,
+    0.1475,
+    0.2775,
+    0.3875,
+    0.5075,
+    0.7475,
+    0.8775,
+    0.8875,
+    0.8975,
+    0.9475,
+    1.1375,
+    1.2375,
+    1.3875,
+    1.4575,
+    1.5075,
+    1.5575,
+    1.6075,
+    1.6375,
+    1.6775,
+    1.7775,
+    1.8375,
+    1.8975,
+    1.9375,
+    1.9575,
+    2.0175,
+    2.0875,
+    2.1375,
+    2.1875,
+    2.2375,
+    2.2875,
+    2.3175,
+    2.3575,
+    2.3875,
+    2.4375,
+    2.5075,
+    2.5775,
+    2.6275,
+    2.6675,
+    2.7175,
+    2.7875,
+    2.9975,
+    3.1275,
+    3.1875,
+    3.2775,
+    3.3375,
+    3.4275,
+    3.4475,
+    3.4975,
+    3.5375,
+    3.6075,
+    3.6375,
+    3.7375,
+    3.7975,
+    4.0675,
+    4.0875,
+    4.1475,
+    4.2175,
+    4.2375,
+    4.3175,
+    4.4175,
+    4.4875,
+    4.5275,
+    4.6075,
+    4.6575,
+    4.6775,
+    4.8775,
+    4.9475,
+    5.0375,
+    5.1275,
+    5.1775,
+    5.2475,
+    5.2875,
+    5.3175,
+    5.4475,
+    5.5375,
+    5.5975,
+    5.6075,
+    5.8375
+   ],
+   "visemeEndTimeSeconds": [
+    0.0875,
+    0.1475,
+    0.2775,
+    0.3875,
+    0.5075,
+    0.7475,
+    0.8775,
+    0.8875,
+    0.8975,
+    0.9475,
+    1.1375,
+    1.2375,
+    1.3875,
+    1.4575,
+    1.5075,
+    1.5575,
+    1.6075,
+    1.6375,
+    1.6775,
+    1.7775,
+    1.8375,
+    1.8975,
+    1.9375,
+    1.9575,
+    2.0175,
+    2.0875,
+    2.1375,
+    2.1875,
+    2.2375,
+    2.2875,
+    2.3175,
+    2.3575,
+    2.3875,
+    2.4375,
+    2.5075,
+    2.5775,
+    2.6275,
+    2.6675,
+    2.7175,
+    2.7875,
+    2.9975,
+    3.1275,
+    3.1875,
+    3.2775,
+    3.3375,
+    3.4275,
+    3.4475,
+    3.4975,
+    3.5375,
+    3.6075,
+    3.6375,
+    3.7375,
+    3.7975,
+    4.0675,
+    4.0875,
+    4.1475,
+    4.2175,
+    4.2375,
+    4.3175,
+    4.4175,
+    4.4875,
+    4.5275,
+    4.6075,
+    4.6575,
+    4.6775,
+    4.8775,
+    4.9475,
+    5.0375,
+    5.1275,
+    5.1775,
+    5.2475,
+    5.2875,
+    5.3175,
+    5.4475,
+    5.5375,
+    5.5975,
+    5.6075,
+    5.8375,
+    6.0384583
+   ]
+  }
+ },
+ "_note": "Inworld TTS-2 REST answer recorded Nov 11 2026 (a neutral garden sentence); audioContent removed, the fake provider generates a tone of the same length."
+}

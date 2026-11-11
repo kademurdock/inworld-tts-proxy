@@ -54,6 +54,12 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
   let run = 0; // ms of silence seen in the current silent run
   let kept = 0; // ms of that run already let through
   const stats = { silentMs: 0, droppedMs: 0, runsShortened: 0, longestRunMs: 0 };
+  // Nov 11 2026 (timing-track.js): where the dropped windows sat on the clip as it came in, as
+  // [startMs, endMs] with touching windows joined, so word and mouth times can follow the cut.
+  // Bookkeeping only: the bytes out are exactly what they were.
+  const cuts = [];
+  let consumed = 0; // input bytes before `data[0]` of the current push (the carry's own start)
+  const bytesPerMs = (sampleRate * 2) / 1000;
   let shortened = false;
   // A kept silent window waits one window to learn whether a cut follows it (then its tail fades out),
   // and the first silent window kept after a cut fades in: a join never steps. Speech is never faded.
@@ -95,6 +101,10 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
           if (held) { out.push(faded(held, false)); held = null; }
           afterCut = true;
           stats.droppedMs += WIN_MS;
+          const from = (consumed + at) / bytesPerMs, to = (consumed + at + winBytes) / bytesPerMs;
+          const last = cuts[cuts.length - 1];
+          if (last && Math.abs(last[1] - from) < 1e-6) last[1] = to;
+          else cuts.push([from, to]);
           if (!shortened) { shortened = true; stats.runsShortened++; }
         }
       } else {
@@ -107,6 +117,7 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
       }
     }
     carry = Buffer.from(data.subarray(windows * winBytes));
+    consumed += windows * winBytes;
     return out.length ? Buffer.concat(out) : Buffer.alloc(0);
   }
 
@@ -117,16 +128,16 @@ function createPauseLimiter({ sampleRate = 24000, kneeMs = 350, slope = 0.5, max
     return rest;
   }
 
-  return { push, flush, stats, get windowBytes() { return winBytes; } };
+  return { push, flush, stats, cuts, get windowBytes() { return winBytes; } };
 }
 
 /** A whole clip's PCM bytes in, the limited PCM bytes out (same limiter, one push). */
 function limitPauses(pcm, sampleRate, settings = pauseSettings()) {
-  if (!pcm || pcm.length < 4) return { pcm, stats: null };
+  if (!pcm || pcm.length < 4) return { pcm, stats: null, cuts: [] };
   const lim = createPauseLimiter({ sampleRate, kneeMs: settings.kneeMs, slope: settings.slope, maxMs: settings.maxMs, thresholdDb: settings.thresholdDb });
   const body = lim.push(pcm);
   const tail = lim.flush();
-  return { pcm: tail.length ? Buffer.concat([body, tail]) : body, stats: lim.stats };
+  return { pcm: tail.length ? Buffer.concat([body, tail]) : body, stats: lim.stats, cuts: lim.cuts };
 }
 
 module.exports = { pauseSettings, createPauseLimiter, limitPauses, WIN_MS };

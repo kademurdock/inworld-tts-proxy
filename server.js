@@ -60,6 +60,8 @@ const fishDirector = createDirector();
 const { createWriter: createInworldWriter, writerOn: inworldWriterOn } = require('./inworld-writer');
 const inworldWriter = createInworldWriter();
 const { pauseSettings: inworldPauseSettings, createPauseLimiter: createInworldPauseLimiter, limitPauses: limitInworldPauses } = require('./inworld-pauses');
+// Nov 11 2026: Inworld's mouth shapes and word times ride the WAV as a `kdtm` chunk for the faces (timing-track.js).
+const { timingSettings: inworldTimingSettings, timingAsked: inworldTimingAsked, lipsyncSpans: inworldLipsyncSpans, buildTrack: buildTimingTrack, writeWavWithTrack } = require('./timing-track');
 const { steerSettings: inworldSteerSettings, steeredRate: inworldSteeredRate, steeredInstruction: inworldSteeredInstruction } = require('./inworld-steer');
 const { balanceSteeringRuns, setRepairLogger: setSteeringRepairLogger } = require('./steering-balance');
 // Nov 6 2026: one log line whenever the balancer repairs a message (a stray run dropped, a forgotten closer
@@ -1082,13 +1084,20 @@ function buildSilence(ms, { sampleRate, numChannels, bitsPerSample }) {
 // Threshold is relative to the clip's own peak (so a quiet voice is not
 // treated as silence) with an absolute floor for near-silent clips. Fully
 // fail-soft: anything unexpected returns the buffer untouched.
-function trimEdgeSilence(pcm, fmt, { head = false, tail = false } = {}) {
+function trimEdgeSilence(pcm, fmt, edges = {}) {
+  return trimEdgeSilenceInfo(pcm, fmt, edges).pcm;
+}
+
+// The same trim, also saying how many bytes came off each edge (timing-track.js moves the word and
+// mouth times by the head trim). trimEdgeSilence above is this with the counts thrown away.
+function trimEdgeSilenceInfo(pcm, fmt, { head = false, tail = false } = {}) {
+  const untouched = { pcm, headBytes: 0, tailBytes: 0 };
   try {
-    if (!TRIM_SEAMS || !pcm || !pcm.length || fmt.bitsPerSample !== 16) return pcm;
+    if (!TRIM_SEAMS || !pcm || !pcm.length || fmt.bitsPerSample !== 16) return untouched;
     const frame = fmt.numChannels * 2;                 // bytes per sample frame
     const win = Math.max(1, Math.round(fmt.sampleRate * 0.005)) * frame; // 5ms
     const total = Math.floor(pcm.length / win);
-    if (total < 4) return pcm;
+    if (total < 4) return untouched;
     let peak = 0;
     const rms = new Float64Array(total);
     for (let w = 0; w < total; w++) {
@@ -1103,16 +1112,16 @@ function trimEdgeSilence(pcm, fmt, { head = false, tail = false } = {}) {
     let first = 0, last = total - 1;
     while (first < total && rms[first] < thr) first++;
     while (last > first && rms[last] < thr) last--;
-    if (first >= last) return pcm;                     // all silence: leave it alone
+    if (first >= last) return untouched;               // all silence: leave it alone
     const maxWin = Math.round(MAX_TRIM_MS / 5);
     const startWin = head ? Math.min(first, maxWin) : 0;
     const endWin = tail ? Math.min(total - 1 - last, maxWin) : 0;
-    if (!startWin && !endWin) return pcm;
+    if (!startWin && !endWin) return untouched;
     const out = pcm.slice(startWin * win, pcm.length - endWin * win);
-    return out.length ? out : pcm;
+    return out.length ? { pcm: out, headBytes: startWin * win, tailBytes: endWin * win } : untouched;
   } catch (err) {
     console.warn(`[TTS] seam trim skipped (${err.message})`);
-    return pcm;
+    return untouched;
   }
 }
 
@@ -1213,7 +1222,15 @@ function sleep(ms) {
 // capacity until the whole proxy starves. Timeouts are retryable below.
 const INWORLD_TIMEOUT_MS = 20000;
 
-async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false) {
+/* Nov 11 2026 — the timing data a buffered Inworld answer brought, kept BESIDE its audio Buffer so the
+ * Buffer every caller and test already handles stays exactly what it was. A WeakMap: the entry dies
+ * with the buffer, and the retry ladder in synthesizeChunk hands back the same object. */
+const inworldTimingOf = new WeakMap();
+// Counts since boot (shown on /health): asked = chunks that asked for timings, missing = asked and
+// came back without lip-sync (Inworld's "temporarily unavailable", or a field it silently ignored).
+const timingStats = { asked: 0, missing: 0, tracks: 0 };
+
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null) {
   text = normalizeInworldCaps(text);
   // Nov 5 2026: a feeling word slows Inworld by its measured cost; chat speech gets that back (inworld-steer.js).
   if (talk) {
@@ -1277,6 +1294,11 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
       ...(previousTexts && previousTexts.length
         ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
         : {}),
+      /* Nov 11 2026 — only when the caller asked for a face track (timing-track.js). Lip-sync
+       * visemes measured free; WORD times are inside the noise on this lane. Neither changed
+       * processedCharactersCount (102 = 102). */
+      ...(timing ? { lipsyncConfig: {} } : {}),
+      ...(timing === "word" ? { timestampType: "WORD" } : {}),
     }),
   });
 
@@ -1332,7 +1354,9 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
     throw new Error("No audioContent in Inworld response");
   }
 
-  return Buffer.from(data.audioContent, "base64");
+  const audio = Buffer.from(data.audioContent, "base64");
+  if (timing && data.timestampInfo && typeof data.timestampInfo === "object") inworldTimingOf.set(audio, data.timestampInfo);
+  return audio;
 }
 
 /* ⭐ AUG 28 2026 — COUNT THE CHUNKS THAT DIE.
@@ -1372,14 +1396,14 @@ function chunkStatsToday() {
   return chunkStats.get(centralDay()) || { ok: 0, failed: 0, retried: 0 };
 }
 
-async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false) {
+async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null) {
   instruction = inworldInstruction(instruction, delivery);
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk);
+        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk, timing);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
@@ -1851,6 +1875,7 @@ app.get("/health", async (req, res) => {
     fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
     inworldWriter: { on: inworldWriterOn(), model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) },
     inworldPauses: inworldPauseSettings(),
+    inworldTimings: { ...inworldTimingSettings(), ...timingStats },
     inworldSteer: inworldSteerSettings(),
     fishRunaway: fishRunaway.runawayHealth(),
     fishStretch: { on: fishStretchOn() || fishExactOn(), exact: fishExactOn(), ...fishStretch.health() },
@@ -4119,6 +4144,14 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     const pauseCfg = !isFishVoice && talks ? inworldPauseSettings() : null;
     const pauseOn = Boolean(pauseCfg && pauseCfg.on);
     const inworldTalks = !isFishVoice && talks;
+    /* Nov 11 2026 — a face track, only when the caller asked (x-kade-tts-timing: 1, sent by the website
+     * when a face is shown) and only on this buffered lane: never Fish (no timings exist), never the
+     * phone (no face, raw mu-law), never with INWORLD_TIMINGS=0. Everyone else's bytes are untouched. */
+    const timingCfg = inworldTimingSettings();
+    const timingMode = !isFishVoice && req.query.telephony !== "1" && timingCfg.on &&
+      inworldTimingAsked(req.get("x-kade-tts-timing"), req.body.timing)
+      ? (timingCfg.words ? "word" : "lip")
+      : null;
 
     const wantsStream =
       TTS_STREAM_ENABLED &&
@@ -4159,11 +4192,11 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
               const { text: liftedText, instruction } = inworldLifted[ci];
               const filled = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;
               const sayText = inworldSounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: ci * 3, seedText: soundSeed(ci) }) : filled;
-              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery, inworldTalks);
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery, inworldTalks, timingMode);
             })()
       )
     );
-    console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"})`);
+    console.log(`[TTS] synth ok: ${chunks.length} chunk(s) in ${Date.now() - tSynth}ms (telephony=${req.query.telephony === "1" ? "yes" : "no"}, timing=${timingMode ? "on" : "off"})`);
     /* Remember what this seat just said, so the NEXT call — which on the app
      * lane is the next sentence of the same reply — has something to go on.
      * Only after a successful synthesis: a failed call was never heard, and
@@ -4194,22 +4227,40 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     const pieces = [];
     let trimmedMs = 0;
     let pausesCutMs = 0;
+    // Nov 11 2026: where each chunk's timings land in the final PCM (timing-track.js). Offsets come
+    // from the real buffer lengths, never from constants.
+    const bytesPerMs = (format.sampleRate * format.numChannels * (format.bitsPerSample / 8)) / 1000;
+    const timingPieces = [];
+    let placedBytes = 0;
     parsed.forEach((p, i) => {
       let body = p.data;
+      let cuts = [];
       if (pauseOn && format.numChannels === 1 && format.bitsPerSample === 16) {
         const lp = limitInworldPauses(body, format.sampleRate, pauseCfg);
         body = lp.pcm;
         if (lp.stats) pausesCutMs += lp.stats.droppedMs;
+        cuts = lp.cuts || [];
       }
       // Aug 18 2026 (her "random commas"): Inworld hands back 460-605ms of
       // trailing silence per chunk. Butting that against our gap made every
       // seam ~655ms -- longer than a real period. Trim the INNER edges so
       // `silence` (GAP_MS) is the entire seam. Outer edges untouched on
       // purpose: better a little air than a clipped first or last word.
-      const trimmed = trimEdgeSilence(body, format, { head: i > 0, tail: i < parsed.length - 1 });
+      const trim = trimEdgeSilenceInfo(body, format, { head: i > 0, tail: i < parsed.length - 1 });
+      const trimmed = trim.pcm;
       trimmedMs += Math.round(((body.length - trimmed.length) / (format.numChannels * 2)) / format.sampleRate * 1000);
+      if (timingMode) {
+        const info = inworldTimingOf.get(wavBuffers[i]) || null;
+        timingStats.asked++;
+        if (!inworldLipsyncSpans(info)) timingStats.missing++;
+        timingPieces.push({ info, cuts, headMs: trim.headBytes / bytesPerMs, keptMs: trimmed.length / bytesPerMs, offsetMs: placedBytes / bytesPerMs });
+      }
       pieces.push(fadePcmEdges(trimmed, edgeFade));
-      if (i < parsed.length - 1) pieces.push(silence);
+      placedBytes += trimmed.length;
+      if (i < parsed.length - 1) {
+        pieces.push(silence);
+        placedBytes += silence.length;
+      }
     });
     if (pauseOn && pausesCutMs) console.log(`[TTS] pauses: ${pausesCutMs}ms of long stops brought in`);
     if (parsed.length > 1) {
@@ -4240,9 +4291,25 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     }
     const audioFingerprint = crypto.createHash("sha256").update(combinedData).digest("hex").slice(0, 16);
     console.log(`[TTS] voice response: label="${voiceForLog}" resolved="${resolvedForLog}" fingerprint=${audioFingerprint} bytes=${combinedData.length}`);
+    // Nov 11 2026: the face track rides inside the WAV (fmt, kdtm, data); with none, the bytes are today's.
+    let sentAudio = finalAudio;
+    if (timingMode) {
+      let track = null;
+      try {
+        track = buildTimingTrack(timingPieces, combinedData.length / bytesPerMs, { words: timingMode === "word", maxBytes: timingCfg.maxBytes });
+      } catch (err) {
+        console.warn(`[TTS] timing track skipped (${err && err.message})`); // timings are decoration; the audio always wins
+      }
+      if (track) {
+        sentAudio = writeWavWithTrack(format, JSON.stringify(track), combinedData);
+        timingStats.tracks++;
+      }
+      res.set("x-kade-tts-timing", track ? "1" : "0");
+      console.log(`[TTS] timing: ${track ? `track ${track.set} ${track.vis.length} shapes, ${track.w ? track.w.length : 0} words, ${sentAudio.length - finalAudio.length} bytes` : "no track"} (${timingPieces.length} chunk(s))`);
+    }
     res.set("Content-Type", "audio/wav");
-    res.set("Content-Length", finalAudio.length);
-    res.send(finalAudio);
+    res.set("Content-Length", sentAudio.length);
+    res.send(sentAudio);
   } catch (err) {
     console.error("Proxy error:", err);
     // Nov 8 2026: the cause is in the log line above; the caller gets the plain answer. `details` carried the provider's own words (and now and
