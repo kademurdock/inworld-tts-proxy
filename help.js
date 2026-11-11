@@ -688,6 +688,8 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>November 11, 2026: Android 2.18.0, a clearer Library player</h2>
+<p>The Library player on Android now has a Status line just above the buttons. It says Playing or Paused and your place, Loading, The end, or why playback stopped, and TalkBack reads it as one stop that begins with the word Status. If a recording is still waiting for the network after a few seconds, TalkBack says Still loading. There is a Start from the beginning choice, five and ten minute jumps in films and long tapes, and Back 10 seconds and Forward 10 seconds on the lock screen. A recording with only one part no longer shows part buttons. On the Library's first screen, up to two more things you are in the middle of sit under Continue, and Springfield and the Ozarks is near the top. Captions and Sound track choices appear only for recordings that carry their own, which is few so far. A voice direction is also no longer carried onto later lines by mistake. It has passed 2,752 automated checks and an emulator run, but has still not been tried on a real phone with TalkBack, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.18.0</a> and install it over your existing copy.</p>
 <h2>November 8, 2026: Android 2.17.0, rebuilt to match the iPhone app</h2>
 <p>The Android app now works like the iPhone app. Talk, the Library, Create, Play and More are built into the app instead of opening web pages, and each message in a chat is one TalkBack stop with the same actions as on the iPhone. Calls, the voice picker, characters' faces, the Character Builder, the Sound Booth, Settings, Search and Help are all new. Kade's Clubhouse and Described video still open their web pages, and the Arcade comes later. It has passed 2,735 automated checks and an emulator run but has not been tried on a real phone with TalkBack, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.17.0</a> and install it over your existing copy; it is about 78 MB.</p>
 <h2>October 8, 2026: backing vocals, stronger rhyme and fuller song sections</h2>
@@ -2322,6 +2324,16 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.18.0 (build 125): the Library player</h2>
+<ul>
+<li><strong>Status line.</strong> Just above the player's buttons, one line says Playing or Paused and your place, Loading, Paused for a call, The end, or why playback stopped. It is one TalkBack stop that begins with the word Status. It does not speak by itself, but a recording that is still waiting for the network after a few seconds is announced once as Still loading. If your listening place cannot be saved, that is said once and shown under the Status line.</li>
+<li><strong>Moving around.</strong> Start from the beginning is in the Actions menu on the title and on Play. It asks first, then says Back at the beginning. Recordings of twenty minutes or more offer five and ten minute jumps, in TalkBack's actions and when you hold Back 10 seconds or Forward 10 seconds. The lock screen and notification player have Back 10 seconds and Forward 10 seconds, though some phones show them only when the player is opened out, and a tap there opens the Library player.</li>
+<li><strong>Less clutter.</strong> A recording with one part has no Previous part, Next part or Part menu. Play with descriptions sits under Speed.</li>
+<li><strong>Captions and Sound track.</strong> These rows appear only when the recording itself carries captions or a second sound track. Most of the archive has neither yet. Two tracks with the same name are numbered, so you can tell them apart.</li>
+<li><strong>First screen.</strong> Up to two more things you are in the middle of sit under Continue, never anything shorter than five minutes. Springfield and the Ozarks is above Other library views.</li>
+<li><strong>Also fixed.</strong> Signed out, Help's rows now show "Sign in first, then that opens." on screen as well as saying it. A voice direction is no longer carried onto later lines by mistake. The back gesture shows Android's preview on Android 13 and up.</li>
+</ul>
+<p>2,752 automated tests, lint, release signing and file alignment passed. On an Android emulator it installed over 2.17.0 and opened without a crash. It has not been tried on a real phone or with TalkBack yet.</p>
 <h2>Android 2.17.0 (build 124): rebuilt to match the iPhone app</h2>
 <ul>
 <li><strong>Talk.</strong> Each message is one TalkBack stop, with the iPhone's actions in the iPhone's order: Open images, Copy text, Play, Reading view, Share, Edit and resend, Regenerate and Delete. Sighted family find the same list behind the three dots beside each message. Stop works, Retry checks with the server first so nothing posts twice, and the Talk list has Pin, Rename, Archive and Bookmark on every chat.</li>
