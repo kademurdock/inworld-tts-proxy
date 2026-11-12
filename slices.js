@@ -9,14 +9,21 @@
  * other request on this process moved: every call's speech and every relayed
  * token waited behind one listener's article.
  *
- * inSlices runs step(from, to) over [0, total) a few seconds of audio at a
- * time and lets the event loop take a turn between slices. A clip shorter
- * than one slice never yields at all, so short clips (every call sentence)
- * run in one piece exactly as before. The arithmetic is the caller's own
- * range function, the same one the one-piece path runs over the whole clip,
- * so the samples that come out are the same bytes either way.
+ * inSlices runs step(from, to) over [0, total) a short stretch of audio at a
+ * time (a quarter second) and lets the event loop take a turn between slices. A clip shorter
+ * than one slice (0.25 s: a word or two) never yields at all; anything
+ * longer, call sentences included, gives the loop a turn every quarter second of
+ * audio. A turn costs a setImmediate, nothing audible. The arithmetic is the
+ * caller's own range function, the same one the one-piece path runs over the
+ * whole clip, so the samples that come out are the same bytes either way.
+ *
+ * Nov 12 2026 lead review: the first cut used 4 s slices. One 4 s slice held
+ * the loop 110-254 ms on kadepc (the 50 ms test failed even run alone); 0.5 s
+ * still held it 62 ms once under load, so a quarter second. Because clips over
+ * 0.25 s now yield, two clips of one voice leveled at once can interleave their
+ * passes; each per-voice memory update is still atomic (see normalizeLoudness).
  */
-const SLICE_SECONDS = 4;
+const SLICE_SECONDS = 0.25;
 
 /** Samples per slice: about SLICE_SECONDS of audio, a multiple of 4 (the budget scan strides by 4). */
 function sliceSamplesFor(sampleRate) {

@@ -3586,7 +3586,7 @@ async function measureSpeechRmsDb(pcmBuf, sampleRate) {
  * the event loop a turn between slices (slices.js), so a long read-aloud no longer freezes every other
  * listener's speech while it is leveled. EVERY CALLER MUST AWAIT IT: the samples are changed in place, and a
  * caller that reads the buffer before the promise settles sends audio that is leveled up to wherever the walk
- * had got to. A clip shorter than one slice (4 s) is still done in one piece, with no turn given up.
+ * had got to. A clip shorter than one slice (0.25 s, slices.js) is still done in one piece, with no turn given up.
  * The three per-voice memories below are each read and written with no await in between, so two clips of one
  * voice being leveled at once can interleave their passes but never tear an update. Same arithmetic in the
  * same order as before: the bytes that come out are unchanged. */
