@@ -42,6 +42,19 @@ function checkSecret(req, res, next) {
 }
 const auth = afterSecret(checkSecret);
 
+/* Audit fix SEC-1 (Nov 12 2026): the settings that ARE the approval gate, the secrets that guard
+ * this service and its approvals, and the owner's id cannot be changed through it, with or
+ * without an approval. Kade changes these by hand in the Railway dashboard. Names are matched
+ * whatever their case and surrounding spaces. No off switch. */
+const GATE_VARS = new Set([
+  "FORGE_APPROVALS", "APPROVAL_PROTECTED", "APPROVAL_DEPLOY_MAP", "KADE_APPROVAL_SECRET",
+  "RAILWAY_PROXY_SECRET", "RAILWAY_API_TOKEN", "GITHUB_PROXY_SECRET", "LIBRECHAT_PROXY_SECRET",
+  "BRIDGE_SECRET", "KADE_OWNER_USER_ID",
+]);
+function isGateVar(name) {
+  return GATE_VARS.has(String(name || "").trim().toUpperCase());
+}
+
 async function gql(query, variables) {
   return railwayQuery(RW_TOKEN, query, variables || {});
 }
@@ -159,6 +172,9 @@ router.post("/railway/vars", auth, async (req, res) => {
   if (!projectId || !environmentId || !serviceId || !name || value === undefined) {
     return res.status(400).json({ error: "projectId, environmentId, serviceId, name, and value are all required" });
   }
+  if (isGateVar(name)) {
+    return res.status(403).json({ error: `${String(name).trim()} guards the approvals themselves; only Kade can change it, by hand in Railway.` });
+  }
   try {
     /* Oct 16 2026: a setting change waits for Kade's yes; the value is never shown in the request. */
     if (approvalsOn()) {
@@ -181,6 +197,7 @@ async function deployCommit({ serviceId, environmentId, commitSha }) {
 registerExecutor("railway-deploy", (p) => deployCommit(p));
 
 async function setVariable({ projectId, environmentId, serviceId, name, value }) {
+  if (isGateVar(name)) throw new Error(`${String(name).trim()} guards the approvals themselves and cannot be set from here`);
   const m = `mutation($input: VariableUpsertInput!){ variableUpsert(input:$input) }`;
   const d = await gql(m, { input: { projectId, environmentId, serviceId, name, value: String(value) } });
   return { set: d.variableUpsert === true, name };
@@ -188,3 +205,5 @@ async function setVariable({ projectId, environmentId, serviceId, name, value })
 registerExecutor("railway-vars", (p) => setVariable(p));
 
 module.exports = router;
+module.exports.isGateVar = isGateVar;
+module.exports.setVariable = setVariable;
