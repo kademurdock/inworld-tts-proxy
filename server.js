@@ -1963,8 +1963,8 @@ app.get("/health", async (req, res) => {
     fishTemperature: { default: FISH_TEMPERATURE, max: FISH_TEMPERATURE_MAX },
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
     inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1", delivery: inworldTalk.talkHealth() },
-    fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
-    inworldWriter: { on: inworldWriterOn(), model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) },
+    fishDirector: { on: directorOn(), live: process.env.FISH_DIRECTOR_LIVE === "1", model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) }, // live: GW-4, calls directed too
+    inworldWriter: { on: inworldWriterOn(), live: process.env.INWORLD_WRITER_LIVE === "1", model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) }, // live: GW-4, calls written too
     inworldPauses: inworldPauseSettings(),
     inworldTimings: { ...inworldTimingSettings(), ...timingStats },
     inworldSteer: inworldSteerSettings(),
@@ -4222,7 +4222,9 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
       ? carryChunkDirections(chunkText(speakText)).map(c => seedFishSteering(c, fishPairedEmphasis(fishModel))).flatMap(splitFishParagraphs)
       : null;
     // Conversation auditions too (Kade: "I also think the directer should work on auditions").
-    if (fishTalks && directorOn()) fishPieces = await fishDirector.directPieces(fishPieces, { previous: previousTexts });
+    // GW-4 (Nov 12 2026): someone on the line never waits on the director (MiMo, ~1.1 s median, 3 s cap): phone, app and web
+    // calls (telephony=1 or any bridge- caller) speak Fish pieces plain. FISH_DIRECTOR_LIVE=1 directs them again.
+    if (fishTalks && directorOn() && (!liveCall || process.env.FISH_DIRECTOR_LIVE === "1")) fishPieces = await fishDirector.directPieces(fishPieces, { previous: previousTexts });
     // Oct 29 2026 (Kade: "a live conversation with someone, not auditioning for a drama"): talk
     // directions keep their feeling and lose the size (talk-calm.js). TTS_TALK_CALM=1 turns it on.
     const calmTalk = talks && talkCalmOn();
@@ -4239,13 +4241,16 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     // Oct 17 2026 (Kade: "we should have a writer that does the same thing for inworld, like turns
     // text into the documented inworld style"): Inworld chat pieces get Inworld's own markup
     // (inworld-writer.js) before fillers and sounds are added. Conversation auditions too; never
-    // the phone, where a live call cannot wait for it.
+    // a live call (the phone, and since GW-4 on Nov 12 2026 app and web calls too: x-kade-caller
+    // bridge-voice), which cannot wait for it. INWORLD_WRITER_LIVE=1 writes for live calls again.
     // A character's own hushed or big direction is cut down before the writer sees it, so an
     // emptied one lets the writer's brief take over (talk-calm.js: hush words stretch Inworld's stops).
     const inworldPlain = isFishVoice ? null : chunks.map(splitChunkForInworld).map(p => (calmTalk
       ? { ...p, text: calmTalkTags(p.text, { engine: 'inworld' }), instruction: p.instruction ? calmTalkDirection(p.instruction, { engine: 'inworld' }) || null : p.instruction }
       : p));
-    const inworldWritten = Boolean(inworldPlain) && talks && req.query.telephony !== "1" && inworldWriterOn();
+    // GW-4: "never the phone, where a live call cannot wait for it" now covers app and web calls too
+    // (x-kade-caller bridge-voice): they are live calls and paid the writer's ~1 s before their first word.
+    const inworldWritten = Boolean(inworldPlain) && talks && (!liveCall || process.env.INWORLD_WRITER_LIVE === "1") && inworldWriterOn();
     const inworldLifted = inworldWritten ? await inworldWriter.writePieces(inworldPlain, { previous: previousTexts }) : inworldPlain;
     // A written piece gets the sound its plain words would have got (pace.js talkSounds seedText).
     const soundSeed = (i) => (inworldWritten ? inworldPlain[i].text : null);

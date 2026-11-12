@@ -26,7 +26,8 @@
  * whispering too much").
  *
  * Only Inworld chat speech and conversation auditions (the caller decides: never reading, STABLE,
- * book scenes, previews of scripts, the phone). Pieces shorter than INWORLD_WRITER_MIN_CHARS are
+ * book scenes, previews of scripts, live calls: the phone, and app and web calls since GW-4 on Nov 12 2026,
+ * unless INWORLD_WRITER_LIVE=1). Pieces shorter than INWORLD_WRITER_MIN_CHARS are
  * spoken plain, like the Fish director: the iPhone's opening piece is short, and later pieces are
  * prepared while the one before plays. A failure, a host refusal or a slow answer speaks the piece
  * as before. INWORLD_WRITER=1 turns it on.
