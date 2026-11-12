@@ -63,6 +63,8 @@ const { pauseSettings: inworldPauseSettings, createPauseLimiter: createInworldPa
 // Nov 11 2026: Inworld's mouth shapes and word times ride the WAV as a `kdtm` chunk for the faces (timing-track.js).
 const { timingSettings: inworldTimingSettings, timingAsked: inworldTimingAsked, lipsyncSpans: inworldLipsyncSpans, buildTrack: buildTimingTrack, writeWavWithTrack } = require('./timing-track');
 const { steerSettings: inworldSteerSettings, steeredRate: inworldSteeredRate, steeredInstruction: inworldSteeredInstruction } = require('./inworld-steer');
+// Nov 12 2026: chat speech talks instead of performing (inworld-talk.js). Off unless INWORLD_TALK_DELIVERY=frame.
+const inworldTalk = require('./inworld-talk');
 const { balanceSteeringRuns, setRepairLogger: setSteeringRepairLogger } = require('./steering-balance');
 // Nov 6 2026: one log line whenever the balancer repairs a message (a stray run dropped, a forgotten closer
 // closed), so "is it firing in real traffic" is a single grep for [TTS] steering-balance.
@@ -1230,17 +1232,32 @@ const inworldTimingOf = new WeakMap();
 // came back without lip-sync (Inworld's "temporarily unavailable", or a field it silently ignored).
 const timingStats = { asked: 0, missing: 0, tracks: 0 };
 
-async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null) {
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null, talkPlain = false) {
   text = normalizeInworldCaps(text);
+  // Nov 12 2026: chat speech talks instead of performing (inworld-talk.js). talkPlain is the one retry after Inworld
+  // refused a framed request: it is sent exactly as before the frame existed. The speed is priced on the words as
+  // written (rateText), never on what the frame changed.
+  const talkCfg = talk && !talkPlain ? inworldTalk.talkSettings() : null;
+  const rateText = text;
+  if (talkCfg) text = inworldTalk.talkText(text, talkCfg);
   // Nov 5 2026: a feeling word slows Inworld by its measured cost; chat speech gets that back (inworld-steer.js).
   if (talk) {
     const kept = inworldSteeredInstruction(instruction);
     if (instruction && !kept) console.log(`[TTS] steering: dropped the direction "${String(instruction).slice(0, 60)}" (it costs more speed than the lift can give back)`);
     instruction = kept;
   }
+  const ownDirection = instruction;
+  const talkShape = talkCfg && talkCfg.mode !== 'off' ? inworldTalk.shapeTalk(instruction, talkCfg) : null;
+  const framed = Boolean(talkShape && talkShape.shaped);
+  if (talkShape) instruction = talkShape.instruction;
   const baseRate = speakingRate != null ? speakingRate : TTS_SPEAKING_RATE;
-  const sendRate = talk ? inworldSteeredRate(baseRate, instruction, text) : baseRate;
+  let sendRate = talk ? inworldSteeredRate(baseRate, framed ? inworldTalk.liftDirection(ownDirection, talkCfg) : instruction, rateText) : baseRate;
+  if (framed && talkCfg.lift !== 1) sendRate = Math.min(1.5, Math.max(0.5, Math.round(sendRate * talkCfg.lift * 1000) / 1000));
   if (sendRate !== baseRate) console.log(`[TTS] steering: speakingRate ${baseRate} -> ${sendRate}`);
+  if (framed) {
+    inworldTalk.noteShaped();
+    console.log(`[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}`);
+  }
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
   let response;
@@ -1346,6 +1363,7 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
      * sound") is a chunk that died and did not come back; this is the half
      * of that fix which lives on the server. */
     err.isServerErr = response.status >= 500;
+    if (framed) err.talkFramed = true; // Nov 12 2026: synthesizeChunk asks once more without the frame
     throw err;
   }
 
@@ -1397,19 +1415,32 @@ function chunkStatsToday() {
 }
 
 async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null) {
-  instruction = inworldInstruction(instruction, delivery);
+  // Nov 12 2026: a framed chat piece's instruction is its own direction and the frame (inworld-talk.js); the Balanced
+  // lively brief is never stacked under the frame. The plain retry below sends what was always sent.
+  const plainInstruction = inworldInstruction(instruction, delivery);
+  const talkInstruction = talk && inworldTalk.talkSettings().mode !== 'off' ? instruction : plainInstruction;
   return inworldLimiter(async () => {
     const maxAttempts = 4;
     let lastErr;
+    let talkPlain = false;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk, timing);
+        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, talkPlain ? plainInstruction : talkInstruction, previousTexts, delivery, talk, timing, talkPlain);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
       } catch (err) {
         lastErr = err;
         const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
+        /* Nov 12 2026: the frame is a manner and the words always win. A 4xx for a framed request is asked once more
+         * exactly as before the frame existed, BEFORE the timing fallback below gives up the face's track. */
+        if (err.talkFramed && !talkPlain && !retryable && err.status >= 400 && err.status < 500 && err.status !== 401 && err.status !== 403) {
+          const off = inworldTalk.noteRefused();
+          console.warn(`[TTS] chunk refused with the talk frame (${String(err.message).slice(0, 160)}) -- asking again without it${off ? '; frame off for 30 min after repeated refusals' : ''}`);
+          talkPlain = true;
+          attempt--;
+          continue;
+        }
         /* Nov 11 2026: timings are decoration and the audio always wins. Should Inworld ever refuse
          * a chunk for the timing fields (a 4xx that is not 429), ask once more without them; the
          * chunk then simply carries no track (buildTrack leaves its span uncovered). */
@@ -1467,15 +1498,29 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
   const filled = fillers ? talkFillersByParagraph(liftedText, fillers) : liftedText;
   const sayText = sounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: sounds.turn, seedText: sounds.seedText }) : filled;
   if (!sayText || !sayText.trim()) return false;
-  let instruction = inworldInstruction(lifted, delivery);
+  // Nov 12 2026: chat speech talks instead of performing (inworld-talk.js). A refused framed stream falls back to the
+  // buffered lane, which asks once more without the frame.
+  const talkCfg = talk ? inworldTalk.talkSettings() : null;
+  const talkOn = Boolean(talkCfg && talkCfg.mode !== 'off');
+  let instruction = talkOn ? lifted : inworldInstruction(lifted, delivery);
   if (talk) {
     const kept = inworldSteeredInstruction(instruction);
     if (instruction && !kept) console.log(`[TTS] steering: dropped the direction "${String(instruction).slice(0, 60)}" (it costs more speed than the lift can give back), streamed`);
     instruction = kept;
   }
+  const ownDirection = instruction;
+  const talkShape = talkOn ? inworldTalk.shapeTalk(instruction, talkCfg) : null;
+  const framed = Boolean(talkShape && talkShape.shaped);
+  if (talkShape) instruction = talkShape.instruction;
+  const streamText = talkOn ? inworldTalk.talkText(sayText, talkCfg) : sayText;
   const baseRate = speakingRate != null ? speakingRate : TTS_SPEAKING_RATE;
-  const sendRate = talk ? inworldSteeredRate(baseRate, instruction, sayText) : baseRate; // inworld-steer.js
+  let sendRate = talk ? inworldSteeredRate(baseRate, framed ? inworldTalk.liftDirection(ownDirection, talkCfg) : instruction, sayText) : baseRate; // inworld-steer.js
+  if (framed && talkCfg.lift !== 1) sendRate = Math.min(1.5, Math.max(0.5, Math.round(sendRate * talkCfg.lift * 1000) / 1000));
   if (sendRate !== baseRate) console.log(`[TTS] steering: speakingRate ${baseRate} -> ${sendRate}, streamed`);
+  if (framed) {
+    inworldTalk.noteShaped();
+    console.log(`[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}, streamed`);
+  }
   return inworldLimiter(async () => {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
@@ -1490,7 +1535,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text: normalizeInworldCaps(sayText),
+          text: normalizeInworldCaps(streamText),
           voiceId: inworldVoice,
           modelId: inworldModel,
           audioConfig: {
@@ -1515,6 +1560,8 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       clearTimeout(timer);
       const errText = await response.text().catch(() => "");
       console.warn(`[TTS] stream: HTTP ${response.status} -- falling back to buffered (${errText.slice(0, 160)})`);
+      // Nov 12 2026: a framed stream refused with a 4xx counts toward the frame's breaker (inworld-talk.js).
+      if (framed && response.status >= 400 && response.status < 500 && ![401, 403, 429].includes(response.status)) inworldTalk.noteRefused();
       return false;
     }
 
@@ -1880,7 +1927,7 @@ app.get("/health", async (req, res) => {
     fishModel: FISH_TTS_MODEL,
     fishTemperature: { default: FISH_TEMPERATURE, max: FISH_TEMPERATURE_MAX },
     ...(selectedReferenceStore ? { fishReferenceModel: FISH_REFERENCE_MODEL } : {}),
-    inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1" },
+    inworldTalk: { fillers: process.env.INWORLD_TALK_FILLERS === "1", sounds: process.env.INWORLD_TALK_SOUNDS === "1", delivery: inworldTalk.talkHealth() },
     fishDirector: { on: directorOn(), model: process.env.FISH_DIRECTOR_MODEL || "xiaomi/mimo-v2.6-pro", minChars: Number(process.env.FISH_DIRECTOR_MIN_CHARS || 140) },
     inworldWriter: { on: inworldWriterOn(), model: process.env.INWORLD_WRITER_MODEL || "xiaomi/mimo-v2.6-flash", minChars: Number(process.env.INWORLD_WRITER_MIN_CHARS || 140) },
     inworldPauses: inworldPauseSettings(),
