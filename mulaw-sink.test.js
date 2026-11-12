@@ -63,3 +63,46 @@ test("the filter sink writes as it goes, under 1 ms behind its input", () => {
     assert.equal(written, 4000);
   });
 });
+
+/* Lead review (Nov 12 2026): the streamed opener ends in the same 12 ms fade as the buffered phone lane. */
+function g711Decode(u) {
+  u = ~u & 0xFF;
+  const mag = ((((u & 0x0F) << 3) + 132) << ((u >> 4) & 7)) - 132;
+  return u & 0x80 ? -mag : mag;
+}
+function square(sr, sec, amp = 30000) { // ends at full amplitude: the worst case for a click
+  const n = Math.round(sr * sec); const b = Buffer.alloc(n * 2);
+  for (let i = 0; i < n; i++) b.writeInt16LE(amp, i * 2);
+  return b;
+}
+test("fadeOutMs: a clip that stops at full amplitude ends in a 12 ms fade, in odd pieces too", () => {
+  withEnv("TTS_PHONE_DECIMATOR", undefined, () => {
+    const pcm = square(24000, 0.5);
+    const parts = [];
+    const sink = createMulawSink((mu) => parts.push(Buffer.from(mu)), 24000, { fadeOutMs: 12 });
+    for (let at = 0, k = 0; at < pcm.length; at += SIZES[k++ % SIZES.length]) sink.push(pcm.subarray(at, at + SIZES[(k) % SIZES.length]));
+    sink.end();
+    const out = Buffer.concat(parts);
+    assert.equal(out.length, 4000, "same length as the unfaded clip");
+    const last = g711Decode(out[out.length - 1]);
+    assert.ok(Math.abs(last) < 1500, `the last sample is near silence (${last})`);
+    const mid = g711Decode(out[2000]);
+    assert.ok(mid > 25000, `the body is untouched (${mid})`);
+    // the ramp: 12 ms = 96 phone samples, falling all the way
+    const at = (i) => g711Decode(out[out.length - 96 + i]);
+    assert.ok(at(10) > at(50) && at(50) > at(90), "falls across the last 12 ms");
+  });
+});
+test("fadeOutMs: everything before the tail equals the buffered encoder; without it nothing changes", () => {
+  withEnv("TTS_PHONE_DECIMATOR", undefined, () => {
+    const pcm = speechish(24000, 1);
+    const faded = Buffer.from(pcm);
+    const n = 288; // 12 ms at 24 kHz, ramped the way fadePcmEdges ramps a tail
+    for (let k = 0; k < n; k++) { const j = pcm.length / 2 - n + k; faded.writeInt16LE(Math.round(pcm.readInt16LE(j * 2) * ((n - 1 - k) / n)), j * 2); }
+    const parts = [];
+    const sink = createMulawSink((mu) => parts.push(Buffer.from(mu)), 24000, { fadeOutMs: 12 });
+    sink.push(pcm.subarray(0, 12345)); sink.push(pcm.subarray(12345)); sink.end();
+    assert.ok(Buffer.concat(parts).equals(pcm16ToMulaw(downsamplePcm(faded, 24000, 8000))));
+    assert.ok(streamThrough(pcm, 24000, [960]).equals(pcm16ToMulaw(downsamplePcm(pcm, 24000, 8000))), "no fadeOutMs: unchanged");
+  });
+});

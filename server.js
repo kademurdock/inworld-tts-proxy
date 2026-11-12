@@ -1584,7 +1584,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
             sentHeaders = true;
           }
           res.write(mu);
-        }, fmt.sampleRate);
+        }, fmt.sampleRate, { fadeOutMs: 12 }); // the buffered phone lane's fadePcmEdges tail, 12 ms (lead review)
         return;
       }
       res.set("Content-Type", "audio/wav");
@@ -1688,11 +1688,12 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       }
       noteChunk("failed");
       console.error(`[TTS] stream: died mid-clip after ${flushedBytes} bytes (${err.message}) -- ending short`);
+      if (sink) sink.end(); // a short phone opener still ends in its 12 ms fade, not a step
       res.end();
       return true;
     }
     clearTimeout(timer);
-    if (sink) sink.end(); // GW-10: the last few phone samples (the filter runs under 1 ms behind its input)
+    if (sink) sink.end(); // GW-10: the held 12 ms tail, faded to zero, and the filter's last samples
 
     if (!sentHeaders) {
       // Stream ended without ever yielding a sniffable header — treat as a

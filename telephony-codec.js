@@ -2,7 +2,8 @@
 /* Phone audio codec (Nov 12 2026, gateway audit GW-3): 16-bit PCM at the provider's rate -> 8 kHz G.711 mu-law
  * for Twilio Media Streams (/v1/audio/speech?telephony=1). Its own file so telephony-codec.test.js can load it
  * without starting the server.
- * Kill switch: TTS_PHONE_DECIMATOR=box restores the old 3-sample averaging (read per call). */
+ * Kill switch: TTS_PHONE_DECIMATOR=box restores the old 3-sample averaging (read per call).
+ * The mu-law bias change (33 -> 132) has NO env rollback: undoing it means reverting the commit. */
 
 // ITU-T G.711 mu-law for 16-bit samples. Was BIAS 33, the 14-bit figure: about 15 dB of SNR lost at speech
 // level and every sample under ~100 decoded to 0. Same constants as the bridge's encodeUlaw now.
@@ -99,7 +100,7 @@ function downsamplePcm(pcmBuf, fromRate, toRate) {
  * input it still needs and writes an output sample only once all of its taps have arrived (half the filter,
  * under 1 ms, behind the input); end() writes the last few, with the same zero edge the whole-clip filter
  * uses. TTS_PHONE_DECIMATOR=box (read when the sink is made) keeps the old group average. */
-function createMulawSink(write, fromRate = 24000) {
+function createRawMulawSink(write, fromRate = 24000) {
   const step = fromRate / PHONE_RATE;
   let odd = null; // a byte left over from a piece that ended mid-sample
   const samplesOf = (pcm) => {
@@ -162,6 +163,38 @@ function createMulawSink(write, fromRate = 24000) {
       while (next < outs) out.push(outAt(next++, total));
       if (out.length) write(Buffer.from(out));
       odd = null;
+    },
+  };
+}
+
+/* GW-10 lead review (Nov 12 2026): the buffered phone lane runs fadePcmEdges (12 ms at BOTH ends, the July 1
+ * click fix); the streamed opener had only its fade-in. opts.fadeOutMs holds back that much of the input and,
+ * at end(), ramps it to zero the way fadePcmEdges ramps a tail (the last sample at gain 0) before it is encoded,
+ * so a clip that stops at full amplitude ends in a fade, not a step. Everything before the tail goes through
+ * untouched and in order; the tail costs fadeOutMs of extra delay. A clip shorter than the tail is faded over
+ * its own length. */
+function createMulawSink(write, fromRate = 24000, opts = {}) {
+  const inner = createRawMulawSink(write, fromRate);
+  const fadeSamples = Math.round((fromRate * (Number(opts.fadeOutMs) || 0)) / 1000);
+  if (!(fadeSamples > 0)) return inner;
+  const keep = fadeSamples * 2;
+  let tail = Buffer.alloc(0);
+  return {
+    push(pcm) {
+      const buf = tail.length ? Buffer.concat([tail, pcm]) : pcm;
+      if (buf.length <= keep) { tail = Buffer.from(buf); return; }
+      let cut = buf.length - keep;
+      cut -= cut & 1; // whole samples out; an odd byte stays with the tail
+      inner.push(buf.subarray(0, cut));
+      tail = Buffer.from(buf.subarray(cut));
+    },
+    end() {
+      const n = tail.length >> 1;
+      const out = Buffer.alloc(n * 2);
+      for (let k = 0; k < n; k++) out.writeInt16LE(Math.round(tail.readInt16LE(k * 2) * ((n - 1 - k) / n)), k * 2);
+      tail = Buffer.alloc(0);
+      if (n) inner.push(out);
+      inner.end();
     },
   };
 }

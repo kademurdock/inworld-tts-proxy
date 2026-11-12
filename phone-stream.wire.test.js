@@ -85,6 +85,12 @@ test('the phone opener streams as mu-law while it is made; without the header it
   assert.notEqual(r.raw.toString('latin1', 0, 4), 'RIFF', 'mu-law, not WAV bytes');
   assert.ok(Math.abs(r.raw.length - 9600) <= 16, `1.2 s of 8 kHz mu-law (${r.raw.length} bytes)`);
   assert.ok(r.firstAt < r.ms - 400, `first bytes at ${r.firstAt} ms, the whole answer at ${r.ms} ms`);
+  // Lead review: the opener ends in the buffered lane's 12 ms fade, not a step (the July 1 click fix).
+  const dec = (u) => { u = ~u & 0xFF; const m = ((((u & 0x0F) << 3) + 132) << ((u >> 4) & 7)) - 132; return u & 0x80 ? -m : m; };
+  const peak = (from, to) => { let p = 0; for (let i = from; i < to; i++) p = Math.max(p, Math.abs(dec(r.raw[i]))); return p; };
+  const n = r.raw.length;
+  assert.ok(peak(n - 400, n - 200) > 4000, "the tone is at full level before the tail");
+  assert.ok(peak(n - 4, n) < 600, `the last samples are faded (${peak(n - 4, n)})`);
   await logged(s.state, /\[TTS\] stream out: .* telephony=yes/); // written after the answer has ended
 
   const b = await speak(32051, 'Well hello there, it is good to hear you.');
