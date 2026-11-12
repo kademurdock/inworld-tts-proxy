@@ -5642,6 +5642,116 @@ const VOICE_ADDITIONS_2026_10_29 = {
   });
 }
 
+// Nov 11 2026: Kade: "add the new voices I just made today from inworld to my platform. Several
+// voices." Workspace diff: 403 customs, 98 not on the platform; ten are her personal hold-outs
+// (Kade*, Amber*, Podcast Keighty fast), two (Dale, Sky) are voices she took off the platform on
+// Jun 26, and these 86 are the new ones (none was on the workspace at the Oct 29 diff). Inworld
+// gives no creation date, so "made today" cannot be told apart from "made since Oct 29". The
+// workspace names stay in comments only (voices are not people).
+const VOICE_ADDITIONS_2026_11_11 = {
+  "Voice 672": "default-e-m11vgtr9l-m7afw4kmnw__aaron", // aaron
+  "Voice 673": "default-e-m11vgtr9l-m7afw4kmnw__arinia", // arinia
+  "Voice 674": "default-e-m11vgtr9l-m7afw4kmnw__arsea", // Arsea
+  "Voice 675": "default-e-m11vgtr9l-m7afw4kmnw__austin", // Austin
+  "Voice 676": "default-e-m11vgtr9l-m7afw4kmnw__bobby", // Bobby
+  "Voice 677": "default-e-m11vgtr9l-m7afw4kmnw__brendai", // Brendai
+  "Voice 678": "default-e-m11vgtr9l-m7afw4kmnw__brittney", // Brittney
+  "Voice 679": "default-e-m11vgtr9l-m7afw4kmnw__bryant", // Bryant
+  "Voice 680": "default-e-m11vgtr9l-m7afw4kmnw__butterscotch", // Butterscotch
+  "Voice 681": "default-e-m11vgtr9l-m7afw4kmnw__cana", // Cana
+  "Voice 682": "default-e-m11vgtr9l-m7afw4kmnw__carney", // Carney
+  "Voice 683": "default-e-m11vgtr9l-m7afw4kmnw__chaienne", // Chaienne
+  "Voice 684": "default-e-m11vgtr9l-m7afw4kmnw__charly", // Charly
+  "Voice 685": "default-e-m11vgtr9l-m7afw4kmnw__chocola", // Chocola
+  "Voice 686": "default-e-m11vgtr9l-m7afw4kmnw__clemmadee", // Clemmadee
+  "Voice 687": "default-e-m11vgtr9l-m7afw4kmnw__codya", // Codya
+  "Voice 688": "default-e-m11vgtr9l-m7afw4kmnw__cosh", // Cosh
+  "Voice 689": "default-e-m11vgtr9l-m7afw4kmnw__darson", // Darson
+  "Voice 690": "default-e-m11vgtr9l-m7afw4kmnw__feefer", // Feefer
+  "Voice 691": "default-e-m11vgtr9l-m7afw4kmnw__forrene", // Forrene
+  "Voice 692": "default-e-m11vgtr9l-m7afw4kmnw__frogley", // Frogley
+  "Voice 693": "default-e-m11vgtr9l-m7afw4kmnw__garlah", // Garlah
+  "Voice 694": "default-e-m11vgtr9l-m7afw4kmnw__goji", // Goji
+  "Voice 695": "default-e-m11vgtr9l-m7afw4kmnw__hank", // Hank
+  "Voice 696": "default-e-m11vgtr9l-m7afw4kmnw__java", // Java
+  "Voice 697": "default-e-m11vgtr9l-m7afw4kmnw__karreesse", // Karreesse
+  "Voice 698": "default-e-m11vgtr9l-m7afw4kmnw__keese", // Keese
+  "Voice 699": "default-e-m11vgtr9l-m7afw4kmnw__keesh", // Keesh
+  "Voice 700": "default-e-m11vgtr9l-m7afw4kmnw__kessie", // Kessie
+  "Voice 701": "default-e-m11vgtr9l-m7afw4kmnw__kinna", // Kinna
+  "Voice 702": "default-e-m11vgtr9l-m7afw4kmnw__kirk", // Kirk
+  "Voice 703": "default-e-m11vgtr9l-m7afw4kmnw__kobie", // Kobie
+  "Voice 704": "default-e-m11vgtr9l-m7afw4kmnw__maggoolah", // Maggoolah
+  "Voice 705": "default-e-m11vgtr9l-m7afw4kmnw__maikin", // Maikin
+  "Voice 706": "default-e-m11vgtr9l-m7afw4kmnw__marceene", // Marceene
+  "Voice 707": "default-e-m11vgtr9l-m7afw4kmnw__marksy", // Marksy
+  "Voice 708": "default-e-m11vgtr9l-m7afw4kmnw__marnique", // Marnique
+  "Voice 709": "default-e-m11vgtr9l-m7afw4kmnw__marsia", // Marsia
+  "Voice 710": "default-e-m11vgtr9l-m7afw4kmnw__martene", // Martene
+  "Voice 711": "default-e-m11vgtr9l-m7afw4kmnw__marthaleea", // Marthaleea
+  "Voice 712": "default-e-m11vgtr9l-m7afw4kmnw__maylene", // Maylene
+  "Voice 713": "default-e-m11vgtr9l-m7afw4kmnw__megina", // Megina
+  "Voice 714": "default-e-m11vgtr9l-m7afw4kmnw__mina_may", // Mina may
+  "Voice 715": "default-e-m11vgtr9l-m7afw4kmnw__myanne", // Myanne
+  "Voice 716": "default-e-m11vgtr9l-m7afw4kmnw__naimaoro", // Naimaoro
+  "Voice 717": "default-e-m11vgtr9l-m7afw4kmnw__nairro", // Nairro
+  "Voice 718": "default-e-m11vgtr9l-m7afw4kmnw__naithannos", // Naithannos
+  "Voice 719": "default-e-m11vgtr9l-m7afw4kmnw__nasheen", // Nasheen
+  "Voice 720": "default-e-m11vgtr9l-m7afw4kmnw__neea", // Neea
+  "Voice 721": "default-e-m11vgtr9l-m7afw4kmnw__needalay", // Needalay
+  "Voice 722": "default-e-m11vgtr9l-m7afw4kmnw__nervera", // Nervera
+  "Voice 723": "default-e-m11vgtr9l-m7afw4kmnw__nezzy", // Nezzy
+  "Voice 724": "default-e-m11vgtr9l-m7afw4kmnw__nova", // Nova
+  "Voice 725": "default-e-m11vgtr9l-m7afw4kmnw__olathah", // Olathah
+  "Voice 726": "default-e-m11vgtr9l-m7afw4kmnw__pansy", // Pansy
+  "Voice 727": "default-e-m11vgtr9l-m7afw4kmnw__panthos", // Panthos
+  "Voice 728": "default-e-m11vgtr9l-m7afw4kmnw__pavous", // Pavous
+  "Voice 729": "default-e-m11vgtr9l-m7afw4kmnw__poppy", // Poppy
+  "Voice 730": "default-e-m11vgtr9l-m7afw4kmnw__posey", // Posey
+  "Voice 731": "default-e-m11vgtr9l-m7afw4kmnw__radio_dude", // Radio dude
+  "Voice 732": "default-e-m11vgtr9l-m7afw4kmnw__rayly", // Rayly
+  "Voice 733": "default-e-m11vgtr9l-m7afw4kmnw__revvy", // Revvy
+  "Voice 734": "default-e-m11vgtr9l-m7afw4kmnw__rocky", // Rocky
+  "Voice 735": "default-e-m11vgtr9l-m7afw4kmnw__saina", // Saina
+  "Voice 736": "default-e-m11vgtr9l-m7afw4kmnw__salara", // Salara
+  "Voice 737": "default-e-m11vgtr9l-m7afw4kmnw__sanaray", // Sanaray
+  "Voice 738": "default-e-m11vgtr9l-m7afw4kmnw__sanettah", // Sanettah
+  "Voice 739": "default-e-m11vgtr9l-m7afw4kmnw__sartruca", // sartruca
+  "Voice 740": "default-e-m11vgtr9l-m7afw4kmnw__shan", // Shan
+  "Voice 741": "default-e-m11vgtr9l-m7afw4kmnw__shassy", // Shassy
+  "Voice 742": "default-e-m11vgtr9l-m7afw4kmnw__shawnsy", // Shawnsy
+  "Voice 743": "default-e-m11vgtr9l-m7afw4kmnw__sofia", // Sofia
+  "Voice 744": "default-e-m11vgtr9l-m7afw4kmnw__swarmsley", // Swarmsley
+  "Voice 745": "default-e-m11vgtr9l-m7afw4kmnw__tamika", // Tamika
+  "Voice 746": "default-e-m11vgtr9l-m7afw4kmnw__tansinite", // tansinite
+  "Voice 747": "default-e-m11vgtr9l-m7afw4kmnw__tarka", // tarka
+  "Voice 748": "default-e-m11vgtr9l-m7afw4kmnw__teesia", // Teesia
+  "Voice 749": "default-e-m11vgtr9l-m7afw4kmnw__thanial", // Thanial
+  "Voice 750": "default-e-m11vgtr9l-m7afw4kmnw__threeni", // Threeni
+  "Voice 751": "default-e-m11vgtr9l-m7afw4kmnw__tierrah", // Tierrah
+  "Voice 752": "default-e-m11vgtr9l-m7afw4kmnw__tiffany", // Tiffany
+  "Voice 753": "default-e-m11vgtr9l-m7afw4kmnw__toshley", // toshley
+  "Voice 754": "default-e-m11vgtr9l-m7afw4kmnw__treese", // Treese
+  "Voice 755": "default-e-m11vgtr9l-m7afw4kmnw__tuniea", // Tuniea
+  "Voice 756": "default-e-m11vgtr9l-m7afw4kmnw__willo", // Willo
+  "Voice 757": "default-e-m11vgtr9l-m7afw4kmnw__ziria", // Ziria
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_11_11);
+  if (entries.length !== 86) throw new Error(`additions 11-11: expected 86, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${672 + idx}`) throw new Error(`additions 11-11: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 11-11: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 11-11: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
