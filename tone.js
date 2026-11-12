@@ -82,25 +82,45 @@ function measureTone(pcmBuf, sampleRate) {
  * saw them -- a hard clip dressed as EQ. Now the shelf runs in floats and, if
  * the result would exceed full scale, the whole clip is scaled down to fit
  * (returned as `scaleDb`, so the caller can log it); the loudness stage that
- * follows measures the scaled clip and gives the level back. Nothing clips. */
-function applyShelf(pcmBuf, sampleRate, type, fc, gainDb) {
-  const c = biquadCoeffs(type, fc, sampleRate, { gainDb });
-  const total = pcmBuf.length >> 1;
-  const y = new Float64Array(total);
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0, peak = 0;
-  for (let i = 0; i < total; i++) {
+ * follows measures the scaled clip and gives the level back. Nothing clips.
+ * GW-13 (Nov 12 2026): the floats used to be KEPT, in a Float64Array as long
+ * as the clip (8 bytes a sample: 726 MB for an hour of speech, per shelf).
+ * Now pass 1 runs the filter only to find the peak, and pass 2 runs the same
+ * filter again and writes in place. Each sample is read before it is written
+ * and the filter keeps its own copies of the two inputs before it, so the
+ * bytes are the ones the kept-floats version wrote (tone.test.js proves it). */
+function shelfPeakRange(pcmBuf, c, st, from, to) {
+  let x1 = st.x1, x2 = st.x2, y1 = st.y1, y2 = st.y2, peak = st.peak;
+  for (let i = from; i < to; i++) {
     const x = pcmBuf.readInt16LE(i * 2);
     const v = c.b0 * x + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2;
     x2 = x1; x1 = x; y2 = y1; y1 = v;
-    y[i] = v;
     const a = Math.abs(v);
     if (a > peak) peak = a;
   }
-  const scale = peak > 32767 ? 32767 / peak : 1;
-  for (let i = 0; i < total; i++) {
-    pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, y[i] * scale))), i * 2);
+  st.x1 = x1; st.x2 = x2; st.y1 = y1; st.y2 = y2; st.peak = peak;
+}
+function shelfWriteRange(pcmBuf, c, st, scale, from, to) {
+  let x1 = st.x1, x2 = st.x2, y1 = st.y1, y2 = st.y2;
+  for (let i = from; i < to; i++) {
+    const x = pcmBuf.readInt16LE(i * 2); // read before this sample is overwritten
+    const v = c.b0 * x + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2;
+    x2 = x1; x1 = x; y2 = y1; y1 = v;
+    pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, v * scale))), i * 2);
   }
-  return { scaleDb: scale < 1 ? 20 * Math.log10(scale) : 0 };
+  st.x1 = x1; st.x2 = x2; st.y1 = y1; st.y2 = y2;
+}
+const shelfScaleOf = (peak) => (peak > 32767 ? 32767 / peak : 1);
+const shelfResult = (scale) => ({ scaleDb: scale < 1 ? 20 * Math.log10(scale) : 0 });
+
+function applyShelf(pcmBuf, sampleRate, type, fc, gainDb) {
+  const c = biquadCoeffs(type, fc, sampleRate, { gainDb });
+  const total = pcmBuf.length >> 1;
+  const st = { x1: 0, x2: 0, y1: 0, y2: 0, peak: 0 };
+  shelfPeakRange(pcmBuf, c, st, 0, total);
+  const scale = shelfScaleOf(st.peak);
+  shelfWriteRange(pcmBuf, c, { x1: 0, x2: 0, y1: 0, y2: 0 }, scale, 0, total);
+  return shelfResult(scale);
 }
 
 /** How far to move, given a measurement, a target and the rules above. */
