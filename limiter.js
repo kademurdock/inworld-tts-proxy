@@ -1,4 +1,5 @@
 "use strict";
+const { inSlices, sliceSamplesFor } = require("./slices");
 /**
  * limiter.js — LOOKAHEAD PEAK LIMITER (Part 117.3, Sep 2 2026)
  *
@@ -122,22 +123,42 @@ function createLookaheadLimiter({ ceiling = 31500, sampleRate = 24000, lookahead
  * function, limited at `ceiling`, and returns { limited, minGain }.
  * gainAt(i) lets the caller ramp between clips exactly as before.
  */
-function limitPcmInPlace(pcmBuf, sampleRate, gainAt, ceiling = 31500) {
-  const total = pcmBuf.length >> 1;
-  const lim = createLookaheadLimiter({ ceiling, sampleRate });
-  let w = 0;
-  const write = (v) => {
-    const c = Math.round(Math.max(-32768, Math.min(32767, v)));
-    pcmBuf.writeInt16LE(c, w * 2);
-    w++;
-  };
-  for (let i = 0; i < total; i++) {
+function limitRange(pcmBuf, lim, gainAt, st, from, to) {
+  for (let i = from; i < to; i++) {
     const out = lim.push(pcmBuf.readInt16LE(i * 2) * gainAt(i));
-    if (out !== null) write(out);
+    if (out !== null) {
+      pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, out))), st.w * 2);
+      st.w++;
+    }
   }
-  for (const v of lim.flush()) if (w < total) write(v);
-  while (w < total) write(0);
+}
+function limitTail(pcmBuf, lim, st, total) {
+  const write = (v) => {
+    pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, v))), st.w * 2);
+    st.w++;
+  };
+  for (const v of lim.flush()) if (st.w < total) write(v);
+  while (st.w < total) write(0);
   return { limited: lim.limitedSamples, minGain: lim.minGain };
 }
 
-module.exports = { createLookaheadLimiter, limitPcmInPlace, DEFAULT_LOOKAHEAD_MS, DEFAULT_HOLD_MS, DEFAULT_RELEASE_MS };
+function limitPcmInPlace(pcmBuf, sampleRate, gainAt, ceiling = 31500) {
+  const total = pcmBuf.length >> 1;
+  const lim = createLookaheadLimiter({ ceiling, sampleRate });
+  const st = { w: 0 };
+  limitRange(pcmBuf, lim, gainAt, st, 0, total);
+  return limitTail(pcmBuf, lim, st, total);
+}
+
+/** limitPcmInPlace for the request path (GW-13, Nov 12 2026): the same limiter object fed the same samples in
+ * the same order, a few seconds of audio at a time, with a turn of the event loop between slices (slices.js).
+ * The write position trails the read position by the lookahead, so nothing is overwritten before it is read. */
+async function limitPcmInPlaceAsync(pcmBuf, sampleRate, gainAt, ceiling = 31500) {
+  const total = pcmBuf.length >> 1;
+  const lim = createLookaheadLimiter({ ceiling, sampleRate });
+  const st = { w: 0 };
+  await inSlices(total, sliceSamplesFor(sampleRate), (from, to) => limitRange(pcmBuf, lim, gainAt, st, from, to));
+  return limitTail(pcmBuf, lim, st, total);
+}
+
+module.exports = { createLookaheadLimiter, limitPcmInPlace, limitPcmInPlaceAsync, DEFAULT_LOOKAHEAD_MS, DEFAULT_HOLD_MS, DEFAULT_RELEASE_MS };

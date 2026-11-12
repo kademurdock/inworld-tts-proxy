@@ -28,6 +28,8 @@
  * those clips, so estimator and target agree by construction.
  */
 
+const { inSlices, sliceSamplesFor } = require("./slices");
+
 function biquadCoeffs(type, fc, sampleRate, { gainDb = 0, bwOct = 1 } = {}) {
   const A = Math.pow(10, gainDb / 40);
   const w0 = (2 * Math.PI * fc) / sampleRate;
@@ -50,28 +52,59 @@ function biquadCoeffs(type, fc, sampleRate, { gainDb = 0, bwOct = 1 } = {}) {
   return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0 };
 }
 
-function bandEnergy(pcmBuf, sampleRate, fc, bwOct) {
-  const c = biquadCoeffs("bpf", fc, sampleRate, { bwOct });
-  const total = pcmBuf.length >> 1;
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0, e = 0;
-  for (let i = 0; i < total; i++) {
+/* GW-13 (Nov 12 2026): every per-sample pass below is a RANGE function that carries its own filter state, so
+ * the same arithmetic serves the one-piece call (tests, the lab) and the sliced call that gives the event loop
+ * a turn every few seconds of audio (slices.js). Same operations in the same order: same bytes. */
+function bandEnergyRange(pcmBuf, c, st, from, to) {
+  let x1 = st.x1, x2 = st.x2, y1 = st.y1, y2 = st.y2, e = st.e;
+  for (let i = from; i < to; i++) {
     const x = pcmBuf.readInt16LE(i * 2) / 32768;
     const y = c.b0 * x + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2;
     x2 = x1; x1 = x; y2 = y1; y1 = y;
     e += y * y;
   }
-  return e;
+  st.x1 = x1; st.x2 = x2; st.y1 = y1; st.y2 = y2; st.e = e;
+}
+
+function bandEnergy(pcmBuf, sampleRate, fc, bwOct) {
+  const c = biquadCoeffs("bpf", fc, sampleRate, { bwOct });
+  const st = { x1: 0, x2: 0, y1: 0, y2: 0, e: 0 };
+  bandEnergyRange(pcmBuf, c, st, 0, pcmBuf.length >> 1);
+  return st.e;
+}
+
+async function bandEnergyAsync(pcmBuf, sampleRate, fc, bwOct) {
+  const c = biquadCoeffs("bpf", fc, sampleRate, { bwOct });
+  const st = { x1: 0, x2: 0, y1: 0, y2: 0, e: 0 };
+  await inSlices(pcmBuf.length >> 1, sliceSamplesFor(sampleRate), (from, to) => bandEnergyRange(pcmBuf, c, st, from, to));
+  return st.e;
+}
+
+// low (80–250 Hz), mid (300–2000 Hz), high (4–8 kHz): centre frequency and width in octaves
+const TONE_BANDS = [
+  [Math.sqrt(80 * 250), Math.log2(250 / 80)],
+  [Math.sqrt(300 * 2000), Math.log2(2000 / 300)],
+  [Math.sqrt(4000 * 8000), Math.log2(8000 / 4000)],
+];
+function toneOfBands(low, mid, high) {
+  if (mid <= 0) return null;
+  return { lowDb: 10 * Math.log10(low / mid + 1e-12), highDb: 10 * Math.log10(high / mid + 1e-12) };
 }
 
 /** {lowDb, highDb}: low(80–250)/mid(300–2000) and high(4–8k)/mid, in dB. */
 function measureTone(pcmBuf, sampleRate) {
   const total = pcmBuf.length >> 1;
   if (total < sampleRate / 4) return null;
-  const low = bandEnergy(pcmBuf, sampleRate, Math.sqrt(80 * 250), Math.log2(250 / 80));
-  const mid = bandEnergy(pcmBuf, sampleRate, Math.sqrt(300 * 2000), Math.log2(2000 / 300));
-  const high = bandEnergy(pcmBuf, sampleRate, Math.sqrt(4000 * 8000), Math.log2(8000 / 4000));
-  if (mid <= 0) return null;
-  return { lowDb: 10 * Math.log10(low / mid + 1e-12), highDb: 10 * Math.log10(high / mid + 1e-12) };
+  const [low, mid, high] = TONE_BANDS.map(([fc, bw]) => bandEnergy(pcmBuf, sampleRate, fc, bw));
+  return toneOfBands(low, mid, high);
+}
+
+async function measureToneAsync(pcmBuf, sampleRate) {
+  const total = pcmBuf.length >> 1;
+  if (total < sampleRate / 4) return null;
+  const e = [];
+  for (const [fc, bw] of TONE_BANDS) e.push(await bandEnergyAsync(pcmBuf, sampleRate, fc, bw));
+  return toneOfBands(e[0], e[1], e[2]);
 }
 
 /** In-place shelf. type = "lowshelf" | "highshelf".
@@ -123,6 +156,18 @@ function applyShelf(pcmBuf, sampleRate, type, fc, gainDb) {
   return shelfResult(scale);
 }
 
+async function applyShelfAsync(pcmBuf, sampleRate, type, fc, gainDb) {
+  const c = biquadCoeffs(type, fc, sampleRate, { gainDb });
+  const total = pcmBuf.length >> 1;
+  const slice = sliceSamplesFor(sampleRate);
+  const st = { x1: 0, x2: 0, y1: 0, y2: 0, peak: 0 };
+  await inSlices(total, slice, (from, to) => shelfPeakRange(pcmBuf, c, st, from, to));
+  const scale = shelfScaleOf(st.peak);
+  const wr = { x1: 0, x2: 0, y1: 0, y2: 0 };
+  await inSlices(total, slice, (from, to) => shelfWriteRange(pcmBuf, c, wr, scale, from, to));
+  return shelfResult(scale);
+}
+
 /** How far to move, given a measurement, a target and the rules above. */
 function shelfCorrection(measuredDb, targetDb, { deadbandDb, maxCutDb, maxBoostDb }) {
   const excess = measuredDb - targetDb;
@@ -132,25 +177,44 @@ function shelfCorrection(measuredDb, targetDb, { deadbandDb, maxCutDb, maxBoostD
   return excess > 0 ? -Math.min(maxCutDb, beyond) : Math.min(maxBoostDb, beyond);
 }
 
+/** What to move, given a measurement. Part 118: boosts may be capped separately per shelf
+ * (cfg.maxLowBoostDb / cfg.maxHighBoostDb, default = cfg.maxBoostDb). The lab presets use it to
+ * audition a cut-only tone match. */
+function tonePlan(t, cfg) {
+  const lowCfg = { ...cfg, maxBoostDb: cfg.maxLowBoostDb != null ? cfg.maxLowBoostDb : cfg.maxBoostDb };
+  const highCfg = { ...cfg, maxBoostDb: cfg.maxHighBoostDb != null ? cfg.maxHighBoostDb : cfg.maxBoostDb };
+  return { lowFix: shelfCorrection(t.lowDb, cfg.lowTargetDb, lowCfg), highFix: shelfCorrection(t.highDb, cfg.highTargetDb, highCfg) };
+}
+function toneNote(t, { lowFix, highFix }, scaled) {
+  const notes = [];
+  if (lowFix) notes.push(`low ${lowFix > 0 ? "+" : ""}${lowFix.toFixed(1)} dB (was ${t.lowDb.toFixed(1)})`);
+  if (highFix) notes.push(`high ${highFix > 0 ? "+" : ""}${highFix.toFixed(1)} dB (was ${t.highDb.toFixed(1)})`);
+  if (scaled < -0.05) notes.push(`shelf headroom ${scaled.toFixed(1)} dB`);
+  return notes.length ? `, tone ${notes.join(", ")}` : "";
+}
+
 /**
  * Measure, decide, apply. Returns a note for the log or "" when untouched.
  */
 function toneMatch(pcmBuf, sampleRate, cfg) {
   const t = measureTone(pcmBuf, sampleRate);
   if (!t) return "";
-  // Part 118: boosts may be capped separately per shelf (cfg.maxLowBoostDb /
-  // cfg.maxHighBoostDb, default = cfg.maxBoostDb). The lab presets use it to
-  // audition a cut-only tone match.
-  const lowCfg = { ...cfg, maxBoostDb: cfg.maxLowBoostDb != null ? cfg.maxLowBoostDb : cfg.maxBoostDb };
-  const highCfg = { ...cfg, maxBoostDb: cfg.maxHighBoostDb != null ? cfg.maxHighBoostDb : cfg.maxBoostDb };
-  const lowFix = shelfCorrection(t.lowDb, cfg.lowTargetDb, lowCfg);
-  const highFix = shelfCorrection(t.highDb, cfg.highTargetDb, highCfg);
-  const notes = [];
+  const plan = tonePlan(t, cfg);
   let scaled = 0;
-  if (lowFix) { const r = applyShelf(pcmBuf, sampleRate, "lowshelf", cfg.lowShelfHz, lowFix); scaled += r.scaleDb; notes.push(`low ${lowFix > 0 ? "+" : ""}${lowFix.toFixed(1)} dB (was ${t.lowDb.toFixed(1)})`); }
-  if (highFix) { const r = applyShelf(pcmBuf, sampleRate, "highshelf", cfg.highShelfHz, highFix); scaled += r.scaleDb; notes.push(`high ${highFix > 0 ? "+" : ""}${highFix.toFixed(1)} dB (was ${t.highDb.toFixed(1)})`); }
-  if (scaled < -0.05) notes.push(`shelf headroom ${scaled.toFixed(1)} dB`);
-  return notes.length ? `, tone ${notes.join(", ")}` : "";
+  if (plan.lowFix) scaled += applyShelf(pcmBuf, sampleRate, "lowshelf", cfg.lowShelfHz, plan.lowFix).scaleDb;
+  if (plan.highFix) scaled += applyShelf(pcmBuf, sampleRate, "highshelf", cfg.highShelfHz, plan.highFix).scaleDb;
+  return toneNote(t, plan, scaled);
+}
+
+/** toneMatch for the request path (GW-13): the same passes, a few seconds of audio at a time. */
+async function toneMatchAsync(pcmBuf, sampleRate, cfg) {
+  const t = await measureToneAsync(pcmBuf, sampleRate);
+  if (!t) return "";
+  const plan = tonePlan(t, cfg);
+  let scaled = 0;
+  if (plan.lowFix) scaled += (await applyShelfAsync(pcmBuf, sampleRate, "lowshelf", cfg.lowShelfHz, plan.lowFix)).scaleDb;
+  if (plan.highFix) scaled += (await applyShelfAsync(pcmBuf, sampleRate, "highshelf", cfg.highShelfHz, plan.highFix)).scaleDb;
+  return toneNote(t, plan, scaled);
 }
 
 /** Part 118: one-pole high-pass (rumble filter) for the lab's "lean" preset.
@@ -168,4 +232,4 @@ function applyHighPass(pcmBuf, sampleRate, fc) {
   for (let i = 0; i < total; i++) pcmBuf.writeInt16LE(Math.round(Math.max(-32768, Math.min(32767, y[i]))), i * 2);
 }
 
-module.exports = { measureTone, applyShelf, shelfCorrection, toneMatch, applyHighPass, biquadCoeffs };
+module.exports = { measureTone, measureToneAsync, applyShelf, applyShelfAsync, shelfCorrection, toneMatch, toneMatchAsync, applyHighPass, biquadCoeffs };

@@ -1682,7 +1682,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
     noteChunk("ok");
     const raw = Buffer.concat(rawPcm);
     if (processor.fmt) {
-      normalizeLoudness(raw, processor.fmt.sampleRate, inworldVoice, { measureOnly: true });
+      await normalizeLoudness(raw, processor.fmt.sampleRate, inworldVoice, { measureOnly: true });
     }
     console.log(
       `[TTS] stream out: label="${voiceLabel}" resolved="${require("./async-routes").describeCause(inworldVoice)}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}`
@@ -3450,7 +3450,7 @@ const TTS_NORM_CEILING_DBTP = parseFloat(process.env.TTS_NORM_CEILING_DBTP || "-
 // a sample-domain ceiling that keeps the reconstructed (inter-sample) peak
 // under the dBTP target: the sweep showed up to +0.35 dB of inter-sample rise
 const TTS_NORM_CEILING = Math.round(32767 * Math.pow(10, (TTS_NORM_CEILING_DBTP - 0.35) / 20));
-const { limitPcmInPlace, createLookaheadLimiter } = require("./limiter");
+const { limitPcmInPlaceAsync, createLookaheadLimiter } = require("./limiter");
 /* ⭐ PART 117.4 (Sep 2 2026) — TONE MATCH, ON BY DEFAULT. Her words after the
  * de-harsh shelf was built and parked: "I like the idea of the shelf, but it
  * seems like a couple of the voices are too bassy as well, so it probably
@@ -3467,7 +3467,8 @@ const TONE_CFG = {
   lowShelfHz: parseFloat(process.env.TTS_EQ_LOW_SHELF_HZ || "300"),
   highShelfHz: parseFloat(process.env.TTS_EQ_HIGH_SHELF_HZ || "3000"),
 };
-const { toneMatch, applyHighPass } = require("./tone");
+const { toneMatchAsync, applyHighPass } = require("./tone");
+const { inSlices, sliceSamplesFor } = require("./slices");
 /* Part 117.4 — LOUDER, NOW THAT THE LIMITER CAN TAKE IT. Her ear on 117.3:
  * "it is a little quiet." The peak caps (2 dB over the smoothed peak, 4 dB
  * over the raw peak, 1.5% of samples over the 26k knee) were sized for the
@@ -3517,21 +3518,33 @@ const voiceGainMemory = new Map(); // resolved voice id -> last applied linear g
 const voiceLevelEma = new Map(); // resolved inworld voice id -> smoothed speech RMS (dBFS)
 const voicePeakEma = new Map(); // resolved inworld voice id -> smoothed peak sample magnitude (linear, 0-32768)
 
-function measureSpeechRmsDb(pcmBuf, sampleRate) {
+/* GW-13 (Nov 12 2026): walks the windows a few seconds of audio at a time (slices.js), so an hour of speech no
+ * longer holds the loop for the whole pass. The loudest window is found with a loop: the old
+ * Math.max(...winRms) spread one argument per 30 ms window onto the stack and threw "Maximum call stack size
+ * exceeded" from about 124,000 windows (62 minutes of audio; measured on Node 24.22.1), which the catch in
+ * normalizeLoudness turned into "normalize skipped": the longest read-alouds went out with the tone shelves
+ * applied and no leveling or limiting at all. */
+async function measureSpeechRmsDb(pcmBuf, sampleRate) {
   const samples = pcmBuf.length >> 1;
   const win = Math.max(1, Math.round(sampleRate * 0.03)); // 30ms windows
   if (samples < win) return null;
-  const winRms = [];
-  for (let start = 0; start + win <= samples; start += win) {
-    let sum = 0;
-    for (let i = start; i < start + win; i++) {
-      const s = pcmBuf.readInt16LE(i * 2) / 32768;
-      sum += s * s;
+  const windows = Math.floor(samples / win);
+  const winRms = new Array(windows);
+  const windowsPerSlice = Math.max(1, Math.floor(sliceSamplesFor(sampleRate) / win));
+  await inSlices(windows, windowsPerSlice, (fromWin, toWin) => {
+    for (let w = fromWin; w < toWin; w++) {
+      const start = w * win;
+      let sum = 0;
+      for (let i = start; i < start + win; i++) {
+        const s = pcmBuf.readInt16LE(i * 2) / 32768;
+        sum += s * s;
+      }
+      winRms[w] = Math.sqrt(sum / win);
     }
-    winRms.push(Math.sqrt(sum / win));
-  }
+  });
   if (!winRms.length) return null;
-  const peakWin = Math.max(...winRms);
+  let peakWin = -Infinity;
+  for (const r of winRms) if (r > peakWin) peakWin = r;
   if (peakWin <= 0.0005) return null; // effectively silent clip -- leave it alone
   const gate = Math.max(peakWin * 0.1, 0.001);
   let acc = 0;
@@ -3546,9 +3559,18 @@ function measureSpeechRmsDb(pcmBuf, sampleRate) {
   return 20 * Math.log10(Math.sqrt(acc / n));
 }
 
-function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
+/* GW-13 (Nov 12 2026): ASYNC. Every pass over the samples now runs a few seconds of audio at a time and gives
+ * the event loop a turn between slices (slices.js), so a long read-aloud no longer freezes every other
+ * listener's speech while it is leveled. EVERY CALLER MUST AWAIT IT: the samples are changed in place, and a
+ * caller that reads the buffer before the promise settles sends audio that is leveled up to wherever the walk
+ * had got to. A clip shorter than one slice (4 s) is still done in one piece, with no turn given up.
+ * The three per-voice memories below are each read and written with no await in between, so two clips of one
+ * voice being leveled at once can interleave their passes but never tear an update. Same arithmetic in the
+ * same order as before: the bytes that come out are unchanged. */
+async function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
   if (!TTS_NORM_ENABLED || !pcmBuf || pcmBuf.length < 4) return pcmBuf;
   try {
+    const slice = sliceSamplesFor(sampleRate);
     const lab = opts.lab && TTS_LAB_PRESETS[opts.lab] ? TTS_LAB_PRESETS[opts.lab] : null;
     if (lab) voiceKey = `${voiceKey}::lab:${opts.lab}`;
     const overdriveDbLa = lab ? lab.overdriveDb : TTS_NORM_MAX_OVERDRIVE_DB_LA;
@@ -3564,9 +3586,9 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     let toneNote = "";
     if (!opts.measureOnly && TTS_NORM_LIMITER === "lookahead") {
       if (lab && lab.hpfHz > 0) { applyHighPass(pcmBuf, sampleRate, lab.hpfHz); toneNote += `, hpf ${lab.hpfHz} Hz`; }
-      if (TTS_EQ_MATCH) toneNote += toneMatch(pcmBuf, sampleRate, toneCfg);
+      if (TTS_EQ_MATCH) toneNote += await toneMatchAsync(pcmBuf, sampleRate, toneCfg);
     }
-    const rmsDb = measureSpeechRmsDb(pcmBuf, sampleRate);
+    const rmsDb = await measureSpeechRmsDb(pcmBuf, sampleRate);
     if (rmsDb == null) return pcmBuf;
 
     // Per-voice smoothing: longer clips are better level evidence, so they
@@ -3593,10 +3615,12 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     // Peak limiter: if the wanted boost would clip, back off to just-under-full-scale.
     const total = pcmBuf.length >> 1;
     let peak = 0;
-    for (let i = 0; i < total; i++) {
-      const a = Math.abs(pcmBuf.readInt16LE(i * 2));
-      if (a > peak) peak = a;
-    }
+    await inSlices(total, slice, (from, to) => {
+      for (let i = from; i < to; i++) {
+        const a = Math.abs(pcmBuf.readInt16LE(i * 2));
+        if (a > peak) peak = a;
+      }
+    });
     // Smoothed peak (July 16 2026 fix -- Kade: intermittent "ducking"). Used to
     // hard-clamp gain for the WHOLE clip off this clip's own raw instant peak --
     // one emphasized word or hard consonant in an otherwise normal-level clip
@@ -3631,9 +3655,12 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
       const govBudget = TTS_NORM_LIMITER === "lookahead" ? TTS_NORM_LIMIT_BUDGET : TTS_NORM_KNEE_BUDGET;
       for (let guard = 0; guard < 12; guard++) {
         let over = 0;
-        for (let i = 0; i < total; i += 4) { // stride-4 scan: plenty of samples, quarter cost
-          if (Math.abs(pcmBuf.readInt16LE(i * 2)) * gain > govLine) over++;
-        }
+        const g = gain;
+        await inSlices(total, slice, (from, to) => { // slices are a multiple of 4 samples, so the stride stays on 0, 4, 8, ...
+          for (let i = from; i < to; i += 4) { // stride-4 scan: plenty of samples, quarter cost
+            if (Math.abs(pcmBuf.readInt16LE(i * 2)) * g > govLine) over++;
+          }
+        });
         if (over / Math.ceil(total / 4) <= govBudget) break;
         gain *= 0.92;
         if (gain <= 1) { gain = Math.max(gain, 1); break; }
@@ -3690,20 +3717,22 @@ function normalizeLoudness(pcmBuf, sampleRate, voiceKey, opts = {}) {
     if (TTS_NORM_LIMITER === "lookahead") {
       // Part 117.3: level-domain lookahead limiter at the true-peak ceiling.
       // (Part 118: the tone match already ran, above, before the level was measured.)
-      const r = limitPcmInPlace(pcmBuf, sampleRate, gainAt, TTS_NORM_CEILING);
+      const r = await limitPcmInPlaceAsync(pcmBuf, sampleRate, gainAt, TTS_NORM_CEILING);
       kneed = r.limited;
       if (kneed) limitNote += `, limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%, min gain ${(20 * Math.log10(r.minGain)).toFixed(1)} dB) at ${TTS_NORM_CEILING_DBTP} dBTP`;
     } else {
-      for (let i = 0; i < total; i++) {
-        const g = gainAt(i);
-        let v = pcmBuf.readInt16LE(i * 2) * g;
-        const a = Math.abs(v);
-        if (a > TTS_NORM_KNEE) {
-          v = Math.sign(v) * (TTS_NORM_KNEE + TTS_NORM_KNEE_RANGE * Math.tanh((a - TTS_NORM_KNEE) / TTS_NORM_KNEE_RANGE));
-          kneed++;
+      await inSlices(total, slice, (from, to) => {
+        for (let i = from; i < to; i++) {
+          const g = gainAt(i);
+          let v = pcmBuf.readInt16LE(i * 2) * g;
+          const a = Math.abs(v);
+          if (a > TTS_NORM_KNEE) {
+            v = Math.sign(v) * (TTS_NORM_KNEE + TTS_NORM_KNEE_RANGE * Math.tanh((a - TTS_NORM_KNEE) / TTS_NORM_KNEE_RANGE));
+            kneed++;
+          }
+          pcmBuf.writeInt16LE(Math.round(v), i * 2);
         }
-        pcmBuf.writeInt16LE(Math.round(v), i * 2);
-      }
+      });
       if (kneed) limitNote = `, soft-limited ${kneed}/${total} samples (${((100 * kneed) / total).toFixed(2)}%)`;
     }
     console.log(
@@ -3838,7 +3867,7 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery,
     if (i < parsed.length - 1) pieces.push(gap);
   });
   const pcm = Buffer.concat(pieces);
-  normalizeLoudness(pcm, fmt.sampleRate, seg.voiceId);
+  await normalizeLoudness(pcm, fmt.sampleRate, seg.voiceId);
   return { pcm, fmt };
 }
 
@@ -4343,7 +4372,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
 
     const leveled = Buffer.concat(pieces);
     const labPreset = typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab] ? req.query.lab : undefined;
-    normalizeLoudness(leveled, format.sampleRate, inworldVoice, labPreset ? { lab: labPreset } : {});
+    await normalizeLoudness(leveled, format.sampleRate, inworldVoice, labPreset ? { lab: labPreset } : {});
     // The apps play one clip per piece of a reply, back to back: the stop after this piece is
     // the silence at its end. Added after leveling, so it never changes the measured level.
     const combinedData = fishTalks && format.numChannels === 1 && format.bitsPerSample === 16
