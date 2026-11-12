@@ -1,6 +1,6 @@
 'use strict';
 /* Nov 11 2026 - Kade: "add the new voices I just made today from inworld to my platform. Several voices."
- * Voices 672-757 are the 86 new non-personal workspace voices (her Kade and Amber clones and Podcast
+ * Voices 672-760 are the 89 new non-personal workspace voices (her Kade and Amber clones and Podcast
  * Keighty fast stay off, and so do Dale and Sky, taken off on Jun 26). They are described by ear like every
  * Inworld voice, filed in a section, and their workspace names are never a way to reach them. */
 const fs = require('node:fs'), vm = require('node:vm');
@@ -17,11 +17,11 @@ const catalog = require('./voice-catalog-v2.json');
 const pools = require('./test-fixtures/person-name-pools.json');
 const WS = 'default-e-m11vgtr9l-m7afw4kmnw__';
 const FIRST = 672;
-const NEW = ["aaron", "arinia", "arsea", "austin", "bobby", "brendai", "brittney", "bryant", "butterscotch", "cana", "carney", "chaienne", "charly", "chocola", "clemmadee", "codya", "cosh", "darson", "feefer", "forrene", "frogley", "garlah", "goji", "hank", "java", "karreesse", "keese", "keesh", "kessie", "kinna", "kirk", "kobie", "maggoolah", "maikin", "marceene", "marksy", "marnique", "marsia", "martene", "marthaleea", "maylene", "megina", "mina_may", "myanne", "naimaoro", "nairro", "naithannos", "nasheen", "neea", "needalay", "nervera", "nezzy", "nova", "olathah", "pansy", "panthos", "pavous", "poppy", "posey", "radio_dude", "rayly", "revvy", "rocky", "saina", "salara", "sanaray", "sanettah", "sartruca", "shan", "shassy", "shawnsy", "sofia", "swarmsley", "tamika", "tansinite", "tarka", "teesia", "thanial", "threeni", "tierrah", "tiffany", "toshley", "treese", "tuniea", "willo", "ziria"];
-const WORKSPACE_NAMES = ["Aaron", "Arinia", "Arsea", "Austin", "Bobby", "Brendai", "Brittney", "Bryant", "Butterscotch", "Cana", "Carney", "Chaienne", "Charly", "Chocola", "Clemmadee", "Codya", "Cosh", "Dale", "Darson", "Feefer", "Forrene", "Frogley", "Garlah", "Goji", "Hank", "Java", "Karreesse", "Keese", "Keesh", "Kessie", "Kinna", "Kirk", "Kobie", "Maggoolah", "Maikin", "Marceene", "Marksy", "Marnique", "Marsia", "Martene", "Marthaleea", "Maylene", "Megina", "Mina may", "Myanne", "Naimaoro", "Nairro", "Naithannos", "Nasheen", "Neea", "Needalay", "Nervera", "Nezzy", "Nova", "Olathah", "Pansy", "Panthos", "Pavous", "Poppy", "Posey", "Radio dude", "Rayly", "Revvy", "Rocky", "Saina", "Salara", "Sanaray", "Sanettah", "Sartruca", "Shan", "Shassy", "Shawnsy", "Sky", "Sofia", "Swarmsley", "Tamika", "Tansinite", "Tarka", "Teesia", "Thanial", "Threeni", "Tierrah", "Tiffany", "Toshley", "Treese", "Tuniea", "Willo", "Ziria", "aaron", "arinia", "sartruca", "tansinite", "tarka", "toshley"];
+const NEW = ["aaron", "arinia", "arsea", "austin", "bobby", "brendai", "brittney", "bryant", "butterscotch", "cana", "carney", "chaienne", "charly", "chocola", "clemmadee", "codya", "cosh", "darson", "feefer", "forrene", "frogley", "garlah", "goji", "hank", "java", "karreesse", "keese", "keesh", "kessie", "kinna", "kirk", "kobie", "maggoolah", "maikin", "marceene", "marksy", "marnique", "marsia", "martene", "marthaleea", "maylene", "megina", "mina_may", "myanne", "naimaoro", "nairro", "naithannos", "nasheen", "neea", "needalay", "nervera", "nezzy", "nova", "olathah", "pansy", "panthos", "pavous", "poppy", "posey", "radio_dude", "rayly", "revvy", "rocky", "saina", "salara", "sanaray", "sanettah", "sartruca", "shan", "shassy", "shawnsy", "sofia", "swarmsley", "tamika", "tansinite", "tarka", "teesia", "thanial", "threeni", "tierrah", "tiffany", "toshley", "treese", "tuniea", "willo", "ziria", "sola", "kells", "megan"];
+const WORKSPACE_NAMES = ["Aaron", "Arinia", "Arsea", "Austin", "Bobby", "Brendai", "Brittney", "Bryant", "Butterscotch", "Cana", "Carney", "Chaienne", "Charly", "Chocola", "Clemmadee", "Codya", "Cosh", "Dale", "Darson", "Feefer", "Forrene", "Frogley", "Garlah", "Goji", "Hank", "Java", "Karreesse", "Keese", "Keesh", "Kessie", "Kinna", "Kirk", "Kobie", "Maggoolah", "Maikin", "Marceene", "Marksy", "Marnique", "Marsia", "Martene", "Marthaleea", "Maylene", "Megina", "Mina may", "Myanne", "Naimaoro", "Nairro", "Naithannos", "Nasheen", "Neea", "Needalay", "Nervera", "Nezzy", "Nova", "Olathah", "Pansy", "Panthos", "Pavous", "Poppy", "Posey", "Radio dude", "Rayly", "Revvy", "Rocky", "Saina", "Salara", "Sanaray", "Sanettah", "Sartruca", "Shan", "Shassy", "Shawnsy", "Sky", "Sofia", "Swarmsley", "Tamika", "Tansinite", "Tarka", "Teesia", "Thanial", "Threeni", "Tierrah", "Tiffany", "Toshley", "Treese", "Tuniea", "Willo", "Ziria", "Sola", "Kells", "Megan", "aaron", "arinia", "sartruca", "tansinite", "tarka", "toshley"];
 
-test('Voices 672-757 speak as the new workspace voices, described and filed', () => {
-  assert.equal(NEW.length, 86);
+test('Voices 672-760 speak as the new workspace voices, described and filed', () => {
+  assert.equal(NEW.length, 89);
   NEW.forEach((short, i) => {
     const num = `Voice ${FIRST + i}`;
     assert.equal(r.VOICE_MAP[num], WS + short, num);
@@ -39,7 +39,7 @@ test('Voices 672-757 speak as the new workspace voices, described and filed', ()
 
 test('the workspace names are not served as voice names, and the hold-outs stay off', () => {
   for (const name of WORKSPACE_NAMES) assert.equal(r.VOICE_MAP[name], undefined, name);
-  for (const short of ['dale', 'sky', 'podcast_keighty_fast', 'amber_brit', 'kade_southern']) {
+  for (const short of ['dale', 'sky', 'kade', 'podcast_keighty_fast', 'amber_brit', 'kade_southern']) {
     assert.ok(!Object.values(r.VOICE_MAP).includes(WS + short), short);
   }
 });

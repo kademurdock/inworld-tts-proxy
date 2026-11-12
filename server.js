@@ -5643,9 +5643,11 @@ const VOICE_ADDITIONS_2026_10_29 = {
 }
 
 // Nov 11 2026: Kade: "add the new voices I just made today from inworld to my platform. Several
-// voices." Workspace diff: 403 customs, 98 not on the platform; ten are her personal hold-outs
-// (Kade*, Amber*, Podcast Keighty fast), two (Dale, Sky) are voices she took off the platform on
-// Jun 26, and these 86 are the new ones (none was on the workspace at the Oct 29 diff). Inworld
+// voices." Workspace diff (exact ids): 403 customs, 102 not on the platform; eleven are her personal
+// hold-outs (Kade*, including the bare "kade" clone, Amber*, Podcast Keighty fast), two (Dale, Sky)
+// are voices she took off the platform on Jun 26, and these 89 are the new ones (Voices 758-760 were
+// first missed because their ids are prefixes of older ones: sola/solaina, kells/kellsey,
+// megan/megan_female_teen). None was on the workspace at the Oct 29 diff. Inworld
 // gives no creation date, so "made today" cannot be told apart from "made since Oct 29". The
 // workspace names stay in comments only (voices are not people).
 const VOICE_ADDITIONS_2026_11_11 = {
@@ -5735,10 +5737,13 @@ const VOICE_ADDITIONS_2026_11_11 = {
   "Voice 755": "default-e-m11vgtr9l-m7afw4kmnw__tuniea", // Tuniea
   "Voice 756": "default-e-m11vgtr9l-m7afw4kmnw__willo", // Willo
   "Voice 757": "default-e-m11vgtr9l-m7afw4kmnw__ziria", // Ziria
+  "Voice 758": "default-e-m11vgtr9l-m7afw4kmnw__sola", // Sola
+  "Voice 759": "default-e-m11vgtr9l-m7afw4kmnw__kells", // Kells
+  "Voice 760": "default-e-m11vgtr9l-m7afw4kmnw__megan", // Megan
 };
 {
   const entries = Object.entries(VOICE_ADDITIONS_2026_11_11);
-  if (entries.length !== 86) throw new Error(`additions 11-11: expected 86, got ${entries.length}`);
+  if (entries.length !== 89) throw new Error(`additions 11-11: expected 89, got ${entries.length}`);
   const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
   entries.forEach(([label, target], idx) => {
     if (label !== `Voice ${672 + idx}`) throw new Error(`additions 11-11: non-contiguous at ${label}`);

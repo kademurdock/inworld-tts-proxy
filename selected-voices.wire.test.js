@@ -28,8 +28,8 @@ test('the real picker restores Classic Inworld and preserves both saved old and 
     // Oct 20 2026: plus Voice 664, her Inworld clone named "Kade".
     // Oct 29 2026: plus the seven new workspace voices (Voices 665-671).
     // Nov 11 2026: plus the 86 new workspace voices (Voices 672-757).
-    assert.equal(catalog.voices.length, 526);
-    assert.equal(catalog.classic.length, 525);
+    assert.equal(catalog.voices.length, 529);
+    assert.equal(catalog.classic.length, 528);
     assert.ok(catalog.classic.includes('Kade (Classic)'));
     assert.ok(catalog.classic.every(label => label.endsWith('(Classic)') && catalog.providers[label] === 'inworld'));
     assert.ok(catalog.hidden.includes('Voice 1'));

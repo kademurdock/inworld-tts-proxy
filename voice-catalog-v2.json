@@ -156,7 +156,9 @@
     "clear high-ish young woman · houndstooth",
     "clear high-ish young woman · agave",
     "clear high-ish young woman · yucca",
-    "clear high-ish young woman · merino"
+    "clear high-ish young woman · merino",
+    "clear high-ish young woman · catbird",
+    "clear high-ish young woman · lacewing"
    ]
   },
   {
@@ -187,7 +189,8 @@
     "clear young woman · buttonbush",
     "clear young woman · sweetfern",
     "clear young woman · rhodonite",
-    "clear young woman · dewpoint"
+    "clear young woman · dewpoint",
+    "clear young woman · loblolly"
    ]
   },
   {
@@ -15503,6 +15506,66 @@
     "brightness": "bright",
     "texture": "clear",
     "energy": "even",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 11 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 758": {
+   "label": "clear young woman · loblolly",
+   "tag": "loblolly",
+   "category": "Women, bright and clear, young",
+   "description": "A clear, engaging female voice with a friendly bright tone, well-suited for voice assistants and instructional content.",
+   "ear_label": "clear bright young female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.98
+   },
+   "note": "Nov 11 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 759": {
+   "label": "clear high-ish young woman · catbird",
+   "tag": "catbird",
+   "category": "Women, bright and high, young",
+   "description": "A bright, crisp young female voice with a friendly tone, ideal for commercials, apps, and upbeat promos.",
+   "ear_label": "Upbeat young female clear voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 11 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 760": {
+   "label": "clear high-ish young woman · lacewing",
+   "tag": "lacewing",
+   "category": "Women, bright and high, young",
+   "description": "A bright and articulate female voice with a friendly demeanor, well-suited for virtual assistants and instructional content.",
+   "ear_label": "clear, friendly American female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
     "accent": "general American",
     "kind": "natural",
     "gender_confidence": 0.95
