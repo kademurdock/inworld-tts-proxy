@@ -1132,22 +1132,9 @@ function trimEdgeSilenceInfo(pcm, fmt, { head = false, tail = false } = {}) {
 // The voice-stream.js bridge pulls /v1/audio/speech?telephony=1 to get raw
 // G.711 μ-law at 8kHz instead of WAV — that's the exact format Twilio's Media
 // Streams expects. We downsample Inworld's 24kHz PCM, then μ-law-encode it.
-
-// Simple averaging downsampler (24kHz PCM → 8kHz PCM, 16-bit LE)
-function downsamplePcm(pcmBuf, fromRate, toRate) {
-  if (fromRate === toRate) return pcmBuf;
-  const ratio = fromRate / toRate;
-  const outSamples = Math.floor(pcmBuf.length / 2 / ratio);
-  const out = Buffer.alloc(outSamples * 2);
-  for (let i = 0; i < outSamples; i++) {
-    const s0 = Math.floor(i * ratio);
-    const s1 = Math.min(Math.floor((i + 1) * ratio), pcmBuf.length / 2);
-    let sum = 0, n = 0;
-    for (let j = s0; j < s1; j++) { sum += pcmBuf.readInt16LE(j * 2); n++; }
-    out.writeInt16LE(n ? Math.round(sum / n) : 0, i * 2);
-  }
-  return out;
-}
+// Nov 12 2026 (GW-3): the codec lives in telephony-codec.js (16-bit G.711 bias, a real anti-alias
+// filter before the step down to 8 kHz; TTS_PHONE_DECIMATOR=box restores the old averaging).
+const { downsamplePcm, pcm16ToMulaw } = require("./telephony-codec");
 
 // Short linear fade-in/out at the edges of a PCM buffer (default 40 samples
 // = 5ms @ 8kHz). TTS-2 clips can start/stop at non-zero amplitude, and an
@@ -1166,27 +1153,6 @@ function fadePcmEdges(pcmBuf, fadeSamples = 96) {  // 96 = 12ms @ 8kHz (5ms prov
   return pcmBuf;
 }
 
-// ITU-T G.711 μ-law encoder (16-bit signed PCM → 8-bit μ-law byte)
-const MULAW_BIAS = 33;
-function encodeMulaw(s16) {
-  let s = s16;
-  const sign = (s >> 8) & 0x80;
-  if (sign) s = -s;
-  s += MULAW_BIAS;
-  if (s > 32767) s = 32767;
-  let exp = 7;
-  for (let mask = 0x4000; !(s & mask) && exp > 0; exp--, mask >>= 1) {}
-  const mantissa = (s >> (exp + 3)) & 0x0F;
-  return (~(sign | (exp << 4) | mantissa)) & 0xFF;
-}
-
-function pcm16ToMulaw(pcmBuf) {
-  const out = Buffer.alloc(pcmBuf.length >> 1);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = encodeMulaw(pcmBuf.readInt16LE(i * 2));
-  }
-  return out;
-}
 
 // Inworld enforces a hard account-wide cap of 10 concurrent TTS requests
 // ("maximum allowed number of concurrent TTS requests: 10 is reached", a 429
