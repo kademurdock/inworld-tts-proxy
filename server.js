@@ -1177,7 +1177,15 @@ const MAX_CONCURRENT_INWORLD_CALLS = 6;
 
 const { createLimiter } = require("./call-limiter"); // Nov 8 2026: moved to its own module, so it can be tested and its promise chain has an end
 
-const inworldLimiter = createLimiter(MAX_CONCURRENT_INWORLD_CALLS);
+// Nov 12 2026 (GW-9): a whole number from the environment, or the default: a typo must never become NaN in a timer or a queue.
+function wholeNumberEnv(name, fallback, min) {
+  const raw = process.env[name];
+  const n = raw == null || String(raw).trim() === "" ? NaN : Number(raw);
+  return Number.isInteger(n) && n >= min ? n : fallback;
+}
+// GW-9: slots kept free of work nobody is on the line for (read-aloud, chat clips, previews). 0 = none kept.
+const TTS_LIVE_RESERVE = wholeNumberEnv("TTS_LIVE_RESERVE", 1, 0);
+const inworldLimiter = createLimiter(MAX_CONCURRENT_INWORLD_CALLS, TTS_LIVE_RESERVE);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1189,6 +1197,23 @@ function sleep(ms) {
 // and (b) permanently eats one of the limiter's 6 slots, quietly shrinking
 // capacity until the whole proxy starves. Timeouts are retryable below.
 const INWORLD_TIMEOUT_MS = 20000;
+/* GW-9: someone on a call cannot wait 4 x 20 s, and the bridge gives a piece up after 25 s. The short live ladder gives a live piece
+ * INWORLD_LIVE_ATTEMPTS (2) attempts and a limit that grows with its words: INWORLD_LIVE_TIMEOUT_MS up to 200 characters, at most
+ * INWORLD_LIVE_TIMEOUT_MAX_MS (11500). It is OFF until INWORLD_LIVE_TIMEOUT_MS is set: the real p50/p99 of
+ * `[TTS] synth ok: 1 chunk(s) in Xms (telephony=yes)` has not been read from the logs, and a limit under the real tail turns late
+ * audio into a skipped sentence. Unset (or not a whole number of 1000 or more), a live piece keeps today's 20 s x 4; the bridge's own
+ * 25 s still bounds it, and its hang-up now ends the provider call (below). The audit's starting figure was 8000; 10000-12000 for the
+ * first attempt still fits inside the bridge's 25 s. */
+const INWORLD_LIVE_TIMEOUT_MS = wholeNumberEnv("INWORLD_LIVE_TIMEOUT_MS", 0, 1000); // 0 = the live ladder is off
+const INWORLD_LIVE_TIMEOUT_MAX_MS = wholeNumberEnv("INWORLD_LIVE_TIMEOUT_MAX_MS", 11500, 1000);
+const INWORLD_LIVE_ATTEMPTS = wholeNumberEnv("INWORLD_LIVE_ATTEMPTS", 2, 1);
+function inworldLiveLadder(queue) {
+  return Boolean(queue && queue.live && INWORLD_LIVE_TIMEOUT_MS);
+}
+function inworldLiveTimeoutMs(text) {
+  const extra = 12 * Math.max(0, String(text || "").length - 200);
+  return Math.min(INWORLD_TIMEOUT_MS, Math.max(INWORLD_LIVE_TIMEOUT_MS, Math.min(INWORLD_LIVE_TIMEOUT_MAX_MS, INWORLD_LIVE_TIMEOUT_MS + extra)));
+}
 
 /* Nov 11 2026 — the timing data a buffered Inworld answer brought, kept BESIDE its audio Buffer so the
  * Buffer every caller and test already handles stays exactly what it was. A WeakMap: the entry dies
@@ -1198,7 +1223,8 @@ const inworldTimingOf = new WeakMap();
 // came back without lip-sync (Inworld's "temporarily unavailable", or a field it silently ignored).
 const timingStats = { asked: 0, missing: 0, tracks: 0 };
 
-async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null, talkPlain = false) {
+// queue (GW-9): { live, signal } of the request this piece belongs to, or null.
+async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null, talkPlain = false, queue = null) {
   text = normalizeInworldCaps(text);
   // Nov 12 2026: chat speech talks instead of performing (inworld-talk.js). talkPlain is the one retry after Inworld
   // refused a framed request: it is sent exactly as before the frame existed. The speed is priced on the words as
@@ -1225,7 +1251,16 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
     console.log(`[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}`);
   }
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
+  const limitMs = inworldLiveLadder(queue) ? inworldLiveTimeoutMs(rateText) : INWORLD_TIMEOUT_MS;
+  const timer = setTimeout(() => ac.abort(), limitMs);
+  // GW-9: the caller closing its request (hang-up, barge-in, Stop) ends the provider call too. That is not a timeout and is never retried.
+  const caller = queue && queue.signal ? queue.signal : null;
+  const callerLeft = () => ac.abort();
+  if (caller) { if (caller.aborted) ac.abort(); else caller.addEventListener("abort", callerLeft, { once: true }); }
+  const settle = () => { clearTimeout(timer); if (caller) caller.removeEventListener("abort", callerLeft); };
+  const cutError = () => (caller && caller.aborted
+    ? Object.assign(new Error("the caller left"), { name: "AbortError", isAbandoned: true })
+    : Object.assign(new Error(`Inworld request timed out after ${limitMs}ms`), { isTimeout: true }));
   let response;
   try {
     response = await fetch("https://api.inworld.ai/tts/v1/voice", {
@@ -1286,12 +1321,8 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
   });
 
   } catch (err) {
-    clearTimeout(timer);
-    if (err.name === "AbortError") {
-      const e = new Error(`Inworld request timed out after ${INWORLD_TIMEOUT_MS}ms`);
-      e.isTimeout = true;
-      throw e;
-    }
+    settle();
+    if (err.name === "AbortError") throw cutError();
     throw err;
   }
   // Nov 10 2026: the timer used to be cleared here, as soon as the HEADERS arrived, so an answer that began and then stalled was
@@ -1301,14 +1332,10 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
     try {
       return await read();
     } catch (err) {
-      if (err && err.name === "AbortError") {
-        const e = new Error(`Inworld request timed out after ${INWORLD_TIMEOUT_MS}ms`);
-        e.isTimeout = true;
-        throw e;
-      }
+      if (err && err.name === "AbortError") throw cutError();
       throw err;
     } finally {
-      clearTimeout(timer);
+      settle();
     }
   };
 
@@ -1380,23 +1407,24 @@ function chunkStatsToday() {
   return chunkStats.get(centralDay()) || { ok: 0, failed: 0, retried: 0 };
 }
 
-async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null) {
+async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction, previousTexts, delivery, talk = false, timing = null, queue = null) {
   // Nov 12 2026: a framed chat piece's instruction is its own direction and the frame (inworld-talk.js); the Balanced
   // lively brief is never stacked under the frame. The plain retry below sends what was always sent.
   const plainInstruction = inworldInstruction(instruction, delivery);
   const talkInstruction = talk && inworldTalk.talkSettings().mode !== 'off' ? instruction : plainInstruction;
   return inworldLimiter(async () => {
-    const maxAttempts = 4;
+    const maxAttempts = inworldLiveLadder(queue) ? INWORLD_LIVE_ATTEMPTS : 4;
     let lastErr;
     let talkPlain = false;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, talkPlain ? plainInstruction : talkInstruction, previousTexts, delivery, talk, timing, talkPlain);
+        const buf = await synthesizeChunkOnce(text, voiceId, modelId, speakingRate, talkPlain ? plainInstruction : talkInstruction, previousTexts, delivery, talk, timing, talkPlain, queue);
         noteChunk('ok');
         if (attempt > 1) noteChunk('retried');
         return buf;
       } catch (err) {
         lastErr = err;
+        if (err && err.isAbandoned) throw err; // GW-9: nobody is waiting; not a failed chunk, not retried, the slot goes back now
         const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
         /* Nov 12 2026: the frame is a manner and the words always win. A 4xx for a framed request is asked once more
          * exactly as before the frame existed, BEFORE the timing fallback below gives up the face's track. */
@@ -1424,7 +1452,7 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
       }
     }
     throw lastErr;
-  });
+  }, queue);
 }
 
 /* ── Part 98 (Aug 29 2026) — THE STREAMED SINGLE-CHUNK LANE ──────────────────
@@ -1457,7 +1485,7 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * runs. The stream lane never retries on its own — retrying after flushed
  * bytes would double-speak the opening of a sentence.
  */
-async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null, pauses = null, talk = false }) {
+async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null, pauses = null, talk = false, queue = null }) {
   // written: the piece as the Inworld writer left it (inworld-writer.js), already lifted.
   const { text: liftedText, instruction: lifted } = written || splitChunkForInworld(chunk);
   // fillers: { turn, seed } when this chat request gets spoken filler words (pace.js).
@@ -1490,6 +1518,9 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
   return inworldLimiter(async () => {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
+    // GW-9: one listener on this request's own signal (this lane is one chunk); it goes when the request does.
+    const caller = queue && queue.signal ? queue.signal : null;
+    if (caller) { if (caller.aborted) ac.abort(); else caller.addEventListener("abort", () => ac.abort(), { once: true }); }
     const t0 = Date.now();
     let response;
     try {
@@ -1624,6 +1655,11 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       }
     } catch (err) {
       clearTimeout(timer);
+      if (caller && caller.aborted) { // GW-9: the listener left; not a failed chunk
+        console.log(`[TTS] stream: the caller left after ${flushedBytes} bytes -- provider call ended`);
+        if (sentHeaders) res.end();
+        return true;
+      }
       if (!sentHeaders) {
         console.warn(`[TTS] stream: died before first audio (${err.message}) -- falling back to buffered`);
         return false;
@@ -1652,7 +1688,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       `[TTS] stream out: label="${voiceLabel}" resolved="${require("./async-routes").describeCause(inworldVoice)}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}`
     );
     return true;
-  });
+  }, queue);
 }
 
 // ── Fish Audio synthesis (sibling of synthesizeChunk above) ──────────────────
@@ -1667,10 +1703,10 @@ const FISH_TIMEOUT_MS = parseInt(process.env.FISH_TIMEOUT_MS || "30000", 10);
 // ≥$100 paid → 15 concurrent). 6 mirrors the Inworld headroom philosophy —
 // well under the ceiling so auditions/other users never starve a reply.
 const MAX_CONCURRENT_FISH_CALLS = parseInt(process.env.FISH_MAX_CONCURRENT || "6", 10);
-const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);
+const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS, TTS_LIVE_RESERVE);
 const FISH_SAMPLE_RATE = 24000; // matches Inworld's 24k so mixed-provider EMA/telephony math never diverges
 
-async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null, talk = false, keepTake = null, { exact = false, liveCall = false } = {}) {
+async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference = null, talk = false, keepTake = null, { exact = false, liveCall = false, signal = null } = {}) {
   // Fish silently falls back to S2.1 Pro for an unknown header. Refuse typos
   // before a paid request, while keeping Inworld and the explicit rollback usable.
   if (!FISH_TTS_MODELS.has(FISH_TTS_MODEL)) {
@@ -1690,6 +1726,10 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
   const encoded = await fishBody(payload, fishModelId, selectedReferenceStore, reference);
   const ac = new AbortController();
   let timer = setTimeout(() => ac.abort(), FISH_TIMEOUT_MS);
+  // GW-9: the caller closing its request ends the Fish call too; that is not a timeout and is never retried.
+  const callerLeft = () => ac.abort();
+  if (signal) { if (signal.aborted) ac.abort(); else signal.addEventListener("abort", callerLeft, { once: true }); }
+  const leftError = () => Object.assign(new Error("the caller left"), { name: "AbortError", isAbandoned: true });
   // Nov 10 2026 (independent review): FISH_TIMEOUT_MS is how long Fish may stay SILENT, not how long a clip may take. It is started
   // again when the headers arrive and with every piece of the body, because Fish streams its audio while it generates: one timer from
   // the request to the end of the body cut a clip that was still arriving, asked for it three more times and then failed it.
@@ -1711,6 +1751,8 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     });
   } catch (err) {
     clearTimeout(timer);
+    if (signal) signal.removeEventListener("abort", callerLeft);
+    if (signal && signal.aborted) throw leftError();
     if (err.name === "AbortError") {
       const e = new Error(`Fish request timed out after ${FISH_TIMEOUT_MS}ms`);
       e.isTimeout = true;
@@ -1726,6 +1768,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
     try {
       return await read();
     } catch (err) {
+      if (signal && signal.aborted) throw leftError();
       if (err && err.name === "AbortError") {
         const e = new Error(`Fish request timed out after ${FISH_TIMEOUT_MS}ms`);
         e.isTimeout = true;
@@ -1734,6 +1777,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
       throw err;
     } finally {
       clearTimeout(timer);
+      if (signal) signal.removeEventListener("abort", callerLeft);
     }
   };
 
@@ -1780,7 +1824,7 @@ async function fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery
 // exact: FISH_SPEED_EXACT for this request. liveCall: someone is on the line, whatever else this is,
 // so it travels here and not inside talk. lane: how long the caller can wait on Praat (fish-stretch.js).
 // tally: { before, after } gains this chunk's audio bytes before and after Praat (fishSpeedApplied).
-async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, talk = false, { exact = false, liveCall = false, lane, tally = null } = {}) {
+async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, talk = false, { exact = false, liveCall = false, lane, tally = null, queue = null } = {}) {
   // Oct 16 2026: a selected voice's private reference is fetched (with its own
   // bounded storage retries) BEFORE a Fish slot is taken, so a slow or failing
   // B2 read never holds one of the provider slots. The loaded reference itself
@@ -1808,7 +1852,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
     let ranOn = null;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk, uncapped, { exact, liveCall });
+        const buf = await fishSynthesizeChunkOnce(text, fishModelId, speakingRate, delivery, reference, talk, uncapped, { exact, liveCall, ...(queue && queue.signal ? { signal: queue.signal } : {}) });
         // Oct 17 2026: how long each Fish chunk runs for the words it was given (fish-runaway.js).
         const take = fishRunaway.checkTake(text, buf, { rate: speakingRate, talk, exact, delivery, voice: fishModelId, sampleRate: FISH_SAMPLE_RATE });
         if (take && take.ranOn) {
@@ -1832,6 +1876,7 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
         return buf;
       } catch (err) {
         lastErr = err;
+        if (err && err.isAbandoned) throw err; // GW-9: nobody is waiting; not a failed chunk, not retried
         const retryable = err.isRateLimit || err.isTimeout || err.isServerErr;
         if (!retryable || attempt === maxAttempts) { noteChunk('failed'); throw err; }
         console.warn(`[TTS] fish chunk attempt ${attempt}/${maxAttempts} failed (${err.message}) -- retrying`);
@@ -1839,7 +1884,8 @@ async function fishSynthesizeChunk(text, fishModelId, speakingRate, delivery, ta
       }
     }
     throw lastErr;
-  });
+  }, queue);
+  if (queue && queue.signal && queue.signal.aborted) throw Object.assign(new Error("the caller left"), { name: "AbortError", isAbandoned: true }); // no Praat for nobody
   const spoken = uncapped ? await fishStretchTake(wav, uncapped.pcm, ratio, speakingRate, { exact, lane }) : wav;
   if (tally) { tally.before += wav.length - 44; tally.after += spoken.length - 44; }
   return spoken;
@@ -3771,7 +3817,7 @@ async function synthesizeSceneSegment(seg, inworldModel, speakingRate, delivery,
         ? fishSynthesizeChunk(c, seg.voiceId.slice(FISH_VOICE_PREFIX.length), speakingRate, delivery, false, fishOptions)
         : (() => {
             const { text: sayText, instruction } = splitChunkForInworld(c);
-            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction, contextFor(chunks, cj), delivery);
+            return synthesizeChunk(sayText, seg.voiceId, inworldModel, speakingRate, instruction, contextFor(chunks, cj), delivery, false, null, fishOptions.queue || null);
           })()
     )
   );
@@ -3912,6 +3958,10 @@ function speechMaxInputChars() {
   return Number.isInteger(set) && set >= 1000 ? set : SPEECH_MAX_INPUT_CHARS_DEFAULT;
 }
 app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) => { // Nov 8 2026: 256 KB of JSON, read after the speech gate above (body-limits.js)
+  // GW-9: the caller closing this request before its audio is sent (hang-up, barge-in, Stop, the bridge's 25 s) gives its
+  // queue spots back and ends its provider calls.
+  const gone = new AbortController();
+  res.on("close", () => { if (!res.writableFinished) gone.abort(); });
   const { input, voice = selectedVoicePicker?.voices[0] || "alloy", model = "tts-1", speed } = req.body;
   // Per-request speaking rate (Kade D2d): optional OpenAI-style `speed`,
   // clamped to Inworld's sane range; absent -> the global TTS_SPEAKING_RATE.
@@ -4063,7 +4113,8 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   const ttsCaller = String(req.get("x-kade-caller") || "");
   const liveCall = req.query.telephony === "1" || ttsCaller.startsWith("bridge-");
   const fishLane = liveCall ? "call" : (delivery === "STABLE" || ttsSeat.startsWith("reading:") || ttsCaller === "fork-described-video") ? "reading" : "chat";
-  const fishOptions = { exact: fishExact, liveCall, lane: fishLane };
+  const queue = { live: liveCall, signal: gone.signal }; // GW-9: someone on the line goes first; a request nobody waits for leaves the queue
+  const fishOptions = { exact: fishExact, liveCall, lane: fishLane, queue };
 
   // Multi-speaker scene lane (Aug 6 2026): double-bracket speaker tags turn a
   // message into a stitched multi-voice performance. Anything short of a real
@@ -4196,6 +4247,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
         sounds: inworldSounds ? { turn: 0, seedText: soundSeed(0) } : null,
         pauses: pauseOn ? pauseCfg : null,
         talk: inworldTalks,
+        queue,
       });
       if (handled) {
         rememberSpoken(ttsSessionKey, speakText, requestSequence);
@@ -4214,7 +4266,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
               const { text: liftedText, instruction } = inworldLifted[ci];
               const filled = inworldFillers ? talkFillersByParagraph(liftedText, { turn: ci * 3, seed: talkSeed }) : liftedText;
               const sayText = inworldSounds ? talkSoundsByParagraph(filled, { engine: "inworld", turn: ci * 3, seedText: soundSeed(ci) }) : filled;
-              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery, inworldTalks, timingMode);
+              return synthesizeChunk(sayText, inworldVoice, inworldModel, speakingRate, instruction, contextFor(chunks, ci, previousTexts), delivery, inworldTalks, timingMode, queue);
             })()
       )
     );
@@ -4333,6 +4385,10 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
     res.set("Content-Length", sentAudio.length);
     res.send(sentAudio);
   } catch (err) {
+    if (gone.signal.aborted && err && err.isAbandoned) { // GW-9: not an error; there is nobody to answer
+      console.log(`[TTS] the caller left before its audio was ready (${liveCall ? "live" : "not live"}): queued provider calls dropped`);
+      return;
+    }
     console.error("Proxy error:", err);
     // Nov 8 2026: the cause is in the log line above; the caller gets the plain answer. `details` carried the provider's own words (and now and
     // then a path) to whoever asked, and nobody reads it: the fork ignores an error body, the bridge only prints 200 characters of it in its own log.

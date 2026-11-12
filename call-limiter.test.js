@@ -99,6 +99,6 @@ test('server.js uses this module for both of its limiters and keeps no copy of i
   const src = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
   assert.ok(src.includes('const { createLimiter } = require("./call-limiter");'), 'server.js requires call-limiter.js');
   assert.ok(!src.includes('function createLimiter('), 'and defines no createLimiter of its own');
-  assert.ok(src.includes('const inworldLimiter = createLimiter(MAX_CONCURRENT_INWORLD_CALLS);'), 'the Inworld limiter');
-  assert.ok(src.includes('const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS);'), 'the Fish limiter');
+  assert.ok(src.includes('const inworldLimiter = createLimiter(MAX_CONCURRENT_INWORLD_CALLS, TTS_LIVE_RESERVE);'), 'the Inworld limiter');
+  assert.ok(src.includes('const fishLimiter = createLimiter(MAX_CONCURRENT_FISH_CALLS, TTS_LIVE_RESERVE);'), 'the Fish limiter');
 });
