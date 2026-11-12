@@ -1134,7 +1134,7 @@ function trimEdgeSilenceInfo(pcm, fmt, { head = false, tail = false } = {}) {
 // Streams expects. We downsample Inworld's 24kHz PCM, then μ-law-encode it.
 // Nov 12 2026 (GW-3): the codec lives in telephony-codec.js (16-bit G.711 bias, a real anti-alias
 // filter before the step down to 8 kHz; TTS_PHONE_DECIMATOR=box restores the old averaging).
-const { downsamplePcm, pcm16ToMulaw } = require("./telephony-codec");
+const { downsamplePcm, pcm16ToMulaw, createMulawSink } = require("./telephony-codec"); // createMulawSink: GW-10, the streamed phone opener
 
 // Short linear fade-in/out at the edges of a PCM buffer (default 40 samples
 // = 5ms @ 8kHz). TTS-2 clips can start/stop at non-zero amplitude, and an
@@ -1485,7 +1485,7 @@ async function synthesizeChunk(text, voiceId, modelId, speakingRate, instruction
  * runs. The stream lane never retries on its own — retrying after flushed
  * bytes would double-speak the opening of a sentence.
  */
-async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null, pauses = null, talk = false, queue = null }) {
+async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, inworldModel, speakingRate, previousTexts, voiceLabel, delivery, fillers = null, sounds = null, pauses = null, talk = false, queue = null, telephony = false }) {
   // written: the piece as the Inworld writer left it (inworld-writer.js), already lifted.
   const { text: liftedText, instruction: lifted } = written || splitChunkForInworld(chunk);
   // fillers: { turn, seed } when this chat request gets spoken filler words (pace.js).
@@ -1570,8 +1570,23 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
     let flushedBytes = 0;
     let firstAudioMs = null;
     let sentHeaders = false;
+    let sink = null; // GW-10: the phone lane's mu-law encoder
+    const emit = (b) => { if (sink) sink.push(b); else res.write(b); };
 
     const beginResponse = (fmt) => {
+      if (telephony) {
+        // GW-10: headers go out with the first mu-law byte, not before, so a stream that dies
+        // before any audio still returns false and the buffered ladder gets its retries.
+        sink = createMulawSink((mu) => {
+          if (!sentHeaders) {
+            res.set("Content-Type", "audio/basic");
+            res.set("x-kade-tts-streamed", "1");
+            sentHeaders = true;
+          }
+          res.write(mu);
+        }, fmt.sampleRate);
+        return;
+      }
       res.set("Content-Type", "audio/wav");
       res.set("x-kade-tts-streamed", "1");
       res.write(buildStreamingWavHeader(fmt));
@@ -1589,6 +1604,12 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
             const sniffed = sniffWavFormat(headerBuf);
             if (!sniffed) continue; // torn header: accumulate and retry
             const { fmt, pcmStart } = sniffed;
+            // GW-10: the phone must never be handed WAV bytes. Anything the sink cannot encode goes buffered.
+            if (telephony && !(fmt.numChannels === 1 && fmt.bitsPerSample === 16 && fmt.sampleRate % 8000 === 0)) {
+              clearTimeout(timer);
+              console.warn(`[TTS] stream: telephony cannot stream ${fmt.sampleRate}Hz/${fmt.numChannels}ch/${fmt.bitsPerSample}bit -- falling back to buffered`);
+              return false;
+            }
             const remembered = TTS_NORM_ENABLED ? voiceGainMemory.get(inworldVoice) : 1.0;
             processor = createStreamProcessor({
               limiter: TTS_NORM_LIMITER,
@@ -1597,7 +1618,8 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
               gain: remembered,
               knee: TTS_NORM_KNEE,
               kneeRange: TTS_NORM_KNEE_RANGE,
-              fadeInSamples: Math.max(48, Math.round(fmt.sampleRate * 0.005)),
+              // GW-10: the phone line needs the 12 ms the buffered telephony lane uses (fadePcmEdges: "5ms proved too short July 1").
+              fadeInSamples: Math.max(48, Math.round(fmt.sampleRate * (telephony ? 0.012 : 0.005))),
               // Part 116.1: the same peak ceiling the buffered limiter uses,
               // applied chunk by chunk (see stream-lane.js). TTS_STREAM_CEILING=0 disables.
               peakCeiling: process.env.TTS_STREAM_CEILING === "0" ? undefined : 32000 * TTS_NORM_LIMIT_HEADROOM,
@@ -1618,7 +1640,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
           rawPcm.push(Buffer.from(pcm));
           const out = processor.process(pcm);
           if (out.length) {
-            res.write(out);
+            emit(out);
             flushedBytes += out.length;
           }
         }
@@ -1629,7 +1651,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
           rawPcm.push(Buffer.from(heard));
           const out = processor.process(heard);
           if (out.length) {
-            res.write(out);
+            emit(out);
             flushedBytes += out.length;
           }
         }
@@ -1640,7 +1662,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
           rawPcm.push(Buffer.from(rest));
           const out = processor.process(rest);
           if (out.length) {
-            res.write(out);
+            emit(out);
             flushedBytes += out.length;
           }
         }
@@ -1649,7 +1671,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       if (processor && processor.flush) {
         const tail = processor.flush(); // Part 117.3: the limiter's 3 ms delay line
         if (tail && tail.length) {
-          res.write(tail);
+          emit(tail);
           flushedBytes += tail.length;
         }
       }
@@ -1670,6 +1692,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       return true;
     }
     clearTimeout(timer);
+    if (sink) sink.end(); // GW-10: the last few phone samples (the filter runs under 1 ms behind its input)
 
     if (!sentHeaders) {
       // Stream ended without ever yielding a sniffable header — treat as a
@@ -1685,7 +1708,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
       await normalizeLoudness(raw, processor.fmt.sampleRate, inworldVoice, { measureOnly: true });
     }
     console.log(
-      `[TTS] stream out: label="${voiceLabel}" resolved="${require("./async-routes").describeCause(inworldVoice)}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}`
+      `[TTS] stream out: label="${voiceLabel}" resolved="${require("./async-routes").describeCause(inworldVoice)}" first-audio ${firstAudioMs}ms total ${Date.now() - t0}ms bytes=${flushedBytes} gain=${processor.appliedGain.toFixed(3)} effective=${(processor.effectiveGain || processor.appliedGain).toFixed(3)}${telephony ? " telephony=yes" : ""}`
     );
     return true;
   }, queue);
@@ -4255,11 +4278,12 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
       ? (timingCfg.words ? "word" : "lip")
       : null;
 
+    const telephonyLane = req.query.telephony === "1"; // GW-10
     const wantsStream =
       TTS_STREAM_ENABLED &&
       !isFishVoice &&
       !(typeof req.query.lab === "string" && TTS_LAB_PRESETS[req.query.lab]) &&
-      req.query.telephony !== "1" &&
+      (!telephonyLane || process.env.TTS_STREAM_TELEPHONY !== "0") && // GW-10: the phone's first piece streams too (TTS_STREAM_TELEPHONY=0: never)
       chunks.length === 1 &&
       (req.get("x-kade-tts-stream") === "1" || req.body.stream === "1" || req.body.stream === true);
     if (wantsStream) {
@@ -4277,6 +4301,7 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
         pauses: pauseOn ? pauseCfg : null,
         talk: inworldTalks,
         queue,
+        telephony: telephonyLane,
       });
       if (handled) {
         rememberSpoken(ttsSessionKey, speakText, requestSequence);

@@ -89,4 +89,81 @@ function downsamplePcm(pcmBuf, fromRate, toRate) {
   return out;
 }
 
-module.exports = { encodeMulaw, pcm16ToMulaw, downsamplePcm, MULAW_BIAS, MULAW_CLIP };
+/* GW-10 (Nov 12 2026): the phone's first piece, encoded as it arrives. PCM16 mono at fromRate (a whole
+ * multiple of 8000; the caller checks) in pieces of any size, odd bytes included; mu-law 8 kHz out through
+ * write(). The bytes written over the whole piece equal pcm16ToMulaw(downsamplePcm(whole, fromRate, 8000))
+ * exactly, so the streamed opener sounds like the buffered lane's (before its fadePcmEdges and leveling).
+ * The audit's first sink downsampled each arriving piece on its own. That was exact for the old 3-sample
+ * average (each output sample used only its own group) but not for GW-3's 47-tap filter: every piece edge
+ * would lose half the filter and dip, a small click at every network piece. So the filter path keeps the
+ * input it still needs and writes an output sample only once all of its taps have arrived (half the filter,
+ * under 1 ms, behind the input); end() writes the last few, with the same zero edge the whole-clip filter
+ * uses. TTS_PHONE_DECIMATOR=box (read when the sink is made) keeps the old group average. */
+function createMulawSink(write, fromRate = 24000) {
+  const step = fromRate / PHONE_RATE;
+  let odd = null; // a byte left over from a piece that ended mid-sample
+  const samplesOf = (pcm) => {
+    let buf = pcm;
+    if (odd) { buf = Buffer.concat([odd, pcm]); odd = null; }
+    if (buf.length & 1) { odd = Buffer.from(buf.subarray(buf.length - 1)); buf = buf.subarray(0, buf.length - 1); }
+    return buf;
+  };
+  const filtered = Number.isInteger(step) && step >= 2 && step <= 12 && process.env.TTS_PHONE_DECIMATOR !== "box";
+  if (!filtered) {
+    // Group average: an output sample is the mean of its own `step` inputs, so pieces are independent.
+    const group = Math.round(step) * 2;
+    let carry = Buffer.alloc(0);
+    return {
+      push(pcm) {
+        const fresh = samplesOf(pcm);
+        const buf = carry.length ? Buffer.concat([carry, fresh]) : fresh;
+        const usable = buf.length - (buf.length % group);
+        if (usable) write(pcm16ToMulaw(downsamplePcm(buf.subarray(0, usable), fromRate, PHONE_RATE)));
+        carry = Buffer.from(buf.subarray(usable));
+      },
+      end() { carry = Buffer.alloc(0); odd = null; },
+    };
+  }
+  const fir = phoneFir(step);
+  const N = fir.length;
+  const half = (N - 1) / 2;
+  const mid = (step - 1) >> 1;
+  let held = new Int16Array(0); // input samples from absolute index `base` on
+  let base = 0;
+  let total = 0;                // input samples received so far
+  let next = 0;                 // the next output sample to write
+  const outAt = (i, end) => {   // decimateForPhone's sum for output i; `end` = input length when known
+    const first = i * step + mid - half;
+    const k0 = first < 0 ? -first : 0;
+    const k1 = end == null ? N : Math.min(N, end - first);
+    let acc = 0;
+    for (let k = k0; k < k1; k++) acc += held[first + k - base] * fir[k];
+    return encodeMulaw(Math.max(-32768, Math.min(32767, Math.round(acc))));
+  };
+  return {
+    push(pcm) {
+      const buf = samplesOf(pcm);
+      const n = buf.length >> 1;
+      if (!n) return;
+      const grown = new Int16Array(held.length + n);
+      grown.set(held);
+      for (let j = 0; j < n; j++) grown[held.length + j] = buf.readInt16LE(j * 2);
+      held = grown;
+      total += n;
+      const out = [];
+      while (next * step + mid + half < total) out.push(outAt(next++, null)); // every tap is in hand
+      if (out.length) write(Buffer.from(out));
+      const keepFrom = Math.max(0, next * step + mid - half); // the first input the next output needs
+      if (keepFrom > base) { held = held.slice(keepFrom - base); base = keepFrom; }
+    },
+    end() {
+      const outs = Math.floor(total / step);
+      const out = [];
+      while (next < outs) out.push(outAt(next++, total));
+      if (out.length) write(Buffer.from(out));
+      odd = null;
+    },
+  };
+}
+
+module.exports = { encodeMulaw, pcm16ToMulaw, downsamplePcm, createMulawSink, MULAW_BIAS, MULAW_CLIP };
