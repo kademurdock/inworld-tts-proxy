@@ -15,6 +15,8 @@
 //    queue with a min gap (LIBRECHAT_MIN_GAP_MS, default 4s) between requests,
 //    (c) reuses ONE cached token (not one login per call), (d) never loops on
 //    re-login — on 429/403 it backs off and surfaces the error.
+//    Nov 12 2026 (GW-5): two things a browser also does are outside the gap: the SSE subscribe follows
+//    its own start POST at once, and a turn whose caller left sends one POST /api/agents/chat/abort.
 
 const express = require("express");
 const { createHash } = require("crypto");
@@ -43,20 +45,78 @@ function checkSecret(req, res, next) {
 const auth = afterSecret(checkSecret);
 
 // ---- anti-abuse: serialize outbound calls, min gap between them ----
-let _chain = Promise.resolve();
+/* Nov 12 2026 (gateway audit GW-5): who goes first, and who never goes.
+ *  - paced(fn) with no options is what it was: one at a time, first come first served, at least
+ *    MIN_GAP_MS from the end of one site call to the start of the next.
+ *  - paced(fn, { live: true }) is a call turn. It starts before every queued call that is not live
+ *    (briefs, canaries, probes, Forge, the bridge's agent lookups). One already running is never cut.
+ *  - paced(fn, { signal }) is dropped without touching the site if the signal fires first (hang-up,
+ *    barge-in, Stop, the bridge's stall timer). Nothing was sent, so no gap is owed.
+ *  - The gap is waited BEFORE the next job is picked (design review, change 2), so a call turn that
+ *    arrives while a background job is waiting out the gap still goes first.
+ *  - A call turn right after a turn whose caller left (a barge-in: the abort POST already went out)
+ *    waits LIBRECHAT_LIVE_GAP_MS (default 1000), not the full gap (design review, change 1). That is
+ *    what a browser does when a person presses Stop and sends again. LIBRECHAT_LIVE_GAP_MS=4000 (or
+ *    anything at or above LIBRECHAT_MIN_GAP_MS) puts the full gap back.
+ * LIBRECHAT_LIVE_FIRST=0 puts call turns back in the single line.
+ * One call is outside this line on purpose: lcAskStream's POST /api/agents/chat/abort (a browser's Stop
+ * button does the same). It must not wait behind the job it is stopping. */
+const LIVE_FIRST = process.env.LIBRECHAT_LIVE_FIRST !== "0";
+const LIVE_GAP_MS = (() => {
+  const n = parseInt(process.env.LIBRECHAT_LIVE_GAP_MS, 10);
+  return Math.min(MIN_GAP_MS, Number.isFinite(n) && n >= 0 ? n : 1000);
+})();
+const _waiting = { live: [], rest: [] };
+let _running = false;
 let _lastAt = 0;
-function paced(fn) {
-  const run = async () => {
-    const wait = Math.max(0, MIN_GAP_MS - (Date.now() - _lastAt));
-    if (wait) await new Promise((r) => setTimeout(r, wait));
+let _lastLeft = false; // the last job that ran ended with its caller gone
+let _gapTimer = null;
+function callerGone() {
+  const e = new Error("the caller left before the site was asked");
+  e.name = "AbortError";
+  e.status = 499;
+  return e;
+}
+function _gapFor(job) {
+  return job.live && _lastLeft ? LIVE_GAP_MS : MIN_GAP_MS;
+}
+function _nextPaced() {
+  if (_running) return;
+  if (_gapTimer) { clearTimeout(_gapTimer); _gapTimer = null; }
+  const line = _waiting.live.length ? _waiting.live : _waiting.rest;
+  const head = line[0];
+  if (!head) return;
+  // Sleep first, then pick: whoever is at the head when the gap is over goes.
+  const wait = Math.max(0, _gapFor(head) - (Date.now() - _lastAt));
+  if (wait) { _gapTimer = setTimeout(() => { _gapTimer = null; _nextPaced(); }, wait); return; }
+  line.shift();
+  if (head.signal && head.signal.aborted) { head.reject(callerGone()); _nextPaced(); return; }
+  _running = true;
+  (async () => {
     try {
-      return await fn();
+      return await head.fn();
     } finally {
       _lastAt = Date.now();
+      _lastLeft = !!(head.signal && head.signal.aborted);
     }
-  };
-  _chain = _chain.then(run, run);
-  return _chain;
+  })()
+    .then(head.resolve, head.reject)
+    .finally(() => { _running = false; _nextPaced(); });
+}
+function paced(fn, opts = {}) {
+  return new Promise((resolve, reject) => {
+    const live = opts.live === true;
+    const job = { fn, resolve, reject, live, signal: opts.signal || null };
+    const line = LIVE_FIRST && live ? _waiting.live : _waiting.rest;
+    if (job.signal) {
+      job.signal.addEventListener("abort", () => {
+        const i = line.indexOf(job);
+        if (i >= 0) { line.splice(i, 1); reject(callerGone()); _nextPaced(); }
+      }, { once: true });
+    }
+    line.push(job);
+    _nextPaced();
+  });
 }
 
 // ---- token cache + server-side login ----
@@ -2017,11 +2077,19 @@ function messageText(msg) {
   return contentToText(msg.content);
 }
 
+/* GW-5: the site creates the job before it answers (request.js createJob, then res.json) and replays every
+ * early event to the first subscriber (GenerationJobManager earlyEventBuffer), so the 300 ms wait bought
+ * nothing. Set LIBRECHAT_SUBSCRIBE_DELAY_MS to bring it back. */
+const SUBSCRIBE_DELAY_MS = parseInt(process.env.LIBRECHAT_SUBSCRIBE_DELAY_MS, 10) || 0;
+
 // Sep 25 2026 (Part 291 review F11): opts.billCaller === true (the bridge marks a call the
 // caller started: inbound phone, app and web voice) adds kadeBillCaller: true, the ONLY thing
 // that lets the fork bill this turn to the person on the line when its KADE_VOICE_BILL_REAL
 // switch is on. lcAsk (friend texts, previews, briefs, canaries) never sends it.
+// Nov 12 2026 (GW-5): opts.live puts the turn ahead of background work; opts.signal is the caller leaving.
 async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
+  const signal = opts.signal || null;
+  const left = () => !!(signal && signal.aborted);
   const userText = composeTextWithHistory(messages);
   const body = {
     endpoint: "agents",
@@ -2038,6 +2106,7 @@ async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
 
   return paced(async () => {
     if (!_token) await login();
+    if (left()) throw callerGone(); // left during a cold login: still nothing sent
 
     const authHeaders = (tok) => ({
       Authorization: `Bearer ${tok}`,
@@ -2045,6 +2114,7 @@ async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
       "User-Agent": UA,
     });
 
+    // Not tied to the signal on purpose: a job the site has created can only be stopped by its streamId.
     const doStart = (tok) =>
       fetch(`${BASE}/api/agents/chat`, {
         method: "POST",
@@ -2069,15 +2139,31 @@ async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
     const streamId = startData.streamId;
     if (!streamId) throw new Error(`no streamId: ${JSON.stringify(startData)}`);
 
-    await new Promise((res) => setTimeout(res, 300));
-
-    const streamR = await fetch(`${BASE}/api/agents/chat/stream/${streamId}`, {
-      headers: { Authorization: `Bearer ${_token}`, "User-Agent": UA, Accept: "text/event-stream" },
-    });
-    if (!streamR.ok) {
-      const t = await streamR.text();
-      throw new Error(`stream subscribe failed ${streamR.status}: ${String(t).slice(0, 200)}`);
-    }
+    /* GW-5: a caller who barged in, pressed Stop or hung up stops the site's job too. It used to run to the
+     * end, paid, while every later call turn waited behind it. /chat/abort is mounted ahead of the site's
+     * message limiters (routes/agents/index.js:245). Not awaited and never rejects. It says "stopped" only
+     * when the site said so; anything else is a job still running on the admin seat, logged as a warning. */
+    let stopping = false;
+    const stopJob = async (why) => {
+      if (stopping) return;
+      stopping = true;
+      const tag = String(streamId).slice(0, 8);
+      const send = () => fetch(`${BASE}/api/agents/chat/abort`, {
+        method: "POST", headers: authHeaders(_token), body: JSON.stringify({ streamId }), signal: AbortSignal.timeout(5000),
+      });
+      try {
+        let rr = await send();
+        // _token is NOT cleared here: the next turn may be between its start and its subscribe.
+        if (rr.status === 401) { await rr.text().catch(() => {}); await login(); rr = await send(); }
+        await rr.text().catch(() => {});
+        if (rr.ok) console.log(`[lcAskStream] ${why}: site job ${tag} stopped (${rr.status})`);
+        else console.warn(`[lcAskStream] ${why}: site job ${tag} NOT stopped, the site answered ${rr.status} (409 = already over or could not be stopped)`);
+      } catch (e) {
+        console.warn(`[lcAskStream] ${why}: could not stop site job ${tag} (${e.message})`);
+      }
+    };
+    if (left()) { stopJob("caller gone before the stream opened"); return; }
+    if (SUBSCRIBE_DELAY_MS) await new Promise((res) => setTimeout(res, SUBSCRIBE_DELAY_MS));
 
     const dec = new TextDecoder();
     let buf = "";
@@ -2087,36 +2173,49 @@ async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
       if (raw) acc += raw; // acc tracks RAW so final-event startsWith() reconciliation stays exact
       if (t) onToken(t);
     };
-    for await (const chunk of streamR.body) {
-      buf += dec.decode(chunk, { stream: true });
-      const lines = buf.split("\n");
-      buf = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const d = JSON.parse(line.slice(6));
-          if (d.final != null) {
-            // FIX (July 1 2026): tool-using turns (web_search etc.) deliver
-            // their text in delta shapes the old on_message_delta-only parser
-            // missed entirely -- "get me the weather" was pure SILENCE on the
-            // phone while plain turns worked. The fork's ConversationMode hit
-            // the same problem and reconciles against the final event's full
-            // responseMessage; same fix here: speak whatever the deltas
-            // didn't already deliver.
-            const deltasSpoke = acc.length;
-            const full = messageText(d.responseMessage) || (typeof d.text === "string" ? d.text : "");
-            if (full && full.length > acc.length && full.startsWith(acc)) emit(full.slice(acc.length));
-            else if (full && acc === "") emit(full);
-            console.log(`[lcAskStream] final: ${acc.length} chars total, ${deltasSpoke} via deltas${deltasSpoke ? "" : " (final-event fallback carried the reply)"}`);
-            return;
-          }
-          if (d.event === "on_reasoning_delta") continue;
-          const deltaContent = d?.data?.delta?.content ?? d?.delta?.content;
-          if (deltaContent != null) { emit(contentToText(deltaContent)); continue; }
-        } catch {}
+    try {
+      const streamR = await fetch(`${BASE}/api/agents/chat/stream/${streamId}`, {
+        headers: { Authorization: `Bearer ${_token}`, "User-Agent": UA, Accept: "text/event-stream" },
+        signal: signal || undefined,
+      });
+      if (!streamR.ok) {
+        const t = await streamR.text();
+        throw new Error(`stream subscribe failed ${streamR.status}: ${String(t).slice(0, 200)}`);
       }
+      for await (const chunk of streamR.body) {
+        buf += dec.decode(chunk, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const d = JSON.parse(line.slice(6));
+            if (d.final != null) {
+              // FIX (July 1 2026): tool-using turns (web_search etc.) deliver
+              // their text in delta shapes the old on_message_delta-only parser
+              // missed entirely -- "get me the weather" was pure SILENCE on the
+              // phone while plain turns worked. The fork's ConversationMode hit
+              // the same problem and reconciles against the final event's full
+              // responseMessage; same fix here: speak whatever the deltas
+              // didn't already deliver.
+              const deltasSpoke = acc.length;
+              const full = messageText(d.responseMessage) || (typeof d.text === "string" ? d.text : "");
+              if (full && full.length > acc.length && full.startsWith(acc)) emit(full.slice(acc.length));
+              else if (full && acc === "") emit(full);
+              console.log(`[lcAskStream] final: ${acc.length} chars total, ${deltasSpoke} via deltas${deltasSpoke ? "" : " (final-event fallback carried the reply)"}`);
+              return;
+            }
+            if (d.event === "on_reasoning_delta") continue;
+            const deltaContent = d?.data?.delta?.content ?? d?.delta?.content;
+            if (deltaContent != null) { emit(contentToText(deltaContent)); continue; }
+          } catch {}
+        }
+      }
+    } catch (e) {
+      if (left()) { stopJob("caller gone mid-turn"); return; }
+      throw e;
     }
-  });
+  }, { live: opts.live === true, signal });
 }
 
 // POST /librechat/ask-stream  { agentId, messages[] } -> SSE { token } stream
@@ -2127,6 +2226,9 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
   if (!agentId || !Array.isArray(messages)) {
     return res.status(400).json({ error: "agentId and messages[] required" });
   }
+  // GW-5: the bridge closing this answer early (barge-in, Stop, hang-up, its stall timer) is the caller gone.
+  const gone = new AbortController();
+  res.on("close", () => { if (!res.writableFinished) gone.abort(); });
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -2139,11 +2241,16 @@ router.post("/librechat/ask-stream", auth, async (req, res) => {
   try {
     await lcAskStream(agentId, messages, (token) => {
       try { res.write(`data: ${JSON.stringify({ token })}\n\n`); } catch {}
-    }, userEmail, { billCaller });
-    res.write("data: [DONE]\n\n");
+    }, userEmail, { billCaller, live: true, signal: gone.signal });
+    if (!gone.signal.aborted) res.write("data: [DONE]\n\n");
   } catch (err) {
-    console.error("[lcAskStream] error:", err.message);
-    try { res.write(`data: ${JSON.stringify({ error: scrubText(err.message) })}\n\n`); } catch {} // Nov 8 2026: cleaned like every other error text of this router (error-text.js)
+    if (gone.signal.aborted) {
+      // 499 = dropped in the line, the site was never asked. Anything else failed at the site while the caller left.
+      console.log(`[lcAskStream] caller gone: ${err && err.status === 499 ? "dropped before the site was asked" : `turn failed with nobody listening (${scrubText(String(err && err.message))})`}`);
+    } else {
+      console.error("[lcAskStream] error:", err.message);
+      try { res.write(`data: ${JSON.stringify({ error: scrubText(err.message) })}\n\n`); } catch {} // Nov 8 2026: cleaned like every other error text of this router (error-text.js)
+    }
   }
   clearInterval(keepalive);
   res.end();
