@@ -688,6 +688,8 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>November 12, 2026: Android 2.19.0, a calmer phone with TalkBack</h2>
+<p>TalkBack no longer cuts Library recordings and family stories in and out; they get quieter while TalkBack speaks and keep playing. The character's voice also gets quieter under TalkBack instead of being talked over. Unplugged headphones and a phone call pause it. Every screen says its name as it opens. A chat keeps reading when you connect a keyboard or fold the phone. Stop goes first and is silent at once. Your voice speed, fillers and voice style now follow your account to every device. Replies you hear can start faster. None of this has been tried on a real phone with TalkBack yet, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.19.0</a> and install it over your existing copy.</p>
 <h2>November 11, 2026: Android 2.18.0, a clearer Library player</h2>
 <p>The Library player on Android now has a Status line just above the buttons. It says Playing or Paused and your place, Loading, The end, or why playback stopped, and TalkBack reads it as one stop that begins with the word Status. If a recording is still waiting for the network after a few seconds, TalkBack says Still loading. There is a Start from the beginning choice, five and ten minute jumps in films and long tapes, and Back 10 seconds and Forward 10 seconds on the lock screen. A recording with only one part no longer shows part buttons. On the Library's first screen, up to two more things you are in the middle of sit under Continue, and Springfield and the Ozarks is near the top. Captions and Sound track choices appear only for recordings that carry their own, which is few so far. A voice direction is also no longer carried onto later lines by mistake. It has passed 2,752 automated checks and an emulator run, but has still not been tried on a real phone with TalkBack, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.18.0</a> and install it over your existing copy.</p>
 <h2>November 8, 2026: Android 2.17.0, rebuilt to match the iPhone app</h2>
@@ -2324,6 +2326,18 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.19.0 (build 126): a calmer phone with TalkBack</h2>
+<ul>
+<li><strong>Recordings and stories.</strong> TalkBack no longer cuts Library recordings and family stories in and out. They get quieter while TalkBack speaks and keep playing. A call or unplugged headphones still pause them.</li>
+<li><strong>The character's voice.</strong> It gets quieter while TalkBack speaks instead of being talked over. Unplugged headphones pause it, even between sentences, and a phone call pauses it. A short call gives it back.</li>
+<li><strong>Quieter chats.</strong> TalkBack no longer says Sending, Replying or Reply ready. Thinking and tool names are said only while the voice is quiet. With Hear replies off you hear the bloop, as on the iPhone.</li>
+<li><strong>Screen names.</strong> Every screen says its name as it opens.</li>
+<li><strong>Steadier chats.</strong> A reply keeps reading when you connect a keyboard, fold the phone or turn on Bold text. With TalkBack on, the message you are resting on stays put when a reply lands.</li>
+<li><strong>Stop goes first.</strong> Stop is silent at once, and your own moves go ahead of the app's background checks.</li>
+<li><strong>Same on every device.</strong> Your voice speed, fillers and voice style follow your account.</li>
+<li><strong>Also.</strong> The notifications card can appear after a reply, long chats open without a stall, and calls tell the server how far you heard.</li>
+</ul>
+<p>2,808 automated tests, lint, release signing and file alignment passed. It has not been tried on a real phone or with TalkBack yet.</p>
 <h2>Android 2.18.0 (build 125): the Library player</h2>
 <ul>
 <li><strong>Status line.</strong> Just above the player's buttons, one line says Playing or Paused and your place, Loading, Paused for a call, The end, or why playback stopped. It is one TalkBack stop that begins with the word Status. It does not speak by itself, but a recording that is still waiting for the network after a few seconds is announced once as Still loading. If your listening place cannot be saved, that is said once and shown under the Status line.</li>
