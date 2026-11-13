@@ -1972,8 +1972,10 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
     }
 
     console.log("[lcAsk] SSE lines received:", rawLines.length);
-    console.log("[lcAsk] first 5 lines:", JSON.stringify(rawLines.slice(0, 5)));
-    console.log("[lcAsk] last 3 lines:", JSON.stringify(rawLines.slice(-3)));
+    if (require("./log-text").logTextOn()) {
+      console.log("[lcAsk] first 5 lines:", JSON.stringify(rawLines.slice(0, 5)));
+      console.log("[lcAsk] last 3 lines:", JSON.stringify(rawLines.slice(-3)));
+    }
     if (!reply) throw new Error(siteError ? `empty reply from agent (site said: ${siteError.slice(0, 240)})` : "empty reply from agent");
     if (opts.deleteAfter && bornConversationId) {
       // Fire-and-forget through the same paced lane; a failed delete is
