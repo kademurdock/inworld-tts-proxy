@@ -688,6 +688,8 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>November 13, 2026: Android 2.19.1, fixes after 2.19.0</h2>
+<p>A small update. The phone now sends proof that you are signed in when it links itself to your account for rings and check-ins. After a long phone call, a paused reply lets go of the sound, so music or a podcast in another app can come back. If your headphones come out while a character is still thinking, the reply is paused instead of playing from the loudspeaker, and TalkBack says the reply was paused. Signing in to a different account on the same phone no longer copies the last person's voice settings into it. It has not been tried on a real phone with TalkBack yet, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.19.1</a> and install it over your existing copy.</p>
 <h2>November 12, 2026: Android 2.19.0, a calmer phone with TalkBack</h2>
 <p>TalkBack no longer cuts Library recordings and family stories in and out; they get quieter while TalkBack speaks and keep playing. The character's voice also gets quieter under TalkBack instead of being talked over. Unplugged headphones and a phone call pause it. Every screen says its name as it opens. A chat keeps reading when you connect a keyboard or fold the phone. Stop goes first and is silent at once. Your voice speed, fillers and voice style now follow your account to every device. Replies you hear can start faster. None of this has been tried on a real phone with TalkBack yet, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.19.0</a> and install it over your existing copy.</p>
 <h2>November 11, 2026: Android 2.18.0, a clearer Library player</h2>
@@ -2326,6 +2328,15 @@ PAGES.android = {
   h1: "The Android App",
   tagline: "Kade-AI as a real app on your Android phone — installed straight from this page, no app store involved.",
   main: `
+<h2>Android 2.19.1 (build 127): fixes after 2.19.0</h2>
+<ul>
+<li><strong>Rings and check-ins.</strong> When the phone links itself to your account for notifications, it now sends proof that you are signed in. The server will start asking for that proof later. Nothing changes for you today.</li>
+<li><strong>After a long phone call.</strong> A reply that a call paused stays paused, and it now lets go of the sound. Music or a podcast in another app can come back.</li>
+<li><strong>Headphones pulled out while you wait.</strong> If your headphones come out while a character is still thinking, the reply is paused when it arrives. It does not play from the loudspeaker. Press Play on the message to hear it.</li>
+<li><strong>TalkBack says so.</strong> When the phone pauses a reply, TalkBack says: Reply paused. Press Play on the message to continue.</li>
+<li><strong>Voice settings and accounts.</strong> Signing in to a different account on the same phone no longer copies the last person's voice speed, fillers and voice styles into it. A voice style you changed on another device now arrives when you change one on the phone. The first time a phone syncs, voice styles set only on that phone are kept.</li>
+</ul>
+<p>2,831 automated tests passed. Lint ran on this build and found no errors. Release signing and file alignment passed. It has not been tried on a real phone or with TalkBack yet.</p>
 <h2>Android 2.19.0 (build 126): a calmer phone with TalkBack</h2>
 <ul>
 <li><strong>Recordings and stories.</strong> TalkBack no longer cuts Library recordings and family stories in and out. They get quieter while TalkBack speaks and keep playing. A call or unplugged headphones still pause them.</li>
