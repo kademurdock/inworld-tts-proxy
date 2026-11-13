@@ -49,6 +49,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * for the design call (remembered-gain normalization) and the measured
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
+const { textReceipt } = require("./log-text"); // sweep 8.6: lengths and hashes in the log, not spoken words
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 const { fishPacedText, fishApiSpeed, fishExactOn, fishSpeedApplied, fishStretchOn, fishStretchRatio, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
@@ -1207,6 +1208,18 @@ const INWORLD_TIMEOUT_MS = 20000;
 const INWORLD_LIVE_TIMEOUT_MS = wholeNumberEnv("INWORLD_LIVE_TIMEOUT_MS", 0, 1000); // 0 = the live ladder is off
 const INWORLD_LIVE_TIMEOUT_MAX_MS = wholeNumberEnv("INWORLD_LIVE_TIMEOUT_MAX_MS", 11500, 1000);
 const INWORLD_LIVE_ATTEMPTS = wholeNumberEnv("INWORLD_LIVE_ATTEMPTS", 2, 1);
+/* Nov 13 2026 (sweep 1.3): the phone's streamed first sentence had one 20 s clock for everything, and the buffered ladder that
+ * used to hide a slow or dead attempt no longer stands in front of it. Two shorter clocks, phone lane only:
+ *  - TTS_STREAM_PHONE_FIRST_MS (6000): no audio at all by then -> the stream is dropped and the BUFFERED ladder gets the piece, with
+ *    its retries. Nothing has been heard yet, so this is a real retry, not a skipped sentence.
+ *  - TTS_STREAM_PHONE_IDLE_MS (5000): audio has started and then nothing more arrives for this long -> the piece ends short (it
+ *    cannot be said twice) and the caller goes on to the next sentence, instead of sitting in silence until the 20 s clock.
+ * Each is a whole number of 500 or more; 0 turns that clock off (the 20 s limit alone, as before). The limits are generous on purpose:
+ * a stream normally gives its first audio in well under a second and never pauses for seconds inside one sentence. */
+const phoneClockEnv = (name, fallback) => (String(process.env[name] ?? "").trim() === "0" ? 0 : wholeNumberEnv(name, fallback, 500));
+const TTS_STREAM_PHONE_FIRST_MS = phoneClockEnv("TTS_STREAM_PHONE_FIRST_MS", 6000);
+const TTS_STREAM_PHONE_IDLE_MS = phoneClockEnv("TTS_STREAM_PHONE_IDLE_MS", 5000);
+const TTS_STREAM_PHONE_CUT_SIGNAL = process.env.TTS_STREAM_PHONE_CUT_SIGNAL !== "0";
 function inworldLiveLadder(queue) {
   return Boolean(queue && queue.live && INWORLD_LIVE_TIMEOUT_MS);
 }
@@ -1518,6 +1531,15 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
   return inworldLimiter(async () => {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
+    /* Nov 13 2026 (sweep 1.3): the phone's two shorter clocks (see TTS_STREAM_PHONE_FIRST_MS above). */
+    let stallTimer = null;
+    let stalled = "";
+    const armStall = (ms, why) => {
+      clearTimeout(stallTimer);
+      stallTimer = telephony && ms > 0 ? setTimeout(() => { stalled = why; ac.abort(); }, ms) : null;
+    };
+    const stopClocks = () => { clearTimeout(timer); clearTimeout(stallTimer); };
+    armStall(TTS_STREAM_PHONE_FIRST_MS, `no audio in ${TTS_STREAM_PHONE_FIRST_MS} ms`);
     // GW-9: one listener on this request's own signal (this lane is one chunk); it goes when the request does.
     const caller = queue && queue.signal ? queue.signal : null;
     if (caller) { if (caller.aborted) ac.abort(); else caller.addEventListener("abort", () => ac.abort(), { once: true }); }
@@ -1549,12 +1571,12 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
         }),
       });
     } catch (err) {
-      clearTimeout(timer);
-      console.warn(`[TTS] stream: handshake failed (${err.message}) -- falling back to buffered`);
+      stopClocks();
+      console.warn(`[TTS] stream: handshake failed (${stalled || err.message}) -- falling back to buffered`);
       return false;
     }
     if (!response.ok || !response.body) {
-      clearTimeout(timer);
+      stopClocks();
       const errText = await response.text().catch(() => "");
       console.warn(`[TTS] stream: HTTP ${response.status} -- falling back to buffered (${errText.slice(0, 160)})`);
       // Nov 12 2026: a framed stream refused with a 4xx counts toward the frame's breaker (inworld-talk.js).
@@ -1596,6 +1618,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
     try {
       for await (const piece of response.body) {
         const audioBufs = parser.feed(Buffer.from(piece));
+        if (audioBufs.length) armStall(TTS_STREAM_PHONE_IDLE_MS, `no audio for ${TTS_STREAM_PHONE_IDLE_MS} ms`); // sweep 1.3: the clock restarts with every piece of audio
         for (const audio of audioBufs) {
           if (firstAudioMs == null) firstAudioMs = Date.now() - t0;
           let pcm;
@@ -1606,7 +1629,7 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
             const { fmt, pcmStart } = sniffed;
             // GW-10: the phone must never be handed WAV bytes. Anything the sink cannot encode goes buffered.
             if (telephony && !(fmt.numChannels === 1 && fmt.bitsPerSample === 16 && fmt.sampleRate % 8000 === 0)) {
-              clearTimeout(timer);
+              stopClocks();
               console.warn(`[TTS] stream: telephony cannot stream ${fmt.sampleRate}Hz/${fmt.numChannels}ch/${fmt.bitsPerSample}bit -- falling back to buffered`);
               return false;
             }
@@ -1676,23 +1699,31 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
         }
       }
     } catch (err) {
-      clearTimeout(timer);
+      stopClocks();
       if (caller && caller.aborted) { // GW-9: the listener left; not a failed chunk
         console.log(`[TTS] stream: the caller left after ${flushedBytes} bytes -- provider call ended`);
         if (sentHeaders) res.end();
         return true;
       }
       if (!sentHeaders) {
-        console.warn(`[TTS] stream: died before first audio (${err.message}) -- falling back to buffered`);
+        console.warn(`[TTS] stream: died before first audio (${stalled || err.message}) -- falling back to buffered`);
         return false;
       }
       noteChunk("failed");
-      console.error(`[TTS] stream: died mid-clip after ${flushedBytes} bytes (${err.message}) -- ending short`);
+      console.error(`[TTS] stream: died mid-clip after ${flushedBytes} bytes (${stalled || err.message}) -- ending short`);
       if (sink) sink.end(); // a short phone opener still ends in its 12 ms fade, not a step
-      res.end();
+      /* Sweep 1.3: a clean end told the bridge the whole sentence had played, so the turn was recorded as fully heard.
+       * On the phone the answer now ends as a BROKEN one (the connection is closed once the faded tail has gone out), which
+       * the bridge reads as "cut short". One byte of mu-law silence carries the flush. TTS_STREAM_PHONE_CUT_SIGNAL=0: the
+       * clean end, as before. The web lane keeps its clean end (a short WAV plays fine). */
+      if (sink && TTS_STREAM_PHONE_CUT_SIGNAL) {
+        try { res.write(Buffer.from([0xff]), () => { try { res.destroy(); } catch { /* already gone */ } }); } catch { try { res.destroy(); } catch { /* already gone */ } }
+      } else {
+        res.end();
+      }
       return true;
     }
-    clearTimeout(timer);
+    stopClocks();
     if (sink) sink.end(); // GW-10: the held 12 ms tail, faded to zero, and the filter's last samples
 
     if (!sentHeaders) {
@@ -4193,7 +4224,8 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   // must not become the "past" of its later provider chunks.
   const previousTexts = sessionContext(ttsSessionKey);
   const speakText = shapeDeliveryPace(applySteeringTags(preppedText.replace(SCENE_TAG_G, " ").replace(/[ \t]{2,}/g, " ")), delivery || TTS_DELIVERY_MODE);
-  console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${JSON.stringify(speakText.slice(0,200))}`);
+  // Sweep 8.6: a receipt, not the reply's first 200 characters (KADE_LOG_TEXT=1 puts the words back for a bug hunt).
+  console.log(`[TTS] input len=${effectiveInput.length}, after strip len=${speakText.length}, first 200: ${textReceipt(speakText.slice(0,200), speakText)}`);
   // If stripping removed all content (e.g. LibreChat sent thinking-only TTS call), return silence
   if (!speakText.trim()) {
     console.log('[TTS] nothing to speak after stripping — returning empty audio');
@@ -6426,6 +6458,12 @@ app.get(["/voices", "/voice-library"], (_req, res) => {
 // { text }. We forward the audio bytes to Deepgram pre-recorded /v1/listen
 // (nova-3) and return { text }. Rides the DEEPGRAM_API_KEY already on this svc.
 const Busboy = require("busboy");
+/* Nov 13 2026 (sweep 8.8): a recording Deepgram took and heard no words in. The answer was { text: "" } and nothing else, which the
+ * site turns into "Missing data in response from the STT API" and a general error. The empty text stays (old callers read only
+ * that), and the answer now also says why, with a plain sentence a caller can show or speak as it is.
+ * STT_EMPTY_REASON=0: the bare { text: "" }, as before. */
+const STT_EMPTY_REASON = process.env.STT_EMPTY_REASON !== "0";
+const STT_NO_SPEECH_MESSAGE = process.env.STT_NO_SPEECH_MESSAGE || "I didn't catch that. Please try again.";
 function sniffAudioType(b, fallback){
   if(!b || b.length < 12) return fallback;
   if(b[0]===0x1A && b[1]===0x45 && b[2]===0xDF && b[3]===0xA3) return "audio/webm"; // EBML
@@ -6505,6 +6543,7 @@ app.post("/v1/audio/transcriptions", (req, res) => {
       // response from the STT API" (Amber A, three in a row on Sep 28) and
       // nothing here said why. One line: what arrived and what Deepgram heard.
       if(!text) console.warn(`[stt] empty transcript: ${audio.length} bytes, sent as ${ct} (part said ${partType || "nothing"}), Deepgram heard ${j && j.metadata && j.metadata.duration != null ? Number(j.metadata.duration).toFixed(1) + " s" : "no duration"}, confidence ${alt.confidence != null ? alt.confidence : "none"}`);
+      if(!text && STT_EMPTY_REASON) return res.json({ text: "", reason: "no_speech", message: STT_NO_SPEECH_MESSAGE });
       return res.json({ text });
     } catch(e){
       if(e && e.name === "TimeoutError"){

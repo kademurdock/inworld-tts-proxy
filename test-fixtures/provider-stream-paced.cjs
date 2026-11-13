@@ -1,7 +1,8 @@
 // Nov 12 2026 (GW-10): an Inworld voice:stream that sends its audio as three NDJSON lines 300 ms apart (the first carries the WAV
 // header). Loaded AFTER provider.cjs (it wraps that fixture's fetch; the buffered lane still answers from there). The words of the
 // request pick a misbehaviour: "stereo" or "oddrate" send a format the phone sink cannot take, "dropearly" sends the WAV header
-// alone and then drops, "dropmid" drops after two audio lines. Every stream call is written to PROVIDER_RECEIPT by provider.cjs
+// alone and then drops, "dropmid" drops after two audio lines, "stallfirst" opens and never sends a byte, "stallmid" sends two audio
+// lines and then goes quiet with the stream left open (Nov 13 2026, sweep 1.3). Every stream call is written to PROVIDER_RECEIPT by provider.cjs
 // only when it falls through, so this fixture appends its own line to STREAM_RECEIPT.
 const fs = require('fs');
 const inner = global.fetch;
@@ -28,6 +29,7 @@ global.fetch = async (url, options = {}) => {
   const parts = [tone(rate, channels, 0.4), tone(rate, channels, 0.4), tone(rate, channels, 0.4)];
   const lines = text.includes('dropearly') ? [wavHeader(rate, channels)] : [Buffer.concat([wavHeader(rate, channels), parts[0]]), parts[1], parts[2]];
   const dropAfter = text.includes('dropearly') ? 1 : text.includes('dropmid') ? 2 : Infinity;
+  const stallAfter = text.includes('stallfirst') ? 0 : text.includes('stallmid') ? 2 : Infinity;
   const signal = options.signal;
   let done = false; // the reader may cancel (a format the phone sink cannot take): stop sending then
   const body = new ReadableStream({
@@ -36,6 +38,7 @@ global.fetch = async (url, options = {}) => {
       let sent = 0;
       const send = () => {
         if (done) return;
+        if (sent >= stallAfter) return; // quiet, and still open: only the caller's abort ends it
         if (sent >= dropAfter) { done = true; controller.error(new TypeError('terminated')); return; }
         if (sent >= lines.length) { done = true; controller.close(); return; }
         try { controller.enqueue(new TextEncoder().encode(line(lines[sent++]))); } catch { done = true; return; }

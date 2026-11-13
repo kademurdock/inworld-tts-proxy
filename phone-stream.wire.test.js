@@ -59,8 +59,11 @@ function speak(port, input, { headers = {}, query = '?telephony=1' } = {}) {
       headers: { 'Content-Type': 'application/json', 'Content-Length': data.length, ...BRIDGE_PHONE, ...headers } }, (res) => {
       const chunks = [];
       res.on('data', (c) => { if (!firstAt) firstAt = Date.now() - t0; chunks.push(c); });
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, raw: Buffer.concat(chunks), firstAt, ms: Date.now() - t0 }));
-      res.on('error', reject);
+      // Nov 13 2026 (sweep 1.3): a phone opener that died mid-clip now ends as a broken answer, so that is an ending here too.
+      const done = () => resolve({ status: res.statusCode, headers: res.headers, raw: Buffer.concat(chunks), firstAt, ms: Date.now() - t0, cut: !res.complete });
+      res.on('end', done);
+      res.on('aborted', done);
+      res.on('error', done);
     });
     req.on('error', reject);
     req.end(data);
@@ -119,6 +122,7 @@ test('a stream that dies before audio, or a format the phone cannot take, falls 
   assert.equal(mid.status, 200);
   assert.equal(mid.headers['x-kade-tts-streamed'], '1');
   assert.ok(mid.raw.length > 0 && mid.raw.length < 9600, `a short opener (${mid.raw.length} bytes)`);
+  assert.equal(mid.cut, true, 'the short opener ends as a broken answer, so the bridge records it as cut (sweep 1.3)');
   await logged(s.state, /stream: died mid-clip after \d+ bytes/);
 });
 
