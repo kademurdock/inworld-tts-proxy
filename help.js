@@ -2337,7 +2337,7 @@ PAGES.android = {
 <li><strong>Same on every device.</strong> Your voice speed, fillers and voice style follow your account.</li>
 <li><strong>Also.</strong> The notifications card can appear after a reply, long chats open without a stall, and calls tell the server how far you heard.</li>
 </ul>
-<p>2,808 automated tests, lint, release signing and file alignment passed. It has not been tried on a real phone or with TalkBack yet.</p>
+<p>2,808 automated tests, release signing and file alignment passed. It has not been tried on a real phone or with TalkBack yet.</p>
 <h2>Android 2.18.0 (build 125): the Library player</h2>
 <ul>
 <li><strong>Status line.</strong> Just above the player's buttons, one line says Playing or Paused and your place, Loading, Paused for a call, The end, or why playback stopped. It is one TalkBack stop that begins with the word Status. It does not speak by itself, but a recording that is still waiting for the network after a few seconds is announced once as Still loading. If your listening place cannot be saved, that is said once and shown under the Status line.</li>
