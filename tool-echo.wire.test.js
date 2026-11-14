@@ -265,12 +265,13 @@ test('tool-echo.js and every other file the service loads are in git: server.js 
     t.skip(`git cannot list this folder (${e.code || e.status || e.message}): nothing to compare with`);
     return;
   }
-  const fold = (name) => (process.platform === 'win32' ? name.toLowerCase() : name);   // Windows finds a file whatever the case
-  const tracked = new Set(listed.split('\0').filter(Boolean).map(fold));
+  // Compared as spelled, also on Windows (which finds a file whatever the case): Railway runs Linux, where a require spelled
+  // with another case than the file in git does not load either.
+  const tracked = new Set(listed.split('\0').filter(Boolean));
   if (!tracked.has('server.js')) {
     t.skip('server.js itself is not in git here: this folder is not a checkout of the service');
     return;
   }
-  assert.deepEqual(files.filter((file) => !tracked.has(fold(file))), [],
+  assert.deepEqual(files.filter((file) => !tracked.has(file)), [],
     'loaded by the service and not in git: git add each one, in the same commit as the code that loads it');
 });
