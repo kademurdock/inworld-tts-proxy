@@ -105,8 +105,9 @@ function env(name, fallback, source = process.env) {
   return v === undefined || v === '' ? fallback : v;
 }
 const model = (source) => env('INWORLD_WRITER_MODEL', 'xiaomi/mimo-v2.6-flash', source);
-// Zero-retention hosts, fastest first (Pro is served with zdr by DeepInfra and Novita only).
-const hosts = (source) => env('INWORLD_WRITER_HOSTS', /flash/.test(model(source)) ? 'Io Net,Makora,DeepInfra' : 'DeepInfra', source)
+// Zero-retention hosts. Nov 14 2026: Io Net no longer serves MiMo Flash, so Cohere goes first (about as
+// quick as Makora and 22% cheaper), then Makora and DeepInfra. Pro: DeepInfra (Novita no longer serves MiMo).
+const hosts = (source) => env('INWORLD_WRITER_HOSTS', /flash/.test(model(source)) ? 'Cohere,Makora,DeepInfra' : 'DeepInfra', source)
   .split(',').map(h => h.trim()).filter(Boolean);
 function writerOn(source = process.env) {
   return source.INWORLD_WRITER === '1' && Boolean(source.OPENROUTER_KEY);
