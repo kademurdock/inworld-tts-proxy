@@ -10,6 +10,8 @@ function harness() {
     BASE: 'https://test.invalid', UA: 'browser', SEATS: { admin: {} },
     seatByName: () => seat, seatToken: () => 'test-token', paced: fn => fn(),
     setTimeout: fn => fn(), stripCitationAnchors: s => s,
+    cutToolEcho: require('./tool-echo').cutToolEcho, // a top-level name in librechat.js, as these others are (Nov 13 2026)
+    require, // lcAsk loads ./log-text where it logs; without this both tests stopped at "require is not defined"
     messageText: m => m?.text || '',
     fetch: async (url, opts) => {
       if (opts.method === 'POST') {

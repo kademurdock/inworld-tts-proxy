@@ -50,6 +50,7 @@ const { SCENE_TAG_RE, SCENE_TAG_G, parseSceneScript, parseAssignments } = requir
  * numbers (1.9s whole-clip vs 438ms first streamed audio). */
 const { createNdjsonAudioParser, sniffWavFormat, buildStreamingWavHeader, createStreamProcessor } = require("./stream-lane");
 const { textReceipt } = require("./log-text"); // sweep 8.6: lengths and hashes in the log, not spoken words
+const { cutToolEcho } = require("./tool-echo"); // Nov 13 2026: a tool call the model only wrote is cut before it is spoken
 const { normalizeInworldCaps, shapeFishPauses, shapeDeliveryPace, baselineInstruction, carryChunkDirections, carryDrama3Scopes } = require("./speech-prosody");
 const { fitContextBudget } = require("./tts-context");
 const { fishPacedText, fishApiSpeed, fishExactOn, fishSpeedApplied, fishStretchOn, fishStretchRatio, fishTalkDirection, fishTalkSeed, talkFillersByParagraph, talkSoundsByParagraph, fishSentencePauses, capFishPauses, fishThoughtGapMs, padFishTail, FISH_PACES } = require('./pace');
@@ -4178,13 +4179,25 @@ app.post("/v1/audio/speech", bodyLimits.speechJson, guardAsync(async (req, res) 
   // SPEAKS the token. Same hygiene class as citation markers.
   // Prep chain minus steering first: scenes must split BEFORE steering so
   // each speaker's %%% carry-forward stays inside their own lines.
+  /* Nov 13 2026: a tool call the model only WROTE is not read aloud (tool-echo.js). Kade heard one at the end of a
+   * reply from Kiana: "Tool: kade_research, === Deep Research Context ===" and her own question restated under it.
+   * From the line that begins "Tool: <a tool name>, " to the end of the text is cut, here: after the reasoning is
+   * gone (a tool line inside the model's thinking must not take the answer with it) and before any other rule or
+   * any chunking sees the text, so no chunk made below can lie inside it. Not on the lanes that name themselves
+   * as readers of a document (the Library, family history, described video): a book is nobody's reply. This route
+   * cannot tell any other typed text from a character's reply, so the rule runs on all of it; a line has to begin
+   * with "Tool: " and a tool name to be cut. KADE_TOOL_ECHO_SPEECH=0 turns it off. */
+  const echoCaller = String(req.get("x-kade-caller") || "");
+  const readsDocument = String(req.get("x-kade-tts-session") || "").startsWith("reading:") ||
+    ["fork-library", "fork-family-history", "fork-described-video"].includes(echoCaller);
+  const answerText = readsDocument ? stripThinkingBlock(effectiveInput) : cutToolEcho(stripThinkingBlock(effectiveInput), { lane: echoCaller || "speech" });
   /* Part 236 (Sep 20 2026): the ONE place this handler can now wait before
    * first audio. Only when the text holds a "(span)" or "*span*" the word list
    * does not know and the pre-filters let by; then one Jev request, capped at
    * 600 ms, 160-410 ms measured. No key, kill switch, timeout or error -> null
    * -> the chain below runs exactly as it always has. */
-  const looseVerdicts = await looseJev.resolve(stripThinkingBlock(effectiveInput));
-  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(emphasisFromMarkdown(rescueLooseDirections(stripThinkingBlock(effectiveInput), looseVerdicts)))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
+  const looseVerdicts = await looseJev.resolve(answerText);
+  const preppedText = fixPronunciations(normalizeForSpeech(stripSpeechMarkdown(stripCitationMarkers(emphasisFromMarkdown(rescueLooseDirections(answerText, looseVerdicts)))))).replace(/\[(?:sound:[a-z0-9_]+|table:[a-z0-9]{1,12})\]/gi, '');
 
   // Oct 30 2026, Kade: "we need Prat as the fish speed controler in all methods that use fish."
   // fishSpeed: "legacy" is the describer's, for a job started before this: its timings were learned

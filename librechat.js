@@ -35,6 +35,7 @@ const AGENT_VIEWER = "agent_viewer";
 // Nov 8 2026: the secret is checked first and the JSON body (up to 10 MB) is read only for a caller that passes (body-limits.js).
 const { afterSecret } = require("./body-limits");
 const { scrubText } = require("./error-text"); // an error text goes out without a container path or a token in it
+const { cutToolEcho, createToolEchoGate } = require("./tool-echo"); // Nov 13 2026: a tool call the model only wrote is never spoken or texted (lcAsk, lcAskStream)
 function checkSecret(req, res, next) {
   const h = req.get("authorization") || "";
   const tok = h.startsWith("Bearer ") ? h.slice(7) : null;
@@ -1989,7 +1990,8 @@ async function lcAsk(agentId, messages, userEmail, opts = {}) {
         .then(() => console.log(`[lcAsk] probe convo deleted (${bornConversationId.slice(0, 8)}…) as ${seat === SEATS.admin ? "admin" : "vischeck"}`))
         .catch((e) => console.warn("[lcAsk] probe delete failed (harmless):", e.message));
     }
-    const text = stripCitationAnchors(reply);
+    // Nov 13 2026: a tool call the model only wrote ("Tool: kade_research, ..." on a line of its own, to the end of the reply) is never spoken or texted (tool-echo.js).
+    const text = cutToolEcho(stripCitationAnchors(reply), { lane: "librechat-ask" });
     return opts.continueConversation ? { text, conversationId: bornConversationId, parentMessageId: responseMessageId } : text;
   });
 }
@@ -2170,8 +2172,12 @@ async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
     const dec = new TextDecoder();
     let buf = "";
     let acc = ""; // everything already forwarded to the caller
+    // Nov 13 2026: a tool call the model only wrote ("Tool: kade_research, ..." on a line of its own, to the end of the reply)
+    // never reaches the caller. The gate passes the reply on up to that line and nothing after it; it holds the start of a
+    // line back only while that line could still become the echo (tool-echo.js). The site job is left to finish.
+    const echoGate = createToolEchoGate({ lane: "librechat-ask-stream" });
     const emit = (raw) => {
-      const t = stripCitationAnchors(raw);
+      const t = echoGate.push(stripCitationAnchors(raw));
       if (raw) acc += raw; // acc tracks RAW so final-event startsWith() reconciliation stays exact
       if (t) onToken(t);
     };
@@ -2216,6 +2222,10 @@ async function lcAskStream(agentId, messages, onToken, userEmail, opts = {}) {
     } catch (e) {
       if (left()) { stopJob("caller gone mid-turn"); return; }
       throw e;
+    } finally {
+      // The reply is over: what the gate still held (the start of a line that did not become the echo) goes out, and its one log line is written.
+      const rest = echoGate.end();
+      if (rest && !left()) onToken(rest);
     }
   }, { live: opts.live === true, signal });
 }
