@@ -39,11 +39,14 @@ test('a good answer becomes a brief, one capital and one turn; MiMo Flash, zero 
   assert.deepEqual(body.reasoning, { enabled: false });
   assert.equal(body.provider.zdr, true);
   assert.equal(body.provider.data_collection, 'deny');
-  assert.deepEqual(body.provider.order, ['Io Net', 'Makora', 'DeepInfra']);
+  assert.deepEqual(body.provider.order, ['Cohere', 'Makora', 'DeepInfra'], 'Io Net no longer serves MiMo Flash (Nov 14 2026)');
   assert.deepEqual(body.response_format, { type: 'json_object' });
   const pro = stub([GOOD]);
   await createWriter({ fetcher: pro.fetcher, source: { ...ON, INWORLD_WRITER_MODEL: 'xiaomi/mimo-v2.6-pro' }, log: quiet }).writePiece({ text: PIECE });
   assert.deepEqual(pro.calls[0].body.provider.order, ['DeepInfra'], 'Pro goes to its zero-retention host');
+  const chosen = stub([GOOD]);
+  await createWriter({ fetcher: chosen.fetcher, source: { ...ON, INWORLD_WRITER_HOSTS: 'Makora, DeepInfra' }, log: quiet }).writePiece({ text: PIECE });
+  assert.deepEqual(chosen.calls[0].body.provider.order, ['Makora', 'DeepInfra'], 'INWORLD_WRITER_HOSTS still wins');
 });
 
 test('the model never returns the text, so a snippet that does not match is simply skipped', () => {
