@@ -83,3 +83,19 @@ test('legacy Railway help links redirect once while the site fetch renders the a
   assert.equal(internal.status, 200);
   assert.match(internal.body, /<h1>Work in a project<\/h1>/);
 });
+
+/* Nov 14 2026 (route savings review): two MiMo lanes may now use hosts that keep prompts for a
+ * while. The page names them, and the described-video section names the repeat-check listener. */
+test('privacy page names the MiMo lanes that are not zero retention, and the described-video listener', () => {
+  const privacy = PAGES.privacy.main;
+  const mimo = privacy.slice(privacy.indexOf('<strong>MiMo model hosts</strong>'));
+  const bullet = mimo.slice(0, mimo.indexOf('</li>'));
+  assert.doesNotMatch(bullet, /Kade-AI restricts these requests to hosts OpenRouter lists as zero data retention\./);
+  assert.match(bullet, /Library books/);
+  assert.match(bullet, /YouTube/);
+  assert.match(bullet, /never go to a host that trains/);
+  assert.match(bullet, /your own uploads?/);
+  const describe = PAGES.describe.main;
+  assert.match(describe, /MiMo/);
+  assert.match(describe, /Video analysis uses Google Gemini/);
+});

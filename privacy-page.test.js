@@ -30,17 +30,23 @@ test('Google retention is not described as flagged requests only', () => {
   assert.match(bullet('Google'), /mainly ones its safety checks flag/);
 });
 
-test('book sorter retention is limited to public Library books', () => {
+/* Merge with route savings (Nov 14 2026): the sorter sends every book's title, author and
+ * blurb to hosts that may keep them (kadeReadingRoomSort.js has no private-shelf lane), and the
+ * repeat check keeps zero retention for uploads and every Library video; only YouTube may keep. */
+test('book sorter sends only book details and claims no private-shelf lane', () => {
   const mimo = bullet('MiMo model hosts');
-  assert.match(mimo, /book sorter[^.]*books shared in the public Library/);
-  assert.match(mimo, /private shelf[^.]*keep nothing/);
+  assert.match(mimo, /sorts Library books[^.]*sends only a book's title, author and blurb/);
+  assert.doesNotMatch(mimo, /private shelf/);
 });
 
-test('narration listen-back keeps uploads on hosts that keep nothing', () => {
+test('narration listen-back keeps uploads and Library videos on hosts that keep nothing', () => {
   const mimo = bullet('MiMo model hosts');
-  assert.match(mimo, /video you upload[^.]*keep nothing/);
+  assert.match(mimo, /YouTube video/);
+  assert.match(mimo, /your own uploaded video, or of any Library video, stays on zero retention hosts/);
+  assert.doesNotMatch(mimo, /Library film/);
   // The described-video help names the listen-back too.
-  assert.match(describe, /MiMo listens back to it\. For a public video[^.]*Xiaomi[^.]*\. For a video you upload[^.]*keep nothing/);
+  assert.match(describe, /MiMo, through OpenRouter, listens back to it[^.]*\. For your own uploads and Library videos that check uses only hosts that keep nothing/);
+  assert.doesNotMatch(describe, /For a public video/);
 });
 
 test('DeepSeek entry names errands; Moonshot is past tense', () => {
