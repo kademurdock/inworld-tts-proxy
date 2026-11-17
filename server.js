@@ -5931,6 +5931,55 @@ const VOICE_ADDITIONS_2026_11_11 = {
   });
 }
 
+// Nov 17 2026: Kade: "Can you add my new inworld voices to the platform?" Workspace diff (exact
+// ids): 428 customs, 39 not on the platform; twelve are her personal hold-outs (Kade*, Amber*, Pro
+// amber reading, Podcast Keighty fast) or voices she took off on Jun 26 (Dale, Sky), and these 27 are
+// the new ones, none on the workspace at the Nov 11 diff. Workspace names stay in comments only.
+const VOICE_ADDITIONS_2026_11_17 = {
+  "Voice 761": "default-e-m11vgtr9l-m7afw4kmnw__seegley", // Seegley
+  "Voice 762": "default-e-m11vgtr9l-m7afw4kmnw__needia", // needia
+  "Voice 763": "default-e-m11vgtr9l-m7afw4kmnw__allizia", // Allizia
+  "Voice 764": "default-e-m11vgtr9l-m7afw4kmnw__nadiana", // Nadiana
+  "Voice 765": "default-e-m11vgtr9l-m7afw4kmnw__darryl", // Darryl
+  "Voice 766": "default-e-m11vgtr9l-m7afw4kmnw__yanna", // Yanna
+  "Voice 767": "default-e-m11vgtr9l-m7afw4kmnw__teej", // Teej
+  "Voice 768": "default-e-m11vgtr9l-m7afw4kmnw__obrah", // Obrah
+  "Voice 769": "default-e-m11vgtr9l-m7afw4kmnw__gramps", // gramps
+  "Voice 770": "default-e-m11vgtr9l-m7afw4kmnw__kursey", // Kursey
+  "Voice 771": "default-e-m11vgtr9l-m7afw4kmnw__widdy", // Widdy
+  "Voice 772": "default-e-m11vgtr9l-m7afw4kmnw__pookey", // pookey
+  "Voice 773": "default-e-m11vgtr9l-m7afw4kmnw__cookie", // Cookie
+  "Voice 774": "default-e-m11vgtr9l-m7afw4kmnw__saidiano", // saidiano
+  "Voice 775": "default-e-m11vgtr9l-m7afw4kmnw__decoda", // Decoda
+  "Voice 776": "default-e-m11vgtr9l-m7afw4kmnw__razey", // Razey
+  "Voice 777": "default-e-m11vgtr9l-m7afw4kmnw__mina_leah", // Mina leah
+  "Voice 778": "default-e-m11vgtr9l-m7afw4kmnw__sartruse", // Sartruse
+  "Voice 779": "default-e-m11vgtr9l-m7afw4kmnw__don", // Don
+  "Voice 780": "default-e-m11vgtr9l-m7afw4kmnw__daman", // Daman
+  "Voice 781": "default-e-m11vgtr9l-m7afw4kmnw__shanai", // Shanai
+  "Voice 782": "default-e-m11vgtr9l-m7afw4kmnw__honnley", // Honnley
+  "Voice 783": "default-e-m11vgtr9l-m7afw4kmnw__vivvy", // Vivvy
+  "Voice 784": "default-e-m11vgtr9l-m7afw4kmnw__eightia", // eightia
+  "Voice 785": "default-e-m11vgtr9l-m7afw4kmnw__jessica", // Jessica
+  "Voice 786": "default-e-m11vgtr9l-m7afw4kmnw__angie", // Angie
+  "Voice 787": "default-e-m11vgtr9l-m7afw4kmnw__possia", // Possia
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_11_17);
+  if (entries.length !== 27) throw new Error(`additions 11-17: expected 27, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${761 + idx}`) throw new Error(`additions 11-17: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 11-17: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 11-17: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
