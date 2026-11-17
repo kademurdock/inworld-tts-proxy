@@ -34,7 +34,8 @@ test('Voices 761-787 speak as the new workspace voices, described and filed', ()
     const sections = r.VOICE_PICKER_CATEGORIES.filter((c) => c.voices.includes(label)).map((c) => c.name);
     assert.deepEqual(Array.from(sections), [catalog.voices[num].category], `${label} sits in one section`);
   });
-  assert.equal(r.VOICE_MAP[`Voice ${FIRST + NEW.length}`], undefined, 'nothing past the batch');
+  /* Voice 788 on is the second Nov 17 batch (voice-additions-20261117b.test.js), none of these. */
+  assert.ok(!NEW.some((short) => r.VOICE_MAP[`Voice ${FIRST + NEW.length}`] === WS + short), 'the batch ends at Voice 787');
   assert.ok(!r.VOICE_PICKER_CATEGORIES.some((c) => c.name === 'Not yet described'), 'every picker voice is described');
 });
 

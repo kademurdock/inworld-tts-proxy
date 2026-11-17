@@ -170,7 +170,16 @@
     "clear high-ish young woman · spatula",
     "clear high-ish young woman · skewer",
     "clear high-ish young woman · trivet",
-    "clear high-ish young woman · zipper"
+    "clear high-ish young woman · zipper",
+    "crisp high-ish young woman · quokka",
+    "crisp high-ish young woman · toucan",
+    "clear high-ish young woman · ocelot",
+    "clear high-ish young woman · flamingo",
+    "clear high-ish young woman · wallaby",
+    "clear high-ish young woman · chinchilla",
+    "crisp high-ish young woman · gumball",
+    "clear high-ish young woman · gecko",
+    "crisp high-ish young woman · meerkat"
    ]
   },
   {
@@ -203,7 +212,8 @@
     "clear young woman · rhodonite",
     "clear young woman · dewpoint",
     "clear young woman · loblolly",
-    "clear young woman · kingfisher"
+    "clear young woman · kingfisher",
+    "clear young woman · lemur"
    ]
   },
   {
@@ -488,7 +498,8 @@
     "smooth low-ish woman, British regional · capella",
     "warm low-ish middle-aged woman, British · winch",
     "smooth low-ish woman, Australian · gully",
-    "clear young woman, Irish · milkweed"
+    "clear young woman, Irish · milkweed",
+    "clear high-ish woman, other non-native English · okapi"
    ]
   },
   {
@@ -712,7 +723,8 @@
     "smooth low-ish middle-aged man · boxelder",
     "warm low middle-aged man · buckthorn",
     "warm low middle-aged man · canteen",
-    "clear low-ish middle-aged man · platypus"
+    "clear low-ish middle-aged man · platypus",
+    "warm low-ish middle-aged man · windmill"
    ]
   },
   {
@@ -877,7 +889,8 @@
     "crisp high kid, cartoon · wombat",
     "clear high youthful voice · manatee",
     "clear high girl · salamander",
-    "clear high girl · sparrowhawk"
+    "clear high girl · sparrowhawk",
+    "clear high kid, character · popsicle"
    ]
   },
   {
@@ -16138,6 +16151,266 @@
     "gender_confidence": 0.95
    },
    "note": "Nov 17 2026: Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 788": {
+   "label": "clear high kid, character · popsicle",
+   "tag": "popsicle",
+   "category": "Kids and teens",
+   "description": "A high-pitched, cheerful child's voice with a light, clear tone, perfect for animation, games, and children's media.",
+   "ear_label": "bright lively playful child voice",
+   "fields": {
+    "gender": "ambiguous",
+    "age": "child",
+    "pitch": "high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "character",
+    "gender_confidence": 0.75
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 789": {
+   "label": "crisp high-ish young woman · quokka",
+   "tag": "quokka",
+   "category": "Women, bright and high, young",
+   "description": "A bright, youthful female voice with crisp articulation, ideal for energetic commercials and modern digital content.",
+   "ear_label": "upbeat young female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "crisp",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 790": {
+   "label": "crisp high-ish young woman · toucan",
+   "tag": "toucan",
+   "category": "Women, bright and high, young",
+   "description": "A crisp, upbeat female voice with a clear tone, ideal for energetic promos and modern virtual assistants.",
+   "ear_label": "bright and lively young female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "crisp",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 1
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 791": {
+   "label": "clear high-ish young woman · ocelot",
+   "tag": "ocelot",
+   "category": "Women, bright and high, young",
+   "description": "A light and clear female voice with a bright tone, well-suited for e-learning, virtual assistants, and clean commercial narration.",
+   "ear_label": "clear young female voice with steady tone",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 792": {
+   "label": "clear high-ish young woman · flamingo",
+   "tag": "flamingo",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear young female voice with an upbeat delivery, ideal for virtual assistants and promotional content.",
+   "ear_label": "upbeat young American female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 793": {
+   "label": "clear high-ish woman, other non-native English · okapi",
+   "tag": "okapi",
+   "category": "Women, from abroad",
+   "description": "A clear, articulate female voice with a warm non-native accent, ideal for instructional content and clear presentations.",
+   "ear_label": "clear bright African-accented female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "other non-native English",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 794": {
+   "label": "clear high-ish young woman · wallaby",
+   "tag": "wallaby",
+   "category": "Women, bright and high, young",
+   "description": "A bright and articulate young female voice with a clean tone, ideal for digital assistants and audio guides.",
+   "ear_label": "clear friendly young female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "even",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 795": {
+   "label": "clear high-ish young woman · chinchilla",
+   "tag": "chinchilla",
+   "category": "Women, bright and high, young",
+   "description": "A crisp and clear young female voice with a balanced delivery, ideal for commercials and modern narration.",
+   "ear_label": "clear articulate young female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 796": {
+   "label": "crisp high-ish young woman · gumball",
+   "tag": "gumball",
+   "category": "Women, bright and high, young",
+   "description": "A bright and crisp female voice with a youthful tone, ideal for friendly apps and modern virtual assistants.",
+   "ear_label": "clear and bright youthful female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "crisp",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 797": {
+   "label": "clear high-ish young woman · gecko",
+   "tag": "gecko",
+   "category": "Women, bright and high, young",
+   "description": "A bright and clear female voice with a friendly tone, perfect for virtual assistants, e-learning, and commercial narration.",
+   "ear_label": "bright friendly young female voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 798": {
+   "label": "crisp high-ish young woman · meerkat",
+   "tag": "meerkat",
+   "category": "Women, bright and high, young",
+   "description": "A clear, upbeat female voice with a crisp tone, perfectly suited for modern tech demos, app navigation, and commercials.",
+   "ear_label": "Bright and friendly young woman",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid-high",
+    "weight": "light",
+    "brightness": "bright",
+    "texture": "crisp",
+    "energy": "lively",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 799": {
+   "label": "clear young woman · lemur",
+   "tag": "lemur",
+   "category": "Women, bright and clear, young",
+   "description": "A clear, approachable female voice with a balanced tone, ideal for virtual assistants and promotional media.",
+   "ear_label": "clear friendly female assistant voice",
+   "fields": {
+    "gender": "woman",
+    "age": "young adult",
+    "pitch": "mid",
+    "weight": "medium",
+    "brightness": "bright",
+    "texture": "clear",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
+  },
+  "Voice 800": {
+   "label": "warm low-ish middle-aged man · windmill",
+   "tag": "windmill",
+   "category": "Men, seasoned and smooth",
+   "description": "A calm and mature male voice with a warm, clear quality suitable for narration and educational content.",
+   "ear_label": "warm mature male voice with steady tone",
+   "fields": {
+    "gender": "man",
+    "age": "middle-aged",
+    "pitch": "low-mid",
+    "weight": "medium",
+    "brightness": "neutral",
+    "texture": "warm",
+    "energy": "steady",
+    "accent": "general American",
+    "kind": "natural",
+    "gender_confidence": 0.95
+   },
+   "note": "Nov 17 2026 (second batch): Gemini 3.5 Flash description of the free Inworld preview; provisional listening classification, not a human acceptance test."
   }
  },
  "recat": "Part 129 (Sep 4 2026): 35 kids/teens re-filed from the adult headings by Kade's own clone titles; 3 gender fixes by vendor description/her fish title; formerLabels keep old picks resolving | Part 176 (Sep 11 2026): Voice 462 re-voiced Deej -> Zondi (formerLabels keeps the old pick resolving); Voices 640-651 added, Gemini 3.5 Flash ear pass on Inworld previews. | Part 182 (Sep 12 2026): Voice 433: Women, smooth and warm, young -> Kids and teens, Voice 431: Women, smooth and warm, grown -> Kids and teens, Voice 487: Women, soft and breathy -> Kids and teens, Voice 467: Women, soft and breathy -> Kids and teens, Voice 468: Women, bright and high, young -> Kids and teens, Voice 458: Women, bright and high, young -> Kids and teens, Voice 643: Women, bright and high, young -> Kids and teens, Voice 426: Women, bright and high, young -> Kids and teens, Voice 451: Women, soft and breathy -> Characters and cartoons, Voice 367: Women, bright and high, young -> Kids and teens, Voice 457: Women, bright and high, young -> Characters and cartoons"

@@ -5980,6 +5980,41 @@ const VOICE_ADDITIONS_2026_11_17 = {
   });
 }
 
+// Nov 17 2026, later the same day: Kade: "add the most recent voices from inworld into my platform".
+// Workspace diff (exact ids): 441 customs, 25 not on the platform; twelve are the same personal
+// hold-outs and Jun 26 removals as the batch above, and these 13 are new since it. Workspace names
+// stay in comments only.
+const VOICE_ADDITIONS_2026_11_17B = {
+  "Voice 788": "default-e-m11vgtr9l-m7afw4kmnw__sakayah", // Sakayah
+  "Voice 789": "default-e-m11vgtr9l-m7afw4kmnw__emmsley", // Emmsley
+  "Voice 790": "default-e-m11vgtr9l-m7afw4kmnw__zesty", // Zesty
+  "Voice 791": "default-e-m11vgtr9l-m7afw4kmnw__shacooka", // Shacooka
+  "Voice 792": "default-e-m11vgtr9l-m7afw4kmnw__musa", // Musa
+  "Voice 793": "default-e-m11vgtr9l-m7afw4kmnw__samalanio", // Samalanio
+  "Voice 794": "default-e-m11vgtr9l-m7afw4kmnw__nadeesia", // Nadeesia
+  "Voice 795": "default-e-m11vgtr9l-m7afw4kmnw__babaline", // Babaline
+  "Voice 796": "default-e-m11vgtr9l-m7afw4kmnw__looley", // Looley
+  "Voice 797": "default-e-m11vgtr9l-m7afw4kmnw__zizza", // Zizza
+  "Voice 798": "default-e-m11vgtr9l-m7afw4kmnw__vexie", // Vexie
+  "Voice 799": "default-e-m11vgtr9l-m7afw4kmnw__deedee", // DeeDee
+  "Voice 800": "default-e-m11vgtr9l-m7afw4kmnw__linnie", // Linnie
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_11_17B);
+  if (entries.length !== 13) throw new Error(`additions 11-17b: expected 13, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${788 + idx}`) throw new Error(`additions 11-17b: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 11-17b: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 11-17b: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
