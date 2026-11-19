@@ -203,6 +203,15 @@ const SECTIONS = [
     "description": "Turn a few sentences into a full audio scene with Cadence — or a real, sung song with Muse."
   },
   {
+    "key": "voicechanger",
+    "path": "/help/voice-changer",
+    "label": "The Voice Changer",
+    "group": "Create and spend time together",
+    "terms": "voice changer change my voice effects effect presets preset robot monster demon chipmunk helium deep low high pitch timbre disguise anonymous echo reverb cave hall stadium announcer telephone phone call radio walkie talkie old record gramophone whisper talk box vocoder auto tune pitch correction plugin plugins vst morph funny stereo 3d headphones background",
+    "icon": "🎭",
+    "description": "Change your own voice with thousands of effects. Free, and it runs on your own device."
+  },
+  {
     "key": "clubhouse",
     "path": "/help/clubhouse",
     "label": "Kade’s Clubhouse",
@@ -688,6 +697,12 @@ PAGES.whatsnew = {
   h1: "What's New",
   tagline: "The latest around here, newest first — in plain language, no tech homework.",
   main: `
+<h2>November 18, 2026: the Voice Changer, an effects rack, and more for Sing it in my voice</h2>
+<p>There is a new Voice Changer in Create. Record your voice, or bring in a recording. Then flick through thousands of voices and effects: phone calls, radios, robots, monsters, chipmunks, caves, stadiums, old records, talk boxes, 3D sound for headphones, and much more. Start with Quick picks for the favorites, or Singing and mixing for sung vocals. Every voice has a one-line description, and every button has a name. It is your own voice, changed, not an AI voice. It is free, because the sound is made on your own device. Save what you make to My Creations, or download it. It is on the website now. See <a href="/help/voice-changer">The Voice Changer</a> for how it works.</p>
+<p>The Voice Changer is also an <strong>effects rack</strong> made for screen readers. Press Customize this preset, or Start an empty rack. Then add effects one at a time: equalizer, compressor, limiter, de-esser, noise gate, distortion, bit crusher, chorus, flanger, phaser, tremolo, vibrato, echoes, room, hall, plate and spring reverbs, pitch and voice size, pitch correction to a key, harmonies, vocoder, granular tricks, reverse, telephone and radio sounds, stereo widening, tape and vinyl wobble, and more. Every setting is a real slider with a number box beside it, and its value is read in words. Move up, Move down, Bypass and Remove are buttons. Nothing is dragged.</p>
+<p>In the Sound Booth, every finished take now has <strong>Open in the effects rack</strong>. A song made with Sing it in my voice opens with the voice on its own and the music as its backing track, so you can put reverb, echo, tuning or harmonies on the voice and hear it over the band.</p>
+<p><strong>Sing it in my voice</strong>, for accounts that have it, has a new <strong>Sound preset</strong>: Natural, Clear diction, Keep the original phrasing, Strongest likeness, Smooth and even, Echoey or live recording, and Old or noisy recording. Under More settings you can change the key and move the music with the voice, make the voice sound bigger or smaller, choose what happens to the backing singers, and clean up noise and room echo. A song with music now also gives you its stems as downloads: the music without the singer, the backing singers, and the original singer alone.</p>
+<p>The same accounts have a new <strong>Voice lab</strong>, linked under More settings. There you make a new singing voice from recordings: name it, say whose voice it is, add files or record with the microphone, and press Learn this voice. A voice that is not your own needs a tick that the person gave permission. The cost is shown before anything starts.</p>
 <h2>November 13, 2026: Android 2.19.1, fixes after 2.19.0</h2>
 <p>A small update. The phone now sends proof that you are signed in when it links itself to your account for rings and check-ins. After a long phone call, a paused reply lets go of the sound, so music or a podcast in another app can come back. If your headphones come out while a character is still thinking, the reply is paused instead of playing from the loudspeaker, and TalkBack says the reply was paused. Signing in to a different account on the same phone no longer copies the last person's voice settings into it. It has not been tried on a real phone with TalkBack yet, so please tell Kade what reads wrong. <a href="/help/android">Download Android 2.19.1</a> and install it over your existing copy.</p>
 <h2>November 12, 2026: Android 2.19.0, a calmer phone with TalkBack</h2>
@@ -1848,6 +1863,10 @@ PAGES.audio = {
 <p><strong>Song drafts:</strong> describe what the song should say, its style and any refrain you want kept. The desk puts meaning before rhyme: verses develop connected thoughts, and the chorus supports its central hook. It aims for natural speech, creative audible rhyme and space for the singer, without adding a relationship, comic exchange or tidy life lesson merely to fill a section. Backing vocals and ad-libs go in (parentheses), after a lead phrase or on their own line. They can be harmony echoes, held sung syllables or replies that fit the song; they do not need a joke or a new comment after each lead line. New generated Lyrics blocks use one performed phrase per line, section labels such as [Verse 1] and [Chorus] on their own lines, and one blank line between sections. Returning choruses are written in full. The last chorus may lift through harmony, vocal energy or arrangement while keeping the words. Supplied lyrics keep your words and formatting. Line breaks organize the lyric; they do not guarantee timing or sung phrasing. Review the words before rendering.</p>
 <p>The Sound Booth uses <strong>AuK Base</strong> for speech and editing, <strong>Seed Audio</strong> for scenes and backgrounds, and <strong>Lyria</strong> for songs. Open Tools, Sound Booth in the native app, or <a href="/sound-booth">the web Sound Booth</a>. Each engine retains its own draft.</p>
 <p>If your account has a trained voice model, <strong>Sing it in my voice</strong> converts an imported song or vocal, or makes a voice version of a YuE2 take. It changes the singer's sound while pronunciation and rhythm still follow the original singing; it does not perform the words again with your own diction. New voice versions leave <strong>Keep original singer’s S sounds</strong> off. Turning it on under More settings puts the original singer's S, SH, T and F hiss back after conversion to soften robotic consonants. This optional choice does not change pronunciation or rhythm. Saved settings and recordings keep their existing choices.</p>
+<p><strong>Sound preset</strong> sets the knobs under More settings for you, and you can still change any of them. <strong>Natural</strong> is the balanced one. <strong>Clear diction</strong> puts the words first. <strong>Keep the original phrasing</strong> follows the original singer's loud and soft moments. <strong>Strongest likeness</strong> presses as much of the voice on as it can. <strong>Smooth and even</strong> evens out the loudness. <strong>Echoey or live recording</strong> and <strong>Old or noisy recording</strong> clean the singer first.</p>
+<p>Under More settings: <strong>Pitch</strong> moves the voice by semitones, and <strong>How the key is chosen</strong> can fit the key to the voice. With <strong>Move the music with the voice</strong> on, the band and backing singers move too, so the song stays in tune. <strong>Voice size</strong> makes the singer sound bigger or smaller without changing the notes. <strong>Backing singers</strong> can be kept as they are, sung in the voice too, or taken out. <strong>Clean up noise</strong> and <strong>How much room to take off</strong> tidy the singer before the voice sings it.</p>
+<p>A finished song gives you the song, the voice on its own, and the stems: <strong>the music without the singer</strong>, <strong>the backing singers</strong>, and <strong>the original singer on their own</strong>. <strong>Open in the effects rack</strong> takes the voice into <a href="/help/voice-changer">the Voice Changer</a> with the music as its backing track.</p>
+<p>The <strong>Voice lab</strong> link under More settings is where you make more voices. Give the voice a name and say whose it is. For anyone else's voice, tick the box that says you have their permission. Add at least one minute of that one person singing or talking with nothing else in the recording; ten minutes or more makes a much better voice. You can pick files or record with the microphone. Press <strong>Learn this voice</strong>, hear the estimate, and press again to start. It usually takes fifteen to forty minutes and costs well under a dollar of GPU time. You get a notification when it is ready, and it then appears under <strong>Voice</strong> in Sing it in my voice. The recordings are deleted once the voice is learned. Only you can use the voices you make.</p>
 <p>For speech without a reference clip, describe the voice's accent, texture, mood and delivery, then write only the words to say in the performance script. Later sections reuse the opening voice. An imported reference supplies its own voice and accent; changing the description does not change that reference. The voice wheel supplies a description when no clip is attached; it does not copy the wheel's original speaker.</p>
 <p>When the writing desk drafts a script, the voice goes in <strong>Describe a new voice</strong> and the script box holds only the directions in square brackets and the words to say. If you already described a voice, the desk keeps yours and writes for that speaker. Before each take without a reference clip, HQ speech makes a short private voice sample from the description and performs from it, so the description is never read aloud. A reference clip shapes the voice from its first eight seconds, so choose a clip that starts with clear speech.</p>
 <p>To try giving a reference voice another accent, choose <strong>Edit</strong>, import the original recording, and describe the accent change while asking to preserve the words and speaker identity. Listen to the new take, then choose <strong>Use this voice</strong> for your script. Adding an arbitrary accent is experimental; AuK documents removing a regional accent. The booth does not automatically run or charge for a separate accent-edit pass.</p>
@@ -2519,6 +2538,47 @@ PAGES.projects = {
 <h2>Keep control of the project</h2>
 <p>Project files are checked against the owner’s account. Shared instructions mean shared across your project’s chats, not automatically shared with other people. Agents save a separate working document when using reference text.</p>`,
 };
+PAGES.voicechanger = {
+  title: 'The Voice Changer', h1: 'The Voice Changer',
+  tagline: 'Your own voice, changed. Thousands of voices and effects, free, made on your own device.',
+  main: `
+<p class="lead">Open <a href="https://kademurdock.com/voice-changer">the Voice Changer</a> from Create. Record yourself or bring in a recording. Then flick through voices and effects until you find one you like. It is your real voice, changed. It is not an AI voice.</p>
+<h2>What it costs</h2>
+<p>Nothing. The sound is made on your own phone or computer, so no company is paid and nothing is sent to an AI. Your recording stays on your device unless you save it to My Creations.</p>
+<h2>1. Get your voice in</h2>
+<ul>
+<li><strong>Record.</strong> Press Record, talk, then press it again to stop. Up to three minutes.</li>
+<li><strong>Upload a file.</strong> A sound file or a video works. Only the sound is used.</li>
+<li><strong>Use a sample voice.</strong> Try things out with a ready-made voice before you record.</li>
+</ul>
+<h2>2. Pick a voice</h2>
+<p>Start with <strong>Quick picks</strong>. It holds the everyday favorites: phone call, old radio, robot, deep voice, chipmunk, cave echo, big hall, stadium announcer, walkie-talkie, old record, whisper, monster and more.</p>
+<p>The <strong>List</strong> box chooses a group, like Robots and machines, Phones and radios, or Spooky and haunted. Then move through the <strong>Voices</strong> list. Each voice has a one-line description.</p>
+<p>Or type in <strong>Search voices</strong>. Try a word like robot, cave, radio or giant, and press Enter.</p>
+<p><strong>Surprise me</strong> picks a voice at random. <strong>Brand new random voice</strong> builds a new chain of effects nobody has heard. <strong>Add to favorites</strong> keeps a voice handy on every device.</p>
+<h2>3. Hear it</h2>
+<p>In the Voices list, <strong>Space</strong> plays or stops a short preview. <strong>Enter</strong> makes the full version. <strong>Escape</strong> stops all sound. <strong>Hear the original</strong> plays your voice with no effects.</p>
+<p>Under <strong>Preview settings</strong> you choose whether each voice plays as you move to it, how long a preview is, and how long it waits first. Nothing plays until you ask.</p>
+<h2>4. Fine-tune</h2>
+<p>These change whichever voice you picked. <strong>Pitch</strong> moves the note up or down. <strong>Timbre</strong> makes the person sound bigger or smaller without changing the note. There is also <strong>Speed</strong>, <strong>Effect strength</strong>, <strong>Stereo width</strong> and <strong>Volume</strong>. <strong>Reset all tweaks</strong> puts them back.</p>
+<p><strong>Background</strong> puts a sound under your voice, like rain, a campfire or a busy street. Every background is made by the engine itself.</p>
+<p><strong>Other sound</strong> mixes your voice with a second sound you record or upload. Some effects use it to make your words come out of a storm, a song or a guitar, like a talk box.</p>
+<h2>5. Build your own</h2>
+<p>The <strong>Rack</strong> part of the page shows the effects in the voice you picked, one after another. Press <strong>Customize this preset</strong> to change them, or <strong>Start an empty rack</strong> to build from nothing. Each effect is under its own heading. Every setting is a slider with a number box beside it, and its value is read in words, like minus 6 decibels or 250 milliseconds. <strong>Move up</strong> and <strong>Move down</strong> change the order, <strong>Bypass</strong> turns one effect off without losing its settings, and <strong>Remove</strong> takes it out. <strong>Add an effect</strong> lists every effect by kind. Undo and Redo work here too. <strong>Save as my preset</strong> keeps your rack. Tick <strong>Share with everyone</strong> to let the family use it. Only your first name shows.</p>
+<p>For singing, start in the <strong>Singing and mixing</strong> list: Studio polish, Warm plate, Big hall ballad, Slapback rock, Dotted echo, Hard tune pop, Soft tune, Wide harmonies, Lo-fi tape and more.</p>
+<p><strong>Backing track</strong>, in the Sound part, plays music under your voice. It is not changed by the effects. It has an on and off checkbox and a level in decibels. When you come from the Sound Booth with <strong>Open in the effects rack</strong>, the voice and its music are already loaded.</p>
+<h2>6. Keep it</h2>
+<p>Press <strong>Make the full version</strong>. When it is ready, play it. Then press <strong>Save to My Creations</strong>, or <strong>Download WAV</strong> to keep a copy on your device. Saving needs you to be signed in.</p>
+<h2>Groups of voices</h2>
+<p>Everyday voices, Disguises, Robots and machines, Creatures and monsters, Fantasy and magic, Space and sci-fi, Critters and animals, Cartoon and comedy, Phones and radios, Retro tech and old games, Places and rooms, Weather and nature, On the move, Stereo and 3D, Echoes and time tricks, Singing and music effects, Announcers and broadcast, Strange and experimental, Spooky and haunted, Studio and cleanup, ASMR and close-up, Guitar amps and pedals, Rhythm, beats and DJ tricks, Your voice as an instrument, Music and mastering, and Mix and match.</p>
+<p>The Stereo and 3D voices, and some ASMR ones, only work in headphones. Their names say so.</p>
+<h2>On your phone</h2>
+<p><strong>iPhone:</strong> Create tab, then Voice Changer. It has the same voices, with buttons VoiceOver reads by name. This comes in the next iPhone update.</p>
+<p><strong>Android:</strong> Create tab, then Voice Changer. It opens this page inside the app, and TalkBack reads it. This comes in the next Android update.</p>
+<h2>If something sounds wrong</h2>
+<p>If a voice sounds broken, buzzy in a bad way, or nothing like its name, tell Kade which one. The name is enough.</p>`,
+};
+
 PAGES.clubhouse = {
   title: 'Kade’s Clubhouse', h1: 'Kade’s Clubhouse',
   tagline: 'A live voice room for your people, music and companion guests.',
