@@ -34,7 +34,7 @@ test('Voices 788-800 speak as the new workspace voices, described and filed', ()
     const sections = r.VOICE_PICKER_CATEGORIES.filter((c) => c.voices.includes(label)).map((c) => c.name);
     assert.deepEqual(Array.from(sections), [catalog.voices[num].category], `${label} sits in one section`);
   });
-  assert.equal(r.VOICE_MAP[`Voice ${FIRST + NEW.length}`], undefined, 'nothing past the batch');
+  assert.equal(r.VOICE_MAP[`Voice ${FIRST + NEW.length}`], 'default-e-m11vgtr9l-m7afw4kmnw__soyer', 'the Nov 19 batch starts right after');
   assert.ok(!r.VOICE_PICKER_CATEGORIES.some((c) => c.name === 'Not yet described'), 'every picker voice is described');
 });
 

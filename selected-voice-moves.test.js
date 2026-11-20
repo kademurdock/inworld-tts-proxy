@@ -32,7 +32,7 @@ test('all retained and newly checked identities coexist with historical bindings
   }
   for(const alias of row.aliases||[]){assert.ok(picker.hidden.includes(alias));assert.ok(!picker.voices.includes(alias));assert.equal(picker.renames[alias],row.label);}
  }
- assert.equal(state.VOICE_MAP['Miss-A'],'default-e-m11vgtr9l-m7afw4kmnw__miss_a');
+ assert.equal(state.VOICE_MAP['Miss-A'],'default-e-m11vgtr9l-m7afw4kmnw__miss-a'); // Nov 19 2026: her new Miss-A clone
  assert.equal(state.VOICE_MAP['Kade Murdock'],'fish:a61737cbbea74c6ca3c112cf1f319d35');
  assert.equal(state.VOICE_MAP['Voice 653'],state.VOICE_MAP['Miss-A']);
  assert.equal(picker.tags['Miss-A (Amber A)'],'Miss-A');
@@ -93,7 +93,7 @@ test('a retained personal name cannot move the new family voice through a displa
  const {rows,state}=fresh();const row=rows.find(r=>r.label==='Miss-A (Amber A)');const before=JSON.stringify(row);
  assert.equal(applyReport(state,report('Miss-A','a man')).ok,false);
  assert.equal(JSON.stringify(row),before);
- assert.equal(state.VOICE_MAP['Miss-A'],'default-e-m11vgtr9l-m7afw4kmnw__miss_a');
+ assert.equal(state.VOICE_MAP['Miss-A'],'default-e-m11vgtr9l-m7afw4kmnw__miss-a'); // Nov 19 2026: her new Miss-A clone
 });
 test('moving a voice can restore a valid but currently empty tone section',()=>{
  const {rows,state,picker}=fresh();const row=rows.find(r=>r.categories.includes('Women, Warm & Soothing'));

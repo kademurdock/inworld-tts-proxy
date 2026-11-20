@@ -6015,6 +6015,60 @@ const VOICE_ADDITIONS_2026_11_17B = {
   });
 }
 
+// Nov 19 2026: Kade: "I also have some new voices on inworld to add to the platform, and miss-a and
+// Kade my professional voices need to be replaced by the new professional voices." Workspace diff
+// (exact ids) since the batch above: 13 new; these 11 are ordinary voices. Workspace names stay in
+// comments only.
+const VOICE_ADDITIONS_2026_11_19 = {
+  "Voice 801": "default-e-m11vgtr9l-m7afw4kmnw__soyer", // Soyer
+  "Voice 802": "default-e-m11vgtr9l-m7afw4kmnw__salacka", // Salacka
+  "Voice 803": "default-e-m11vgtr9l-m7afw4kmnw__milio", // milio
+  "Voice 804": "default-e-m11vgtr9l-m7afw4kmnw__namaro", // namaro
+  "Voice 805": "default-e-m11vgtr9l-m7afw4kmnw__sanso", // Sanso
+  "Voice 806": "default-e-m11vgtr9l-m7afw4kmnw__slervie", // SLERVIE
+  "Voice 807": "default-e-m11vgtr9l-m7afw4kmnw__sansanita", // Sansanita
+  "Voice 808": "default-e-m11vgtr9l-m7afw4kmnw__sadaysa", // sadaysa
+  "Voice 809": "default-e-m11vgtr9l-m7afw4kmnw__scavards", // Scavards
+  "Voice 810": "default-e-m11vgtr9l-m7afw4kmnw__sansa", // Sansa
+  "Voice 811": "default-e-m11vgtr9l-m7afw4kmnw__silverbell", // silverbell
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_11_19);
+  if (entries.length !== 11) throw new Error(`additions 11-19: expected 11, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${801 + idx}`) throw new Error(`additions 11-19: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 11-19: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 11-19: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
+// Nov 19 2026, same message: her two personal platform voices move to her new Inworld clones.
+// "Miss-A" (Voice 653) -> the new workspace voice miss-a (the old miss_a stays in her workspace for now
+// and any raw miss_a id saved somewhere now speaks the new one too). "Kade" (Voice 664) -> her new
+// professional clone (workspace name "Me from eleven", comment only); its old target kade_murdock was
+// deleted from her workspace, so 664 was silent. Labels, numbers and every stored spelling stay.
+const KADE_PRO_REPLACEMENTS_2026_11_19 = {
+  "Voice 653": { target: "default-e-m11vgtr9l-m7afw4kmnw__miss-a", was: "default-e-m11vgtr9l-m7afw4kmnw__miss_a" },
+  "Voice 664": { target: "default-e-m11vgtr9l-m7afw4kmnw__me_from_eleven", was: "default-e-m11vgtr9l-m7afw4kmnw__kade_murdock" },
+};
+{
+  for (const [label, info] of Object.entries(KADE_PRO_REPLACEMENTS_2026_11_19)) {
+    if (NUMBERED_VOICE_ALIASES[label] !== info.was) throw new Error(`pro replacement 11-19: ${label} is not ${info.was} any more (${NUMBERED_VOICE_ALIASES[label]})`);
+    if (Object.values(NUMBERED_VOICE_ALIASES).includes(info.target)) throw new Error(`pro replacement 11-19: ${info.target} already registered`);
+    let repointed = 0;
+    for (const [k, t] of Object.entries(VOICE_MAP)) if (t === info.was) { VOICE_MAP[k] = info.target; repointed++; }
+    for (const [k, t] of Object.entries(NUMBERED_VOICE_ALIASES)) if (t === info.was) NUMBERED_VOICE_ALIASES[k] = info.target;
+    if (repointed === 0) throw new Error(`pro replacement 11-19: nothing in VOICE_MAP pointed at ${info.was}`);
+    VOICE_MAP[info.was] = info.target; // a raw old id saved somewhere speaks too
+  }
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck

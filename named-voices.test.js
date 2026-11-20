@@ -6,7 +6,7 @@ const ctx={FISH_VOICE_PREFIX:'fish:',process:{env:{}},console:{log(){},warn(){}}
 vm.runInNewContext(definitions+'\n'+picker+'\nthis.result={VOICE_MAP,VOICE_LIST,VOICE_PICKER_CATEGORIES,VOICE_RENAMES};',ctx);
 const r=ctx.result;
 assert.equal(r.VOICE_MAP['Kade Murdock'],'fish:a61737cbbea74c6ca3c112cf1f319d35');
-assert.equal(r.VOICE_MAP['Miss-A'],'default-e-m11vgtr9l-m7afw4kmnw__miss_a');
+assert.equal(r.VOICE_MAP['Miss-A'],'default-e-m11vgtr9l-m7afw4kmnw__miss-a'); // Nov 19 2026: her new Miss-A clone
 assert.equal(r.VOICE_MAP['Miss A'],r.VOICE_MAP['Miss-A']);
 for(const [num,label] of [['Voice 652','Kade Murdock'],['Voice 653','Miss-A']]){
  assert.equal(r.VOICE_MAP[num],r.VOICE_MAP[label]);assert.equal(r.VOICE_RENAMES[num],label);
@@ -24,7 +24,8 @@ assert.ok(!r.VOICE_LIST.includes('clear high-ish young woman · dory'));
 assert.equal(r.VOICE_PICKER_CATEGORIES.filter(c=>c.voices.includes('Kade Professional')).map(c=>c.name).join(),'Women, named voices');
 assert.ok(!Object.values(r.VOICE_MAP).includes('default-e-m11vgtr9l-m7afw4kmnw__keighty_pro'),'nothing still points at the deleted clone');
 // Oct 20 2026: Voice 664 is her second Inworld clone, named "Kade".
-assert.equal(r.VOICE_MAP['Voice 664'],'default-e-m11vgtr9l-m7afw4kmnw__kade_murdock');
+// Nov 19 2026: kade_murdock was deleted from her workspace; 664 now speaks as her new clone me_from_eleven.
+assert.equal(r.VOICE_MAP['Voice 664'],'default-e-m11vgtr9l-m7afw4kmnw__me_from_eleven');
 assert.equal(r.VOICE_MAP['Kade'],r.VOICE_MAP['Voice 664']);
 assert.equal(r.VOICE_RENAMES['Voice 664'],'Kade');
 assert.equal(r.VOICE_MAP['Kade Murdock'],'fish:a61737cbbea74c6ca3c112cf1f319d35','the Fish voice keeps its own name');
