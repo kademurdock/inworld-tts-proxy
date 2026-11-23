@@ -6069,6 +6069,44 @@ const KADE_PRO_REPLACEMENTS_2026_11_19 = {
   }
 }
 
+// Nov 22 2026: Kade: "I have a few new inworld voices for you to add to the platform." Workspace diff
+// (exact ids) since the Nov 19 batch: 18 new ordinary voices. Workspace names stay in comments only.
+const VOICE_ADDITIONS_2026_11_22 = {
+  "Voice 812": "default-e-m11vgtr9l-m7afw4kmnw__barkley", // Barkley
+  "Voice 813": "default-e-m11vgtr9l-m7afw4kmnw__ellias", // Ellias
+  "Voice 814": "default-e-m11vgtr9l-m7afw4kmnw__patty", // Patty
+  "Voice 815": "default-e-m11vgtr9l-m7afw4kmnw__ennzia", // Ennzia
+  "Voice 816": "default-e-m11vgtr9l-m7afw4kmnw__zana", // Zana
+  "Voice 817": "default-e-m11vgtr9l-m7afw4kmnw__aubrey", // aubrey
+  "Voice 818": "default-e-m11vgtr9l-m7afw4kmnw__zenzy", // Zenzy
+  "Voice 819": "default-e-m11vgtr9l-m7afw4kmnw__nezia", // Nezia
+  "Voice 820": "default-e-m11vgtr9l-m7afw4kmnw__elia", // Elia
+  "Voice 821": "default-e-m11vgtr9l-m7afw4kmnw__lomez", // Lomez
+  "Voice 822": "default-e-m11vgtr9l-m7afw4kmnw__clari", // Clari
+  "Voice 823": "default-e-m11vgtr9l-m7afw4kmnw__etzie", // Etzie
+  "Voice 824": "default-e-m11vgtr9l-m7afw4kmnw__justin", // Justin
+  "Voice 825": "default-e-m11vgtr9l-m7afw4kmnw__vanoussa", // Vanoussa
+  "Voice 826": "default-e-m11vgtr9l-m7afw4kmnw__china", // China
+  "Voice 827": "default-e-m11vgtr9l-m7afw4kmnw__novo", // Novo
+  "Voice 828": "default-e-m11vgtr9l-m7afw4kmnw__peddle", // Peddle
+  "Voice 829": "default-e-m11vgtr9l-m7afw4kmnw__elry", // Elry
+};
+{
+  const entries = Object.entries(VOICE_ADDITIONS_2026_11_22);
+  if (entries.length !== 18) throw new Error(`additions 11-22: expected 18, got ${entries.length}`);
+  const seenTargets = new Set(Object.values(NUMBERED_VOICE_ALIASES));
+  entries.forEach(([label, target], idx) => {
+    if (label !== `Voice ${812 + idx}`) throw new Error(`additions 11-22: non-contiguous at ${label}`);
+    if (!target.startsWith("default-e-")) throw new Error(`additions 11-22: ${label} target shape`);
+    if (VOICE_MAP[label] || seenTargets.has(target)) throw new Error(`additions 11-22: collision at ${label}`);
+    seenTargets.add(target);
+    NUMBERED_VOICE_ALIASES[label] = target;
+    VOICE_MAP[label] = target;
+    VOICE_LIST.push(label);
+    CUSTOM_VOICE_NUMBERS.add(label);
+  });
+}
+
 // ── VOICE CATEGORIES (July 23 2026, Kade: "I'd like to have voices loosely
 // categorised based on the description of them... so the madness and chaos
 // has some form and shape. Then when I add new voices they can kinda be snuck
