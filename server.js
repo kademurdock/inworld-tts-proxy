@@ -1262,8 +1262,10 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
   if (sendRate !== baseRate) console.log(`[TTS] steering: speakingRate ${baseRate} -> ${sendRate}`);
   if (framed) {
     inworldTalk.noteShaped();
-    console.log(`[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}`);
+    console.log(talkShape.reasoning ? '[TTS] talk: reasoning on' : `[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}`);
   }
+  // Nov 24 2026: Inworld's own Reasoning (inworld-talk.js); {} unless INWORLD_TALK_DELIVERY=reasoning.
+  const reasoning = talkShape && talkShape.reasoning ? inworldTalk.reasoningFields(talkCfg) : {};
   const ac = new AbortController();
   const limitMs = inworldLiveLadder(queue) ? inworldLiveTimeoutMs(rateText) : INWORLD_TIMEOUT_MS;
   const timer = setTimeout(() => ac.abort(), limitMs);
@@ -1324,8 +1326,8 @@ async function synthesizeChunkOnce(text, voiceId, modelId, speakingRate, instruc
        * Context is not billed. Its combined text must stay below 2,000
        * characters, and a few recent pieces provide the relevant continuity. */
       ...(previousTexts && previousTexts.length
-        ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
-        : {}),
+        ? { synthesisContext: { ...reasoning, previousRequests: previousTexts.map((t) => ({ text: t })) } }
+        : (reasoning.reasoning ? { synthesisContext: reasoning } : {})),
       /* Nov 11 2026 — only when the caller asked for a face track (timing-track.js). Lip-sync
        * visemes measured free; WORD times are inside the noise on this lane. Neither changed
        * processedCharactersCount (102 = 102). */
@@ -1527,8 +1529,9 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
   if (sendRate !== baseRate) console.log(`[TTS] steering: speakingRate ${baseRate} -> ${sendRate}, streamed`);
   if (framed) {
     inworldTalk.noteShaped();
-    console.log(`[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}, streamed`);
+    console.log(talkShape.reasoning ? '[TTS] talk: reasoning on, streamed' : `[TTS] talk: instruction ${JSON.stringify(String(instruction).slice(0, 160))}, streamed`);
   }
+  const reasoning = talkShape && talkShape.reasoning ? inworldTalk.reasoningFields(talkCfg) : {}; // Nov 24 2026 (inworld-talk.js)
   return inworldLimiter(async () => {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), INWORLD_TIMEOUT_MS);
@@ -1567,8 +1570,8 @@ async function tryStreamSingleChunk(res, { chunk, written = null, inworldVoice, 
           ...(instruction ? { instruction } : {}),
           ...(TTS_ENHANCE ? { enhanceGeneration: true } : {}),
           ...(previousTexts && previousTexts.length
-            ? { synthesisContext: { previousRequests: previousTexts.map((t) => ({ text: t })) } }
-            : {}),
+            ? { synthesisContext: { ...reasoning, previousRequests: previousTexts.map((t) => ({ text: t })) } }
+            : (reasoning.reasoning ? { synthesisContext: reasoning } : {})),
         }),
       });
     } catch (err) {

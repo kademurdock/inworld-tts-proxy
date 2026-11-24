@@ -95,3 +95,24 @@ test('five refusals in ten minutes turn the frame off for thirty, then it comes 
   assert.equal(talk.talkHealth(ON, t0).shaped, 1);
   talk._resetForTests();
 });
+
+// Nov 24 2026: INWORLD_TALK_DELIVERY=reasoning (Inworld directs itself).
+test('reasoning: no instruction, no bracketed direction, sounds kept, an empty piece left alone', () => {
+  talk._resetForTests();
+  const s = talkSettings({ INWORLD_TALK_DELIVERY: ' Reasoning ' });
+  assert.equal(s.mode, 'reasoning');
+  assert.equal(talkSettings({ INWORLD_TALK_DELIVERY: 'reasoning', KADE_TTS_INSTRUCTION_FIELD: '0' }).mode, 'reasoning');
+  assert.deepEqual(shapeTalk('warm and chatty', s), { instruction: null, shaped: true, reasoning: true });
+  assert.deepEqual(shapeTalk(null, s), { instruction: null, shaped: true, reasoning: true });
+  assert.equal(talkText('[reset] Anyway, [softly] I think so.', s), 'Anyway, I think so.');
+  assert.equal(talkText('Ha! [laughs] Okay. [sighs]', s), 'Ha! [laughs] Okay. [sighs]');
+  assert.equal(talkText('One.\n\n[warm] Two.', s), 'One.\n\nTwo.');
+  assert.equal(talkText('[warm]', s), '[warm]', 'never an empty text');
+  assert.equal(liftDirection('amused', s), null);
+  assert.deepEqual(talk.reasoningFields(s), { reasoning: 'REASONING_ON', reasoningContext: talk.DEFAULT_REASONING_CONTEXT });
+  assert.deepEqual(talk.reasoningFields(talkSettings({})), {});
+  assert.deepEqual(talk.reasoningFields(talkSettings({ INWORLD_TALK_DELIVERY: 'frame' })), {});
+  assert.equal(talkSettings({ INWORLD_TALK_DELIVERY: 'reasoning', INWORLD_TALK_LIFT: '1.1' }).lift, 1, 'the frame\'s lift is not Reasoning\'s');
+  assert.equal(talkSettings({ INWORLD_TALK_DELIVERY: 'reasoning', INWORLD_TALK_REASONING_LIFT: '1.05' }).lift, 1.05);
+  assert.equal(talk.talkHealth({ INWORLD_TALK_DELIVERY: 'reasoning' }).asked, 'reasoning');
+});

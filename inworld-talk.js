@@ -28,9 +28,21 @@
  * left as the character wrote them.
  * A refused framed request is asked once more exactly as before (server.js); five refusals in ten minutes turn the frame
  * off for thirty, so a change on Inworld's side costs one extra call a piece for minutes, not for days (/health shows it).
+ *
+ * Nov 24 2026 — INWORLD DIRECTS ITSELF (INWORLD_TALK_DELIVERY=reasoning). Kade: "if inworld has a steering thing they
+ * specifically made for the voices we use, it would almost probably have to work better than the steering we put
+ * together ... if we don't use our steering, less likely steering text will leak". She heard 8 blind pairs (frame vs
+ * Inworld Reasoning, "Inworld steering vs Reasoning (Nov 22)") and picked Reasoning. In this mode a chat piece carries
+ * NO direction of ours: no instruction field, no frame, and every bracketed direction is taken out of the words (sounds
+ * such as [laughs] stay where they are). synthesisContext.reasoning = REASONING_ON with a short situation line
+ * (INWORLD_TALK_REASONING_CONTEXT) beside the previousRequests the proxy already sends; Inworld reads the words and the
+ * pieces before them and writes its own direction. Measured Nov 22-24: same billed characters, answers about as fast,
+ * works on both /voice and /voice:stream. The same refusal fallback and breaker as the frame apply. Rollback:
+ * INWORLD_TALK_DELIVERY=frame (the Nov 12 frame) or unset (off).
  */
-const { isResetTag } = require('./sounds');
+const { isResetTag, isNonVerbalSound } = require('./sounds');
 
+const DEFAULT_REASONING_CONTEXT = 'One side of a casual phone chat between best friends: unscripted, just talking, not performing.';
 const DEFAULT_FRAME = 'talking with a close friend on the phone, animated and natural, just chatting, not performing';
 const FRAME_MAX = 200;
 const BREAKER = { refusals: 5, windowMs: 10 * 60 * 1000, offMs: 30 * 60 * 1000 };
@@ -50,15 +62,28 @@ function cleanFrame(raw) {
   return /\p{L}/u.test(s) ? s : '';
 }
 
+function askedMode(env = process.env) {
+  const asked = String(env.INWORLD_TALK_DELIVERY || '').trim().toLowerCase();
+  if (asked === 'reasoning') return 'reasoning';
+  return asked === 'frame' && env.KADE_TTS_INSTRUCTION_FIELD !== '0' ? 'frame' : 'off';
+}
+
 function talkSettings(env = process.env, now = Date.now()) {
   const merge = String(env.INWORLD_TALK_FRAME_MERGE || '').trim().toLowerCase();
-  const on = String(env.INWORLD_TALK_DELIVERY || '').trim().toLowerCase() === 'frame' && env.KADE_TTS_INSTRUCTION_FIELD !== '0';
+  const asked = askedMode(env);
   return {
-    mode: on && now >= offUntil ? 'frame' : 'off',
+    mode: asked !== 'off' && now >= offUntil ? asked : 'off',
     frame: cleanFrame(env.INWORLD_TALK_FRAME) || DEFAULT_FRAME,
     frameMerge: ['merge', 'after', 'replace', 'bare'].includes(merge) ? merge : 'merge',
-    lift: Math.min(1.3, Math.max(0.8, num(env.INWORLD_TALK_LIFT, 1))),
+    reasoningContext: cleanFrame(env.INWORLD_TALK_REASONING_CONTEXT) || DEFAULT_REASONING_CONTEXT,
+    // The frame's lift was measured for the frame; Reasoning has its own (default 1, none).
+    lift: Math.min(1.3, Math.max(0.8, num(asked === 'reasoning' ? env.INWORLD_TALK_REASONING_LIFT : env.INWORLD_TALK_LIFT, 1))),
   };
+}
+
+/** The synthesisContext fields a Reasoning piece adds beside previousRequests; {} in any other mode. */
+function reasoningFields(settings = talkSettings()) {
+  return settings.mode === 'reasoning' ? { reasoning: 'REASONING_ON', reasoningContext: settings.reasoningContext } : {};
 }
 
 /**
@@ -67,6 +92,7 @@ function talkSettings(env = process.env, now = Date.now()) {
  */
 function shapeTalk(direction, settings = talkSettings()) {
   const dir = String(direction == null ? '' : direction).replace(/\s+/g, ' ').trim() || null;
+  if (settings.mode === 'reasoning') return { instruction: null, shaped: true, reasoning: true };
   if (settings.mode !== 'frame') return { instruction: dir, shaped: false };
   const frame = settings.frame;
   if (!dir) return { instruction: frame, shaped: true };
@@ -78,6 +104,14 @@ function shapeTalk(direction, settings = talkSettings()) {
 /** The words as Inworld should get them: only a [reset] that opens the piece goes (frame on); nothing else moves. */
 function talkText(text, settings = talkSettings()) {
   const s = String(text == null ? '' : text);
+  if (settings.mode === 'reasoning') {
+    // Inworld writes the direction: every bracketed direction (and [reset]) leaves the words; sounds stay put.
+    if (!s.includes('[')) return s;
+    const out = s.replace(/[ \t]*\[([^\]\n]{1,300})\][ \t]*/g, (whole, inner) => (isNonVerbalSound(inner) ? whole : ' '))
+      .replace(/ {2,}/g, ' ').replace(/^ +| +$/gm, '');
+    // A piece that would be left with nothing to say goes as it came (never send Inworld an empty text).
+    return /[\p{L}\p{N}]/u.test(out) || /\[[^\]]*\]/.test(out) ? out : s;
+  }
   if (settings.mode !== 'frame' || settings.frameMerge === 'bare' || !s.includes('[')) return s;
   return s.replace(/^(\s*)\[([^\]\n]{1,300})\][ \t]*/, (whole, lead, inner) => (isResetTag(inner) ? lead : whole));
 }
@@ -107,12 +141,11 @@ function noteRefused(now = Date.now()) {
 
 function talkHealth(env = process.env, now = Date.now()) {
   const s = talkSettings(env, now);
-  const asked = String(env.INWORLD_TALK_DELIVERY || '').trim().toLowerCase() === 'frame';
-  return { mode: s.mode, asked: asked ? 'frame' : 'off', frame: s.frame, frameMerge: s.frameMerge, lift: s.lift, ...stats,
+  return { mode: s.mode, asked: askedMode(env), frame: s.frame, frameMerge: s.frameMerge, reasoningContext: s.reasoningContext, lift: s.lift, ...stats,
     offForMinutes: now < offUntil ? Math.ceil((offUntil - now) / 60000) : 0 };
 }
 
 function _resetForTests() { stats.shaped = 0; stats.refused = 0; refusals = []; offUntil = 0; }
 
-module.exports = { talkSettings, shapeTalk, talkText, liftDirection, noteShaped, noteRefused, talkHealth, cleanFrame,
-  DEFAULT_FRAME, FRAME_MAX, BREAKER, _resetForTests };
+module.exports = { talkSettings, shapeTalk, talkText, liftDirection, reasoningFields, noteShaped, noteRefused, talkHealth, cleanFrame,
+  DEFAULT_FRAME, DEFAULT_REASONING_CONTEXT, FRAME_MAX, BREAKER, _resetForTests };

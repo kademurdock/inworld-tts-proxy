@@ -9,7 +9,8 @@ global.fetch = async (url, options) => {
   if (!['https://api.inworld.ai/tts/v1/voice', 'https://api.inworld.ai/tts/v1/voice:stream'].includes(u)) throw Error('External network blocked by fixture');
   const body = JSON.parse(options.body);
   fs.appendFileSync(process.env.PROVIDER_RECEIPT, JSON.stringify({ url: u, body }) + '\n');
-  const framed = /close friend/.test(body.instruction || '');
+  // Nov 24 2026: a Reasoning request (inworld-talk.js) counts as framed too.
+  const framed = /close friend/.test(body.instruction || '') || Boolean(body.synthesisContext && body.synthesisContext.reasoning);
   if (process.env.TALK_REJECT === 'all' || (process.env.TALK_REJECT === '1' && framed)) {
     return new Response(JSON.stringify({ code: 3, message: 'INVALID_ARGUMENT: test refusal' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }

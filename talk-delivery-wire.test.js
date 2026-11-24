@@ -13,7 +13,7 @@ const { WORDS, PHRASES } = require('./inworld-steer');
 
 const BODY = 'I went to the farmers market this morning before it got too hot outside. They had the best peaches I have seen all summer long.';
 const CLEAR = ['INWORLD_WRITER', 'INWORLD_TALK_FILLERS', 'INWORLD_TALK_SOUNDS', 'INWORLD_STEER_RATE', 'TTS_TALK_CALM', 'KADE_TTS_LIVELY_BASELINE',
-  'INWORLD_TALK_RATE', 'INWORLD_STEER_DROP_ABOVE', 'INWORLD_TALK_DELIVERY', 'INWORLD_TALK_FRAME', 'INWORLD_TALK_FRAME_MERGE', 'INWORLD_TALK_LIFT',
+  'INWORLD_TALK_RATE', 'INWORLD_STEER_DROP_ABOVE', 'INWORLD_TALK_DELIVERY', 'INWORLD_TALK_FRAME', 'INWORLD_TALK_FRAME_MERGE', 'INWORLD_TALK_LIFT', 'INWORLD_TALK_REASONING_CONTEXT', 'INWORLD_TALK_REASONING_LIFT',
   'KADE_TTS_INSTRUCTION_FIELD', 'TTS_DELIVERY_MODE', 'TTS_ENHANCE', 'INWORLD_TIMINGS', 'TALK_REJECT', 'TTS_STEER_CARRY'];
 
 async function withServer(port, extraEnv, run) {
@@ -177,5 +177,55 @@ test('an unrelated 400 with the frame on still fails as before, after one plain 
     await r.arrayBuffer();
     assert.match(log(), /refused with the talk frame \(Inworld API error 400: .*test refusal/);
     assert.doesNotMatch(log(), /talkFramed: false/);
+  });
+});
+
+// Nov 24 2026: INWORLD_TALK_DELIVERY=reasoning. Inworld directs itself: no instruction, no bracketed direction in the
+// words (sounds stay), REASONING_ON with the situation line beside previousRequests, base speed, reading left alone,
+// and a refusal is asked again exactly as before.
+const { DEFAULT_REASONING_CONTEXT: RC } = require('./inworld-talk');
+test('reasoning: no direction of ours reaches Inworld, buffered or streamed; Inworld gets REASONING_ON and the situation', async () => {
+  await withServer(32411, { ...PROD, INWORLD_TALK_DELIVERY: 'reasoning', INWORLD_TALK_LIFT: '1.04' }, async ({ calls, log, health }) => {
+    for (const stream of [false, true]) {
+      const [a] = await calls(`%%%amused%%% ${BODY}`, { stream });
+      assert.equal(a.body.instruction, undefined);
+      assert.equal(a.body.text, BODY);
+      assert.equal(a.body.synthesisContext.reasoning, 'REASONING_ON');
+      assert.equal(a.body.synthesisContext.reasoningContext, RC);
+      assert.equal(a.body.audioConfig.speakingRate, 1, 'no steering lift and not the frame\'s lift');
+      const mid = await calls(`Okay. %%%sharp and interested%%% ${BODY}`, { stream });
+      for (const c of mid) assert.doesNotMatch(c.body.text, /\[|sharp and interested/, 'a mid-piece direction leaves the words');
+    }
+    // a sound stays where it was written; a later piece keeps its context next to Reasoning
+    const long = await calls(`%%%dry%%% First paragraph about the market. [laughs] Really.\n\n%%%reset%%% And then I went home and had a nap.`);
+    assert.ok(long.some((c) => /\[laughs\]/.test(c.body.text)), JSON.stringify(long.map((c) => c.body.text)));
+    for (const c of long) {
+      assert.doesNotMatch(c.body.text, /\[(dry|reset)\]/i);
+      assert.equal(c.body.synthesisContext.reasoning, 'REASONING_ON');
+    }
+    const withPrev = long.find((c) => c.body.synthesisContext.previousRequests);
+    if (withPrev) assert.ok(withPrev.body.synthesisContext.previousRequests.length > 0);
+    // reading is never steered by Inworld either: STABLE goes as before
+    const [r] = await calls(`%%%amused%%% ${BODY}`, { delivery: 'STABLE' });
+    assert.equal(r.body.instruction, 'amused');
+    assert.equal((r.body.synthesisContext || {}).reasoning, undefined);
+    assert.match(log(), /\[TTS\] talk: reasoning on/);
+    const h = (await health()).inworldTalk.delivery;
+    assert.deepEqual([h.mode, h.asked, h.reasoningContext], ['reasoning', 'reasoning', RC]);
+  });
+});
+
+test('reasoning: a refused Reasoning request is asked again exactly as before; the instruction-field switch does not turn it off', async () => {
+  let off;
+  await withServer(32412, PROD, async (o) => { off = (await o.calls(`%%%amused%%% ${BODY}`)).map((c) => c.body); });
+  await withServer(32413, { ...PROD, INWORLD_TALK_DELIVERY: 'reasoning', TALK_REJECT: '1' }, async ({ calls, log }) => {
+    const buffered = await calls(`%%%amused%%% ${BODY}`);
+    assert.equal(buffered.length, 2, 'refused once, then asked plain');
+    assert.deepEqual(buffered[1].body, off[0]);
+    assert.match(log(), /refused with the talk frame/);
+  });
+  await withServer(32414, { ...PROD, INWORLD_TALK_DELIVERY: 'reasoning', INWORLD_TALK_REASONING_CONTEXT: 'Two old pals [x] on the phone.' }, async ({ calls }) => {
+    const [a] = await calls(BODY);
+    assert.equal(a.body.synthesisContext.reasoningContext, 'Two old pals x on the phone.');
   });
 });
