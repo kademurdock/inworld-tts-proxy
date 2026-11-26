@@ -21,7 +21,6 @@ const bodyLimits = require("./body-limits");
 
 // Mount the accessible help system (/help and friends). See help.js.
 app.use(require("./help"));
-app.use(require("./envprobe_tmp")); // temporary diagnostics (revert follows)
 require("./lab")(app); // Part 118: GET /lab/limiter, the A/B/C/D listening page for the output stage
 
 // KADE Aug 8 2026: unlisted plain-text mirrors of her MOO design docs at
