@@ -1,6 +1,7 @@
 const express = require("express");
 require("./async-routes").install(); // Nov 7 2026: a handler that rejects answers its own request instead of ending the process (async-routes.js)
 const rejectionNet = require("./rejection-net").install(); // Nov 7 2026: a rejection that belongs to no request is logged and counted, fatal in the first 30 s (rejection-net.js)
+require("./site-seat").installFetchSeat(); // Nov 26 2026 (Part 461): every call to the site carries the service seat header (KADE_SERVICE_LIMIT_SECRET); no other host gets it (site-seat.js)
 const crypto = require("crypto");
 const { createReferenceStore, fishBody, selectedPicker, installSelectedBindings } = require("./private-voice-references");
 let selectedReferenceStore = null;
