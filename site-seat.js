@@ -13,7 +13,18 @@
  * (LIBRECHAT_BASE, LIBRECHAT_URL, or kademurdock.com) gets the header; nothing
  * else does. A redirect from the site is followed by hand: to the site again,
  * with the header; anywhere else, without it. The value is never logged.
- * Unset KADE_SERVICE_LIMIT_SECRET = fetch behaves exactly as before.
+ * Unset KADE_SERVICE_LIMIT_SECRET = fetch behaves exactly as before. The site
+ * ignores a value shorter than 24 characters or holding a comma, so this file
+ * follows the same rule: such a value is never sent, and one warning says so.
+ *
+ * Known differences when a site call is redirected (the site's API does not
+ * redirect today, and no caller here reads these):
+ * - A followed redirect answers with res.redirected false, and res.url is the
+ *   last address asked for.
+ * - A 307 or 308 redirect of a body that cannot be sent twice (a stream, or a
+ *   Request object with a body) is handed back as the raw redirect, not followed.
+ * The redirect is followed by hand on purpose: fetch keeps custom headers when
+ * it follows a redirect to another host, and the seat must never leave the site.
  */
 const HEADER = "X-Kade-Service";
 const DEFAULT_SITE = "https://kademurdock.com";
@@ -34,8 +45,22 @@ function siteOrigins(env = process.env) {
   return out;
 }
 
+const MIN_SECRET_LENGTH = 24; // the same rule the site uses
+
+/** Why the secret will not be used, or "" when it is fine or unset. Never includes the value. */
+function seatSecretProblem(env = process.env) {
+  const s = typeof env.KADE_SERVICE_LIMIT_SECRET === "string" ? env.KADE_SERVICE_LIMIT_SECRET.trim() : "";
+  if (!s) return "";
+  if (s.length < MIN_SECRET_LENGTH || s.includes(",")) {
+    return `KADE_SERVICE_LIMIT_SECRET must be at least ${MIN_SECRET_LENGTH} characters with no comma, so the service seat header is not sent`;
+  }
+  return "";
+}
+
 function seatSecret(env = process.env) {
-  return typeof env.KADE_SERVICE_LIMIT_SECRET === "string" ? env.KADE_SERVICE_LIMIT_SECRET.trim() : "";
+  const s = typeof env.KADE_SERVICE_LIMIT_SECRET === "string" ? env.KADE_SERVICE_LIMIT_SECRET.trim() : "";
+  if (!s || seatSecretProblem(env)) return "";
+  return s;
 }
 
 function isSiteUrl(url, env = process.env) {
@@ -101,6 +126,8 @@ let installed = false;
 /** Wrap the global fetch once. Every module that calls fetch() picks it up at call time. */
 function installFetchSeat(env = process.env) {
   if (installed || typeof globalThis.fetch !== "function") return false;
+  const problem = seatSecretProblem(env);
+  if (problem) console.warn(`[site-seat] ${problem}`); // the rule only, never the value
   const realFetch = globalThis.fetch;
   globalThis.fetch = function kadeSeatFetch(input, init) {
     return seatFetch(realFetch, input, init, env);
@@ -109,4 +136,4 @@ function installFetchSeat(env = process.env) {
   return true;
 }
 
-module.exports = { HEADER, siteOrigins, isSiteUrl, seatFetch, installFetchSeat };
+module.exports = { HEADER, MIN_SECRET_LENGTH, seatSecret, seatSecretProblem, siteOrigins, isSiteUrl, seatFetch, installFetchSeat };

@@ -102,3 +102,17 @@ test("installFetchSeat wraps the global fetch once, and server.js installs it at
   const top = src.split("\n").slice(0, 8).join("\n");
   assert.match(top, /require\("\.\/site-seat"\)\.installFetchSeat\(\);/);
 });
+
+test("a secret the site would ignore (short, or with a comma) is never sent", async () => {
+  for (const bad of ["short-secret", "abc,defghijklmnopqrstuvwxyz0123"]) {
+    const env = { LIBRECHAT_BASE: "https://kademurdock.com", KADE_SERVICE_LIMIT_SECRET: bad };
+    assert.equal(seat.seatSecret(env), "");
+    assert.match(seat.seatSecretProblem(env), /at least 24 characters/);
+    assert.equal(seat.seatSecretProblem(env).includes(bad), false);
+    let sent = null;
+    const fake = async (_input, init) => { sent = new Headers(init && init.headers).get("x-kade-service"); return new Response("{}"); };
+    await seat.seatFetch(fake, "https://kademurdock.com/api/x", { headers: {} }, env);
+    assert.equal(sent, null);
+  }
+  assert.equal(seat.seatSecretProblem({}), "");
+});
