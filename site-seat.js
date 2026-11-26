@@ -25,8 +25,19 @@
  *   Request object with a body) is handed back as the raw redirect, not followed.
  * The redirect is followed by hand on purpose: fetch keeps custom headers when
  * it follows a redirect to another host, and the seat must never leave the site.
+ * Nov 26 2026 (review fix): a hop to another origin also drops Authorization,
+ * Cookie and Proxy-Authorization, the same as fetch itself does, so a site call
+ * that carries a sign-in token never hands it to wherever the site redirected.
+ *
+ * Every site call also carries X-Kade-Service-Name: inworld-proxy. It is not a
+ * secret: the site uses it only on a request whose seat matched, to keep this
+ * proxy's failed sign-ins in a count of its own, apart from the bridge's.
  */
 const HEADER = "X-Kade-Service";
+const NAME_HEADER = "X-Kade-Service-Name";
+const SERVICE_NAME = "inworld-proxy";
+/* What fetch drops on a redirect to another origin. */
+const CROSS_ORIGIN_DROP = ["authorization", "cookie", "proxy-authorization"];
 const DEFAULT_SITE = "https://kademurdock.com";
 const MAX_HOPS = 5;
 
@@ -91,6 +102,7 @@ async function seatFetch(realFetch, input, init, env, hops = 0) {
   const base = init || {};
   const headers = new Headers(base.headers !== undefined ? base.headers : (isRequest(input) ? input.headers : undefined));
   headers.set(HEADER, secret);
+  headers.set(NAME_HEADER, SERVICE_NAME);
   const wanted = base.redirect || (isRequest(input) ? input.redirect : "follow");
   const res = await realFetch(input, { ...base, headers, redirect: "manual" });
 
@@ -111,13 +123,14 @@ async function seatFetch(realFetch, input, init, env, hops = 0) {
 
   const next = new URL(location, url).href;
   const nextInit = { ...base, method, body, redirect: wanted };
+  const h = new Headers(base.headers);
   if (body === undefined) {
     delete nextInit.body;
-    const h = new Headers(base.headers);
     h.delete("content-type");
     h.delete("content-length");
-    nextInit.headers = h;
   }
+  if (originOf(next) !== originOf(url)) for (const k of CROSS_ORIGIN_DROP) h.delete(k);
+  nextInit.headers = h;
   if (isSiteUrl(next, env)) return seatFetch(realFetch, next, nextInit, env, hops + 1);
   return realFetch(next, nextInit); // off the site: the caller's own headers, never the seat
 }
@@ -128,6 +141,8 @@ function installFetchSeat(env = process.env) {
   if (installed || typeof globalThis.fetch !== "function") return false;
   const problem = seatSecretProblem(env);
   if (problem) console.warn(`[site-seat] ${problem}`); // the rule only, never the value
+  // One line at boot, so the logs show whether site calls carry the seat. Never the value.
+  else console.log(seatSecret(env) ? "[site-seat] site calls carry the service seat (as \"inworld-proxy\")" : "[site-seat] KADE_SERVICE_LIMIT_SECRET unset: site calls carry no service seat");
   const realFetch = globalThis.fetch;
   globalThis.fetch = function kadeSeatFetch(input, init) {
     return seatFetch(realFetch, input, init, env);
@@ -136,4 +151,4 @@ function installFetchSeat(env = process.env) {
   return true;
 }
 
-module.exports = { HEADER, MIN_SECRET_LENGTH, seatSecret, seatSecretProblem, siteOrigins, isSiteUrl, seatFetch, installFetchSeat };
+module.exports = { HEADER, NAME_HEADER, SERVICE_NAME, MIN_SECRET_LENGTH, seatSecret, seatSecretProblem, siteOrigins, isSiteUrl, seatFetch, installFetchSeat };

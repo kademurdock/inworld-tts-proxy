@@ -19,7 +19,10 @@ function echo(req, res) {
   req.on("data", (c) => (body += c));
   req.on("end", () => {
     res.setHeader("content-type", "application/json");
-    res.end(JSON.stringify({ seat: req.headers["x-kade-service"] || null, method: req.method, body, ua: req.headers["user-agent"] || null }));
+    res.end(JSON.stringify({
+      seat: req.headers["x-kade-service"] || null, method: req.method, body, ua: req.headers["user-agent"] || null,
+      name: req.headers["x-kade-service-name"] || null, auth: req.headers.authorization || null, cookie: req.headers.cookie || null,
+    }));
   });
 }
 const realFetch = globalThis.fetch;
@@ -40,7 +43,7 @@ test("the site gets the header with the caller's own headers kept; another host 
   const env = { LIBRECHAT_BASE: site.base, KADE_SERVICE_LIMIT_SECRET: SECRET };
   try {
     const a = await (await call(env, `${site.base}/api/auth/login`, { method: "POST", headers: { "User-Agent": "ua-1", "Content-Type": "application/json" }, body: "{}" })).json();
-    assert.deepEqual(a, { seat: SECRET, method: "POST", body: "{}", ua: "ua-1" });
+    assert.deepEqual(a, { seat: SECRET, method: "POST", body: "{}", ua: "ua-1", name: "inworld-proxy", auth: null, cookie: null });
     const b = await (await call(env, new URL(`${site.base}/api/agents`))).json();
     assert.equal(b.seat, SECRET);
     const c = await (await call(env, `${other.base}/x`, { headers: { "User-Agent": "ua-2" } })).json();
@@ -80,6 +83,26 @@ test("redirects: on the site the header stays, off the site it is dropped", asyn
     const manual = await call(env, `${site.base}/away`, { redirect: "manual" });
     assert.equal(manual.status, 302);
     await assert.rejects(call(env, `${site.base}/away`, { redirect: "error" }));
+  } finally {
+    site.server.close();
+    other.server.close();
+  }
+});
+
+test("a redirect to another origin drops the sign-in token and cookies; one on the site keeps them", async () => {
+  const other = await listen(echo);
+  const site = await listen((req, res) => {
+    if (req.url === "/away") { res.statusCode = 302; res.setHeader("location", `${other.base}/landed`); return res.end(); }
+    if (req.url === "/stay") { res.statusCode = 302; res.setHeader("location", "/here"); return res.end(); }
+    return echo(req, res);
+  });
+  const env = { LIBRECHAT_BASE: site.base, KADE_SERVICE_LIMIT_SECRET: SECRET };
+  const headers = { Authorization: "Bearer user-jwt", Cookie: "refreshToken=abc", "Proxy-Authorization": "Basic x", "User-Agent": "ua-4" };
+  try {
+    const away = await (await call(env, `${site.base}/away`, { headers })).json();
+    assert.deepEqual([away.seat, away.name, away.auth, away.cookie, away.ua], [null, null, null, null, "ua-4"]);
+    const stay = await (await call(env, `${site.base}/stay`, { headers })).json();
+    assert.deepEqual([stay.seat, stay.auth, stay.cookie], [SECRET, "Bearer user-jwt", "refreshToken=abc"]);
   } finally {
     site.server.close();
     other.server.close();
